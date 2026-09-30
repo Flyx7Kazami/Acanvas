@@ -1,0 +1,351 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { request as rawRequest } from 'node:http';
+import { execFile, spawn, type ChildProcess } from 'node:child_process';
+import { promisify } from 'node:util';
+import type { Asset, Claim, Draft, Task } from '../src/shared/types.js';
+import { startServer, type RunningServer } from '../src/server/http.js';
+import { cli } from '../src/cli.js';
+
+async function fixture(t: test.TestContext, maxUploadBytes = 512 * 1024 * 1024) {
+  const root = await mkdtemp(join(tmpdir(), 'acanvas-test-'));
+  let running = await startServer({ root, port: 0, maxUploadBytes });
+  let bootstrap = await (await fetch(`${running.url}/api/bootstrap`)).json();
+  t.after(async () => { await running.close(); await rm(root, { recursive: true, force: true }); });
+  const call = async (path: string, method = 'GET', body?: unknown, expected = 200) => {
+    const response = await fetch(`${running.url}${path}`, { method, headers: { Authorization: `Bearer ${bootstrap.token}`, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+    const value = await response.json(); assert.equal(response.status, expected, JSON.stringify(value)); return value;
+  };
+  const session = async (name = 'Session') => call('/api/sessions', 'POST', { name }, 201);
+  const state = async (sessionId: string) => call(`/api/state?sessionId=${sessionId}`);
+  const sendTask = async (sessionId: string, message = 'Prepare the reference') => {
+    const draft: Draft = (await state(sessionId)).draft;
+    const saved = await call(`/api/sessions/${sessionId}/draft`, 'PUT', { ...draft, text: message });
+    return (await call(`/api/sessions/${sessionId}/tasks`, 'POST', { draftId: draft.id, expectedRevision: saved.revision })).task as Task;
+  };
+  const upload = async (body: string | Buffer, query = '', expected = 201) => {
+    const response = await fetch(`${running.url}/api/assets?name=sample.png&mime=image/png${query}`, { method: 'POST', body: typeof body === 'string' ? body : new Uint8Array(body), headers: { Authorization: `Bearer ${bootstrap.token}` } });
+    const value = await response.json(); assert.equal(response.status, expected, JSON.stringify(value)); return value as Asset;
+  };
+  return { root, call, session, state, sendTask, upload, get running() { return running; }, get token() { return bootstrap.token; }, async restart() { await running.close(); running = await startServer({ root, port: 0, maxUploadBytes }); bootstrap = await (await fetch(`${running.url}/api/bootstrap`)).json(); } };
+}
+
+test('saved drafts are session-specific; duplicate send returns one immutable snapshot', async (t) => {
+  const f = await fixture(t), a = await f.session('A'), b = await f.session('B');
+  const asset = await f.upload('image bytes');
+  const created = await f.call('/api/board/operations', 'POST', { sessionId: a.id, operations: [{ type: 'create', object: { assetId: asset.id, x: 10, y: 20, width: 200, height: 100 } }] });
+  const object = created.objects[0];
+  const initial = (await f.state(a.id)).draft;
+  const saved = await f.call(`/api/sessions/${a.id}/draft`, 'PUT', { ...initial, text: 'Make it brighter', attachments: [asset.id], annotations: [{ id: 'local-note', scope: 'object', coordinateSpace: 'normalized', objectId: object.id, objectIds: [object.id], assetId: asset.id, bounds: { x: .2, y: .1, width: .3, height: .4 }, text: 'Brighter here' }] });
+  const sends = await Promise.all([f.call(`/api/sessions/${a.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision }), f.call(`/api/sessions/${a.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision })]);
+  assert.equal(sends[0].task.id, sends[1].task.id); assert.notEqual(sends[0].draft.id, saved.id);
+  await f.call(`/api/sessions/${a.id}/draft`, 'PUT', saved, 409);
+  assert.equal((await f.state(b.id)).draft.text, ''); assert.equal((await f.state(b.id)).tasks.length, 0);
+  await f.call(`/api/sessions/${b.id}/tasks`, 'POST', { draftId: saved.id }, 409);
+  await f.call('/api/board/operations', 'POST', { sessionId: b.id, operations: [{ type: 'delete', objectId: object.id, expectedVersion: 1 }] });
+  const task = await f.call(`/api/sessions/${a.id}/tasks/${sends[0].task.id}`);
+  assert.equal(task.snapshot.userRequest.source, 'user_instruction'); assert.equal(task.snapshot.referenceContent.source, 'reference_content');
+  assert.equal(task.snapshot.annotations[0].text, 'Brighter here'); assert.equal(task.snapshot.referenceContent.objects[0].x, 10);
+  assert.equal((await f.state(a.id)).annotations.length, 1);
+  const bytes = await fetch(`${f.running.url}/api/assets/${asset.id}/content`, { headers: { Authorization: `Bearer ${f.token}` } }); assert.equal(await bytes.text(), 'image bytes');
+});
+
+test('one consumer per session and parallel FIFO sessions; empty claim leaves later tasks queued', async (t) => {
+  const f = await fixture(t), a = await f.session('A'), b = await f.session('B');
+  const first = await f.sendTask(a.id, 'first'), second = await f.sendTask(a.id, 'second'), other = await f.sendTask(b.id, 'other');
+  const concurrent = await Promise.all(['one', 'two'].map(async (consumerId) => { const response = await fetch(`${f.running.url}/api/sessions/${a.id}/claim`, { method: 'POST', headers: { Authorization: `Bearer ${f.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ consumerId }) }); return { status: response.status, data: await response.json() }; }));
+  assert.deepEqual(concurrent.map((result) => result.status).sort(), [200, 409]);
+  const owner = concurrent.find((result) => result.status === 200)!.data as Claim;
+  assert.equal(owner.task!.id, first.id);
+  const parallel = await f.call(`/api/sessions/${b.id}/claim`, 'POST', { consumerId: 'other' }); assert.equal(parallel.task.id, other.id);
+  await f.call(`/api/sessions/${a.id}/tasks/${first.id}/complete`, 'POST', { consumerId: owner.consumerId, runId: owner.run!.id, summary: 'First delivered', assetIds: [], validation: ['Text reviewed'], operations: [] });
+  await f.call(`/api/sessions/${a.id}/claim`, 'POST', { consumerId: 'new-owner' }, 409);
+  const next = await f.call(`/api/sessions/${a.id}/claim`, 'POST', { consumerId: owner.consumerId }); assert.equal(next.task.id, second.id);
+  await f.call(`/api/sessions/${a.id}/tasks/${second.id}/complete`, 'POST', { consumerId: owner.consumerId, runId: next.run.id, summary: 'Second delivered', assetIds: [], validation: [], operations: [] });
+  const empty = await f.call(`/api/sessions/${a.id}/claim`, 'POST', { consumerId: owner.consumerId }); assert.equal(empty.task, null);
+  assert.equal((await f.state(a.id)).session.consumerId, null);
+  const third = await f.sendTask(a.id, 'later'); assert.equal(third.status, 'queued');
+  const afterEmpty = await f.call(`/api/sessions/${a.id}/claim`, 'POST', { consumerId: 'new-owner' }); assert.equal(afterEmpty.task.id, third.id);
+});
+
+test('resume reads existing outputs; stale attempts are retained and cannot publish', async (t) => {
+  const f = await fixture(t), session = await f.session(), task = await f.sendTask(session.id);
+  const claim = await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'old-agent' });
+  const output = await f.upload('generated bytes', `&sessionId=${session.id}&taskId=${task.id}&runId=${claim.run.id}&consumerId=old-agent`);
+  await f.call(`/api/sessions/${session.id}/tasks/${task.id}/progress`, 'POST', { runId: claim.run.id, consumerId: 'old-agent', message: 'Output saved', externalJobId: 'provider-job-1', assetIds: [output.id] });
+  await f.call(`/api/sessions/${session.id}/tasks/${task.id}/block`, 'POST', { runId: claim.run.id, consumerId: 'old-agent', reason: 'Confirm placement' });
+  await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'new-agent' }, 409);
+  await f.call(`/api/sessions/${session.id}/tasks/${task.id}/reply`, 'POST', { text: 'Place at the right' });
+  const resumed = await f.call(`/api/sessions/${session.id}/tasks/${task.id}/resume`, 'POST', { consumerId: 'new-agent', expectedRunId: claim.run.id, resolution: 'The saved file is complete; reuse it. External job is finished.' });
+  assert.notEqual(resumed.run.id, claim.run.id); assert.equal(resumed.task.runs[0].outputAssetIds[0], output.id); assert.equal(resumed.task.replies.length, 1);
+  const operations = [{ type: 'create', object: { assetId: output.id, x: 400, y: 0, width: 200, height: 150 } }];
+  await f.call(`/api/sessions/${session.id}/tasks/${task.id}/complete`, 'POST', { consumerId: 'old-agent', runId: claim.run.id, summary: 'Late result', assetIds: [output.id], validation: [], operations }, 409);
+  assert.equal((await f.state(session.id)).objects.length, 0);
+  const completed = await f.call(`/api/sessions/${session.id}/tasks/${task.id}/complete`, 'POST', { consumerId: 'new-agent', runId: resumed.run.id, summary: 'Reference delivered', assetIds: [output.id], validation: ['Bytes reviewed'], operations });
+  assert.equal(completed.status, 'completed'); assert.equal(completed.lateResults.length, 1); assert.equal(completed.receipt.objectIds.length, 1);
+  const repeated = await f.call(`/api/sessions/${session.id}/tasks/${task.id}/complete`, 'POST', { consumerId: 'new-agent', runId: resumed.run.id, summary: 'Reference delivered', assetIds: [output.id], validation: [], operations });
+  assert.equal(repeated.receipt.objectIds[0], completed.receipt.objectIds[0]); assert.equal((await f.state(session.id)).objects.length, 1);
+});
+
+test('object CAS rolls back a whole board or publication transaction', async (t) => {
+  const f = await fixture(t), session = await f.session(), asset = await f.upload('reference');
+  const created = await f.call('/api/board/operations', 'POST', { sessionId: session.id, operations: [0, 1].map((x) => ({ type: 'create', object: { assetId: asset.id, x, y: 0, width: 100, height: 100 } })) });
+  const a = created.objects.find((object: any) => object.x === 0), b = created.objects.find((object: any) => object.x === 1);
+  await f.call('/api/board/operations', 'POST', { sessionId: session.id, operations: [{ type: 'update', objectId: b.id, expectedVersion: 1, changes: { x: 300 } }] });
+  const operations = [{ type: 'update', objectId: a.id, expectedVersion: 1, changes: { x: 500 } }, { type: 'update', objectId: b.id, expectedVersion: 1, changes: { x: 500 } }];
+  await f.call('/api/board/operations', 'POST', { sessionId: session.id, operations }, 409);
+  assert.equal((await f.state(session.id)).objects.find((object: any) => object.id === a.id).x, 0);
+  const task = await f.sendTask(session.id), claim = await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'agent' });
+  await f.call(`/api/sessions/${session.id}/tasks/${task.id}/complete`, 'POST', { runId: claim.run.id, consumerId: 'agent', summary: 'Updated', assetIds: [], validation: [], operations }, 409);
+  const current = await f.call(`/api/sessions/${session.id}/tasks/${task.id}`); assert.equal(current.status, 'running'); assert.equal(current.receipt, null);
+  assert.equal((await f.state(session.id)).objects.find((object: any) => object.id === a.id).version, 1);
+});
+
+test('media byte ranges, authentication, origins, hostile attachments and path boundaries', async (t) => {
+  const f = await fixture(t), asset = await f.upload('0123456789');
+  const bootstrap = await fetch(`${f.running.url}/api/bootstrap`); const cookie = bootstrap.headers.get('set-cookie')!.split(';')[0];
+  const read = await fetch(`${f.running.url}/api/assets/${asset.id}/content`, { headers: { Cookie: cookie, Range: 'bytes=2-5' } });
+  assert.equal(read.status, 206); assert.equal(read.headers.get('content-range'), 'bytes 2-5/10'); assert.equal(await read.text(), '2345');
+  const suffix = await fetch(`${f.running.url}/api/assets/${asset.id}/content`, { headers: { Authorization: `Bearer ${f.token}`, Range: 'bytes=-2' } }); assert.equal(await suffix.text(), '89');
+  const bad = await fetch(`${f.running.url}/api/assets/${asset.id}/content`, { headers: { Cookie: cookie, Range: 'bytes=100-' } }); assert.equal(bad.status, 416);
+  assert.equal((await fetch(`${f.running.url}/api/assets/${asset.id}/content`)).status, 401);
+  assert.equal((await fetch(`${f.running.url}/api/sessions`, { method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/json' }, body: '{"name":"Cookie write"}' })).status, 401);
+  assert.equal((await fetch(`${f.running.url}/api/bootstrap`, { headers: { Origin: 'https://example.com' } })).status, 403);
+  assert.equal((await fetch(`${f.running.url}/api/bootstrap`, { headers: { 'Sec-Fetch-Site': 'cross-site' } })).status, 403);
+  assert.equal((await fetch(`${f.running.url}/api/sessions`, { method: 'POST', headers: { Authorization: `Bearer ${f.token}`, Origin: 'null', 'Content-Type': 'application/json' }, body: '{"name":"Null"}' })).status, 403);
+  const hostileHost = await new Promise<number>((resolvePromise, reject) => { const request = rawRequest(`${f.running.url}/api/bootstrap`, { headers: { Host: 'evil.example' } }, (response) => { response.resume(); response.on('end', () => resolvePromise(response.statusCode!)); }); request.on('error', reject); request.end(); });
+  assert.equal(hostileHost, 403);
+  assert.equal((await fetch(`${f.running.url}/api/assets/%2e%2e%2fprivate/content`, { headers: { Cookie: cookie } })).status, 404);
+  const htmlResponse = await fetch(`${f.running.url}/api/assets?name=hostile.html&mime=text/html`, { method: 'POST', headers: { Authorization: `Bearer ${f.token}` }, body: '<script>fetch("/api/bootstrap")</script>' }); const html = await htmlResponse.json();
+  const htmlRead = await fetch(`${f.running.url}/api/assets/${html.id}/content`, { headers: { Cookie: cookie } }); assert.match(htmlRead.headers.get('content-disposition')!, /^attachment/); assert.equal(htmlRead.headers.get('content-type'), 'application/octet-stream');
+  const svgResponse = await fetch(`${f.running.url}/api/assets?name=hostile.svg&mime=image/svg%2Bxml`, { method: 'POST', headers: { Authorization: `Bearer ${f.token}` }, body: '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>' }); const svg = await svgResponse.json();
+  const svgRead = await fetch(`${f.running.url}/api/assets/${svg.id}/content`, { headers: { Cookie: cookie } }); assert.match(svgRead.headers.get('content-security-policy')!, /sandbox/); assert.equal(svgRead.headers.get('x-content-type-options'), 'nosniff');
+  const outside = join(tmpdir(), `acanvas-outside-${asset.id}`); await writeFile(outside, '0123456789'); t.after(() => rm(outside, { force: true }));
+  const path = f.running.service.assetPath(asset.id); await rm(path); await symlink(outside, path);
+  assert.equal((await fetch(`${f.running.url}/api/assets/${asset.id}/content`, { headers: { Cookie: cookie } })).status, 403);
+});
+
+test('overlimit and aborted upload discard partial files; complete uploads survive restart', async (t) => {
+  const f = await fixture(t, 20);
+  await f.upload('a'.repeat(21), '', 413);
+  await new Promise<void>((resolvePromise) => {
+    const request = rawRequest(`${f.running.url}/api/assets?name=large.mp4&mime=video/mp4`, { method: 'POST', headers: { Authorization: `Bearer ${f.token}`, 'Content-Length': 20 } });
+    request.on('error', () => resolvePromise()); request.on('close', () => resolvePromise());
+    request.write('partial'); setTimeout(() => request.destroy(), 30);
+  });
+  await new Promise((resolvePromise) => setTimeout(resolvePromise, 50));
+  assert.deepEqual(await readdir(join(f.root, '.acanvas', 'tmp')), []); assert.equal(f.running.service.assets().length, 0);
+  const complete = await f.upload('complete'); const session = await f.session(); const task = await f.sendTask(session.id);
+  const claim = await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'agent' });
+  await f.call(`/api/sessions/${session.id}/tasks/${task.id}/progress`, 'POST', { consumerId: 'agent', runId: claim.run.id, message: 'Read the file' });
+  await f.restart();
+  const after = await f.state(session.id); assert.equal(after.tasks[0].status, 'interrupted'); assert.equal(after.tasks[0].runs[0].progress.length, 1);
+  assert.equal(after.assets[0].id, complete.id); assert.equal(after.session.consumerId, null);
+  await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'new' }, 409);
+  const resumed = await f.call(`/api/sessions/${session.id}/tasks/${task.id}/resume`, 'POST', { consumerId: 'new', expectedRunId: claim.run.id, resolution: 'No external operation started; continue from saved progress.' }); assert.equal(resumed.task.status, 'running');
+});
+
+test('CLI checks project identity and executes read/import/complete against the HTTP service', async (t) => {
+  const f = await fixture(t), args = ['--project', f.root, '--url', f.running.url];
+  const session = await cli(['session', 'create', '--name', 'Agent', ...args]) as any;
+  const assetFile = join(f.root, 'reference.png'); await writeFile(assetFile, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aJ1QAAAAASUVORK5CYII=', 'base64'));
+  const source = await cli(['asset', 'import', '--file', assetFile, '--mime', 'image/png', ...args]) as Asset;
+  const state = await cli(['session', 'read', '--session', session.id, ...args]) as any;
+  const draftFile = join(f.root, 'draft.json'); await writeFile(draftFile, JSON.stringify({ ...state.draft, text: 'Copy this reference into a new whiteboard image.', attachments: [source.id] }));
+  const saved = await cli(['draft', 'save', '--session', session.id, '--input', draftFile, ...args]) as Draft;
+  const sent = await cli(['draft', 'send', '--session', session.id, '--draft', state.draft.id, '--revision', String(saved.revision), ...args]) as any;
+  const claimed = await cli(['task', 'next', '--session', session.id, '--consumer', 'cli-agent', ...args]) as Claim;
+  const read = await cli(['task', 'read', '--session', session.id, '--task', sent.task.id, ...args]) as any; assert.equal(read.task.snapshot.referenceContent.assets[0].id, source.id);
+  const downloaded = join(f.root, 'downloaded.png'); await cli(['asset', 'read', '--asset', source.id, '--out', downloaded, ...args]);
+  const generated = join(f.root, 'generated.png'); await writeFile(generated, await readFile(downloaded));
+  const identity = ['--session', session.id, '--task', sent.task.id, '--run', claimed.run!.id, '--consumer', 'cli-agent'];
+  const output = await cli(['asset', 'import', '--file', generated, '--mime', 'image/png', ...identity, ...args]) as Asset;
+  const completionFile = join(f.root, 'complete.json'); await writeFile(completionFile, JSON.stringify({ summary: 'Copied the supplied reference into a separate asset.', assetIds: [output.id], validation: ['Downloaded and copied the exact source bytes.'], operations: [{ type: 'create', object: { assetId: output.id, x: 200, y: 100, width: 320, height: 240 } }] }));
+  const done = await cli(['task', 'complete', '--input', completionFile, ...identity, ...args]) as Task; assert.equal(done.status, 'completed'); assert.equal(done.receipt!.assetIds[0], output.id);
+  const empty = await cli(['task', 'next', '--session', session.id, '--consumer', 'cli-agent', ...args]) as Claim; assert.equal(empty.task, null);
+  const otherRoot = await mkdtemp(join(tmpdir(), 'acanvas-other-')); t.after(() => rm(otherRoot, { recursive: true, force: true }));
+  await assert.rejects(cli(['session', 'create', '--name', 'Wrong project', '--project', otherRoot, '--url', f.running.url]), /another project/);
+  assert.equal((await f.call('/api/sessions')).length, 1);
+});
+
+test('a project has one service owner and persisted views/drafts survive a restart', async (t) => {
+  const f = await fixture(t), session = await f.session(), draft = (await f.state(session.id)).draft;
+  await f.call(`/api/sessions/${session.id}/view`, 'PUT', { x: 100, y: 200, zoom: 2, selectedObjectIds: [] });
+  await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...draft, text: 'Saved for later' });
+  const workerSession = await f.session('Active worker'), task = await f.sendTask(workerSession.id);
+  const run = await f.call(`/api/sessions/${workerSession.id}/claim`, 'POST', { consumerId: 'active-worker' });
+  await assert.rejects(startServer({ root: f.root, port: 0 }), /active local service/);
+  const active = await f.state(workerSession.id); assert.equal(active.session.consumerId, 'active-worker'); assert.equal(active.tasks[0].status, 'running'); assert.equal(active.tasks[0].id, task.id); assert.equal(active.tasks[0].currentRunId, run.run.id);
+  await f.restart(); const state = await f.state(session.id); assert.equal(state.draft.text, 'Saved for later'); assert.equal(state.draft.id, draft.id); assert.equal(state.session.view.zoom, 2);
+  await f.call(`/api/sessions/${workerSession.id}/claim`, 'POST', { consumerId: 'active-worker' }, 409);
+  const recovered = await f.state(workerSession.id); assert.equal(recovered.tasks[0].status, 'interrupted'); assert.equal(recovered.tasks[0].currentRunId, run.run.id);
+});
+
+test('cancelling a later queued task preserves the active consumer', async (t) => {
+  const f = await fixture(t), session = await f.session();
+  const first = await f.sendTask(session.id, 'Running work'), second = await f.sendTask(session.id, 'Queued work');
+  const claimed = await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'worker' });
+  await f.call(`/api/sessions/${session.id}/tasks/${second.id}/cancel`, 'POST', { reason: 'Withdraw the queued request' });
+  assert.equal((await f.state(session.id)).session.consumerId, 'worker');
+  const completed = await f.call(`/api/sessions/${session.id}/tasks/${first.id}/complete`, 'POST', { consumerId: 'worker', runId: claimed.run.id, summary: 'Completed current work', assetIds: [], validation: [], operations: [] });
+  assert.equal(completed.status, 'completed');
+});
+
+test('empty claim and draft send overlap with a persistent queued or running outcome', async (t) => {
+  const f = await fixture(t), session = await f.session(), draft = (await f.state(session.id)).draft;
+  const saved = await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...draft, text: 'Added at the idle boundary' });
+  const [claim, sent] = await Promise.all([
+    f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'worker' }),
+    f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: draft.id, expectedRevision: saved.revision }),
+  ]);
+  const state = await f.state(session.id);
+  assert.equal(state.tasks.length, 1); assert.equal(state.tasks[0].id, sent.task.id);
+  if (claim.task) { assert.equal(claim.task.id, sent.task.id); assert.equal(state.tasks[0].status, 'running'); assert.equal(state.session.consumerId, 'worker'); }
+  else { assert.equal(state.tasks[0].status, 'queued'); assert.equal(state.session.consumerId, null); }
+});
+
+test('concurrent draft writes use revisions and stale send preserves the latest saved draft', async (t) => {
+  const f = await fixture(t), session = await f.session(), draft = (await f.state(session.id)).draft;
+  const results = await Promise.all(['A', 'B'].map(async (message) => {
+    const response = await fetch(`${f.running.url}/api/sessions/${session.id}/draft`, { method: 'PUT', headers: { Authorization: `Bearer ${f.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ ...draft, text: message }) }); return { status: response.status, body: await response.json() };
+  }));
+  assert.deepEqual(results.map((result) => result.status).sort(), [200, 409]);
+  assert.equal(results.find((result) => result.status === 409)!.body.error.code, 'draft_revision_conflict');
+  const saved = (await f.state(session.id)).draft; assert.equal(saved.revision, draft.revision + 1);
+  await f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: draft.revision }, 409);
+  assert.equal((await f.state(session.id)).tasks.length, 0);
+  const task = await f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision });
+  assert.equal(task.task.snapshot.userRequest.text, saved.text);
+});
+
+test('completion derives published assets and rejects cross-task and omitted receipt references atomically', async (t) => {
+  const f = await fixture(t), a = await f.session('A'), b = await f.session('B');
+  const taskA = await f.sendTask(a.id), taskB = await f.sendTask(b.id);
+  const claimA = await f.call(`/api/sessions/${a.id}/claim`, 'POST', { consumerId: 'agentA' }), claimB = await f.call(`/api/sessions/${b.id}/claim`, 'POST', { consumerId: 'agentB' });
+  const outputA = await f.upload('A output', `&sessionId=${a.id}&taskId=${taskA.id}&runId=${claimA.run.id}&consumerId=agentA`);
+  const outputB = await f.upload('B output', `&sessionId=${b.id}&taskId=${taskB.id}&runId=${claimB.run.id}&consumerId=agentB`);
+  const reference = await f.upload('ordinary reference');
+  const operation = (assetId: string) => ({ type: 'create', object: { assetId, x: 0, y: 0, width: 100, height: 100 } });
+  const completion = { consumerId: 'agentB', runId: claimB.run.id, summary: 'Published', assetIds: [], validation: [] };
+  const completePath = `/api/sessions/${b.id}/tasks/${taskB.id}/complete`;
+  for (const asset of [outputA, reference]) { const error = await f.call(completePath, 'POST', { ...completion, operations: [operation(outputB.id), operation(asset.id)], assetIds: [outputB.id] }, 409); assert.equal(error.error.code, 'output_ownership'); }
+  const omitted = await f.call(completePath, 'POST', { ...completion, operations: [operation(outputB.id)] }, 409); assert.equal(omitted.error.code, 'receipt_assets_missing');
+  const before = await f.state(b.id); assert.equal(before.objects.length, 0); assert.equal(before.tasks[0].status, 'running'); assert.equal(before.tasks[0].receipt, null);
+  const done = await f.call(completePath, 'POST', { ...completion, assetIds: [outputB.id], operations: [operation(outputB.id)] });
+  assert.equal(done.status, 'completed'); assert.deepEqual(done.receipt.assetIds, [outputB.id]);
+  assert.equal((await f.state(b.id)).objects[0].sourceTaskId, taskB.id);
+  const layoutTask = await f.sendTask(b.id, 'Move the existing result');
+  const layoutClaim = await f.call(`/api/sessions/${b.id}/claim`, 'POST', { consumerId: 'agentB' });
+  const object = (await f.state(b.id)).objects[0];
+  const layout = await f.call(`/api/sessions/${b.id}/tasks/${layoutTask.id}/complete`, 'POST', { consumerId: 'agentB', runId: layoutClaim.run.id, summary: 'Moved the saved result', assetIds: [], validation: [], operations: [{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: 40 } }] });
+  assert.equal(layout.status, 'completed'); assert.deepEqual(layout.receipt.assetIds, []);
+  assert.equal((await f.state(b.id)).objects[0].sourceTaskId, taskB.id);
+});
+
+test('session resume transfers a settled queue by expected owner and retains running-attempt ownership', async (t) => {
+  const f = await fixture(t), session = await f.session(), first = await f.sendTask(session.id, 'First'), second = await f.sendTask(session.id, 'Second');
+  const claimed = await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'old' });
+  await f.call(`/api/sessions/${session.id}/resume`, 'POST', { consumerId: 'new', expectedConsumerId: 'old', resolution: 'Continue queue' }, 409);
+  await f.call(`/api/sessions/${session.id}/tasks/${first.id}/complete`, 'POST', { consumerId: 'old', runId: claimed.run.id, summary: 'First complete', assetIds: [], validation: [], operations: [] });
+  const args = ['--project', f.root, '--url', f.running.url, '--session', session.id];
+  const resumed = await cli(['session', 'resume', '--consumer', 'new', '--expected-consumer', 'old', '--resolution', 'First task receipt is complete. Continue queued work.', ...args]) as any;
+  assert.equal(resumed.consumerId, 'new');
+  await f.call(`/api/sessions/${session.id}/resume`, 'POST', { consumerId: 'third', expectedConsumerId: 'old', resolution: 'Stale transfer' }, 409);
+  await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'old' }, 409);
+  const next = await cli(['task', 'next', '--consumer', 'new', ...args]) as Claim; assert.equal(next.task!.id, second.id);
+  await f.call(`/api/sessions/${session.id}/tasks/${second.id}/block`, 'POST', { consumerId: 'new', runId: next.run!.id, reason: 'Needs confirmation' });
+  await f.call(`/api/sessions/${session.id}/resume`, 'POST', { consumerId: 'third', expectedConsumerId: 'new', resolution: 'Continue' }, 409);
+  const recovered = await f.call(`/api/sessions/${session.id}/tasks/${second.id}/resume`, 'POST', { consumerId: 'third', expectedRunId: next.run!.id, resolution: 'Reviewed the blocked request; continue.' });
+  await f.call(`/api/sessions/${session.id}/tasks/${second.id}/interrupt`, 'POST', { consumerId: 'third', runId: recovered.run.id, reason: 'External result needs checking' });
+  await f.call(`/api/sessions/${session.id}/resume`, 'POST', { consumerId: 'fourth', expectedConsumerId: 'third', resolution: 'Continue' }, 409);
+});
+
+test('idle and transferred consumers stay retired across later enqueue and claim calls', async (t) => {
+  const f = await fixture(t), session = await f.session(), first = await f.sendTask(session.id);
+  const claimed = await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'old' });
+  await f.call(`/api/sessions/${session.id}/tasks/${first.id}/complete`, 'POST', { consumerId: 'old', runId: claimed.run.id, summary: 'Complete', assetIds: [], validation: [], operations: [] });
+  await f.call(`/api/sessions/${session.id}/resume`, 'POST', { consumerId: 'new', expectedConsumerId: 'old', resolution: 'Continue after reviewing the completed receipt' });
+  await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'old' }, 409);
+  assert.equal((await f.state(session.id)).session.consumerId, 'new');
+  const empty = await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'new' }); assert.equal(empty.task, null);
+  assert.equal((await f.state(session.id)).session.consumerId, null);
+  await f.sendTask(session.id, 'Added after idle');
+  for (const consumerId of ['old', 'new']) { const error = await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId }, 409); assert.equal(error.error.code, 'consumer_retired'); }
+  const fresh = await cli(['task', 'next', '--session', session.id, '--project', f.root, '--url', f.running.url]) as Claim;
+  assert.equal(fresh.task!.status, 'running'); assert.notEqual(fresh.consumerId, 'old'); assert.notEqual(fresh.consumerId, 'new'); assert.equal(fresh.sessionId, session.id);
+});
+
+test('importing the CLI from another cli.js process leaves command execution to its caller', async () => {
+  const { stdout, stderr } = await promisify(execFile)(process.execPath, ['--input-type=module', '-e', `process.argv[1]='/tmp/another-tool/cli.js'; process.argv.push('--bad-option'); await import('./dist/src/cli.js'); console.log('imported');`]);
+  assert.equal(stdout.trim(), 'imported'); assert.equal(stderr, '');
+});
+
+test('Node 24 SQLite lifecycle survives repeated open/claim/complete/close and garbage collection', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'acanvas-native-lifecycle-')); t.after(() => rm(root, { recursive: true, force: true }));
+  const code = `import {CanvasService} from './dist/src/server/service.js'; for(let index=0;index<25;index++){let service=new CanvasService(${JSON.stringify(root)});const session=service.createSession('Run '+index);const draft=service.draft(session.id);const saved=service.saveDraft(session.id,{...draft,text:'Deliver text'});const {task}=service.sendDraft(session.id,saved.id,saved.revision);const claim=service.claim(session.id,'node24');service.complete(session.id,task.id,{runId:claim.run.id,consumerId:'node24',summary:'Delivered',assetIds:[],validation:[],operations:[]});service.close();service=null;global.gc();}console.log('25 lifecycle cycles passed');`;
+  const { stdout, stderr } = await promisify(execFile)(process.execPath, ['--expose-gc', '--input-type=module', '-e', code]);
+  assert.match(stdout, /25 lifecycle cycles passed/); assert.equal(stderr, '');
+});
+
+test('service shutdown ends active SSE and incomplete uploads before closing SQLite', async (t) => {
+  const f = await fixture(t);
+  const stream = await fetch(`${f.running.url}/api/events`, { headers: { Authorization: `Bearer ${f.token}` } });
+  const reader = stream.body!.getReader(); assert.match(new TextDecoder().decode((await reader.read()).value), /event: ready/);
+  const uploadStopped = new Promise<void>((resolvePromise) => {
+    const request = rawRequest(`${f.running.url}/api/assets?name=pending.mp4&mime=video/mp4`, { method: 'POST', headers: { Authorization: `Bearer ${f.token}`, 'Content-Length': 1000000 } });
+    request.on('error', () => resolvePromise()); request.on('close', () => resolvePromise()); request.write('partial upload');
+  });
+  await new Promise((resolvePromise) => setTimeout(resolvePromise, 30));
+  const started = Date.now(); await f.restart(); assert.ok(Date.now() - started < 2000, 'HTTP shutdown must drain promptly');
+  await uploadStopped; assert.equal((await reader.read()).done, true);
+  assert.deepEqual(await readdir(join(f.root, '.acanvas', 'tmp')), []); assert.equal(f.running.service.assets().length, 0);
+  const session = await f.session('Restarted'); assert.equal((await f.state(session.id)).tasks.length, 0);
+});
+
+test('production Node 24 process recovers after a crash and exits normally with active SSE', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'acanvas-production-lifecycle-'));
+  let child: ChildProcess | undefined, token = '', url = '';
+  t.after(async () => { if (child && child.exitCode === null && child.signalCode === null) { child.kill('SIGKILL'); await new Promise<void>((resolvePromise) => child!.once('exit', () => resolvePromise())); } await rm(root, { recursive: true, force: true }); });
+  const start = async () => {
+    child = spawn(process.execPath, ['dist/src/server/main.js', '--project', root, '--port', '0'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let output = '', errors = '';
+    child.stderr!.on('data', (chunk) => { errors += chunk.toString(); });
+    url = await new Promise<string>((resolvePromise, reject) => {
+      const timeout = setTimeout(() => reject(new Error(`Production service startup timed out: ${errors}`)), 5000);
+      child!.once('error', (error) => { clearTimeout(timeout); reject(error); });
+      child!.once('exit', () => { clearTimeout(timeout); reject(new Error(`Production service ended during startup: ${errors}`)); });
+      child!.stdout!.on('data', (chunk) => { output += chunk.toString(); const match = output.match(/acanvas: (http:\/\/127\.0\.0\.1:\d+)/); if (match) { clearTimeout(timeout); resolvePromise(match[1]); } });
+    });
+    token = (await (await fetch(`${url}/api/bootstrap`)).json()).token;
+  };
+  const call = async (path: string, method = 'GET', body?: unknown, expected = 200) => {
+    const response = await fetch(`${url}${path}`, { method, headers: { Authorization: `Bearer ${token}`, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+    const value = await response.json(); assert.equal(response.status, expected, JSON.stringify(value)); return value;
+  };
+  const stop = async (signal: 'SIGTERM' | 'SIGKILL') => {
+    const ended = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolvePromise) => child!.once('exit', (code, signalCode) => resolvePromise({ code, signal: signalCode })));
+    const started = Date.now(); child!.kill(signal); const result = await ended;
+    assert.ok(Date.now() - started < 2000, 'The production process must close promptly');
+    if (signal === 'SIGTERM') { assert.equal(result.code, 0); assert.equal(result.signal, null); } else assert.equal(result.signal, 'SIGKILL');
+  };
+  await start();
+  const session = await call('/api/sessions', 'POST', { name: 'Production recovery' }, 201), draft = (await call(`/api/state?sessionId=${session.id}`)).draft;
+  const saved = await call(`/api/sessions/${session.id}/draft`, 'PUT', { ...draft, text: 'Save a text delivery receipt' });
+  const sent = await call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision });
+  const claimed = await call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'before-crash' });
+  await call(`/api/sessions/${session.id}/tasks/${sent.task.id}/progress`, 'POST', { consumerId: 'before-crash', runId: claimed.run.id, message: 'Read the request; no external job started.' });
+  await stop('SIGKILL');
+  await start();
+  const interrupted = await call(`/api/state?sessionId=${session.id}`); assert.equal(interrupted.tasks[0].status, 'interrupted'); assert.equal(interrupted.tasks[0].runs[0].progress.length, 1);
+  await call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'before-crash' }, 409);
+  const resumed = await call(`/api/sessions/${session.id}/tasks/${sent.task.id}/resume`, 'POST', { consumerId: 'after-crash', expectedRunId: claimed.run.id, resolution: 'Saved progress confirms that no external operation started; continue with a text receipt.' });
+  await call(`/api/sessions/${session.id}/tasks/${sent.task.id}/complete`, 'POST', { consumerId: 'after-crash', runId: resumed.run.id, summary: 'Text delivery recorded', assetIds: [], validation: ['Saved request reviewed'], operations: [] });
+  const stream = await fetch(`${url}/api/events`, { headers: { Authorization: `Bearer ${token}` } }); const reader = stream.body!.getReader(); await reader.read();
+  await stop('SIGTERM'); assert.equal((await reader.read()).done, true);
+  await start(); const completed = await call(`/api/state?sessionId=${session.id}`); assert.equal(completed.tasks[0].status, 'completed'); assert.equal(completed.tasks[0].receipt.summary, 'Text delivery recorded');
+  const empty = await call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'new-activation' }); assert.equal(empty.task, null);
+  await stop('SIGTERM');
+});

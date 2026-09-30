@@ -3,6 +3,8 @@
 
 # Dependencies and build output
 node_modules/
+.runtime/
+.npm-cache/
 dist/
 coverage/
 

@@ -1,0 +1,36 @@
+{
+  "name": "acanvas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build": "node scripts/runtime.mjs build",
+    "build:server": "node scripts/runtime.mjs build-server",
+    "test": "node scripts/runtime.mjs test",
+    "start": "node scripts/runtime.mjs start",
+    "cli": "node scripts/runtime.mjs cli",
+    "dev": "node scripts/runtime.mjs dev",
+    "typecheck": "node scripts/runtime.mjs typecheck",
+    "demo": "node scripts/runtime.mjs demo",
+    "test:browser": "node scripts/runtime.mjs test-browser"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.1",
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "24.6.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "5.0.4",
+    "typescript": "5.9.3",
+    "vite": "7.3.6"
+  },
+  "dependencies": {
+    "better-sqlite3": "12.4.1",
+    "lucide-react": "0.468.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
+  }
+}
