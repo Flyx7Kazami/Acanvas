@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Project-local whiteboard data
+.acanvas/
+
+# Local credentials and developer environment files
+.env
+.env.*
+!.env.example
+
+# Temporary editor files
+*.swp
+*.swo
