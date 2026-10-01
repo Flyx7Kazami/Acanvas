@@ -96,7 +96,7 @@ h1,h2,h3,p { margin: 0; }
 .drop-indicator,.canvas-busy { position: absolute; inset: 0; background: color-mix(in srgb,var(--surface) 85%,transparent); z-index: 12; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; font-size: 13px; }
 .drop-indicator { border: 2px dashed var(--ink); border-radius: 14px; inset: 10px; pointer-events: none; }
 .creation-dock { --dock-width: min(720px,calc(100vw - 48px)); --tool-clearance: max(0px,calc(var(--canvas-tool-left) + var(--canvas-tool-width) + 8px - (100vw - var(--dock-width)) / 2)); position: absolute; z-index: 20; bottom: 18px; left: 50%; transform: translateX(-50%); width: var(--dock-width); }
-.queue-stack { position: absolute; bottom: calc(100% - 20px); left: max(16px,var(--tool-clearance)); right: 16px; padding-top: 18px; }
+.queue-stack { position: absolute; bottom: calc(100% - 20px); left: max(16px,var(--tool-clearance)); right: max(16px,var(--tool-clearance)); padding-top: 18px; }
 .queue-peeks { position: absolute; inset: 18px 0 0; pointer-events: none; }
 .queue-peeks>span { position: absolute; inset: calc(var(--peek) * -6px) calc(var(--peek) * 8px) 0; background: var(--surface); border: 1px solid var(--edge); border-radius: 20px 20px 0 0; }
 .queue-list { position: relative; border: 1px solid var(--edge); border-radius: 20px 20px 0 0; background: var(--surface); padding: 0 10px 20px; box-shadow: var(--shadow); max-height: min(208px,var(--queue-available-height,208px),var(--queue-context-limit,360px)); overflow: auto; scrollbar-width: thin; }
@@ -178,7 +178,7 @@ details[open] summary svg { rotate: 180deg; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes context-reveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 760px) { .canvas-empty h1 { font-size: 25px; } .canvas-empty p { font-size: 11px; } .creation-dock { bottom: 14px; } }
-@media (max-width: 540px) { .project-identity { top: 14px; left: 14px; gap: 8px; padding-inline: 9px; max-width: calc(100% - 122px); } .project-name { padding-left: 8px; } .canvas-actions { top: 14px; right: 14px; } .canvas-empty { padding: 40px 64px 210px; } .canvas-empty h1 { font-size: 23px; } .creation-dock { --dock-width: min(720px,calc(100vw - 32px)); bottom: 12px; } .composer { padding-left: 16px; } .composer-input-row>textarea,.comment-control textarea,.inline-resume textarea { font-size: 16px; } .queue-stack { right: 12px; } .queue-list { padding-inline: 5px; } .queue-item { gap: 3px; } .queue-task { gap: 7px; padding-inline: 6px; } .queue-title { font-size: 11px; } .queue-item .status-badge { font-size: 8px; padding-inline: 4px; } .selection-actions { padding-inline: 4px; gap: 1px; max-width: calc(100% - 24px); } .selection-actions>button:not(.icon-button) { padding-inline: 4px; gap: 4px; font-size: 9px; } }
+@media (max-width: 540px) { .project-identity { top: 14px; left: 14px; gap: 8px; padding-inline: 9px; max-width: calc(100% - 122px); } .project-name { padding-left: 8px; } .canvas-actions { top: 14px; right: 14px; } .canvas-empty { padding: 40px 64px 210px; } .canvas-empty h1 { font-size: 23px; } .creation-dock { --dock-width: min(720px,calc(100vw - 32px)); bottom: 12px; } .composer { padding-left: 16px; } .composer-input-row>textarea,.comment-control textarea,.inline-resume textarea { font-size: 16px; } .queue-list { padding-inline: 5px; } .queue-item { gap: 3px; } .queue-task { gap: 7px; padding-inline: 6px; } .queue-title { font-size: 11px; } .queue-item .status-badge { font-size: 8px; padding-inline: 4px; } .selection-actions { padding-inline: 4px; gap: 1px; max-width: calc(100% - 24px); } .selection-actions>button:not(.icon-button) { padding-inline: 4px; gap: 4px; font-size: 9px; } }
 @media (pointer: coarse) { .icon-button { min-width: 40px; min-height: 40px; } .canvas-toolbar .icon-button { min-width: 32px; min-height: 32px; } .resize-handle { width: 16px; height: 16px; right: -8px; bottom: -8px; } .draft-asset,.draft-annotation { height: 36px; } .draft-asset .icon-button,.draft-annotation .icon-button { min-width: 28px; min-height: 28px; width: 28px; height: 28px; flex-basis: 28px; } }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none!important; transition: none!important; scroll-behavior: auto!important; } button:active:not(:disabled) { scale: 1; } }
 
@@ -200,7 +200,6 @@ details[open] summary svg { rotate: 180deg; }
 .comment-video-meta input { width: 62px; padding: 3px; border: 0; border-radius: 4px; background: var(--soft); font-size: 10px; }
 .queue-row { display: flex; align-items: center; gap: 6px; min-height: 36px; }
 .queue-previews { display: flex; align-items: center; gap: 3px; flex: 0 0 auto; }
-.queue-task:has(.queue-previews) .queue-task-mark { display: none; }
 .queue-preview { position: relative; display: block; width: 24px; height: 24px; flex: 0 0 24px; }
 .queue-preview .asset-thumb { width: 24px; height: 24px; flex-basis: 24px; border-radius: 6px; }
 .queue-preview.annotation-preview>.annotation-bubble:last-child:not(:first-child) { position: absolute; bottom: -1px; right: -2px; }
