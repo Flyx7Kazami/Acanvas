@@ -71,6 +71,60 @@ async function png(page: Page) {
   return { name: 'reference.png', mimeType: 'image/png', buffer: Buffer.from(encoded, 'base64') };
 }
 
+test('drag snapping preserves its preview at release, group offsets and bypass controls', async ({ page, app }, info) => {
+  await open(page, app); const image = await png(page);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(['Cover study.png', 'Color study.png', 'Type study.png'].map(name => ({ ...image, name })));
+  await expect(page.locator('.board-object')).toHaveCount(3);
+  const initial = await app.state(), ids = initial.objects.map(object => object.id);
+  const place = async (zoom = 1, group = false) => {
+    const state = await app.state();
+    const positions = group ? [{ x: 200, y: 200, width: 80, height: 80 }, { x: 350, y: 250, width: 100, height: 60 }, { x: 600, y: 420, width: 120, height: 80 }] : [{ x: 250, y: 250, width: 100, height: 80 }, { x: 450, y: 450, width: 80, height: 60 }, { x: 900, y: 700, width: 60, height: 60 }];
+    await app.call('/api/board/operations', 'POST', { sessionId: state.session.id, operations: state.objects.map((object, index) => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: positions[index] })) });
+    await app.call(`/api/sessions/${state.session.id}/view`, 'PUT', { x: zoom === 2 ? -200 : 0, y: zoom === 2 ? -250 : 0, zoom, selectedObjectIds: group ? ids.slice(0, 2) : [ids[0]] });
+    await page.reload(); await expect(page.locator('.board-object')).toHaveCount(3); await expect(page.getByRole('button', { name: 'Select files', exact: true })).toBeEnabled();
+  };
+  const object = () => page.locator(`[data-object-id="${ids[0]}"]`);
+  const begin = async () => { const rect = (await object().boundingBox())!; await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2); await page.mouse.down(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }; };
+  for (const zoom of [1, 2]) {
+    await place(zoom); const before = (await app.state()).objects[0];
+    const start = await begin(); await page.mouse.move(start.x + 97 * zoom, start.y + 120 * zoom, { steps: 4 });
+    await expect(page.locator('[data-snap-axis=x]')).toHaveAttribute('x1', '450');
+    expect(await page.locator('.alignment-guides').evaluate(element => getComputedStyle(element).pointerEvents)).toBe('none');
+    await expect.poll(async () => object().evaluate(element => Number.parseFloat((element as HTMLElement).style.left))).toBe(350);
+    const preview = (await object().boundingBox())!; await page.mouse.up();
+    await expect(object()).toHaveAttribute('data-object-version', String(before.version + 1));
+    const saved = (await app.state()).objects[0]; expect(saved.x).toBe(350); expect(saved.y).toBe(370);
+    expect((await object().boundingBox())!).toEqual(preview); await expect(page.locator('.alignment-guides')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Select files', exact: true })).toBeEnabled();
+  }
+  await place();
+  let start = await begin(); await page.mouse.move(start.x + 97, start.y + 120); await expect(page.locator('.alignment-guides')).toBeVisible();
+  await page.keyboard.down('Alt'); await expect(page.locator('.alignment-guides')).toHaveCount(0); expect(await object().evaluate(element => Number.parseFloat((element as HTMLElement).style.left))).toBe(347);
+  await page.mouse.up(); await page.keyboard.up('Alt'); await expect.poll(async () => (await app.state()).objects[0].x).toBe(347);
+  await place(); await page.getByRole('button', { name: 'Snap to objects', exact: true }).click(); await expect(page.getByRole('button', { name: 'Snap to objects', exact: true })).toHaveAttribute('aria-pressed', 'false');
+  start = await begin(); await page.mouse.move(start.x + 97, start.y + 120); await expect(page.locator('.alignment-guides')).toHaveCount(0); await page.mouse.up(); await expect.poll(async () => (await app.state()).objects[0].x).toBe(347);
+  await page.reload(); await expect(page.getByRole('button', { name: 'Snap to objects', exact: true })).toHaveAttribute('aria-pressed', 'false'); await page.getByRole('button', { name: 'Snap to objects', exact: true }).click();
+  await place(1, true); const groupBefore = await app.state(); start = await begin(); await page.mouse.move(start.x + 147, start.y + 40, { steps: 4 }); await expect(page.locator('[data-snap-axis=x]')).toHaveAttribute('x1', '600');
+  await page.screenshot({ path: info.outputPath('snap-group-guides.png') }); await page.mouse.up();
+  await expect.poll(async () => (await app.state()).objects[0].x).toBe(350); const groupAfter = await app.state();
+  expect(groupAfter.objects[1].x).toBe(500); expect(groupAfter.objects[1].x - groupAfter.objects[0].x).toBe(groupBefore.objects[1].x - groupBefore.objects[0].x); expect(groupAfter.objects[2]).toEqual(groupBefore.objects[2]);
+  await expect(page.getByRole('button', { name: 'Select files', exact: true })).toBeEnabled();
+  const version = groupAfter.objects[0].version; await object().click(); expect((await app.state()).objects[0].version).toBe(version); await expect(page.locator('.alignment-guides')).toHaveCount(0);
+});
+
+test('six inline alignment commands batch positions without changing sizes or unselected files', async ({ page, app }, info) => {
+  await open(page, app); const image = await png(page);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(['Cover.png', 'Palette.png', 'Type.png'].map(name => ({ ...image, name }))); await expect(page.locator('.board-object')).toHaveCount(3);
+  const requests: { operations: { objectId: string; expectedVersion: number; changes: { x: number; y: number } }[] }[] = [];
+  page.on('request', request => { if (request.method() === 'POST' && request.url().endsWith('/api/board/operations')) requests.push(request.postDataJSON()); });
+  const reset = async () => { const state = await app.state(); await app.call('/api/board/operations', 'POST', { sessionId: state.session.id, operations: state.objects.map((object, index) => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: [{ x: 220, y: 200, width: 120, height: 80 }, { x: 410, y: 310, width: 80, height: 120 }, { x: 900, y: 200, width: 60, height: 60 }][index] })) }); await app.call(`/api/sessions/${state.session.id}/view`, 'PUT', { x: 0, y: 0, zoom: 1, selectedObjectIds: state.objects.slice(0, 2).map(object => object.id) }); await page.reload(); await expect(page.getByRole('button', { name: 'Align left', exact: true })).toBeVisible(); return app.state(); };
+  const commands = [{ name: 'Align left', expected: [[220, 200], [220, 310]] }, { name: 'Align horizontal centers', expected: [[295, 200], [315, 310]] }, { name: 'Align right', expected: [[370, 200], [410, 310]] }, { name: 'Align top', expected: [[220, 200], [410, 200]] }, { name: 'Align vertical centers', expected: [[220, 275], [410, 255]] }, { name: 'Align bottom', expected: [[220, 350], [410, 310]] }];
+  for (const command of commands) { const before = await reset(), count = requests.length; const button = page.getByRole('button', { name: command.name, exact: true }); await button.focus(); await button.press('Enter'); await expect(button).toBeEnabled(); await expect.poll(async () => (await app.state()).objects.slice(0, 2).map(object => [object.x, object.y])).toEqual(command.expected); const after = await app.state(); expect(requests.length).toBe(count + 1); for (let index = 0; index < 2; index++) { expect(after.objects[index].width).toBe(before.objects[index].width); expect(after.objects[index].height).toBe(before.objects[index].height); } expect(after.objects[2]).toEqual(before.objects[2]); const versions = after.objects.map(object => object.version); await button.press('Enter'); await page.evaluate(() => new Promise(requestAnimationFrame)); expect((await app.state()).objects.map(object => object.version)).toEqual(versions); expect(requests.length).toBe(count + 1); }
+  await reset();
+  for (const width of [390, 320]) { await page.setViewportSize({ width, height: 480 }); await page.getByRole('button', { name: 'Fit all files', exact: true }).click(); await expect.poll(async () => page.locator('.alignment-actions button,.canvas-toolbar button').evaluateAll(elements => elements.every(element => { const bounds = element.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === element; }))).toBeTruthy(); await expect(page.getByRole('textbox', { name: 'Add a comment', exact: true })).toBeVisible(); if (width === 390) await page.screenshot({ path: info.outputPath('alignment-controls-390.png') }); }
+  const before = await app.state(); await page.route('**/api/board/operations', route => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'object_conflict', message: 'Updated layout' } }) })); await page.getByRole('button', { name: 'Align right', exact: true }).click(); await expect(page.getByRole('alert')).toBeVisible(); expect((await app.state()).objects).toEqual(before.objects); await expect(page.getByRole('button', { name: 'Align right', exact: true })).toBeEnabled();
+});
+
 test('each confirmed local send animates once including SSE-first and recovered responses', async ({ page, app }, info) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.addInitScript(() => {
@@ -773,7 +827,7 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
     expect(await floating.evaluateAll(buttons => buttons.every(button => { const bounds = button.getBoundingClientRect(); return bounds.top >= 14 && bounds.right <= innerWidth - 14 && document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === button; }))).toBeTruthy();
     const actions = (await page.locator('.selection-actions').boundingBox())!, imports = (await page.locator('.canvas-actions').boundingBox())!;
     expect(actions.x + actions.width <= imports.x || actions.y >= imports.y + imports.height).toBeTruthy();
-    await expect(page.locator('.canvas-toolbar button')).toHaveCount(6);
+    await expect(page.locator('.canvas-toolbar button')).toHaveCount(7);
     await expect(page.locator('.canvas-zoom')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Draw region annotation', exact: true })).toHaveCount(0);
     await expect(page.locator('header,.canvas-heading,.draft-save,.send-hint')).toHaveCount(0);

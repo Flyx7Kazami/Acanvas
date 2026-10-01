@@ -27,6 +27,54 @@ export function screenBounds(rect: Rect, view: View): Rect {
   return { ...worldToScreen(rect, view), width: rect.width * view.zoom, height: rect.height * view.zoom };
 }
 
+export type IdentifiedRect = Rect & { id: string };
+export type SnapGuide = { axis: 'x' | 'y'; position: number; start: number; end: number };
+export type Alignment = 'left' | 'horizontal-center' | 'right' | 'top' | 'vertical-center' | 'bottom';
+
+export function snapTranslation(moving: IdentifiedRect[], objects: IdentifiedRect[], delta: Point, view: View, viewport: { width: number; height: number }, thresholdPixels = 6): { delta: Point; guides: SnapGuide[] } {
+  if (!moving.length) return { delta, guides: [] };
+  const ids = new Set(moving.map(object => object.id));
+  const targets = objects.filter(object => {
+    if (ids.has(object.id)) return false;
+    const screen = screenBounds(object, view);
+    return screen.x < viewport.width && screen.x + screen.width > 0 && screen.y < viewport.height && screen.y + screen.height > 0;
+  });
+  const original = unionBounds(moving), bounds = { ...original, x: original.x + delta.x, y: original.y + delta.y };
+  const result = { ...delta }, matches: { axis: 'x' | 'y'; position: number; target: Rect }[] = [];
+  for (const axis of ['x', 'y'] as const) {
+    const size = axis === 'x' ? 'width' : 'height';
+    const anchors = [bounds[axis], bounds[axis] + bounds[size] / 2, bounds[axis] + bounds[size]];
+    let nearest: { adjustment: number; position: number; target: Rect } | undefined;
+    for (const target of targets) for (const position of [target[axis], target[axis] + target[size] / 2, target[axis] + target[size]]) for (const anchor of anchors) {
+      const adjustment = position - anchor;
+      if (Math.abs(adjustment) * view.zoom <= thresholdPixels && (!nearest || Math.abs(adjustment) < Math.abs(nearest.adjustment))) nearest = { adjustment, position, target };
+    }
+    if (nearest) { result[axis] += nearest.adjustment; matches.push({ axis, position: nearest.position, target: nearest.target }); }
+  }
+  const final = { ...original, x: original.x + result.x, y: original.y + result.y };
+  const guides = matches.map(({ axis, position, target }) => {
+    const across = axis === 'x' ? 'y' : 'x', size = axis === 'x' ? 'height' : 'width';
+    return { axis, position, start: Math.min(final[across], target[across]), end: Math.max(final[across] + final[size], target[across] + target[size]) };
+  });
+  return { delta: result, guides };
+}
+
+export function alignedPositions(objects: IdentifiedRect[], alignment: Alignment): { id: string; x: number; y: number }[] {
+  if (objects.length < 2) return [];
+  const bounds = unionBounds(objects);
+  const precision = Number.EPSILON * Math.max(1, Math.abs(bounds.x), Math.abs(bounds.y), bounds.width, bounds.height) * 8;
+  return objects.map(object => {
+    let { x, y } = object;
+    if (alignment === 'left') x = bounds.x;
+    if (alignment === 'horizontal-center') x = bounds.x + (bounds.width - object.width) / 2;
+    if (alignment === 'right') x = bounds.x + bounds.width - object.width;
+    if (alignment === 'top') y = bounds.y;
+    if (alignment === 'vertical-center') y = bounds.y + (bounds.height - object.height) / 2;
+    if (alignment === 'bottom') y = bounds.y + bounds.height - object.height;
+    return { id: object.id, x, y };
+  }).filter((position, index) => Math.abs(position.x - objects[index].x) > precision || Math.abs(position.y - objects[index].y) > precision);
+}
+
 export function placeFloatingControl(anchor: Rect, size: { width: number; height: number }, viewport: Rect, side: 'above' | 'below', obstacles: Rect[], gap = 8): Rect | null {
   const margin = 12;
   const minX = viewport.x + margin, maxX = viewport.x + viewport.width - size.width - margin;

@@ -58,6 +58,8 @@ h1,h2,h3,p { margin: 0; }
 .file-card a { font-size: 10px; text-decoration: none; display: flex; align-items: center; gap: 5px; padding-top: 6px; }
 .resize-handle { position: absolute; right: -5px; bottom: -5px; width: 11px; height: 11px; background: var(--surface); border: 2px solid var(--ink); border-radius: 3px; cursor: nwse-resize; padding: 0; }
 .selection-rect { position: absolute; border: 1px solid var(--ink); background: color-mix(in srgb,var(--ink) 7%,transparent); pointer-events: none; }
+.alignment-guides { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 5; }
+.alignment-guides line { stroke: var(--muted); stroke-width: 1; opacity: .65; }
 .annotation-outline { position: absolute; border: 1px solid var(--ink); pointer-events: none; z-index: 4; }
 .annotation-outline.draft-outline { border-style: dashed; }
 .annotation-pin { position: absolute; bottom: calc(100% + 4px); left: -1px; width: 23px; height: 23px; border-radius: 5px; background: var(--ink); color: var(--surface); font-size: 10px; pointer-events: auto; box-shadow: var(--shadow); }
@@ -180,6 +182,9 @@ details[open] summary svg { rotate: 180deg; }
 .comment-control textarea { min-width: 0; flex: 1; width: 100%; min-height: 20px; max-height: 80px; padding: 0 3px; resize: none; border: 0; background: transparent; font-size: 12px; line-height: 20px; scrollbar-width: thin; outline: 0; box-shadow: none; }
 .comment-control textarea::placeholder { color: var(--muted); }
 .comment-control .icon-button { flex-basis: 28px; width: 28px; height: 28px; padding: 6px; }
+.alignment-actions { display: flex; align-items: center; justify-content: center; gap: 2px; border-top: 1px solid var(--edge); margin-top: 4px; padding-top: 4px; }
+.alignment-divider { width: 1px; height: 16px; background: var(--edge); margin: 0 3px; }
+@media(pointer:coarse) { .alignment-actions .icon-button { min-width: 30px; min-height: 32px; } }
 .comment-video-meta { display: flex; align-items: center; gap: 8px; padding: 3px 9px 5px; color: var(--muted); font-size: 9px; }
 .comment-video-meta label { margin-left: auto; display: flex; align-items: center; gap: 5px; }
 .comment-video-meta input { width: 62px; padding: 3px; border: 0; border-radius: 4px; background: var(--soft); font-size: 10px; }
