@@ -14,14 +14,16 @@ export function useComposerLayout(input: ElementRef<HTMLTextAreaElement>, dock: 
     const layout = () => {
       const containerBounds = container.getBoundingClientRect();
       const otherHeight = container.offsetHeight - form.offsetHeight;
+      const references = form.querySelector<HTMLElement>('.draft-attachments');
+      const internalHeight = 28 + (references ? references.offsetHeight + 8 : 0);
       const bottom = innerHeight - containerBounds.bottom;
-      const available = innerHeight - 64 - (toolbar?.offsetHeight || 226) - 12 - bottom - otherHeight - 28;
+      const available = innerHeight - 64 - (toolbar?.offsetHeight || 226) - 12 - bottom - otherHeight - internalHeight;
       const maximum = Math.max(24, Math.min(144, Math.floor(available / 24) * 24));
       textarea.style.height = '24px';
       const height = textarea.value ? Math.min(maximum, Math.max(24, textarea.scrollHeight)) : 24;
       textarea.style.height = `${height}px`;
       textarea.style.overflowY = textarea.value && textarea.scrollHeight > height ? 'auto' : 'hidden';
-      form.style.height = `${Math.max(52, height + 28)}px`;
+      form.style.height = `${Math.max(52, height + internalHeight)}px`;
     };
     const positionDock = () => {
       const bounds = container.getBoundingClientRect();

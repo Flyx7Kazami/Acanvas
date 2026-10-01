@@ -71,6 +71,52 @@ async function png(page: Page) {
   return { name: 'reference.png', mimeType: 'image/png', buffer: Buffer.from(encoded, 'base64') };
 }
 
+test('composer contains asset and annotation chips with quiet success feedback across viewports', async ({ page, app }, info) => {
+  await open(page, app);
+  const input = page.locator('#instruction'), composer = page.locator('.composer');
+  expect((await composer.boundingBox())!.height).toBe(52);
+  await input.fill('Initial direction'); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1);
+  const image = await png(page);
+  const names = ['Product reference with a long descriptive file name one.png', 'Product reference with a long descriptive file name two.png', 'Product reference with a long descriptive file name three.png'];
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(names.map(name => ({ ...image, name })));
+  await expect(page.locator('.board-object')).toHaveCount(3);
+  for (let index = 0; index < 3; index++) { await page.locator('.board-object').nth(index).focus(); await page.keyboard.press(index ? 'Shift+Enter' : 'Enter'); }
+  await page.getByRole('button', { name: 'Attach to request', exact: true }).click();
+  await expect(page.locator('.composer .draft-asset')).toHaveCount(3); await expect(page.locator('.toast')).toHaveCount(0);
+  const comment = page.getByRole('textbox', { name: 'Add a comment', exact: true });
+  for (const text of ['Keep these proportions and the breathing room around the subject.', 'Use the reference colors across the composition.']) { await comment.fill(text); await comment.press('Enter'); await expect(comment).toBeEnabled(); await expect(page.locator('.toast')).toHaveCount(0); }
+  await expect(page.locator('.composer .draft-annotation')).toHaveCount(2);
+  await input.fill('Use these references.\nKeep the visual hierarchy.');
+  await expect(composer).toHaveAttribute('data-save-state', 'saved');
+  for (const { width, height } of [{ width: 1440, height: 1000 }, { width: 390, height: 480 }, { width: 320, height: 480 }]) {
+    await page.setViewportSize({ width, height });
+    await expect.poll(async () => composer.evaluate(element => {
+      const form = element.getBoundingClientRect(), refs = element.querySelector('.draft-attachments')!.getBoundingClientRect(), row = element.querySelector('.composer-input-row')!.getBoundingClientRect();
+      return refs.left > form.left && refs.right < form.right && refs.top > form.top && refs.bottom <= row.top && row.bottom < form.bottom && form.left >= 16 && form.right <= innerWidth - 16 && form.bottom <= innerHeight;
+    })).toBeTruthy();
+    expect(await page.locator('.composer button').evaluateAll(elements => elements.filter(element => element !== document.querySelector('.send-button')).every(element => (element as HTMLButtonElement).type === 'button'))).toBeTruthy();
+    expect(await page.locator('.draft-asset>span:nth-child(2)').first().evaluate(element => getComputedStyle(element).textOverflow)).toBe('ellipsis');
+    expect(await page.locator('.queue-item').last().evaluate(element => element.getBoundingClientRect().bottom <= document.querySelector('.composer')!.getBoundingClientRect().top)).toBeTruthy();
+    expect(await page.locator('.canvas-toolbar button,.send-button').evaluateAll(elements => elements.every(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; }))).toBeTruthy();
+    if (width < 500) expect(await page.locator('.draft-attachments').evaluate(element => element.scrollWidth > element.clientWidth)).toBeTruthy();
+    if (width === 390) await page.screenshot({ path: info.outputPath('composer-reference-chips-390.png') });
+  }
+  const refs = page.locator('.draft-attachments'); await refs.evaluate(element => { element.scrollLeft = 0; });
+  await page.getByRole('button', { name: `Remove attachment ${names[0]}`, exact: true }).click();
+  await expect(page.locator('.draft-asset')).toHaveCount(2); expect((await app.state()).tasks).toHaveLength(1);
+  await refs.evaluate(element => { element.scrollLeft = element.scrollWidth; });
+  await page.getByRole('button', { name: 'Remove annotation 2', exact: true }).click();
+  await expect(page.locator('.draft-annotation')).toHaveCount(1); expect((await app.state()).tasks).toHaveLength(1);
+  await page.locator('.annotation-content').click(); await expect(page.getByRole('region', { name: 'Annotation', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Close annotation', exact: true }).click(); expect((await app.state()).tasks).toHaveLength(1);
+  await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(2);
+  const sent = await app.state(); expect(sent.tasks[1].snapshot.userRequest.text).toBe('Use these references.\nKeep the visual hierarchy.'); expect(sent.tasks[1].snapshot.annotations).toHaveLength(1);
+  await expect(page.locator('.draft-attachments')).toHaveCount(0); await expect.poll(async () => (await composer.boundingBox())!.height).toBe(52);
+  await page.locator('.board-object').first().focus(); await page.keyboard.press('Enter');
+  await page.route('**/api/sessions/*/draft', route => route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: { code: 'test_save_failure', message: 'The reference could not be saved.' } }) }));
+  await page.getByRole('button', { name: 'Attach to request', exact: true }).click(); await expect(page.getByRole('alert')).toContainText('The action could not be completed (500).'); await expect(page.locator('.toast')).toHaveCount(0);
+});
+
 test('inline comments retain their targets through delayed snapshots and submit pending-only requests', async ({ page, app }, info) => {
   await open(page, app);
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
@@ -672,7 +718,7 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
     const composer = (await page.locator('.composer').boundingBox())!, box = (await input.boundingBox())!, send = (await page.getByRole('button', { name: 'Send request', exact: true }).boundingBox())!;
     const canvas = (await page.locator('#whiteboard').boundingBox())!, tools = (await page.getByRole('toolbar', { name: 'Board tools', exact: true }).boundingBox())!;
     expect(canvas).toEqual({ x: 0, y: 0, width, height });
-    await expect.poll(async () => (await page.locator('.composer').boundingBox())!.height).toBe(100);
+    await expect.poll(async () => (await page.locator('.composer').boundingBox())!.height).toBe(152);
     expect(composer.width).toBeLessThanOrEqual(720);
     expect(Math.abs(box.y + box.height - 12 - send.y - send.height / 2)).toBeLessThan(1);
     expect(tools.x - canvas.x).toBe(16); expect(tools.height).toBeGreaterThan(tools.width);
@@ -713,10 +759,10 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
     await page.setViewportSize({ width, height: 844 });
     const queue = (await page.locator('.queue-list').boundingBox())!, tools = (await page.locator('.canvas-toolbar').boundingBox())!, composer = (await page.locator('.composer').boundingBox())!, references = (await page.locator('.draft-attachments').boundingBox())!;
     expect(queue.x).toBeGreaterThanOrEqual(tools.x + tools.width + 4);
-    expect(references.x).toBeGreaterThanOrEqual(tools.x + tools.width + 4);
-    expect(references.height).toBeLessThanOrEqual(44); expect(references.y + references.height).toBeLessThan(composer.y);
+    expect(references.x).toBeGreaterThan(composer.x);
+    expect(references.height).toBeLessThanOrEqual(44); expect(references.y).toBeGreaterThan(composer.y); expect(references.y + references.height).toBeLessThan(composer.y + composer.height);
     expect((await page.locator('.queue-item').last().boundingBox())!.y + (await page.locator('.queue-item').last().boundingBox())!.height).toBeLessThanOrEqual(references.y);
-    expect(composer.height).toBe(100);
+    expect(composer.height).toBe(152);
     expect(await page.locator('.canvas-toolbar button').evaluateAll(buttons => buttons.every(button => { const bounds = button.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === button; }))).toBeTruthy();
     measurements.push({ name: `expanded-queue-${width}`, viewport: { width, height: 844 }, queue, tools, composer, references });
     await page.screenshot({ path: info.outputPath(`floating-queue-${width}.png`) });

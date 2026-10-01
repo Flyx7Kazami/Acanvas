@@ -161,3 +161,9 @@ CUA 浏览器键盘走虚拟剪贴板，未发出读取系统原生文件剪贴�
 - [视频批注与固定时点](evidence/inline-controls/video-comment-wide.png)
 - [草稿冲突原位比较](evidence/inline-controls/inline-draft-conflict.png)
 - [320×480 读取区滚动与持续可见的关闭入口](evidence/inline-controls/reader-scrolled-320.png)
+
+## 本轮输入框内置引用回归
+
+附件和批注标签位于输入框内部上方，添加成功直接以标签反馈；错误提示保持。构建通过；既有输入/草稿相关 2 项通过，新标签专项在修正 500 通用错误提示的 fixture 断言后通过（10.3 秒，exit 0）。独立隔离验收 6/6、exit 0，覆盖 1440/390/320 内含边界、横向滚动、移除不发送、批注就地读取、成功静默及 Enter 单次发送/清空高度。当前无未解决发现。
+
+[390×480 输入框内部引用标签](evidence/composer-references/refs-390.png)来自独立临时 fixture。
