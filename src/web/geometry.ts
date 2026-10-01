@@ -30,6 +30,68 @@ export function screenBounds(rect: Rect, view: View): Rect {
 export type IdentifiedRect = Rect & { id: string };
 export type SnapGuide = { axis: 'x' | 'y'; position: number; start: number; end: number };
 export type Alignment = 'left' | 'horizontal-center' | 'right' | 'top' | 'vertical-center' | 'bottom';
+export type ResizeCorner = 'nw' | 'ne' | 'sw' | 'se';
+
+function resizeFrame(original: Rect, corner: ResizeCorner): { anchor: Point; direction: Point } {
+  const west = corner.endsWith('w'), north = corner.startsWith('n');
+  return {
+    anchor: { x: original.x + (west ? original.width : 0), y: original.y + (north ? original.height : 0) },
+    direction: { x: original.width * (west ? -1 : 1), y: original.height * (north ? -1 : 1) },
+  };
+}
+
+function boundsAtResizeScale(original: Rect, corner: ResizeCorner, scale: number): Rect {
+  const { anchor, direction } = resizeFrame(original, corner);
+  const width = original.width * scale, height = original.height * scale;
+  return { x: anchor.x - (direction.x < 0 ? width : 0), y: anchor.y - (direction.y < 0 ? height : 0), width, height };
+}
+
+export function resizeBounds(original: Rect, corner: ResizeCorner, delta: Point, minSize = 40): Rect {
+  const { direction } = resizeFrame(original, corner);
+  const projectedScale = 1 + (delta.x * direction.x + delta.y * direction.y) / (original.width ** 2 + original.height ** 2);
+  const scale = Math.max(minSize / original.width, minSize / original.height, projectedScale);
+  return boundsAtResizeScale(original, corner, scale);
+}
+
+export function snapResize(original: IdentifiedRect, corner: ResizeCorner, delta: Point, objects: IdentifiedRect[], view: View, viewport: { width: number; height: number }, bypass = false, thresholdPixels = 6): { bounds: Rect; guides: SnapGuide[] } {
+  const bounds = resizeBounds(original, corner, delta);
+  if (bypass) return { bounds, guides: [] };
+  const { anchor, direction } = resizeFrame(original, corner);
+  const moving = { x: bounds.x + (direction.x > 0 ? bounds.width : 0), y: bounds.y + (direction.y > 0 ? bounds.height : 0) };
+  const minScale = Math.max(40 / original.width, 40 / original.height), freeScale = bounds.width / original.width;
+  const candidates: { axis: 'x' | 'y'; position: number; target: Rect; scale: number; distance: number }[] = [];
+  for (const target of objects) {
+    if (target.id === original.id) continue;
+    const screen = screenBounds(target, view);
+    if (screen.x >= viewport.width || screen.x + screen.width <= 0 || screen.y >= viewport.height || screen.y + screen.height <= 0) continue;
+    for (const axis of ['x', 'y'] as const) {
+      const size = axis === 'x' ? 'width' : 'height';
+      for (const position of [target[axis], target[axis] + target[size] / 2, target[axis] + target[size]]) {
+        if (Math.abs(position - moving[axis]) * view.zoom > thresholdPixels) continue;
+        const scale = (position - anchor[axis]) / direction[axis];
+        if (scale < minScale) continue;
+        // Every candidate moves along the same diagonal; its scale change gives the full screen displacement.
+        const distance = Math.abs(scale - freeScale) * Math.hypot(original.width, original.height) * view.zoom;
+        candidates.push({ axis, position, target, scale, distance });
+      }
+    }
+  }
+  candidates.sort((a, b) => a.distance - b.distance);
+  const nearest = candidates[0];
+  if (!nearest) return { bounds, guides: [] };
+  const final = boundsAtResizeScale(original, corner, nearest.scale);
+  const finalMoving = { x: final.x + (direction.x > 0 ? final.width : 0), y: final.y + (direction.y > 0 ? final.height : 0) };
+  const guides = (['x', 'y'] as const).flatMap(axis => {
+    const match = candidates.find(candidate => {
+      const precision = Number.EPSILON * Math.max(1, Math.abs(candidate.position), Math.abs(anchor[axis]), final.width, final.height) * 8;
+      return candidate.axis === axis && Math.abs(candidate.position - finalMoving[axis]) <= precision;
+    });
+    if (!match) return [];
+    const across = axis === 'x' ? 'y' : 'x', size = axis === 'x' ? 'height' : 'width';
+    return [{ axis, position: match.position, start: Math.min(final[across], match.target[across]), end: Math.max(final[across] + final[size], match.target[across] + match.target[size]) }];
+  });
+  return { bounds: final, guides };
+}
 
 export function snapTranslation(moving: IdentifiedRect[], objects: IdentifiedRect[], delta: Point, view: View, viewport: { width: number; height: number }, thresholdPixels = 6): { delta: Point; guides: SnapGuide[] } {
   if (!moving.length) return { delta, guides: [] };

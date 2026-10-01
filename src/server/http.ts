@@ -158,13 +158,15 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
           if (action === 'claim' && method === 'POST') { send(response, 200, service.claim(sessionId, (await payload(request)).consumerId)); return; }
           if (action === 'resume' && method === 'POST') { send(response, 200, service.resumeSession(sessionId, await payload(request))); return; }
         }
-        const taskMatch = path.match(/^\/api\/sessions\/([^/]+)\/tasks\/([^/]+)(?:\/(context|progress|block|interrupt|resume|complete|reply|cancel))?$/);
+        const taskMatch = path.match(/^\/api\/sessions\/([^/]+)\/tasks\/([^/]+)(?:\/(context|progress|block|interrupt|resume|complete|reply|cancel|edit|cancel-edit))?$/);
         if (taskMatch) {
           const sessionId = decodeURIComponent(taskMatch[1]), taskId = decodeURIComponent(taskMatch[2]), action = taskMatch[3];
           if (!action && method === 'GET') { send(response, 200, service.task(sessionId, taskId)); return; }
           if (action === 'context' && method === 'GET') { send(response, 200, service.context(sessionId, taskId)); return; }
           if (method === 'POST') {
             const input = await payload(request);
+            if (action === 'edit') { send(response, 200, service.beginTaskEdit(sessionId, taskId, input)); return; }
+            if (action === 'cancel-edit') { send(response, 200, service.cancelTaskEdit(sessionId, taskId, input)); return; }
             if (action === 'progress') { send(response, 200, service.progress(sessionId, taskId, input)); return; }
             if (action === 'block' || action === 'interrupt') { send(response, 200, service.pause(sessionId, taskId, input, action === 'block' ? 'blocked' : 'interrupted')); return; }
             if (action === 'resume') { send(response, 200, service.resume(sessionId, taskId, input)); return; }

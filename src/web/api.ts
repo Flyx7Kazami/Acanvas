@@ -17,6 +17,7 @@ const errorMessages: Record<string, string> = {
   upload_incomplete: 'The upload was interrupted. Import the complete file again.',
   upload_too_large: 'The file exceeds the upload limit. Choose a smaller file.',
   request_too_large: 'This request is too large. Reduce the attachments or text and try again.',
+  task_edit_conflict: 'This request changed state. Save the current edit or select a waiting request.',
   invalid_annotation: 'Check the annotation area, timestamp and file references, then try again.',
   invalid_input: 'Check the entered content and try again.',
   invalid_view: 'Adjust the canvas view and try again.',
@@ -74,6 +75,7 @@ export class BoardApi {
   createSession(name: string) { return this.request<Session>('/api/sessions', { method: 'POST', body: JSON.stringify({ name }) }); }
   saveDraft(draft: Draft) { return this.request<Draft>(`/api/sessions/${encodeURIComponent(draft.sessionId)}/draft`, { method: 'PUT', body: JSON.stringify(draft) }); }
   send(sessionId: string, draftId: string, expectedRevision: number) { return this.request<{ task: Task; draft: Draft }>(`/api/sessions/${encodeURIComponent(sessionId)}/tasks`, { method: 'POST', body: JSON.stringify({ draftId, expectedRevision }) }); }
+  editTask(sessionId: string, taskId: string, draftId: string, expectedRevision: number, cancel = false) { return this.request<{ task: Task; draft: Draft }>(`/api/sessions/${encodeURIComponent(sessionId)}/tasks/${encodeURIComponent(taskId)}/${cancel ? 'cancel-edit' : 'edit'}`, { method: 'POST', body: JSON.stringify({ draftId, expectedRevision }) }); }
   view(sessionId: string, view: SessionView) { return this.request<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/view`, { method: 'PUT', body: JSON.stringify(view) }); }
   operations(sessionId: string, operations: BoardOperation[]) { return this.request<{ objects: BoardState['objects'] }>('/api/board/operations', { method: 'POST', body: JSON.stringify({ sessionId, operations }) }); }
   upload(file: Blob, name: string, signal?: AbortSignal) { return this.request<Asset>(`/api/assets?name=${encodeURIComponent(name)}&mime=${encodeURIComponent(file.type || 'application/octet-stream')}`, { method: 'POST', body: file, signal }); }

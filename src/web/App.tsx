@@ -1,14 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react';
-import { AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignStartHorizontal, AlignStartVertical, ArrowDownToLine, ArrowLeft, ArrowUp, Check, ChevronDown, Circle, Copy, File, Hand, History, ImagePlus, LoaderCircle, Maximize, Minus, Moon, MousePointer2, Pause, Play, Plus, Sun, Trash2, Upload, X } from 'lucide-react';
+import { AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignStartHorizontal, AlignStartVertical, ArrowDownToLine, ArrowLeft, ArrowUp, Check, ChevronDown, Copy, File, Hand, History, ImagePlus, LoaderCircle, Maximize, Minus, Moon, MousePointer2, Pause, Pencil, Play, Plus, Sun, Trash2, Upload, X } from 'lucide-react';
 import type { AnnotationInput, Asset, BoardObject, BoardOperation, Draft, SessionView, Task, TaskStatus } from '../shared/types';
-import { alignedPositions, fitView, intersects, mediaContentRect, normalizedRegion, objectRegion, rectangle, screenToWorld, snapTranslation, unionBounds, zoomAt, type Alignment, type Point, type Rect, type SnapGuide } from './geometry';
+import { alignedPositions, fitView, intersects, mediaContentRect, normalizedRegion, objectRegion, rectangle, screenToWorld, resizeBounds, snapResize, snapTranslation, unionBounds, zoomAt, type Alignment, type Point, type Rect, type SnapGuide, type ResizeCorner } from './geometry';
 import { useBoard } from './useBoard';
 import { filesFromTransfer } from './import';
 import { useComposerLayout, useContextualControls } from './useCanvasLayout';
 import { AnnotationBubble } from './AnnotationBubble';
 import { getVideoThumbnail } from './videoThumbnail';
 
-const statusLabels: Record<TaskStatus, string> = { queued: 'Queued', running: 'Running', blocked: 'Needs input', interrupted: 'Interrupted', completed: 'Completed', cancelled: 'Cancelled' };
+const statusLabels: Record<TaskStatus, string> = { queued: 'Queued', editing: 'Editing', running: 'Running', blocked: 'Needs input', interrupted: 'Interrupted', completed: 'Completed', cancelled: 'Cancelled' };
 const timeLabel = (value: number) => `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}`;
 const bytes = (value: number) => value < 1024 * 1024 ? `${Math.max(1, Math.round(value / 1024))} KB` : `${(value / (1024 * 1024)).toFixed(1)} MB`;
 const unique = (values: string[]) => [...new Set(values)];
@@ -34,7 +34,7 @@ async function fileDimensions(file: File): Promise<{ width: number; height: numb
 
 type UploadEntry = { id: string; name: string; controller: AbortController };
 type CommentEdit = { value: AnnotationInput; sessionId: string; draftId: string; end: string; snapshot?: Promise<Blob | undefined>; frameNote?: string };
-type Gesture = { kind: 'move' | 'resize' | 'pan' | 'select' | 'mark'; start: Point; point: Point; moved: boolean; preview?: Record<string, Rect>; view: SessionView; objects: BoardObject[]; sessionId: string; commentKey?: string; markBounds?: Rect; region?: Rect };
+type Gesture = { kind: 'move' | 'resize' | 'pan' | 'select' | 'mark'; start: Point; point: Point; moved: boolean; preview?: Record<string, Rect>; view: SessionView; objects: BoardObject[]; sessionId: string; resizeCorner?: ResizeCorner; commentKey?: string; markBounds?: Rect; region?: Rect };
 
 function AssetThumb({ asset, src }: { asset?: Asset; src: string }) {
   const [frame, setFrame] = useState<{ src: string; image: string }>();
@@ -49,22 +49,25 @@ function AssetThumb({ asset, src }: { asset?: Asset; src: string }) {
 }
 
 function TaskPreviews({ task, content }: { task: Task; content: (id: string) => string }) {
+  const [previewLimit, setPreviewLimit] = useState(() => matchMedia('(max-width: 360px)').matches ? 1 : 3);
+  useEffect(() => { const compact = matchMedia('(max-width: 360px)'); const update = () => setPreviewLimit(compact.matches ? 1 : 3); update(); compact.addEventListener('change', update); return () => compact.removeEventListener('change', update); }, []);
   const sourceIds = (annotation: AnnotationInput) => task.snapshot.referenceContent.objects.filter(object => object.id === annotation.objectId || annotation.objectIds.includes(object.id)).map(object => object.assetId);
   const included = new Set(task.snapshot.annotations.flatMap(annotation => [annotation.snapshotAssetId, annotation.assetId, ...sourceIds(annotation)].filter((id): id is string => !!id)));
   const assets = task.snapshot.referenceContent.assets.filter((asset, index, values) => !included.has(asset.id) && values.findIndex(value => value.id === asset.id) === index);
   const references = [...assets.map(asset => ({ key: `asset-${asset.id}`, asset, annotation: undefined as AnnotationInput | undefined, number: undefined as number | undefined })), ...task.snapshot.annotations.map((annotation, index) => ({ key: `annotation-${annotation.id}`, asset: task.snapshot.referenceContent.assets.find(asset => asset.id === (annotation.snapshotAssetId || annotation.assetId || sourceIds(annotation)[0])), annotation, number: index + 1 }))];
   if (!references.length) return null;
   return <span className="queue-previews" aria-label={`${references.length} references`}>
-    {references.slice(0, 3).map(reference => <span className={`queue-preview${reference.annotation ? ' annotation-preview' : ''}`} key={reference.key} title={reference.annotation?.text || reference.asset?.name}>
+    {references.slice(0, previewLimit).map(reference => <span className={`queue-preview${reference.annotation ? ' annotation-preview' : ''}`} key={reference.key} title={reference.annotation?.text || reference.asset?.name}>
       {reference.asset ? <AssetThumb asset={reference.asset} src={content(reference.asset.id)}/> : <AnnotationBubble number={reference.number} size={24}/>}
       {reference.annotation && reference.asset && <AnnotationBubble number={reference.number} size={15}/>}
     </span>)}
-    {references.length > 3 && <span className="queue-preview-overflow" aria-label={`${references.length - 3} more references; ${references.length} references total`}>+{references.length - 3}</span>}
+    {references.length > previewLimit && <span className="queue-preview-overflow" aria-label={`${references.length - previewLimit} more references; ${references.length} references total`}>+{references.length - previewLimit}</span>}
   </span>;
 }
 
 function QueueItem({ task, animateSend, visible, played, children }: { task: Task; animateSend: boolean; visible: boolean; played: Set<string>; children: ReactNode }) {
   const [entering, setEntering] = useState(false);
+  const element = useRef<HTMLElement>(null);
   useLayoutEffect(() => {
     if (!visible) { setEntering(false); return; }
     if (!animateSend || played.has(task.id)) return;
@@ -76,12 +79,31 @@ function QueueItem({ task, animateSend, visible, played, children }: { task: Tas
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     const stop = () => setEntering(false);
     const motionChange = () => { if (reduced.matches) stop(); };
-    const timer = window.setTimeout(stop, 260);
+    const cancelled = (event: AnimationEvent) => { if (event.target === element.current) stop(); };
+    const node = element.current; node?.addEventListener('animationcancel', cancelled);
     reduced.addEventListener('change', motionChange);
     motionChange();
-    return () => { window.clearTimeout(timer); reduced.removeEventListener('change', motionChange); };
+    return () => { node?.removeEventListener('animationcancel', cancelled); reduced.removeEventListener('change', motionChange); };
   }, [entering]);
-  return <article className={`queue-item${entering ? ' queue-entering' : ''}`} role="listitem" data-task-id={task.id} data-status={task.status} onAnimationEnd={event => { if (event.target === event.currentTarget) setEntering(false); }}>{children}</article>;
+  return <article ref={element} className={`queue-item${entering ? ' queue-entering' : ''}`} role="listitem" data-task-id={task.id} data-status={task.status} onAnimationEnd={event => { if (event.target === event.currentTarget) setEntering(false); }}>{children}</article>;
+}
+
+function MotionDisclosure({ open, children, ...props }: { open: boolean; children: ReactNode } & React.HTMLAttributes<HTMLDivElement>) {
+  const [mounted, setMounted] = useState(open);
+  const [expanded, setExpanded] = useState(false);
+  useLayoutEffect(() => {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    let frame = 0, timer = 0;
+    const sync = () => {
+      cancelAnimationFrame(frame); window.clearTimeout(timer);
+      if (open) { setMounted(true); if (reduced.matches) setExpanded(true); else frame = requestAnimationFrame(() => { frame = requestAnimationFrame(() => setExpanded(true)); }); }
+      else { setExpanded(false); if (reduced.matches) setMounted(false); else timer = window.setTimeout(() => setMounted(false), 340); }
+    };
+    sync(); reduced.addEventListener('change', sync);
+    return () => { cancelAnimationFrame(frame); window.clearTimeout(timer); reduced.removeEventListener('change', sync); };
+  }, [open]);
+  if (!mounted) return null;
+  return <div {...props} className={`motion-disclosure ${props.className || ''}`} data-motion={expanded ? 'open' : 'closing'} inert={!open} aria-hidden={!open}><div className="motion-disclosure-content">{children}</div></div>;
 }
 
 function videoPlayback(video?: HTMLVideoElement) {
@@ -122,17 +144,26 @@ function VideoPlaybackControls({ objectId, videos, disabled, onError, controlRef
   </div>;
 }
 
-function TaskCard({ task, assets, objects, content, locateAsset, onAnnotationView }: { task: Task; assets: Asset[]; objects: BoardObject[]; content: (id: string) => string; locateAsset: (id: string) => void; onAnnotationView: (task: Task, open: boolean) => void }) {
+function TaskCard({ task, assets, objects, content, locateAsset, onAnnotationView, compact = false }: { task: Task; assets: Asset[]; objects: BoardObject[]; content: (id: string) => string; locateAsset: (id: string) => void; onAnnotationView: (task: Task, open: boolean) => void; compact?: boolean }) {
   const sourceAssets = task.snapshot.referenceContent.assets;
   const [previewId, setPreviewId] = useState('');
   const previewAsset = [...assets, ...sourceAssets].find(asset => asset.id === previewId);
   const assetAction = (asset: Asset, thumbnail: boolean) => asset.kind === 'file' ? <a href={content(asset.id)} download={asset.name} title={asset.name} key={asset.id}>{thumbnail ? <AssetThumb asset={asset} src={content(asset.id)}/> : <><ArrowDownToLine size={12}/>{asset.name}</>}</a> : <button type="button" title={asset.name} aria-label={`View ${asset.name}`} key={asset.id} onClick={() => { if (objects.some(object => object.assetId === asset.id)) locateAsset(asset.id); else setPreviewId(current => current === asset.id ? '' : asset.id); }}>{thumbnail ? <AssetThumb asset={asset} src={content(asset.id)}/> : asset.name}</button>;
   return <article className="task-card" data-task-id={task.id} data-status={task.status}>
-    <div className="task-heading"><span className="task-sequence">Request {String(task.sequence).padStart(2, '0')}</span><span className={`status-badge status-${task.status}`}>{task.status === 'running' && <LoaderCircle size={11} className="spin"/>}{task.status === 'completed' && <Check size={11}/>} {statusLabels[task.status]}</span></div>
-    <p className="task-instruction">{task.snapshot.userRequest.text || 'Create from the attachments and annotations.'}</p>
-    {!!sourceAssets.length && <div className="task-attachments">{sourceAssets.map(asset => assetAction(asset, true))}</div>}
-    {previewAsset && <div className="task-media-preview" role="region" aria-label={`Preview ${previewAsset.name}`}><IconButton label="Close media preview" onClick={() => setPreviewId('')}><X size={14}/></IconButton>{previewAsset.kind === 'image' ? <img src={content(previewAsset.id)} alt={previewAsset.name}/> : <video src={content(previewAsset.id)} controls playsInline preload="metadata"/>}</div>}
-    {!!task.snapshot.annotations.length && <details className="task-annotations" onToggle={event => onAnnotationView(task, event.currentTarget.open)}><summary>{task.snapshot.annotations.length} annotations<ChevronDown size={12}/></summary>{task.snapshot.annotations.map((annotation, index) => <div key={annotation.id}><p><AnnotationBubble number={index + 1} size={20}/>{annotation.text}{annotation.timeStart !== undefined && <small> · {timeLabel(annotation.timeStart)}</small>}</p>{annotation.snapshotAssetId && <img className="task-annotation-frame" src={content(annotation.snapshotAssetId)} alt="Annotated video frame"/>}</div>)}</details>}
+    {!compact && <div className="task-heading"><span className="task-sequence">Request {String(task.sequence).padStart(2, '0')}</span><span className={`status-badge status-${task.status}`}>{task.status === 'completed' && <Check size={11}/>} {statusLabels[task.status]}</span></div>}
+    {!compact && <p className="task-instruction">{task.snapshot.userRequest.text || 'Create from the attachments and annotations.'}</p>}
+    <div className="task-reference-groups">{(() => {
+      const sources = task.snapshot.referenceContent.objects;
+      const frameIds = new Set(task.snapshot.annotations.map(annotation => annotation.snapshotAssetId).filter(Boolean));
+      const groups = [...sources.map(object => ({ key: object.id, asset: sourceAssets.find(asset => asset.id === object.assetId), annotations: task.snapshot.annotations.filter(annotation => annotation.objectId === object.id || annotation.objectIds.includes(object.id)) })), ...sourceAssets.filter(asset => !sources.some(object => object.assetId === asset.id) && !frameIds.has(asset.id)).map(asset => ({ key: asset.id, asset, annotations: task.snapshot.annotations.filter(annotation => annotation.assetId === asset.id && !annotation.objectIds.length && !annotation.objectId) }))];
+      const unbound = task.snapshot.annotations.filter(annotation => !groups.some(group => group.annotations.includes(annotation)));
+      if (unbound.length) groups.push({ key: 'region', asset: undefined, annotations: unbound });
+      return groups.map(group => <div className="task-reference-group" key={group.key} data-reference-item={group.key}>
+        <div className="task-reference-source">{group.asset ? <>{assetAction(group.asset, true)}<span>{group.asset.name}</span></> : <span>Canvas region</span>}</div>
+        {group.annotations.map(annotation => <div className="task-item-annotation" data-annotation-id={annotation.id} key={annotation.id}><button type="button" className="task-annotation-text" onClick={() => onAnnotationView(task, true)}><AnnotationBubble number={task.snapshot.annotations.indexOf(annotation) + 1} size={18}/><span>{annotation.text}{annotation.timeStart !== undefined && <small> · {timeLabel(annotation.timeStart)}{annotation.timeEnd !== undefined && ` – ${timeLabel(annotation.timeEnd)}`}</small>}</span></button>{annotation.snapshotAssetId && <img className="task-annotation-frame" src={content(annotation.snapshotAssetId)} alt="Annotated video frame"/>}</div>)}
+      </div>);
+    })()}</div>
+    {previewAsset && <div className="task-media-preview" role="region" aria-label={`Preview ${previewAsset.name}`}><IconButton label="Close media preview" onClick={() => setPreviewId('')}><ChevronDown size={14}/></IconButton>{previewAsset.kind === 'image' ? <img src={content(previewAsset.id)} alt={previewAsset.name}/> : <video src={content(previewAsset.id)} controls playsInline preload="metadata"/>}</div>}
     {task.reason && <p className="task-reason">{task.reason}</p>}
     {task.runs.at(-1)?.progress.at(-1) && <p className="task-progress">{task.runs.at(-1)?.progress.at(-1)?.message}</p>}
     {task.receipt && <div className="task-receipt"><div className="receipt-label"><Check size={13}/>Receipt</div><p>{task.receipt.summary}</p>{!!task.receipt.assetIds.length && <div className="receipt-assets">{task.receipt.assetIds.map(id => { const asset = assets.find(asset => asset.id === id); return asset ? assetAction(asset, false) : <a key={id} href={content(id)} download>Download output</a>; })}</div>}{!!task.receipt.validation.length && <details><summary>Validation<ChevronDown size={12}/></summary><ul>{task.receipt.validation.map((line, index) => <li key={index}>{line}</li>)}</ul></details>}</div>}
@@ -149,10 +180,14 @@ export default function App() {
   const [layoutSaving, setLayoutSaving] = useState(false);
   const layoutBusy = useRef(false);
   const updateDrag = useRef<(active: Gesture, point: Point, bypass: boolean) => void>(() => {});
+  const [composerFocused, setComposerFocused] = useState(false);
+  const [editingTask, setEditingTask] = useState(false);
+  const queueCloseTimer = useRef(0);
+  const [queueHovered, setQueueHovered] = useState(false);
+  const [queueFocused, setQueueFocused] = useState(false);
   const [queueExpanded, setQueueExpanded] = useState(false);
   const [sentTaskId, setSentTaskId] = useState('');
   const playedSendIds = useRef(new Set<string>());
-  const revealedSendId = useRef('');
   const [taskDetailId, setTaskDetailId] = useState('');
   const [inspectedTaskId, setInspectedTaskId] = useState('');
   const [annotatingKey, setAnnotatingKey] = useState('');
@@ -198,9 +233,10 @@ export default function App() {
   const selectedVideo = selected.length === 1 && selected[0].type === 'video' && !mediaErrors[selected[0].id] ? selected[0] : undefined;
   const assets = state?.assets || [];
   const assetFor = (id: string) => assets.find(asset => asset.id === id);
-  const disabled = board.projectChanged || board.switching || board.sending || annotationSaving || removingObjects || layoutSaving;
-  const queuedTasks = state?.tasks.filter(task => ['queued', 'running', 'blocked', 'interrupted'].includes(task.status)) || [];
+  const disabled = board.projectChanged || board.switching || board.sending || editingTask || annotationSaving || removingObjects || layoutSaving;
+  const queuedTasks = state?.tasks.filter(task => ['queued', 'editing', 'running', 'blocked', 'interrupted'].includes(task.status)) || [];
   const pending = queuedTasks.length;
+  const queueOpen = queueExpanded || queueHovered || queueFocused || !!taskDetailId || historyOpen;
   const commentKey = `${state?.session.id}:${draft?.id}:${[...selectedIds].sort().join(',')}`;
   const comment = comments.current.get(commentKey);
   const annotating = annotatingKey === commentKey && selected.length > 0;
@@ -229,16 +265,14 @@ export default function App() {
   useLayoutEffect(() => { if (aligning) selectionActions.current?.querySelector<HTMLButtonElement>('.alignment-actions button')?.focus({ preventScroll: true }); }, [aligning]);
   useEffect(() => { setInspectedTaskId(''); setAnnotationRead(null); }, [state?.session.id]);
   useEffect(() => { if (inspectedTaskId && !inspectableTask) { setInspectedTaskId(''); setAnnotationRead(null); } }, [inspectedTaskId, !!inspectableTask]);
-  useEffect(() => { const modifier = (event: KeyboardEvent) => { if (event.key !== 'Alt') return; const active = gesture.current; if (active?.kind === 'move' && active.moved) updateDrag.current(active, active.point, event.type === 'keydown'); }; window.addEventListener('keydown', modifier); window.addEventListener('keyup', modifier); return () => { window.removeEventListener('keydown', modifier); window.removeEventListener('keyup', modifier); }; }, []);
+  useEffect(() => { const modifier = (event: KeyboardEvent) => { if (event.key !== 'Alt') return; const active = gesture.current; if ((active?.kind === 'move' || active?.kind === 'resize') && active.moved) updateDrag.current(active, active.point, event.type === 'keydown'); }; window.addEventListener('keydown', modifier); window.addEventListener('keyup', modifier); return () => { window.removeEventListener('keydown', modifier); window.removeEventListener('keyup', modifier); }; }, []);
   useEffect(() => { if (!pending) setQueueExpanded(false); }, [pending]);
-  useEffect(() => { setSentTaskId(''); revealedSendId.current = ''; }, [state?.session.id]);
-  useLayoutEffect(() => {
-    if (!sentTaskId || revealedSendId.current === sentTaskId) return;
-    const row = document.querySelector<HTMLElement>(`.queue-list>.queue-item[data-task-id="${sentTaskId}"]`);
-    if (!row) return;
-    if (getComputedStyle(row).display === 'none') { setQueueExpanded(true); return; }
-    row.scrollIntoView({ block: 'nearest' }); revealedSendId.current = sentTaskId;
-  }, [sentTaskId, queueExpanded, historyOpen, state?.tasks]);
+  useEffect(() => { setSentTaskId(''); }, [state?.session.id]);
+  useEffect(() => {
+    const close = (event: globalThis.PointerEvent) => { if (!dock.current?.contains(event.target as Node)) { setQueueExpanded(false); setQueueHovered(false); setQueueFocused(false); clearInspection(); setTaskDetailId(''); } };
+    document.addEventListener('pointerdown', close);
+    return () => { document.removeEventListener('pointerdown', close); window.clearTimeout(queueCloseTimer.current); };
+  }, []);
   useEffect(() => {
     const element = canvas.current;
     if (!element) return;
@@ -343,7 +377,7 @@ export default function App() {
 
   function toggleTaskDetail(task: Task) {
     const open = taskDetailId !== task.id;
-    clearInspection(); exitAnnotation(); setQueueExpanded(true); setTaskDetailId(open ? task.id : '');
+    clearInspection(); exitAnnotation(); setTaskDetailId(open ? task.id : '');
     if (open) setInspectedTaskId(task.id);
   }
 
@@ -369,7 +403,7 @@ export default function App() {
     else if (annotation.coordinateSpace === 'world' && size) {
       viewUpdate({ x: size.width / 2 - (bounds.x + bounds.width / 2) * view.zoom, y: size.height / 2 - (bounds.y + bounds.height / 2) * view.zoom, selectedObjectIds: annotation.objectIds.filter(id => objects.some(value => value.id === id)) });
     }
-    setReaderInDraft(annotation.coordinateSpace === 'normalized' && !object);
+    setReaderInDraft((inDraft && !!draft?.editingTaskId) || (annotation.coordinateSpace === 'normalized' && !object));
     setAnnotationRead(annotation);
   }
 
@@ -425,10 +459,10 @@ export default function App() {
       await board.flushDraft(owner.sessionId);
       if (!sameScope(owner)) throw new Error('The request scope has changed. Continue in the original draft.');
       const task = await board.send();
-      if (task && task.draftId === owner.draftId && task.sessionId === scope.current.sessionId) {
+      if (task && (task.draftId === owner.draftId || task.lastEditDraftId === owner.draftId) && task.sessionId === scope.current.sessionId) {
         clearInspection(); exitAnnotation(); setTaskDetailId('');
         setHistoryOpen(false); setSentTaskId(task.id);
-        if (queuedTasks.length >= 3) setQueueExpanded(true);
+
       }
     } catch (cause) { board.showError(cause); }
     finally { committing.current = false; setAnnotationSaving(false); }
@@ -457,6 +491,7 @@ export default function App() {
     active.moved = true;
     const delta = { x: (point.x - active.start.x) / active.view.zoom, y: (point.y - active.start.y) / active.view.zoom };
     const size = canvas.current!.getBoundingClientRect();
+    if (active.kind === 'resize') { const object = active.objects[0], result = snapResize(object, active.resizeCorner || 'se', delta, state?.objects || [], active.view, size, bypass); active.preview = { [object.id]: result.bounds }; setPreview(active.preview); setSnapGuides(result.guides); return; }
     const result = !bypass ? snapTranslation(active.objects, state?.objects || [], delta, active.view, size) : { delta, guides: [] };
     active.preview = Object.fromEntries(active.objects.map(object => [object.id, { x: object.x + result.delta.x, y: object.y + result.delta.y, width: object.width, height: object.height }]));
     setPreview(active.preview); setSnapGuides(result.guides);
@@ -472,7 +507,7 @@ export default function App() {
     const effectiveMode = spacePan ? 'pan' : mode;
     const object = objects.find(value => value.id === objectId);
     if (annotating && !spacePan && (!object || !selectedIds.includes(object.id))) exitAnnotation();
-    else if (annotating && !spacePan && selected.every(value => value.type === 'image' || value.type === 'video')) {
+    else if (!resizeId && annotating && !spacePan && selected.every(value => value.type === 'image' || value.type === 'video')) {
       const edit = beginComment();
       if (!edit) return;
       const bounds = unionBounds(selected.map(contentBounds)), world = screenToWorld(point, view);
@@ -490,7 +525,7 @@ export default function App() {
       selectObjects(ids); kind = 'move'; moving = objects.filter(value => ids.includes(value.id));
     } else if (effectiveMode === 'select' && !event.shiftKey) selectObjects([]);
     setSnapGuides([]);
-    gesture.current = { kind, start: point, point, moved: false, view, objects: moving, sessionId: state.session.id };
+    gesture.current = { kind, start: point, point, moved: false, view, objects: moving, sessionId: state.session.id, resizeCorner: (event.target as HTMLElement).closest<HTMLElement>('[data-resize-corner]')?.dataset.resizeCorner as ResizeCorner | undefined };
     event.currentTarget.setPointerCapture(event.pointerId);
     event.preventDefault();
   }
@@ -502,8 +537,7 @@ export default function App() {
     const dx = (point.x - active.start.x) / active.view.zoom;
     const dy = (point.y - active.start.y) / active.view.zoom;
     if (active.kind === 'mark') { const region = objectRegion(normalizedRegion(rectangle(screenToWorld(active.start, active.view), screenToWorld(point, active.view)), active.markBounds!), active.markBounds!); active.region = region.width > 0 && region.height > 0 ? region : undefined; setMarkPreview(active.region || null); return; }
-    if (active.kind === 'move') previewMove(active, point, event.altKey);
-    if (active.kind === 'resize') { const object = active.objects[0]; const width = Math.max(40, object.width + dx); setPreview({ [object.id]: { x: object.x, y: object.y, width, height: width * object.height / object.width } }); }
+    if (active.kind === 'move' || active.kind === 'resize') previewMove(active, point, event.altKey);
     if (active.kind === 'pan') board.updateView({ ...active.view, x: active.view.x + point.x - active.start.x, y: active.view.y + point.y - active.start.y }, active.sessionId);
     if (active.kind === 'select') setSelectionRect(rectangle(screenToWorld(active.start, active.view), screenToWorld(point, active.view)));
   }
@@ -527,13 +561,9 @@ export default function App() {
       else setPreview({});
     }
     if (active.kind === 'resize') {
-      const dx = (point.x - active.start.x) / active.view.zoom;
-      const dy = (point.y - active.start.y) / active.view.zoom;
-      const changes = Math.abs(dx) + Math.abs(dy) > .01 ? active.objects.map(object => {
-        const width = Math.max(40, object.width + dx);
-        return { type: 'update' as const, objectId: object.id, expectedVersion: object.version, changes: { width, height: width * object.height / object.width } };
-      }) : [];
+      const changes = active.moved && active.preview ? active.objects.flatMap(object => { const bounds = active.preview![object.id]; return bounds.x !== object.x || bounds.y !== object.y || bounds.width !== object.width || bounds.height !== object.height ? [{ type: 'update' as const, objectId: object.id, expectedVersion: object.version, changes: bounds }] : []; }) : [];
       if (changes.length) void writeLayout(changes, active.sessionId);
+      else setPreview({});
     }
     if (active.kind === 'select' && region.width > 2 && region.height > 2) selectObjects(objects.filter(object => intersects(region, object)).map(object => object.id));
     setSelectionRect(null);
@@ -573,32 +603,40 @@ export default function App() {
     finally { setCancellingTask(''); }
   }
 
-  function toggleQueue() {
-    setQueueExpanded(current => !current);
+  async function editRequest(task: Task, cancel = false) {
+    if (disabled) return;
+    setEditingTask(true);
+    try { await board.editTask(task.id, cancel); clearInspection(); exitAnnotation(); setTaskDetailId(''); setQueueExpanded(false); requestAnimationFrame(() => instruction.current?.focus({ preventScroll: true })); }
+    finally { setEditingTask(false); }
   }
 
-  const reader = annotationRead && <div className="annotation-reader" role="region" aria-label="Annotation"><div className="inline-heading"><span>Comment</span><IconButton label="Close annotation" onClick={() => setAnnotationRead(null)}><X size={14}/></IconButton></div><p>{annotationRead.text}</p>{annotationRead.timeStart !== undefined && <span>Video {timeLabel(annotationRead.timeStart)}{annotationRead.timeEnd !== undefined ? ` – ${timeLabel(annotationRead.timeEnd)}` : ''}</span>}{annotationRead.snapshotAssetId && <img src={board.api.content(annotationRead.snapshotAssetId)} alt="Annotated video frame"/>}</div>;
-  const taskCard = (task: Task) => <TaskCard task={task} assets={assets} objects={objects} content={id => board.api.content(id)} locateAsset={locateAsset} onAnnotationView={(value, open) => { if (open) { exitAnnotation(); setInspectedTaskId(value.id); setAnnotationRead(null); } else if (historyOpen) { setInspectedTaskId(current => current === value.id ? '' : current); setAnnotationRead(null); } }}/>;
-  const composer = state && draft && <section ref={dock} className="creation-dock" data-canvas-control aria-label="Request composer and queue" onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); event.stopPropagation(); } }} onDrop={event => { const files = filesFromTransfer(event.dataTransfer); if (files.length) { event.preventDefault(); event.stopPropagation(); void importFiles(files); } }}>
-    {(pending > 0 || historyOpen) && <div className={`queue-stack ${queueExpanded || historyOpen ? 'expanded' : ''} ${pending > 3 && !historyOpen ? 'has-stack' : ''}`} data-pending={pending}>
-      {!queueExpanded && pending > 3 && !historyOpen && <div className="queue-peeks" aria-hidden="true">{Array.from({ length: Math.min(pending - 3, 2) }, (_, index) => <span key={index} style={{ '--peek': index + 1 } as React.CSSProperties}/>)}</div>}
-      {historyOpen ? <div className="queue-list history-list" id="request-history" role="region" aria-label="Request history"><div className="inline-heading"><span>Request history</span><IconButton label="Close request history" onClick={() => { clearInspection(); setHistoryOpen(false); document.querySelector<HTMLButtonElement>('.history-toggle')?.focus(); }}><X size={14}/></IconButton></div>{state.tasks.length ? [...state.tasks].reverse().map(task => <div key={task.id}>{taskCard(task)}</div>) : <p className="field-hint">Your requests, progress and receipts appear here.</p>}</div> : <div className="queue-list" id="creation-queue" role="list" aria-label="Task queue">
-        {queuedTasks.map((task, index) => <QueueItem task={task} key={task.id} visible={queueExpanded || index < 3} animateSend={sentTaskId === task.id} played={playedSendIds.current}>
-          <div className="queue-row"><button type="button" className="queue-task" aria-label={`View request ${task.sequence}: ${task.snapshot.userRequest.text || 'Attachments and annotations'} — ${statusLabels[task.status]}`} aria-expanded={taskDetailId === task.id} aria-controls={`request-details-${task.id}`} onClick={() => { toggleTaskDetail(task); }}><span className="queue-task-mark" aria-hidden="true">{task.status === 'running' ? <LoaderCircle size={15} className="spin"/> : <Circle size={15}/>}</span><TaskPreviews task={task} content={id => board.api.content(id)}/><span className="queue-title">{task.snapshot.userRequest.text || 'Create from the attachments and annotations.'}</span></button>
-          {['blocked', 'interrupted'].includes(task.status) && <span className={`status-badge status-${task.status}`} aria-hidden="true">{statusLabels[task.status]}</span>}{['queued', 'blocked', 'interrupted'].includes(task.status) && <IconButton label={`Cancel request ${task.sequence}`} disabled={disabled || !!cancellingTask} onClick={() => void cancelTask(task)}>{cancellingTask === task.id ? <LoaderCircle size={15} className="spin"/> : <Trash2 size={15}/>}</IconButton>}</div>
-          {taskDetailId === task.id && <div className="inline-task-detail" id={`request-details-${task.id}`} role="region" aria-label={`Request ${task.sequence}`}><IconButton label="Collapse request details" onClick={() => { clearInspection(); setTaskDetailId(''); document.querySelector<HTMLButtonElement>(`.queue-item[data-task-id="${task.id}"] .queue-task`)?.focus(); }}><X size={14}/></IconButton>{taskCard(task)}</div>}
-        </QueueItem>)}
+  function hoverQueue() { window.clearTimeout(queueCloseTimer.current); setQueueHovered(true); }
+  function leaveDock() { queueCloseTimer.current = window.setTimeout(() => { setQueueHovered(false); if (!dock.current?.contains(document.activeElement)) { setQueueExpanded(false); clearInspection(); setTaskDetailId(''); } }, 140); }
+
+
+  const reader = annotationRead && <div className="annotation-reader" role="region" aria-label="Annotation"><div className="inline-heading"><span>Comment</span><IconButton label="Close annotation" onClick={() => setAnnotationRead(null)}><X size={14}/></IconButton></div>{readerInDraft && draft?.editingTaskId ? <textarea aria-label="Annotation text" value={annotationRead.text} rows={3} disabled={disabled} onChange={event => { const value = { ...annotationRead, text: event.target.value }; setAnnotationRead(value); board.changeDraft(current => ({ ...current, annotations: current.annotations.map(annotation => annotation.id === value.id ? value : annotation) })); }}/> : <p>{annotationRead.text}</p>}{annotationRead.timeStart !== undefined && <span>Video {timeLabel(annotationRead.timeStart)}{annotationRead.timeEnd !== undefined ? ` – ${timeLabel(annotationRead.timeEnd)}` : ''}</span>}{annotationRead.snapshotAssetId && <img src={board.api.content(annotationRead.snapshotAssetId)} alt="Annotated video frame"/>}</div>;
+  const taskCard = (task: Task, compact = false) => <TaskCard compact={compact} task={task} assets={assets} objects={objects} content={id => board.api.content(id)} locateAsset={locateAsset} onAnnotationView={(value, open) => { if (open) { exitAnnotation(); setInspectedTaskId(value.id); setAnnotationRead(null); } else if (historyOpen) { setInspectedTaskId(current => current === value.id ? '' : current); setAnnotationRead(null); } }}/>;
+  const composer = state && draft && <section ref={dock} className="creation-dock" data-canvas-control aria-label="Request composer and queue" onPointerLeave={leaveDock} onPointerEnter={() => window.clearTimeout(queueCloseTimer.current)} onKeyDown={event => { if (event.key === 'Escape') { clearInspection(); setTaskDetailId(''); setQueueExpanded(false); setQueueHovered(false); setQueueFocused(false); instruction.current?.focus(); } }} onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); event.stopPropagation(); } }} onDrop={event => { const files = filesFromTransfer(event.dataTransfer); if (files.length) { event.preventDefault(); event.stopPropagation(); void importFiles(files); } }}>
+    {(pending > 0 || historyOpen) && <div className={`queue-stack ${queueOpen ? 'expanded' : ''} ${pending > 1 && !historyOpen ? 'has-stack' : ''}`} data-pending={pending} onPointerEnter={event => { if (event.pointerType === 'mouse') hoverQueue(); }} onFocusCapture={event => { if ((event.target as HTMLElement).matches(':focus-visible')) setQueueFocused(true); }} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setQueueFocused(false); }}>
+      {pending > 1 && !historyOpen && <div className="queue-peeks" aria-hidden="true">{Array.from({ length: Math.min(pending - 1, 2) }, (_, index) => <span key={index} style={{ '--peek': index + 1 } as React.CSSProperties}/>)}</div>}
+      {historyOpen ? <div className="queue-list history-list" id="request-history" role="region" aria-label="Request history"><div className="inline-heading"><span>Request history</span><IconButton label="Close request history" onClick={() => { clearInspection(); setHistoryOpen(false); document.querySelector<HTMLButtonElement>('.history-toggle')?.focus(); }}><ChevronDown size={14}/></IconButton></div>{state.tasks.length ? [...state.tasks].reverse().map(task => <div key={task.id}>{taskCard(task)}</div>) : <p className="field-hint">Your requests, progress and receipts appear here.</p>}</div> : <div className="queue-list" id="creation-queue" role="list" aria-label="Task queue">
+        {queuedTasks.map((task, index) => <div key={task.id} className={index ? `queue-extra ${queueOpen ? 'open' : ''}` : 'queue-first'} inert={index > 0 && !queueOpen} aria-hidden={index > 0 && !queueOpen}><div className="queue-extra-content"><QueueItem task={task} visible={queueOpen || index === 0} animateSend={sentTaskId === task.id} played={playedSendIds.current}>
+          <div className={`queue-row ${taskDetailId === task.id ? 'detail-open' : ''}`}><button type="button" className="queue-task" aria-label={`View request ${task.sequence}: ${task.snapshot.userRequest.text || 'Attachments and annotations'} — ${statusLabels[task.status]}`} aria-expanded={taskDetailId === task.id} aria-controls={`request-details-${task.id}`} onClick={() => toggleTaskDetail(task)}><TaskPreviews task={task} content={id => board.api.content(id)}/><span className="queue-title">{task.snapshot.userRequest.text || 'Create from the attachments and annotations.'}</span></button>
+          {['blocked', 'interrupted', 'editing'].includes(task.status) && <span className={`status-badge status-${task.status}`} aria-hidden="true">{statusLabels[task.status]}</span>}{task.status === 'queued' && <IconButton label={`Edit request ${task.sequence}`} disabled={disabled || !!draft.editingTaskId} onClick={() => void editRequest(task)}><Pencil size={14}/></IconButton>}{['queued', 'blocked', 'interrupted'].includes(task.status) && <IconButton label={`Cancel request ${task.sequence}`} disabled={disabled || !!cancellingTask} onClick={() => void cancelTask(task)}>{cancellingTask === task.id ? <LoaderCircle size={14} className="spin"/> : <Trash2 size={14}/>}</IconButton>}{taskDetailId === task.id && <IconButton label="Collapse request details" onClick={() => { clearInspection(); setTaskDetailId(''); document.querySelector<HTMLButtonElement>(`.queue-item[data-task-id="${task.id}"] .queue-task`)?.focus({ preventScroll: true }); }}><ChevronDown size={14}/></IconButton>}</div>
+          <MotionDisclosure open={taskDetailId === task.id} className="inline-task-detail" id={`request-details-${task.id}`} role="region" aria-label={`Request ${task.sequence}`}>{taskCard(task, true)}</MotionDisclosure>
+        </QueueItem></div></div>)}
       </div>}
-      {!historyOpen && pending > 3 && <button type="button" className="queue-expand" aria-expanded={queueExpanded} aria-controls="creation-queue" onClick={toggleQueue}>{queueExpanded ? 'Collapse queue' : `${pending} requests`}<ChevronDown size={12}/></button>}
+      {!historyOpen && pending > 1 && <button type="button" className="queue-expand" aria-label={`${pending} requests`} aria-expanded={queueOpen} aria-controls="creation-queue" onClick={() => setQueueExpanded(current => !current)}>{pending}<ChevronDown size={12}/></button>}
     </div>}
     {board.draftConflict && <section className="draft-conflict" aria-label="Resolve draft update"><strong>Draft updated elsewhere</strong><div className="conflict-comparison">{[{ label: 'Your input', value: draft }, { label: 'Saved draft', value: board.draftConflict }].map(item => <section key={item.label}><h3>{item.label}</h3><p className="conflict-text">{item.value?.text || 'No text yet'}</p><div className="conflict-references"><span>{item.value?.attachments.length || 0} attachments · {item.value?.annotations.length || 0} annotations</span>{item.value?.attachments.map(id => <small key={id}>{assetFor(id)?.name || id}</small>)}{item.value?.annotations.map(annotation => <small key={annotation.id}>{annotation.text}</small>)}</div></section>)}</div><div className="inline-actions"><button type="button" className="button" disabled={resolvingConflict} onClick={() => { setResolvingConflict(true); void board.resolveDraftConflict('remote').catch(board.showError).finally(() => setResolvingConflict(false)); }}>Use saved draft</button><button type="button" className="button primary" disabled={resolvingConflict} onClick={() => { setResolvingConflict(true); void board.resolveDraftConflict('local').catch(board.showError).finally(() => setResolvingConflict(false)); }}>{resolvingConflict ? 'Saving…' : 'Keep your draft'}</button></div></section>}
     {!!unavailableComments.length && <div className="unavailable-comments" aria-label="Unavailable comments">{unavailableComments.map(([key, edit]) => <div key={key}><span>Removed file · {edit.value.text}</span><IconButton label="Discard unavailable comment" onClick={() => { comments.current.delete(key); board.changeDraft(current => ({ ...current, annotations: current.annotations.filter(annotation => annotation.id !== edit.value.id) })); setCommentRevision(revision => revision + 1); board.setError(''); }}><Trash2 size={14}/></IconButton></div>)}</div>}
     {readerInDraft && reader && <div className="draft-annotation-reader">{reader}</div>}
     {copyCommand && <section className="inline-resume" aria-label="Resume prompt"><div className="inline-heading"><span>Resume prompt</span><IconButton label="Close resume prompt" onClick={() => setCopyCommand('')}><X size={14}/></IconButton></div><textarea aria-label="Resume prompt text" readOnly value={copyCommand} rows={3} onFocus={event => event.target.select()}/></section>}
-    <form className="composer" aria-label="Request draft" data-save-state={board.saveState} onSubmit={event => { event.preventDefault(); if (!composing.current && !commentComposing.current) void sendRequest(); }}>
-    {!!(draft.attachments.length || draft.annotations.length) && <div className="draft-attachments" aria-label="Request attachments">{draft.attachments.map(id => { const asset = assetFor(id); return <div className="draft-asset" key={id}><AssetThumb asset={asset} src={board.api.content(id)}/><span title={asset?.name}>{asset?.name || 'Loading file'}</span><IconButton label={`Remove attachment ${asset?.name || id}`} disabled={disabled} onClick={() => board.changeDraft(current => ({ ...current, attachments: current.attachments.filter(value => value !== id), references: { ...current.references, objectIds: current.references.objectIds.filter(objectId => { const object = state.objects.find(value => value.id === objectId); return !!object && object.assetId !== id; }) } }))}><X size={13}/></IconButton></div>; })}{draft.annotations.map((annotation, index) => <div className="draft-annotation" key={annotation.id}><button type="button" className="annotation-content" onClick={() => openAnnotation(annotation, true)}><AnnotationBubble number={index + 1} size={24}/><span>{annotation.text}{annotation.timeStart !== undefined && <small> · {timeLabel(annotation.timeStart)}</small>}</span></button><IconButton label={`Remove annotation ${index + 1}`} disabled={disabled} onClick={() => board.changeDraft(current => ({ ...current, annotations: current.annotations.filter(value => value.id !== annotation.id) }))}><X size={13}/></IconButton></div>)}</div>}
+    <form className="composer" data-compact={!composerFocused && !hasRequest} onFocusCapture={() => setComposerFocused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setComposerFocused(false); }} aria-label="Request draft" data-save-state={board.saveState} onSubmit={event => { event.preventDefault(); if (!composing.current && !commentComposing.current) void sendRequest(); }}>
+    {draft.editingTaskId && <div className="composer-editing"><span>Editing request {state.tasks.find(task => task.id === draft.editingTaskId)?.sequence}</span><button type="button" disabled={disabled} onClick={() => { const task = state.tasks.find(task => task.id === draft.editingTaskId); if (task) void editRequest(task, true); }}>Cancel edit</button></div>}
+    {!!(draft.attachments.length || draft.annotations.length) && <div className="draft-attachments" aria-label="Request attachments">{draft.attachments.map(id => { const asset = assetFor(id); return <div className="draft-asset" key={id}><AssetThumb asset={asset} src={board.api.content(id)}/><span title={asset?.name}>{asset?.name || 'Loading file'}</span><IconButton label={`Remove attachment ${asset?.name || id}`} disabled={disabled} onClick={() => board.changeDraft(current => ({ ...current, attachments: current.attachments.filter(value => value !== id), references: { ...current.references, objectIds: current.references.objectIds.filter(objectId => { const object = state.tasks.find(task => task.id === current.editingTaskId)?.snapshot.referenceContent.objects.find(value => value.id === objectId) || state.objects.find(value => value.id === objectId); return !!object && object.assetId !== id; }) } }))}><X size={13}/></IconButton></div>; })}{draft.annotations.map((annotation, index) => <div className="draft-annotation" key={annotation.id}><button type="button" className="annotation-content" onClick={() => openAnnotation(annotation, true)}><AnnotationBubble number={index + 1} size={24}/><span>{annotation.text}{annotation.timeStart !== undefined && <small> · {timeLabel(annotation.timeStart)}</small>}</span></button><IconButton label={`Remove annotation ${index + 1}`} disabled={disabled} onClick={() => board.changeDraft(current => ({ ...current, annotations: current.annotations.filter(value => value.id !== annotation.id) }))}><X size={13}/></IconButton></div>)}</div>}
       <div className="composer-input-row">
-      <label className="sr-only" htmlFor="instruction">Request</label><textarea ref={instruction} id="instruction" rows={1} placeholder="What would you like to create?" value={draft.text} readOnly={board.projectChanged} disabled={board.switching || board.sending || annotationSaving} onChange={event => board.changeDraft(current => ({ ...current, text: event.target.value }))} onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }} onKeyDown={event => { if (event.key !== 'Enter' || event.shiftKey || composing.current || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return; event.preventDefault(); void sendRequest(); }}/><button className="send-button" type="submit" disabled={disabled || !!uploads.length || !!board.draftConflict || !hasRequest} aria-label="Send request">{board.sending || annotationSaving ? <LoaderCircle size={17} className="spin"/> : <ArrowUp size={18}/>}</button>
+      <label className="sr-only" htmlFor="instruction">Request</label><textarea ref={instruction} id="instruction" rows={1} placeholder="What would you like to create?" value={draft.text} readOnly={board.projectChanged} disabled={board.switching || board.sending || annotationSaving} onChange={event => board.changeDraft(current => ({ ...current, text: event.target.value }))} onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }} onKeyDown={event => { if (event.key !== 'Enter' || event.shiftKey || composing.current || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return; event.preventDefault(); void sendRequest(); }}/><button className="send-button" type="submit" disabled={disabled || !!uploads.length || !!board.draftConflict || !hasRequest} aria-label={draft.editingTaskId ? "Save request" : "Send request"}>{board.sending || annotationSaving ? <LoaderCircle size={17} className="spin"/> : <ArrowUp size={16}/>}</button>
       </div>
     </form>
     <div className="dock-footer"><IconButton className="history-toggle" label="Request history" aria-expanded={historyOpen} aria-controls="request-history" onClick={() => { clearInspection(); exitAnnotation(); setHistoryOpen(current => !current); setTaskDetailId(''); }}><History size={15}/></IconButton><IconButton label="Copy resume prompt" onClick={() => void copyResume()}><Copy size={15}/></IconButton></div>
@@ -610,7 +648,7 @@ export default function App() {
     <main className="canvas-main"><div id="whiteboard" className={`whiteboard mode-${annotating && !spacePan ? 'annotate' : spacePan ? 'pan' : mode} ${dragOver ? 'drag-over' : ''} ${board.switching ? 'is-loading' : ''}`} ref={canvas} tabIndex={0} role="region" aria-label="Project board. Enter selects files, arrow keys move them, and Space pans the canvas." style={{ backgroundSize: `${24 * view.zoom}px ${24 * view.zoom}px`, backgroundPosition: `${view.x}px ${view.y}px` }} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={() => { gesture.current = null; setPreview({}); setSelectionRect(null); setSnapGuides([]); setMarkPreview(null); }} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === ' ') { event.preventDefault(); setSpacePan(true); } if (event.key === 'Escape') { if (annotating) exitAnnotation(); else if (aligning) exitAlignment(); else { clearInspection(); selectObjects([]); setMode('select'); } } if (event.key === '+' || event.key === '=') { event.preventDefault(); zoom(1.2); } if (event.key === '-') { event.preventDefault(); zoom(1 / 1.2); } }} onKeyUp={event => { if (event.key === ' ') setSpacePan(false); }} onBlur={() => setSpacePan(false)} onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); setDragOver(true); } }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragOver(false); }} onDrop={event => { event.preventDefault(); setDragOver(false); void importFiles(filesFromTransfer(event.dataTransfer), localPoint(event)); }}>
       <div className="canvas-world" style={{ transform: `translate(${view.x}px,${view.y}px) scale(${view.zoom})` }}>{objects.map((object, index) => { const asset = assetFor(object.assetId); const isSelected = selectedIds.includes(object.id); return <article key={object.id} className={`board-object object-${object.type} ${isSelected ? 'selected' : ''}`} data-object-id={object.id} data-object-version={object.version} data-selected={isSelected || undefined} style={{ left: object.x, top: object.y, width: object.width, height: object.height }} tabIndex={0} role="group" aria-label={`${asset?.name || 'File'}${isSelected ? ', selected' : ''}`} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectObjects(event.shiftKey ? unique([...selectedIds, object.id]) : [object.id]); } const delta = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key]; if (delta) { event.preventDefault(); event.stopPropagation(); void board.operations([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: object.x + delta[0], y: object.y + delta[1] } }]).catch(() => undefined); } }}>
         <div className="object-media">{object.type === 'image' && !mediaErrors[object.id] && <img src={board.api.content(object.assetId)} alt={asset?.name || 'Imported image'} draggable={false} onLoad={event => { const size = { width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight }; setMediaSizes(current => ({ ...current, [object.id]: size })); }} onError={() => setMediaErrors(current => ({ ...current, [object.id]: true }))}/>} {object.type === 'video' && !mediaErrors[object.id] && <video playsInline preload="metadata" tabIndex={-1} src={board.api.content(object.assetId)} ref={element => { if (element) videoRefs.current.set(object.id, element); else videoRefs.current.delete(object.id); }} onLoadedMetadata={event => { const size = { width: event.currentTarget.videoWidth, height: event.currentTarget.videoHeight }; setMediaSizes(current => ({ ...current, [object.id]: size })); }} onError={() => setMediaErrors(current => ({ ...current, [object.id]: true }))}/>} {(object.type === 'file' || mediaErrors[object.id]) && <div className="file-card"><File size={32} strokeWidth={1.25}/><strong>{asset?.name || 'File'}</strong><span>{mediaErrors[object.id] ? 'Preview unavailable in this browser' : `${asset?.mime || 'Attachment'} · ${bytes(asset?.size || 0)}`}</span><a data-canvas-control href={board.api.content(object.assetId)} download={asset?.name} onPointerDown={event => event.stopPropagation()}><ArrowDownToLine size={13}/>Download file</a></div>}</div>
-        <div className="object-caption"><span className="object-index">{String(index + 1).padStart(2, '0')}</span><span title={asset?.name}>{asset?.name || 'File'}</span>{object.sourceTaskId && <span className="generated-label">Output</span>}</div>{isSelected && <button type="button" className="resize-handle" data-resize-id={object.id} aria-label={`Resize ${asset?.name || 'File'}`} onKeyDown={event => { if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) return; event.preventDefault(); event.stopPropagation(); const width = Math.max(40, object.width + (event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 10 : -10)); void board.operations([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { width, height: width * object.height / object.width } }]).catch(() => undefined); }}/>}</article>; })}
+        <div className="object-caption"><span className="object-index">{String(index + 1).padStart(2, '0')}</span><span title={asset?.name}>{asset?.name || 'File'}</span>{object.sourceTaskId && <span className="generated-label">Output</span>}</div>{isSelected && (['nw', 'ne', 'sw', 'se'] as ResizeCorner[]).map(corner => <button key={corner} type="button" className="resize-handle" data-resize-id={object.id} data-resize-corner={corner} aria-label={`Resize ${asset?.name || 'File'} ${ { nw: 'top left', ne: 'top right', sw: 'bottom left', se: 'bottom right' }[corner]}`} onKeyDown={event => { if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key) || layoutBusy.current || disabled) return; event.preventDefault(); event.stopPropagation(); const delta = { x: event.key === 'ArrowRight' ? 10 : event.key === 'ArrowLeft' ? -10 : 0, y: event.key === 'ArrowDown' ? 10 : event.key === 'ArrowUp' ? -10 : 0 }; const bounds = resizeBounds(object, corner, delta); void writeLayout([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: bounds }], state.session.id); }}/>) }</article>; })}
       {allAnnotations.map((annotation, index) => { const object = objects.find(value => value.id === annotation.objectId); if (annotation.coordinateSpace === 'normalized' && !object) return null; const bounds = annotation.coordinateSpace === 'normalized' && object ? objectRegion(annotation.bounds, contentBounds(object)) : annotation.bounds; return <div className={`annotation-outline ${draft.annotations.some(value => value.id === annotation.id) ? 'draft-outline' : ''}`} key={`${annotation.inspectionTaskId || 'draft'}-${annotation.id}`} data-annotation-source={annotation.inspectionTaskId ? 'task' : 'draft'} style={{ borderWidth: 1 / view.zoom, left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height }}><button type="button" data-canvas-control className="annotation-pin" title={annotation.text} aria-label={`Annotation ${index + 1}: ${annotation.text}`} onPointerDown={event => event.stopPropagation()} onClick={() => openAnnotation(annotation)} style={{ transform: `scale(${1 / view.zoom})`, transformOrigin: 'bottom left' }}><AnnotationBubble number={index + 1} size={28}/></button></div>; })}
       {editingBounds && <div className="annotation-outline editing-outline" data-annotation-source="editing" style={{ left: editingBounds.x, top: editingBounds.y, width: editingBounds.width, height: editingBounds.height, borderWidth: 1 / view.zoom }}/>}
       {!!snapGuides.length && <svg className="alignment-guides" aria-hidden="true">{snapGuides.map(guide => <line key={guide.axis} data-snap-axis={guide.axis} vectorEffect="non-scaling-stroke" x1={guide.axis === 'x' ? guide.position : guide.start} y1={guide.axis === 'y' ? guide.position : guide.start} x2={guide.axis === 'x' ? guide.position : guide.end} y2={guide.axis === 'y' ? guide.position : guide.end}/>)}</svg>}

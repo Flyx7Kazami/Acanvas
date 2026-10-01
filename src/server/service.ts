@@ -54,10 +54,12 @@ export class CanvasService {
       CREATE TABLE IF NOT EXISTS objects(id TEXT PRIMARY KEY, asset_id TEXT NOT NULL REFERENCES assets(id), x REAL NOT NULL, y REAL NOT NULL, width REAL NOT NULL, height REAL NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, source_task_id TEXT, source_run_id TEXT);
       CREATE TABLE IF NOT EXISTS annotations(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), task_id TEXT NOT NULL, data_json TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), draft_id TEXT NOT NULL UNIQUE, sequence INTEGER NOT NULL, status TEXT NOT NULL, snapshot_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, current_run_id TEXT, reason TEXT, receipt_json TEXT, replies_json TEXT NOT NULL DEFAULT '[]', UNIQUE(session_id, sequence));
+      CREATE TABLE IF NOT EXISTS task_edits(draft_id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), task_id TEXT NOT NULL REFERENCES tasks(id), previous_draft_json TEXT NOT NULL, state TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id), consumer_id TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, progress_json TEXT NOT NULL DEFAULT '[]', output_asset_ids_json TEXT NOT NULL DEFAULT '[]', recovery_resolution TEXT);
       CREATE TABLE IF NOT EXISTS late_results(id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id), run_id TEXT NOT NULL REFERENCES runs(id), consumer_id TEXT NOT NULL, received_at TEXT NOT NULL, payload_json TEXT NOT NULL);
     `);
     if (!(this.db.pragma('table_info(drafts)') as Row[]).some((column) => column.name === 'revision')) this.db.exec('ALTER TABLE drafts ADD COLUMN revision INTEGER NOT NULL DEFAULT 1');
+    if (!(this.db.pragma('table_info(drafts)') as Row[]).some((column) => column.name === 'editing_task_id')) this.db.exec('ALTER TABLE drafts ADD COLUMN editing_task_id TEXT REFERENCES tasks(id)');
     let projectId = this.db.prepare("SELECT value FROM metadata WHERE key='project_id'").get() as Row | undefined;
     if (!projectId) { this.db.prepare("INSERT INTO metadata(key,value) VALUES('project_id',?)").run(randomUUID()); projectId = this.db.prepare("SELECT value FROM metadata WHERE key='project_id'").get() as Row; }
     this.project = { id: projectId.value, name: basename(this.root), root: this.root };
@@ -118,7 +120,7 @@ export class CanvasService {
   draft(sessionId: string): Draft {
     this.sessionRow(sessionId);
     const row = this.db.prepare('SELECT * FROM drafts WHERE session_id=?').get(sessionId) as Row;
-    return { id: row.id, sessionId, revision: row.revision, text: row.text, attachments: parse(row.attachments_json), annotations: parse(row.annotations_json), references: parse(row.references_json), updatedAt: row.updated_at };
+    return { ...(row.editing_task_id ? { editingTaskId: row.editing_task_id } : {}), id: row.id, sessionId, revision: row.revision, text: row.text, attachments: parse(row.attachments_json), annotations: parse(row.annotations_json), references: parse(row.references_json), updatedAt: row.updated_at };
   }
   private assetFrom(row: Row): Asset { return { id: row.id, name: row.name, mime: row.mime, size: row.size, kind: row.kind, createdAt: row.created_at, ...(row.source_task_id ? { sourceTaskId: row.source_task_id, sourceRunId: row.source_run_id } : {}) }; }
   asset(id: string): Asset { nonempty(id, 'Asset ID', 200); const row = this.db.prepare('SELECT * FROM assets WHERE id=?').get(id) as Row; return row ? this.assetFrom(row) : fail(404, 'asset_missing', 'The referenced asset is unavailable.'); }
@@ -158,13 +160,13 @@ export class CanvasService {
   object(id: string): BoardObject { nonempty(id, 'Object ID', 200); const row = this.db.prepare('SELECT * FROM objects WHERE id=?').get(id) as Row; return row ? this.objectFrom(row) : fail(404, 'object_missing', 'The referenced object is unavailable.'); }
   objects(): BoardObject[] { return (this.db.prepare('SELECT * FROM objects ORDER BY created_at,id').all() as Row[]).map((row) => this.objectFrom(row)); }
   annotations(): Annotation[] { return (this.db.prepare('SELECT data_json FROM annotations ORDER BY rowid').all() as Row[]).map((row) => parse(row.data_json)); }
-  private validateAnnotation(value: AnnotationInput): AnnotationInput {
+  private validateAnnotation(value: AnnotationInput, source?: TaskSnapshot): AnnotationInput {
     if (!value || !['object', 'region'].includes(value.scope) || !['normalized', 'world'].includes(value.coordinateSpace)) fail(400, 'invalid_annotation', 'Annotation scope and coordinate space are required.');
     nonempty(value.id, 'Annotation ID', 200);
     nonempty(value.text, 'Annotation text');
     const objectIds = ids(value.objectIds, 'Annotation object IDs');
-    for (const objectId of objectIds) this.object(objectId);
-    if (value.objectId) this.object(value.objectId);
+    for (const objectId of objectIds) if (!source?.referenceContent.objects.some(object => object.id === objectId)) this.object(objectId);
+    if (value.objectId && !source?.referenceContent.objects.some(object => object.id === value.objectId)) this.object(value.objectId);
     if (value.assetId) this.asset(value.assetId);
     if (value.snapshotAssetId) this.asset(value.snapshotAssetId);
     if (!value.bounds || typeof value.bounds !== 'object') fail(400, 'invalid_annotation', 'Annotation bounds are required.');
@@ -182,13 +184,15 @@ export class CanvasService {
       const draft = this.draft(sessionId);
       if (input?.id !== draft.id || (input.sessionId && input.sessionId !== sessionId)) fail(409, 'draft_conflict', 'This draft has already been sent or replaced. Read the current draft.');
       if (!Number.isSafeInteger(input.revision) || input.revision !== draft.revision) fail(409, 'draft_revision_conflict', 'The saved draft changed. Review both versions before saving.', { currentRevision: draft.revision });
+      if (input.editingTaskId !== draft.editingTaskId) fail(409, 'draft_conflict', 'The request editing target has changed. Read the current draft.');
+      const source = draft.editingTaskId ? this.task(sessionId, draft.editingTaskId).snapshot : undefined;
       const attachments = ids(input.attachments, 'Attachments');
       attachments.forEach((id) => this.asset(id));
       if (!Array.isArray(input.annotations) || input.annotations.length > 1000) fail(400, 'invalid_annotation', 'Annotations must be a list.');
-      const annotations = input.annotations.map((annotation) => this.validateAnnotation(annotation));
+      const annotations = input.annotations.map((annotation) => this.validateAnnotation(annotation, source));
       if (new Set(annotations.map((annotation) => annotation.id)).size !== annotations.length) fail(400, 'invalid_annotation', 'Each annotation needs a distinct ID.');
       const references = { objectIds: ids(input.references?.objectIds, 'Object references'), taskIds: ids(input.references?.taskIds, 'Task references') };
-      references.objectIds.forEach((id) => this.object(id));
+      references.objectIds.forEach((id) => { if (!source?.referenceContent.objects.some(object => object.id === id)) this.object(id); });
       references.taskIds.forEach((id) => { if (!this.db.prepare('SELECT id FROM tasks WHERE id=?').get(id)) fail(404, 'task_missing', 'The referenced task is unavailable.'); });
       const updated = this.db.prepare('UPDATE drafts SET text=?,attachments_json=?,annotations_json=?,references_json=?,updated_at=?,revision=revision+1 WHERE id=? AND revision=?').run(text(input.text, 'Draft text'), json(attachments), json(annotations), json(references), now(), draft.id, input.revision);
       if (updated.changes !== 1) fail(409, 'draft_revision_conflict', 'The saved draft changed. Review both versions before saving.');
@@ -205,28 +209,72 @@ export class CanvasService {
       return this.session(sessionId);
     });
   }
+  beginTaskEdit(sessionId: string, taskId: string, input: { draftId: string; expectedRevision: number }): { task: Task; draft: Draft } {
+    return this.transaction(() => {
+      const task = this.task(sessionId, taskId), previous = this.draft(sessionId);
+      if (previous.editingTaskId === taskId && task.status === 'editing') return { task, draft: previous };
+      if (task.status !== 'queued') fail(409, 'task_edit_conflict', 'Edit a waiting request. This request has already changed state.');
+      if (previous.editingTaskId) fail(409, 'task_edit_conflict', 'Save or cancel the current edit before editing another request.');
+      if (previous.id !== input.draftId || previous.revision !== input.expectedRevision) fail(409, 'draft_revision_conflict', 'The draft changed. Read the current draft before editing a request.');
+      const id = randomUUID(), snapshot = task.snapshot;
+      this.db.prepare('INSERT INTO task_edits VALUES(?,?,?,?,?)').run(id, sessionId, taskId, json(previous), 'active');
+      this.db.prepare("UPDATE tasks SET status='editing',updated_at=? WHERE id=? AND status='queued'").run(now(), taskId);
+      this.db.prepare('DELETE FROM drafts WHERE id=?').run(previous.id);
+      this.db.prepare('INSERT INTO drafts(id,session_id,revision,text,attachments_json,annotations_json,references_json,updated_at,editing_task_id) VALUES(?,?,1,?,?,?,?,?,?)').run(id, sessionId, snapshot.userRequest.text, json(snapshot.referenceContent.assets.map(asset => asset.id)), json(snapshot.annotations), json({ objectIds: snapshot.referenceContent.objects.map(object => object.id), taskIds: snapshot.referenceContent.taskIds }), now(), taskId);
+      return { task: this.task(sessionId, taskId), draft: this.draft(sessionId) };
+    });
+  }
+  private restorePreviousDraft(edit: Row) {
+    const previous = parse<Draft>(edit.previous_draft_json);
+    this.db.prepare('DELETE FROM drafts WHERE session_id=?').run(edit.session_id);
+    this.db.prepare('INSERT INTO drafts(id,session_id,revision,text,attachments_json,annotations_json,references_json,updated_at) VALUES(?,?,?,?,?,?,?,?)').run(previous.id, edit.session_id, previous.revision + 1, previous.text, json(previous.attachments), json(previous.annotations), json(previous.references), now());
+  }
+  cancelTaskEdit(sessionId: string, taskId: string, input: { draftId: string; expectedRevision: number }): { task: Task; draft: Draft } {
+    return this.transaction(() => {
+      this.taskRow(sessionId, taskId);
+      const edit = this.db.prepare('SELECT * FROM task_edits WHERE draft_id=? AND session_id=? AND task_id=?').get(input.draftId, sessionId, taskId) as Row;
+      if (edit?.state === 'cancelled') return { task: this.task(sessionId, taskId), draft: this.draft(sessionId) };
+      const draft = this.draft(sessionId);
+      if (!edit || edit.state !== 'active' || draft.id !== input.draftId || draft.editingTaskId !== taskId || draft.revision !== input.expectedRevision) fail(409, 'draft_revision_conflict', 'The request edit changed. Read the current draft before cancelling.');
+      this.db.prepare("UPDATE tasks SET status='queued',updated_at=? WHERE id=? AND status='editing'").run(now(), taskId);
+      this.db.prepare("UPDATE task_edits SET state='cancelled' WHERE draft_id=?").run(edit.draft_id);
+      this.restorePreviousDraft(edit);
+      return { task: this.task(sessionId, taskId), draft: this.draft(sessionId) };
+    });
+  }
   sendDraft(sessionId: string, draftId: string, expectedRevision: number): { task: Task; draft: Draft } {
     return this.transaction(() => {
       this.sessionRow(sessionId);
+      const submittedEdit = this.db.prepare("SELECT * FROM task_edits WHERE draft_id=? AND state='submitted'").get(draftId) as Row;
+      if (submittedEdit) { if (submittedEdit.session_id !== sessionId) fail(409, 'draft_conflict', 'The draft belongs to another session.'); return { task: this.task(sessionId, submittedEdit.task_id), draft: this.draft(sessionId) }; }
       const existing = this.db.prepare('SELECT id,session_id FROM tasks WHERE draft_id=?').get(draftId) as Row;
       if (existing) { if (existing.session_id !== sessionId) fail(409, 'draft_conflict', 'The draft belongs to another session.'); return { task: this.task(sessionId, existing.id), draft: this.draft(sessionId) }; }
       const draft = this.draft(sessionId);
       if (draft.id !== draftId) fail(409, 'draft_conflict', 'Send the current saved draft.');
       if (!Number.isSafeInteger(expectedRevision) || draft.revision !== expectedRevision) fail(409, 'draft_revision_conflict', 'The draft changed before sending. Review the saved version.', { currentRevision: draft.revision });
       if (!draft.text.trim() && !draft.attachments.length && !draft.annotations.length && !draft.references.objectIds.length && !draft.references.taskIds.length) fail(400, 'empty_request', 'Add a request or attachment.');
+      const source = draft.editingTaskId ? this.task(sessionId, draft.editingTaskId) : undefined;
+      if (source && source.status !== 'editing') fail(409, 'task_edit_conflict', 'The request changed state. Read the current request.');
+      const edit = source ? this.db.prepare("SELECT * FROM task_edits WHERE draft_id=? AND state='active'").get(draftId) as Row : undefined;
+      if (source && !edit) fail(409, 'task_edit_conflict', 'The request edit is unavailable. Read the current draft.');
       const objectIds = [...new Set([...draft.references.objectIds, ...draft.annotations.flatMap((annotation) => [...annotation.objectIds, ...(annotation.objectId ? [annotation.objectId] : [])])])];
-      const objects = objectIds.map((id) => this.object(id));
+      const objects = objectIds.map((id) => source?.snapshot.referenceContent.objects.find(object => object.id === id) || this.object(id));
       const assetIds = [...new Set([...draft.attachments, ...objects.map((object) => object.assetId), ...draft.annotations.flatMap((annotation) => [annotation.assetId, annotation.snapshotAssetId].filter((id): id is string => !!id))])];
-      const snapshot: TaskSnapshot = { userRequest: { source: 'user_instruction', text: draft.text }, annotations: structuredClone(draft.annotations), referenceContent: { source: 'reference_content', assets: assetIds.map((id) => { this.assetPath(id); return this.asset(id); }), objects, taskIds: draft.references.taskIds } };
-      const id = randomUUID(), time = now();
-      const sequence = (this.db.prepare('SELECT COALESCE(MAX(sequence),0)+1 AS next FROM tasks WHERE session_id=?').get(sessionId) as Row).next;
-      this.db.prepare("INSERT INTO tasks(id,session_id,draft_id,sequence,status,snapshot_json,created_at,updated_at) VALUES(?,?,?,?,'queued',?,?,?)").run(id, sessionId, draftId, sequence, json(snapshot), time, time);
+      const snapshot: TaskSnapshot = { userRequest: { source: 'user_instruction', text: draft.text }, annotations: structuredClone(draft.annotations), referenceContent: { source: 'reference_content', assets: assetIds.map((id) => { this.assetPath(id); return source?.snapshot.referenceContent.assets.find(asset => asset.id === id) || this.asset(id); }), objects, taskIds: draft.references.taskIds } };
+      const id = source?.id || randomUUID(), time = now();
+      if (source) {
+        this.db.prepare("UPDATE tasks SET status='queued',snapshot_json=?,updated_at=? WHERE id=? AND status='editing'").run(json(snapshot), time, id);
+        this.db.prepare("UPDATE task_edits SET state='submitted' WHERE draft_id=?").run(draftId);
+      } else {
+        const sequence = (this.db.prepare('SELECT COALESCE(MAX(sequence),0)+1 AS next FROM tasks WHERE session_id=?').get(sessionId) as Row).next;
+        this.db.prepare("INSERT INTO tasks(id,session_id,draft_id,sequence,status,snapshot_json,created_at,updated_at) VALUES(?,?,?,?,'queued',?,?,?)").run(id, sessionId, draftId, sequence, json(snapshot), time, time);
+      }
       for (const input of draft.annotations) {
         const annotation: Annotation = { ...input, id: randomUUID(), source: 'user_annotation', createdAt: time, sourceTaskId: id, sessionId };
         this.db.prepare('INSERT INTO annotations VALUES(?,?,?,?)').run(annotation.id, sessionId, id, json(annotation));
       }
-      this.db.prepare('DELETE FROM drafts WHERE id=?').run(draftId);
-      this.newDraft(sessionId);
+      if (edit) this.restorePreviousDraft(edit);
+      else { this.db.prepare('DELETE FROM drafts WHERE id=?').run(draftId); this.newDraft(sessionId); }
       return { task: this.task(sessionId, id), draft: this.draft(sessionId) };
     });
   }
@@ -235,7 +283,8 @@ export class CanvasService {
   private runFrom(row: Row): Run { return { id: row.id, taskId: row.task_id, consumerId: row.consumer_id, status: row.status, createdAt: row.created_at, updatedAt: row.updated_at, progress: parse(row.progress_json), outputAssetIds: parse(row.output_asset_ids_json), ...(row.recovery_resolution ? { recoveryResolution: row.recovery_resolution } : {}) }; }
   task(sessionId: string, id: string): Task {
     const row = this.taskRow(sessionId, id);
-    return { id: row.id, sessionId, draftId: row.draft_id, sequence: row.sequence, status: row.status, snapshot: parse(row.snapshot_json), createdAt: row.created_at, updatedAt: row.updated_at, currentRunId: row.current_run_id, reason: row.reason, receipt: row.receipt_json ? parse(row.receipt_json) : null, replies: parse(row.replies_json), runs: (this.db.prepare('SELECT * FROM runs WHERE task_id=? ORDER BY created_at,rowid').all(id) as Row[]).map((run) => this.runFrom(run)), lateResults: (this.db.prepare('SELECT * FROM late_results WHERE task_id=? ORDER BY rowid').all(id) as Row[]).map((late) => ({ runId: late.run_id, consumerId: late.consumer_id, receivedAt: late.received_at, payload: parse(late.payload_json) })) };
+    const lastEdit = this.db.prepare("SELECT draft_id FROM task_edits WHERE task_id=? AND state='submitted' ORDER BY rowid DESC LIMIT 1").get(id) as Row | undefined;
+    return { ...(lastEdit ? { lastEditDraftId: lastEdit.draft_id } : {}), id: row.id, sessionId, draftId: row.draft_id, sequence: row.sequence, status: row.status, snapshot: parse(row.snapshot_json), createdAt: row.created_at, updatedAt: row.updated_at, currentRunId: row.current_run_id, reason: row.reason, receipt: row.receipt_json ? parse(row.receipt_json) : null, replies: parse(row.replies_json), runs: (this.db.prepare('SELECT * FROM runs WHERE task_id=? ORDER BY created_at,rowid').all(id) as Row[]).map((run) => this.runFrom(run)), lateResults: (this.db.prepare('SELECT * FROM late_results WHERE task_id=? ORDER BY rowid').all(id) as Row[]).map((late) => ({ runId: late.run_id, consumerId: late.consumer_id, receivedAt: late.received_at, payload: parse(late.payload_json) })) };
   }
   tasks(sessionId: string): Task[] { this.sessionRow(sessionId); return (this.db.prepare('SELECT id FROM tasks WHERE session_id=? ORDER BY sequence').all(sessionId) as Row[]).map((row) => this.task(sessionId, row.id)); }
   context(sessionId: string, taskId: string) {
@@ -266,9 +315,9 @@ export class CanvasService {
       const session = this.sessionRow(sessionId);
       if (session.consumer_id && session.consumer_id !== consumerId) fail(409, 'consumer_conflict', 'This session belongs to another consumer activation. Read the session and explicitly resume its settled queue.', { consumerId: session.consumer_id });
       this.activateConsumer(sessionId, consumerId);
-      const active = this.db.prepare("SELECT * FROM tasks WHERE session_id=? AND status IN ('queued','running','blocked','interrupted') ORDER BY sequence LIMIT 1").get(sessionId) as Row;
+      const active = this.db.prepare("SELECT * FROM tasks WHERE session_id=? AND status IN ('queued','editing','running','blocked','interrupted') ORDER BY sequence LIMIT 1").get(sessionId) as Row;
       if (!active) { this.retireConsumer(sessionId, consumerId); this.db.prepare('UPDATE sessions SET consumer_id=NULL WHERE id=?').run(sessionId); return { task: null, run: null, consumerId, projectId: this.project.id, sessionId }; }
-      if (active.status !== 'queued') fail(409, 'queue_paused', 'Review the current running, blocked or interrupted task before claiming another.', { taskId: active.id, status: active.status });
+      if (active.status !== 'queued') fail(409, 'queue_paused', 'Save the current request edit, or review the running, blocked or interrupted task before claiming another.', { taskId: active.id, status: active.status });
       this.db.prepare('UPDATE sessions SET consumer_id=? WHERE id=?').run(consumerId, sessionId);
       const run = this.newRun(active.id, consumerId);
       return { task: this.task(sessionId, active.id), run, consumerId, projectId: this.project.id, sessionId };
@@ -341,7 +390,7 @@ export class CanvasService {
     return this.transaction(() => {
       const task = this.taskRow(sessionId, taskId);
       if (!['blocked', 'interrupted'].includes(task.status) || task.current_run_id !== input.expectedRunId) fail(409, 'resume_conflict', 'Resume the current blocked or interrupted attempt after reviewing its saved results.');
-      const first = this.db.prepare("SELECT id FROM tasks WHERE session_id=? AND status IN ('queued','running','blocked','interrupted') ORDER BY sequence LIMIT 1").get(sessionId) as Row;
+      const first = this.db.prepare("SELECT id FROM tasks WHERE session_id=? AND status IN ('queued','editing','running','blocked','interrupted') ORDER BY sequence LIMIT 1").get(sessionId) as Row;
       if (first?.id !== taskId) fail(409, 'queue_order', 'Resume the earliest unfinished task.');
       const consumerId = nonempty(input.consumerId, 'Consumer ID', 200);
       const resolution = nonempty(input.resolution, 'Recovery decision');

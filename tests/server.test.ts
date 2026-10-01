@@ -349,3 +349,48 @@ test('production Node 24 process recovers after a crash and exits normally with 
   const empty = await call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'new-activation' }); assert.equal(empty.task, null);
   await stop('SIGTERM');
 });
+
+test('waiting request editing retains FIFO identity, source references and the previous draft across restart', async t => {
+  const f = await fixture(t), session = await f.session('Editing'), other = await f.session('Other');
+  const asset = await f.upload('source reference');
+  await f.call('/api/board/operations', 'POST', { sessionId: session.id, operations: [{ type: 'create', object: { id: 'edit-source', assetId: asset.id, x: 10, y: 20, width: 100, height: 80 } }] });
+  const first = await f.sendTask(session.id, 'First request');
+  let draft: Draft = (await f.state(session.id)).draft;
+  draft = await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...draft, text: 'Original request', attachments: [asset.id], references: { objectIds: ['edit-source'], taskIds: [first.id] }, annotations: [{ id: 'edit-note', scope: 'object', objectId: 'edit-source', objectIds: ['edit-source'], assetId: asset.id, bounds: { x: 0, y: 0, width: 1, height: 1 }, coordinateSpace: 'normalized', text: 'Source comment' }] });
+  const target: Task = (await f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: draft.id, expectedRevision: draft.revision })).task;
+  const last = await f.sendTask(session.id, 'Last request');
+  draft = (await f.state(session.id)).draft;
+  const previous: Draft = await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...draft, text: 'Unsent next idea', attachments: [asset.id] });
+  const edit = await f.call(`/api/sessions/${session.id}/tasks/${target.id}/edit`, 'POST', { draftId: previous.id, expectedRevision: previous.revision });
+  assert.equal(edit.task.status, 'editing'); assert.equal(edit.draft.editingTaskId, target.id); assert.deepEqual(edit.task.snapshot, target.snapshot);
+  assert.deepEqual((await f.call(`/api/sessions/${session.id}/tasks/${target.id}/edit`, 'POST', { draftId: previous.id, expectedRevision: previous.revision })).draft, edit.draft);
+  const claimed: Claim = await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'edit-consumer' }); assert.equal(claimed.task?.id, first.id);
+  await f.call(`/api/sessions/${session.id}/tasks/${first.id}/complete`, 'POST', { consumerId: 'edit-consumer', runId: claimed.run!.id, summary: 'First complete', assetIds: [], validation: [], operations: [] });
+  const paused = await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'edit-consumer' }, 409); assert.equal(paused.error.code, 'queue_paused'); assert.equal(paused.error.details.taskId, target.id);
+  await f.call(`/api/sessions/${other.id}/tasks/${target.id}/edit`, 'POST', { draftId: previous.id, expectedRevision: previous.revision }, 404);
+  await f.restart(); assert.deepEqual((await f.state(session.id)).draft, edit.draft);
+  const cancelled = await f.call(`/api/sessions/${session.id}/tasks/${target.id}/cancel-edit`, 'POST', { draftId: edit.draft.id, expectedRevision: edit.draft.revision });
+  assert.equal(cancelled.draft.id, previous.id); assert.equal(cancelled.draft.text, previous.text); assert.deepEqual(cancelled.draft.attachments, previous.attachments); assert.equal(cancelled.task.status, 'queued'); assert.deepEqual(cancelled.task.snapshot, target.snapshot);
+  const again = await f.call(`/api/sessions/${session.id}/tasks/${target.id}/edit`, 'POST', { draftId: cancelled.draft.id, expectedRevision: cancelled.draft.revision });
+  const object = (await f.state(session.id)).objects[0];
+  await f.call('/api/board/operations', 'POST', { sessionId: session.id, operations: [{ type: 'delete', objectId: object.id, expectedVersion: object.version }] });
+  const saved: Draft = await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...again.draft, text: 'Revised request', annotations: again.draft.annotations.map((annotation: any) => ({ ...annotation, text: 'Revised comment' })) });
+  await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...saved, revision: saved.revision - 1 }, 409);
+  const submitted = await f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision });
+  assert.equal(submitted.task.id, target.id); assert.equal(submitted.task.sequence, target.sequence); assert.equal(submitted.task.status, 'queued'); assert.equal(submitted.task.snapshot.userRequest.text, 'Revised request'); assert.equal(submitted.task.snapshot.annotations[0].text, 'Revised comment'); assert.deepEqual(submitted.task.snapshot.referenceContent, target.snapshot.referenceContent);
+  assert.equal(submitted.draft.id, previous.id); assert.equal(submitted.draft.text, previous.text);
+  const repeated = await f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision }); assert.equal(repeated.task.id, target.id); assert.deepEqual(repeated.draft, submitted.draft);
+  assert.deepEqual((await f.state(session.id)).tasks.map((task: Task) => task.id), [first.id, target.id, last.id]);
+  assert.equal((await f.call(`/api/sessions/${session.id}/claim`, 'POST', { consumerId: 'after-edit' })).task.id, target.id);
+});
+
+test('claim and edit share one reservation boundary while the losing action retains its content', async t => {
+  const f = await fixture(t), session = await f.session('Edit race');
+  const task = await f.sendTask(session.id, 'Race original'), draft: Draft = (await f.state(session.id)).draft;
+  const request = (action: string, body: unknown) => fetch(`${f.running.url}/api/sessions/${session.id}/${action}`, { method: 'POST', headers: { Authorization: `Bearer ${f.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const responses = await Promise.all([request(`tasks/${task.id}/edit`, { draftId: draft.id, expectedRevision: draft.revision }), request('claim', { consumerId: 'race-consumer' })]);
+  assert.deepEqual(responses.map(response => response.status).sort(), [200, 409]);
+  const state = await f.state(session.id); assert.deepEqual(state.tasks[0].snapshot, task.snapshot);
+  if (state.tasks[0].status === 'editing') { assert.equal(state.draft.text, task.snapshot.userRequest.text); assert.equal(state.tasks[0].runs.length, 0); }
+  else { assert.equal(state.tasks[0].status, 'running'); assert.equal(state.draft.id, draft.id); assert.equal(state.tasks[0].runs.length, 1); }
+});

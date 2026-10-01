@@ -105,8 +105,8 @@ test('annotation levels retain clipped regions and sent task markings follow exp
   expect(JSON.stringify((await app.state()).tasks[0].snapshot)).toBe(snapshot); expect((await app.state()).annotations).toHaveLength(1);
   await page.getByRole('button', { name: 'Remove annotation 1', exact: true }).click(); await expect(page.locator('.annotation-outline')).toHaveCount(0);
   await page.getByRole('button', { name: 'Request history', exact: true }).click(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(0);
-  await page.locator('.task-annotations summary').click(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(1); await page.getByRole('button', { name: 'Close request history', exact: true }).click(); await expect(page.locator('.annotation-outline')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Remove selected files from canvas', exact: true }).click(); await expect(object).toHaveCount(0); await page.getByRole('button', { name: 'Request history', exact: true }).click(); await page.locator('.task-annotations summary').click(); await expect(page.locator('.annotation-outline')).toHaveCount(0); await expect(page.locator('.task-annotations p')).toContainText('Refine the lower-right detail.'); await expect(page.locator('.task-annotations p')).toBeVisible();
+  await page.locator('.task-annotation-text').first().click(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(1); await page.getByRole('button', { name: 'Close request history', exact: true }).click(); await expect(page.locator('.annotation-outline')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Remove selected files from canvas', exact: true }).click(); await expect(object).toHaveCount(0); await page.getByRole('button', { name: 'Request history', exact: true }).click(); await page.locator('.task-annotation-text').first().click(); await expect(page.locator('.annotation-outline')).toHaveCount(0); await expect(page.locator('.task-annotation-text')).toContainText('Refine the lower-right detail.'); await expect(page.locator('.task-annotation-text')).toBeVisible();
   expect(JSON.stringify((await app.state()).tasks[0].snapshot)).toBe(snapshot);
 });
 
@@ -120,7 +120,7 @@ test('second-level video annotation preserves time frame and pending target when
   await page.locator('.object-image').click({ position: { x: 60, y: 60 } }); await expect(page.locator('.object-image')).toHaveAttribute('data-selected', 'true'); await expect(comment).toHaveCount(0); await videoObject.click({ position: { x: 60, y: 60 } }); await beginAnnotating(page); await expect(comment).toHaveValue('Keep this exact moment.');
   await comment.press('Escape'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1); await expect(page.locator('.annotation-outline')).toHaveCount(0);
   const saved = await app.state(), annotation = saved.tasks[0].snapshot.annotations[0]; expect(annotation.timeStart).toBeCloseTo(.7, 4); expect(annotation.snapshotAssetId).toBeTruthy(); expect(annotation.bounds.x).toBeCloseTo(.2, 2); expect(annotation.bounds.width).toBeCloseTo(.5, 2);
-  await page.locator('.queue-task').click(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(1); await page.locator('.task-annotations summary').click(); await expect(page.locator('.task-annotation-frame')).toHaveJSProperty('naturalWidth', 320);
+  await page.locator('.queue-task').click(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(1); await page.locator('.task-annotation-text').first().click(); await expect(page.locator('.task-annotation-frame')).toHaveJSProperty('naturalWidth', 320);
 });
 
 test('drag snapping preserves its preview at release, group offsets and bypass controls', async ({ page, app }, info) => {
@@ -240,15 +240,15 @@ test('each confirmed local send animates once including SSE-first and recovered 
       let entered!: () => void; arrived = new Promise(resolve => { entered = resolve; }); const delayed = new Promise<void>(resolve => { release = resolve; });
       await page.route(`**/api/sessions/${sessionId}/tasks`, async route => { const response = await route.fetch(); entered(); await delayed; await route.fulfill({ response }); });
     }
-    await input.fill(`Motion direction ${index}`); await input.press('Enter');
+    await input.fill(`Motion direction ${index}`); await input.press('Enter'); if (index === 1) await page.locator('.queue-stack').hover();
     if (arrived) { await arrived; await expect(page.locator('.queue-item')).toHaveCount(2); expect((await motions()).starts).toHaveLength(1); release(); }
     await expect(input).toBeEnabled(); await expect.poll(async () => (await motions()).starts.length).toBe(index);
     if (index === 2) await page.unroute(`**/api/sessions/${sessionId}/tasks`);
   }
   await expect.poll(async () => (await motions()).ends.length).toBe(3);
   await input.fill('Visible fourth direction'); await input.press('Enter'); await expect(input).toBeEnabled(); await expect.poll(async () => (await motions()).starts.length).toBe(4);
-  await expect(page.locator('.queue-expand')).toHaveAttribute('aria-expanded', 'true'); await expect(page.locator('.queue-item').last()).toBeInViewport();
-  await page.locator('.queue-expand').click(); await page.locator('.queue-expand').click();
+  await page.locator('.queue-stack').hover(); await expect(page.locator('.queue-expand')).toHaveAttribute('aria-expanded', 'true'); await expect(page.locator('.queue-item').last()).toBeInViewport();
+  await page.locator('#whiteboard').click({ position: { x: 1200, y: 100 } }); await page.locator('.queue-stack').hover();
   await expect.poll(async () => page.locator('.queue-entering').count()).toBe(0); expect((await motions()).starts).toHaveLength(4);
   const state = await app.state(); await app.call(`/api/sessions/${sessionId}/tasks/${state.tasks[0].id}/cancel`, 'POST', { reason: 'Updated direction' }); await expect(page.locator('.queue-item')).toHaveCount(3);
   await page.getByRole('button', { name: 'Request history', exact: true }).click(); await page.getByRole('button', { name: 'Close request history', exact: true }).click(); expect((await motions()).starts).toHaveLength(4);
@@ -258,7 +258,7 @@ test('each confirmed local send animates once including SSE-first and recovered 
   await page.emulateMedia({ reducedMotion: 'reduce' }); await input.fill('Immediate reduced motion result'); await input.press('Enter'); await expect(input).toBeEnabled(); await expect(page.locator('.queue-item')).toHaveCount(4); expect((await motions()).starts).toHaveLength(4); await expect(page.locator('.queue-entering')).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: 'no-preference' }); expect((await motions()).starts).toHaveLength(4);
   await page.route(`**/api/sessions/${sessionId}/tasks`, async route => { await route.fetch(); await route.abort('failed'); });
-  await input.fill('Recovered response direction'); await input.press('Enter'); await expect(input).toBeEnabled(); await expect.poll(async () => (await motions()).starts.length).toBe(5); await page.unroute(`**/api/sessions/${sessionId}/tasks`);
+  await input.fill('Recovered response direction'); await input.press('Enter'); await expect(input).toBeEnabled(); await page.locator('.queue-stack').hover(); await expect.poll(async () => (await motions()).starts.length).toBe(5); await page.unroute(`**/api/sessions/${sessionId}/tasks`);
   const ids = (await motions()).starts; expect(new Set(ids).size).toBe(ids.length);
   const second = await app.call('/api/sessions', 'POST', { name: 'Independent motion scope' }); const other = await page.context().newPage();
   await other.goto(`${app.server.url}/?session=${second.id}`); await expect(other.locator('#instruction')).toBeEnabled(); await other.locator('#instruction').fill('Other scope direction'); await other.locator('#instruction').press('Enter'); await expect(other.locator('.queue-item')).toHaveCount(1); expect((await motions()).starts).toHaveLength(5); await other.close();
@@ -458,7 +458,7 @@ test('project identity and contextual actions follow selection, pan, zoom, resiz
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
   await expect.poll(anchorGap).toBeCloseTo(8, 1);
   expect((await actions.boundingBox())!.width).toBeCloseTo(original.width, 1);
-  await page.getByRole('button', { name: 'Resize reference.png', exact: true }).press('ArrowRight');
+  await page.getByRole('button', { name: 'Resize reference.png bottom right', exact: true }).press('ArrowRight');
   await expect.poll(async () => (await app.state()).objects[0].version).toBe(2);
   await expect.poll(anchorGap).toBeCloseTo(8, 1);
   const current = await app.state();
@@ -523,9 +523,9 @@ test('composer grows with wrap and newlines, restores height, sends Enter and pr
     await page.setViewportSize({ width, height: 480 });
     await expect.poll(async () => page.locator('.queue-list').evaluate(element => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(64);
     const queue = page.locator('.queue-list');
-    await queue.evaluate(element => { element.scrollTop = element.scrollHeight; });
+    await expect.poll(async () => page.locator('.queue-extra').last().evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThan(36); await queue.evaluate(element => { element.scrollTop = element.scrollHeight; });
     await expect(page.locator('.queue-item').last()).toBeInViewport();
-    expect(await page.locator('.canvas-toolbar button,.canvas-actions button,.send-button,.queue-item:last-child button').evaluateAll(elements => elements.every(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; }))).toBeTruthy();
+    await expect.poll(async () => page.locator('.canvas-toolbar button,.canvas-actions button,.send-button,.queue-list>.queue-extra:last-child .queue-item button').evaluateAll(elements => elements.filter(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') !== element; }).map(element => element.getAttribute('aria-label')))).toEqual([]);
     await page.screenshot({ path: info.outputPath(`growing-composer-${width}x480.png`) });
   }
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -566,7 +566,7 @@ test('short-screen contextual video controls stay reachable beside a clipped sel
     await timeline.click(); await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeGreaterThan(.5);
     expect(await video.evaluate(element => (element as HTMLVideoElement & { retained: string }).retained)).toBe(mediaIdentity);
     await expect(page.getByRole('dialog', { name: /Request [12]/ })).not.toBeVisible();
-    const queue = page.locator('.queue-list'); await queue.evaluate(element => { element.scrollTop = element.scrollHeight; });
+    const queue = page.locator('.queue-list'); await expect.poll(async () => page.locator('.queue-extra').last().evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThan(36); await queue.evaluate(element => { element.scrollTop = element.scrollHeight; });
     expect(await page.locator('.queue-item').last().getByRole('button').first().evaluate(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; })).toBeTruthy();
     await page.screenshot({ path: info.outputPath(`context-video-queued-${width}x480.png`) });
   }
@@ -615,7 +615,7 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   await page.mouse.move(box.x + box.width * .8 + 60, box.y + box.height * .8 + 30, { steps: 5 }); await page.mouse.up();
   await expect.poll(async () => (await app.state()).objects[0].version).toBe(2);
   await expect(object).toHaveAttribute('data-object-version', '2');
-  const handle = page.getByRole('button', { name: 'Resize reference.png', exact: true });
+  const handle = page.getByRole('button', { name: 'Resize reference.png bottom right', exact: true });
   await handle.focus(); await handle.press('ArrowRight');
   await expect.poll(async () => (await app.state()).objects[0].version).toBe(3);
   const currentBox = (await object.locator('img').boundingBox())!;
@@ -1177,58 +1177,118 @@ test('lost send responses query the persisted draft association and keep one tas
   expect((await app.state()).tasks.map(task => task.snapshot.userRequest.text)).toEqual(['响应丢失仍保留的一次需求', '后续独立需求']);
 });
 
-test('queue left status icons and symmetric insets stay usable across viewport widths', async ({ page, browser, app }, info) => {
-  await page.emulateMedia({ reducedMotion: 'no-preference' }); await open(page, app); const image = await png(page);
+test('queue accessible statuses and symmetric insets stay usable across viewport widths', async ({ page, browser, app }, info) => {
+  await open(page, app); const image = await png(page);
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(['Cover study.png', 'Palette study.png', 'Light study.png', 'Texture study.png'].map(name => ({ ...image, name }))); await expect(page.locator('.board-object')).toHaveCount(4);
   for (const [index, object] of (await page.locator('.board-object').all()).entries()) { await object.focus(); await page.keyboard.press(index ? 'Shift+Enter' : 'Enter'); }
   await page.getByRole('button', { name: 'Attach to request', exact: true }).click(); await page.locator('#instruction').fill('Compose a quiet cover from these references.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1);
-  await page.locator('#instruction').fill('Refine the title spacing and hierarchy.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(2); await page.locator('#whiteboard').focus(); await page.keyboard.press('Escape');
+  await page.locator('#instruction').fill('Refine the title spacing and hierarchy.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(2);
   const first = page.locator('.queue-item').first(), second = page.locator('.queue-item').nth(1), measurements: unknown[] = [];
-  for (const row of [first, second]) { await expect(row.locator('.queue-task-mark .lucide-circle')).toBeVisible(); await expect(row.locator('.queue-row>.status-badge')).toHaveCount(0); await expect(row.locator('.queue-task')).toHaveAttribute('aria-label', /Queued$/); await expect(row.locator('.queue-task-mark')).toHaveAttribute('aria-hidden', 'true'); }
-  await expect(first.locator('.queue-preview')).toHaveCount(3); await expect(first.locator('.queue-preview-overflow')).toHaveText('+1'); await expect(second.locator('.queue-previews')).toHaveCount(0);
+  for (const row of [first, second]) { await expect(row.locator('.queue-task-mark')).toHaveCount(0); await expect(row.locator('.queue-row>.status-badge')).toHaveCount(0); await expect(row.locator('.queue-task')).toHaveAttribute('aria-label', /Queued$/); }
+  await expect(first.locator('.queue-preview')).toHaveCount(3); await expect(first.locator('.queue-preview-overflow')).toHaveText('+1');
   for (const width of [320, 390, 560, 768, 1440]) {
-    await page.setViewportSize({ width, height: width > 1000 ? 900 : 480 });
+    await page.setViewportSize({ width, height: width > 1000 ? 900 : 480 }); await page.locator('.queue-stack').hover();
     await expect.poll(async () => page.locator('.queue-stack').evaluate(element => { const queue = element.getBoundingClientRect(), form = document.querySelector('.composer')!.getBoundingClientRect(); return Math.abs(queue.x + queue.width / 2 - form.x - form.width / 2); })).toBeLessThan(.5);
-    const measurement = await first.evaluate(element => { const queue = document.querySelector('.queue-list')!.getBoundingClientRect(), form = document.querySelector('.composer')!.getBoundingClientRect(), rail = document.querySelector('.canvas-toolbar')!.getBoundingClientRect(), mark = element.querySelector('.queue-task-mark')!.getBoundingClientRect(), previews = element.querySelector('.queue-previews')!.getBoundingClientRect(), title = element.querySelector('.queue-title')!.getBoundingClientRect(); return { viewport: innerWidth, queue: queue.toJSON(), form: form.toJSON(), rail: rail.toJSON(), titleWidth: title.width, markBeforePreviews: mark.right <= previews.left }; });
-    expect(measurement.markBeforePreviews).toBeTruthy(); expect(measurement.titleWidth).toBeGreaterThan(20); expect(measurement.queue.x).toBeGreaterThanOrEqual(measurement.rail.x + measurement.rail.width + 8); measurements.push(measurement);
+    const measurement = await first.evaluate(element => { const queue = document.querySelector('.queue-list')!.getBoundingClientRect(), rail = document.querySelector('.canvas-toolbar')!.getBoundingClientRect(), title = element.querySelector('.queue-title')!.getBoundingClientRect(); return { viewport: innerWidth, queue: queue.toJSON(), rail: rail.toJSON(), titleWidth: title.width }; });
+    expect(measurement.titleWidth).toBeGreaterThanOrEqual(width <= 360 ? 60 : 20); if (width <= 360) { await expect(first.locator('.queue-preview')).toHaveCount(1); await expect(first.locator('.queue-preview-overflow')).toHaveText('+3'); } else { await expect(first.locator('.queue-preview')).toHaveCount(3); await expect(first.locator('.queue-preview-overflow')).toHaveText('+1'); } expect(measurement.queue.x).toBeGreaterThanOrEqual(measurement.rail.x + measurement.rail.width + 8); measurements.push(measurement);
     expect(await first.locator('.queue-row').evaluate(element => element.getBoundingClientRect().height)).toBe(36);
-    expect(await page.locator('.canvas-toolbar button,.queue-task,.queue-row>.icon-button').evaluateAll(elements => elements.every(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; }))).toBeTruthy();
     await first.locator('.queue-task').click(); await expect(first.locator('.queue-task')).toHaveAttribute('aria-expanded', 'true'); await first.locator('.queue-task').click(); await expect(first.locator('.queue-task')).toHaveAttribute('aria-expanded', 'false');
   }
   const state = await app.state(), session = state.session.id, claim = await app.call(`/api/sessions/${session}/claim`, 'POST', { consumerId: 'queue-status-fixture' }) as Claim;
-  await expect(first).toHaveAttribute('data-status', 'running'); await expect(first.locator('.queue-task-mark .spin')).toBeVisible(); await expect(first.locator('.queue-row>.status-badge')).toHaveCount(0); await expect(first.locator('.queue-task')).toHaveAttribute('aria-label', /Running$/);
-  expect(await first.locator('.spin').evaluate(element => getComputedStyle(element).animationName)).toBe('spin'); const transform = await first.locator('.spin').evaluate(element => getComputedStyle(element).transform); await expect.poll(async () => first.locator('.spin').evaluate(element => getComputedStyle(element).transform)).not.toBe(transform);
-  await page.emulateMedia({ reducedMotion: 'reduce' }); expect(await first.locator('.spin').evaluate(element => getComputedStyle(element).animationName)).toBe('none'); await expect(first.locator('.queue-task-mark')).toBeVisible(); await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await first.locator('.queue-task').click(); await expect(first.locator('.task-heading .status-running')).toContainText('Running'); await first.locator('.queue-task').click();
-  await page.setViewportSize({ width: 390, height: 480 }); await page.screenshot({ path: info.outputPath('queue-status-centered-390.png') }); await writeFile(info.outputPath('queue-status-geometry.json'), JSON.stringify(measurements, null, 2));
+  await expect(first).toHaveAttribute('data-status', 'running'); await expect(first.locator('.queue-task')).toHaveAttribute('aria-label', /Running$/); await expect(first.locator('.queue-task svg.lucide-loader-circle')).toHaveCount(0); await expect(first.getByRole('button', { name: 'Edit request 1', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Request history', exact: true }).click(); await expect(page.locator('.history-list .status-running')).toHaveText('Running'); await page.getByRole('button', { name: 'Close request history', exact: true }).click();
   await app.call(`/api/sessions/${session}/tasks/${claim.task!.id}/complete`, 'POST', { runId: claim.run!.id, consumerId: claim.consumerId, summary: 'Cover direction prepared.', assetIds: [], validation: [], operations: [] });
   const textClaim = await app.call(`/api/sessions/${session}/claim`, 'POST', { consumerId: claim.consumerId }) as Claim;
-  const textRow = page.locator('.queue-item').first(); await expect(textRow).toHaveAttribute('data-status', 'running'); await expect(textRow.locator('.queue-task-mark .spin')).toBeVisible(); await expect(textRow.locator('.queue-previews')).toHaveCount(0); await expect(textRow.locator('.queue-row>.status-badge')).toHaveCount(0);
-  await app.call(`/api/sessions/${session}/tasks/${textClaim.task!.id}/block`, 'POST', { runId: textClaim.run!.id, consumerId: textClaim.consumerId, reason: 'Choose the final title.' }); await expect(textRow.locator('.queue-row>.status-blocked')).toHaveText('Needs input'); await expect(textRow.locator('.queue-task')).toHaveAttribute('aria-label', /Needs input$/);
-  const resumed = await app.call(`/api/sessions/${session}/tasks/${textClaim.task!.id}/resume`, 'POST', { expectedRunId: textClaim.run!.id, consumerId: 'queue-status-resumed', resolution: 'Title selected.' }) as Claim;
-  await app.call(`/api/sessions/${session}/tasks/${resumed.task!.id}/interrupt`, 'POST', { runId: resumed.run!.id, consumerId: resumed.consumerId, reason: 'Save this direction for later.' }); await expect(textRow.locator('.queue-row>.status-interrupted')).toHaveText('Interrupted');
+  await app.call(`/api/sessions/${session}/tasks/${textClaim.task!.id}/block`, 'POST', { runId: textClaim.run!.id, consumerId: textClaim.consumerId, reason: 'Choose the final title.' }); await expect(page.locator('.queue-row>.status-blocked')).toHaveText('Needs input');
+  await page.screenshot({ path: info.outputPath('queue-status-centered-390.png') }); await writeFile(info.outputPath('queue-status-geometry.json'), JSON.stringify(measurements, null, 2));
   const context = await browser.newContext({ hasTouch: true, viewport: { width: 320, height: 480 } }); try { const touch = await context.newPage(); await touch.goto(page.url()); await expect(touch.locator('.queue-item')).toHaveCount(1); expect(await touch.locator('.queue-row').evaluate(element => element.getBoundingClientRect().height)).toBe(40); } finally { await context.close(); }
 });
 
-test('compact queue keeps hover and focus stable and expands through explicit actions', async ({ page, browser, app }, info) => {
+test('compact queue opens on hover with nonlinear motion and supports keyboard and touch access', async ({ page, browser, app }, info) => {
   await open(page, app);
   for (let index = 1; index <= 6; index++) { await page.locator('#instruction').fill(`Composition ${index}`); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); await expect(page.locator('#instruction')).toBeEnabled(); }
-  const toggle = page.locator('.queue-expand'); await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-  await toggle.click(); await expect(page.locator('.queue-item:visible')).toHaveCount(3);
-  const first = page.locator('.queue-task').first();
-  await expect.poll(async () => page.locator('.queue-entering').count()).toBe(0);
-  const before = await first.evaluate(element => ({ background: getComputedStyle(element).backgroundColor, rect: element.getBoundingClientRect().toJSON() }));
-  await first.hover(); await first.focus();
-  expect(await first.evaluate(element => ({ background: getComputedStyle(element).backgroundColor, rect: element.getBoundingClientRect().toJSON() }))).toEqual(before);
-  await expect(toggle).toHaveAttribute('aria-expanded', 'false'); await expect(page.locator('.queue-item:visible')).toHaveCount(3);
-  expect(await page.locator('.queue-row').first().evaluate(element => element.getBoundingClientRect().height)).toBe(36);
-  await first.click(); await expect(first).toHaveAttribute('aria-expanded', 'true'); await expect(page.getByRole('region', { name: 'Request 1', exact: true })).toBeVisible();
-  await first.click(); await expect(first).toHaveAttribute('aria-expanded', 'false');
-  await toggle.click(); await expect(page.locator('.queue-item:visible')).toHaveCount(3);
-  await toggle.focus(); await toggle.press('Enter'); await expect(page.locator('.queue-item:visible')).toHaveCount(6);
-  await toggle.press('Space'); await expect(page.locator('.queue-item:visible')).toHaveCount(3);
-  await toggle.press('Enter'); await page.getByRole('button', { name: 'Cancel request 4', exact: true }).click(); await expect(page.locator('.queue-item')).toHaveCount(5);
+  const toggle = page.locator('.queue-expand'); await page.locator('#whiteboard').click({ position: { x: 1100, y: 100 } }); await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect.poll(async () => page.locator('.queue-extra').first().evaluate(element => element.getBoundingClientRect().height)).toBe(0);
+  await page.evaluate(() => { const motion: number[] = []; (window as any).hoverMotion = motion; const started = performance.now(); const sample = () => { motion.push(new DOMMatrix(getComputedStyle(document.querySelector('.queue-extra')!).transform).m42); if (performance.now() - started < 600) requestAnimationFrame(sample); }; requestAnimationFrame(sample); });
+  await page.locator('.queue-stack').hover(); await expect(toggle).toHaveAttribute('aria-expanded', 'true'); await expect.poll(async () => page.locator('.queue-extra').last().evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThan(30);
+  await expect.poll(async () => page.evaluate(() => Math.min(...(window as any).hoverMotion))).toBeLessThan(0); await writeFile(info.outputPath('hover-motion.json'), JSON.stringify(await page.evaluate(() => (window as any).hoverMotion), null, 2));
+  await page.locator('#instruction').hover(); await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await page.locator('#whiteboard').hover({ position: { x: 1100, y: 100 } }); await expect(toggle).toHaveAttribute('aria-expanded', 'false'); await expect.poll(async () => page.locator('.queue-extra').first().evaluate(element => element.getBoundingClientRect().height)).toBe(0);
+  await toggle.focus(); await toggle.press('Enter'); await expect(toggle).toHaveAttribute('aria-expanded', 'true'); await expect(page.getByRole('button', { name: 'Cancel request 4', exact: true })).toBeInViewport();
+  await toggle.press('Escape'); await expect(page.locator('#instruction')).toBeFocused(); await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await page.setViewportSize({ width: 390, height: 480 }); await page.screenshot({ path: info.outputPath('compact-queue-390.png') });
   const touchContext = await browser.newContext({ viewport: { width: 390, height: 480 }, hasTouch: true, isMobile: true });
-  try { const touch = await touchContext.newPage(); await touch.goto(page.url()); await expect(touch.locator('.queue-item:visible')).toHaveCount(3); await touch.locator('.queue-expand').tap(); await expect(touch.locator('.queue-item:visible')).toHaveCount(5); expect(await touch.locator('.queue-row').first().evaluate(element => element.getBoundingClientRect().height)).toBe(40); await touch.locator('.queue-expand').tap(); await expect(touch.locator('.queue-item:visible')).toHaveCount(3); } finally { await touchContext.close(); }
+  try { const touch = await touchContext.newPage(); await touch.goto(page.url()); await expect(touch.locator('.queue-extra').first()).toHaveAttribute('aria-hidden', 'true'); await touch.locator('.queue-expand').tap(); await expect(touch.locator('.queue-expand')).toHaveAttribute('aria-expanded', 'true'); await expect(touch.getByRole('button', { name: 'Cancel request 4', exact: true })).toBeInViewport(); expect(await touch.locator('.queue-row').first().evaluate(element => element.getBoundingClientRect().height)).toBe(40); await touch.locator('#whiteboard').tap({ position: { x: 250, y: 100 } }); await expect(touch.locator('.queue-expand')).toHaveAttribute('aria-expanded', 'false'); } finally { await touchContext.close(); }
+});
+
+test('spring queue and composer keep compact references, editable FIFO slots and balanced controls', async ({ page, app }, info) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' }); await open(page, app);
+  const composer = page.locator('.composer'), input = page.locator('#instruction');
+  const narrow = (await composer.boundingBox())!.width; await input.click(); await expect(composer).toHaveAttribute('data-compact', 'false');
+  await expect.poll(async () => (await composer.boundingBox())!.width).toBeGreaterThan(narrow + 100);
+  await input.fill('One line\nSecond line\nThird line');
+  await expect.poll(async () => composer.evaluate(form => { const outer = form.getBoundingClientRect(), send = form.querySelector('.send-button')!.getBoundingClientRect(); return Math.abs((outer.right - send.right) - (outer.bottom - send.bottom)); })).toBeLessThan(.1);
+  expect((await page.locator('.send-button').boundingBox())!.width).toBe(32);
+  await input.fill(''); await page.locator('#whiteboard').click({ position: { x: 1000, y: 150 } }); await expect(composer).toHaveAttribute('data-compact', 'true');
+  const springImage = await png(page); await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(['Cover.png', 'Palette.png'].map(name => ({ ...springImage, name })));
+  await expect(page.locator('.board-object')).toHaveCount(2);
+  const initial = await app.state(), objectA = initial.objects[0], objectB = initial.objects[1];
+  let saved = await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...initial.draft, text: 'Create from each reference.', attachments: initial.assets.map(asset => asset.id), references: { objectIds: initial.objects.map(object => object.id), taskIds: [] }, annotations: [objectA, objectA, objectB].map((object, index) => ({ id: `spring-note-${index}`, scope: 'object', objectId: object.id, objectIds: [object.id], assetId: object.assetId, bounds: { x: 0, y: 0, width: 1, height: 1 }, coordinateSpace: 'normalized', text: `Comment ${index + 1}` })) });
+  await app.call(`/api/sessions/${initial.session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision });
+  for (const text of ['Second queued request', 'Third queued request']) { const state = await app.state(); saved = await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...state.draft, text }); await app.call(`/api/sessions/${initial.session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision }); }
+  await page.reload(); await expect(page.locator('.queue-item')).toHaveCount(3); await expect(page.locator('.queue-stack')).not.toHaveClass(/expanded/);
+  await expect.poll(async () => page.locator('.queue-extra').first().evaluate(element => element.getBoundingClientRect().height)).toBe(0);
+  await page.locator('.queue-stack').hover(); await expect(page.locator('.queue-stack')).toHaveClass(/expanded/); await expect.poll(async () => page.locator('.queue-extra').first().evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThan(30);
+  await expect(page.locator('.queue-task-mark,.queue-task .lucide-circle,.queue-task .lucide-loader-circle')).toHaveCount(0); await expect(page.getByRole('button', { name: 'Collapse queue', exact: true })).toHaveCount(0);
+  const first = page.locator('.queue-item').first(); await first.locator('.queue-task').click(); await expect(first.locator('.motion-disclosure')).toHaveAttribute('data-motion', 'open');
+  await expect(first.locator('.task-instruction,.task-heading')).toHaveCount(0); await expect(first.locator(`[data-reference-item="${objectA.id}"] .task-item-annotation`)).toHaveCount(2); await expect(first.locator(`[data-reference-item="${objectB.id}"] .task-item-annotation`)).toHaveCount(1);
+  expect(await first.getByRole('button', { name: 'Collapse request details', exact: true }).locator('svg').getAttribute('class')).toContain('chevron-down');
+  await page.screenshot({ path: info.outputPath('spring-queue-wide.png') });
+  await first.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(first.locator('.motion-disclosure')).toHaveAttribute('data-motion', 'closing'); await expect(first.locator('.motion-disclosure')).toHaveCount(0);
+  const queued = await app.state(), ids = queued.tasks.map(task => task.id); saved = await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...queued.draft, text: 'Next unsent idea' }); await expect(input).toHaveValue('Next unsent idea');
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(input).toHaveValue('Create from each reference.'); await expect(page.locator('.draft-annotation')).toHaveCount(3); await expect(page.locator('.composer-editing')).toBeVisible();
+  await input.fill('Revised request'); await expect(composer).toHaveAttribute('data-save-state', 'saved'); await page.reload(); await expect(input).toHaveValue('Revised request'); await expect(page.getByRole('button', { name: 'Cancel edit', exact: true })).toBeVisible();
+  await page.locator('.annotation-content').first().click(); const annotationText = page.getByRole('textbox', { name: 'Annotation text', exact: true }); await annotationText.fill('Revised first comment'); await page.getByRole('button', { name: 'Close annotation', exact: true }).click();
+  await page.route(`**/api/sessions/${initial.session.id}/tasks`, async route => { await route.fetch(); await route.abort('failed'); });
+  await page.getByRole('button', { name: 'Save request', exact: true }).click(); await expect(input).toHaveValue('Next unsent idea'); await expect(page.getByRole('alert')).toHaveCount(0); await page.unroute(`**/api/sessions/${initial.session.id}/tasks`);
+  const result = await app.state(); expect(result.tasks.map(task => task.id)).toEqual(ids); expect(result.tasks[0].snapshot.userRequest.text).toBe('Revised request'); expect(result.tasks[0].snapshot.annotations[0].text).toBe('Revised first comment'); expect(result.tasks[0].sequence).toBe(1);
+  for (const width of [390, 320]) { await page.setViewportSize({ width, height: 480 }); await expect.poll(async () => page.locator('.dock-footer').evaluate(element => { const box = element.getBoundingClientRect(), button = element.querySelector('button')!.getBoundingClientRect(); return button.left - box.left; })).toBeLessThan(16); await page.locator('.queue-stack').hover(); await expect(page.getByRole('button', { name: 'Edit request 1', exact: true })).toBeInViewport(); await page.screenshot({ path: info.outputPath(`spring-queue-${width}.png`) }); }
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(input).toHaveValue('Revised request'); await input.fill('Discarded edit'); await page.getByRole('button', { name: 'Cancel edit', exact: true }).click(); await expect(input).toHaveValue('Next unsent idea'); expect((await app.state()).tasks[0].snapshot.userRequest.text).toBe('Revised request');
+  await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' }); await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click(); await first.locator('.queue-task').click(); await expect(first.locator('.motion-disclosure')).toHaveAttribute('data-motion', 'open'); expect(await first.locator('.motion-disclosure').evaluate(element => getComputedStyle(element).transitionDuration)).toBe('0s'); await first.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(first.locator('.motion-disclosure')).toHaveCount(0); await page.screenshot({ path: info.outputPath('spring-queue-dark-reduced.png') });
+});
+
+test('four square file corners preserve opposite anchors and commit snapped resize previews', async ({ page, app }, info) => {
+  await open(page, app); const resizeImage = await png(page); await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(['Resize.png', 'Target.png'].map(name => ({ ...resizeImage, name })));
+  await expect(page.locator('.board-object')).toHaveCount(2); const initial = await app.state(), id = initial.objects[0].id, targetId = initial.objects[1].id;
+  const place = async (zoom = 1) => { const state = await app.state(); await app.call('/api/board/operations', 'POST', { sessionId: state.session.id, operations: state.objects.map(object => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: object.id === id ? { x: 400, y: 200, width: 200, height: 100 } : { x: 700, y: 350, width: 80, height: 80 } })) }); await app.call(`/api/sessions/${state.session.id}/view`, 'PUT', { x: zoom === 2 ? -500 : 0, y: zoom === 2 ? -160 : 0, zoom, selectedObjectIds: [id] }); await page.reload(); await expect(page.locator(`[data-object-id="${id}"] .resize-handle`)).toHaveCount(4); };
+  await place(); const object = page.locator(`[data-object-id="${id}"]`); expect(await object.evaluate(element => getComputedStyle(element).borderRadius)).toBe('0px');
+  for (const corner of ['nw', 'ne', 'sw', 'se']) { await place(); const box = (await object.locator(`[data-resize-corner="${corner}"]`).boundingBox())!; const signX = corner.endsWith('w') ? -1 : 1, signY = corner.startsWith('n') ? -1 : 1; await page.keyboard.down('Alt'); await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down(); await page.mouse.move(box.x + box.width / 2 + signX * 40, box.y + box.height / 2 + signY * 20, { steps: 4 }); await page.mouse.up(); await page.keyboard.up('Alt'); await expect.poll(async () => (await app.state()).objects.find(value => value.id === id)!.width).toBeCloseTo(240, 3); const result = (await app.state()).objects.find(value => value.id === id)!; expect(result.width / result.height).toBe(2); expect(corner.endsWith('w') ? result.x + result.width : result.x).toBe(corner.endsWith('w') ? 600 : 400); expect(corner.startsWith('n') ? result.y + result.height : result.y).toBe(corner.startsWith('n') ? 300 : 200); }
+  for (const zoom of [1, 2]) { await place(zoom); const handle = (await object.locator('[data-resize-corner="se"]').boundingBox())!, start = { x: handle.x + handle.width / 2, y: handle.y + handle.height / 2 }; await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(start.x + 97 * zoom, start.y + 48.5 * zoom, { steps: 4 }); await expect(page.locator('[data-snap-axis="x"]')).toHaveAttribute('x1', '700'); await expect(page.locator('[data-snap-axis="y"]')).toHaveAttribute('y1', '350'); const preview = await object.evaluate(element => ({ width: parseFloat((element as HTMLElement).style.width), height: parseFloat((element as HTMLElement).style.height) })); expect(preview).toEqual({ width: 300, height: 150 }); await page.screenshot({ path: info.outputPath(`resize-snap-${zoom}x.png`) }); await page.mouse.up(); await expect.poll(async () => (await app.state()).objects.find(value => value.id === id)!.width).toBe(300); }
+  await page.reload(); await expect.poll(async () => object.evaluate(element => parseFloat((element as HTMLElement).style.width))).toBe(300); expect((await app.state()).objects.find(value => value.id === targetId)!.width).toBe(80);
+});
+
+test('explicit draft conflict choices adopt the current editing scope in both directions', async ({ page, app }) => {
+  await open(page, app); const input = page.locator('#instruction'); await input.fill('Queued original'); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1);
+  const first = await app.state(), sessionId = first.session.id, task = first.tasks[0];
+  const conflict = page.getByRole('region', { name: 'Resolve draft update', exact: true });
+  for (const entering of [true, false]) {
+    let release!: () => void, entered!: () => void; const enteredPromise = new Promise<void>(resolve => { entered = resolve; }), delayed = new Promise<void>(resolve => { release = resolve; });
+    await page.route(`**/api/sessions/${sessionId}/draft`, async route => { entered(); await delayed; await route.continue(); });
+    const localText = entering ? 'Local ordinary draft' : 'Local editing draft'; await input.fill(localText); await enteredPromise;
+    const current = await app.state(); await app.call(`/api/sessions/${sessionId}/tasks/${task.id}/${entering ? 'edit' : 'cancel-edit'}`, 'POST', { draftId: current.draft.id, expectedRevision: current.draft.revision });
+    await expect(conflict).toBeVisible(); await expect(input).toHaveValue(localText); release();
+    await page.getByRole('button', { name: 'Keep your draft', exact: true }).click(); await expect(conflict).not.toBeVisible(); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+    const result = await app.state(); expect(result.draft.text).toBe(localText); expect(result.draft.editingTaskId).toBe(entering ? task.id : undefined); expect(result.tasks[0].snapshot.userRequest.text).toBe('Queued original'); await expect(page.getByRole('alert')).toHaveCount(0);
+    await page.unroute(`**/api/sessions/${sessionId}/draft`);
+  }
+});
+
+test('editing one removed source attachment preserves the other original object reference', async ({ page, app }) => {
+  await open(page, app); await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(['A.txt', 'B.txt'].map(name => ({ name, mimeType: 'text/plain', buffer: Buffer.from(`Reference ${name}`) }))); await expect(page.locator('.board-object')).toHaveCount(2);
+  const initial = await app.state(), sessionId = initial.session.id, sourceA = initial.objects.find(object => initial.assets.find(asset => asset.id === object.assetId)?.name === 'A.txt')!, sourceB = initial.objects.find(object => initial.assets.find(asset => asset.id === object.assetId)?.name === 'B.txt')!;
+  const saved = await app.call(`/api/sessions/${sessionId}/draft`, 'PUT', { ...initial.draft, text: 'Use these sources', attachments: initial.assets.map(asset => asset.id), references: { objectIds: [sourceA.id, sourceB.id], taskIds: [] } });
+  await app.call(`/api/sessions/${sessionId}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision });
+  await app.call('/api/board/operations', 'POST', { sessionId, operations: initial.objects.map(object => ({ type: 'delete', objectId: object.id, expectedVersion: object.version })) }); await expect(page.locator('.board-object')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Use these sources'); await page.getByRole('button', { name: 'Remove attachment A.txt', exact: true }).click(); await page.getByRole('button', { name: 'Save request', exact: true }).click(); await expect(page.locator('.composer-editing')).toHaveCount(0);
+  const task = (await app.state()).tasks[0]; expect(task.snapshot.referenceContent.objects).toEqual([sourceB]); expect(task.snapshot.referenceContent.assets.map(asset => asset.id)).toEqual([sourceB.assetId]);
 });

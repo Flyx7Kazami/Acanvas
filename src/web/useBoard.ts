@@ -194,7 +194,7 @@ export function useBoard() {
     if (!current?.conflict) return;
     const remote = current.conflict;
     window.clearTimeout(draftTimers.current.get(sessionId));
-    const next = choice === 'remote' ? freshDraft(remote, current.epoch + 1) : { ...freshDraft({ ...current.value, id: remote.id, revision: remote.revision }, current.epoch + 1), editRevision: 1 };
+    const next = choice === 'remote' ? freshDraft(remote, current.epoch + 1) : { ...freshDraft({ ...current.value, id: remote.id, revision: remote.revision, editingTaskId: remote.editingTaskId }, current.epoch + 1), editRevision: 1 };
     drafts.current.set(sessionId, next); reflectDraft(next); setError('');
     if (choice === 'local') await save(next);
     await refresh();
@@ -236,15 +236,36 @@ export function useBoard() {
       return result.task;
     } catch (cause) {
       const committed = await api.state(current.sessionId).catch(() => undefined);
-      if (committed?.tasks.some(task => task.draftId === current.id)) {
+      if (committed?.tasks.some(task => (task.draftId === current.id || task.lastEditDraftId === current.id))) {
         const next = freshDraft(committed.draft, (drafts.current.get(current.sessionId)?.epoch || 0) + 1);
         drafts.current.set(current.sessionId, next);
         if (sessionRef.current === current.sessionId) { adopt(committed); setError(''); }
-        return committed.tasks.find(task => task.draftId === current.id);
+        return committed.tasks.find(task => (task.draftId === current.id || task.lastEditDraftId === current.id));
       } else showError(cause);
     }
     finally { setSending(false); }
   }, [api, flushDraft, refresh, showError, reflectDraft, adopt]);
+
+  const editTask = useCallback(async (taskId: string, cancel = false) => {
+    const current = drafts.current.get(sessionRef.current)?.value;
+    if (!current || switchingRef.current) return;
+    setSending(true); setError('');
+    try {
+      await flushDraft(current.sessionId);
+      const latest = drafts.current.get(current.sessionId)!;
+      const result = await api.editTask(current.sessionId, taskId, current.id, latest.confirmedRevision, cancel);
+      const next = freshDraft(result.draft, latest.epoch + 1); drafts.current.set(current.sessionId, next);
+      if (sessionRef.current === current.sessionId) reflectDraft(next);
+      await refresh();
+    } catch (cause) {
+      const persisted = await api.state(current.sessionId).catch(() => undefined);
+      const task = persisted?.tasks.find(task => task.id === taskId);
+      const recovered = persisted && (cancel ? persisted.draft.id !== current.id && !persisted.draft.editingTaskId && task?.status === 'queued' && task.lastEditDraftId !== current.id : persisted.draft.editingTaskId === taskId && task?.status === 'editing');
+      if (recovered) { const next = freshDraft(persisted.draft, (drafts.current.get(current.sessionId)?.epoch || 0) + 1); drafts.current.set(current.sessionId, next); if (sessionRef.current === current.sessionId) { adopt(persisted); setError(''); } }
+      else { await refresh().catch(() => undefined); showError(cause); }
+    }
+    finally { setSending(false); }
+  }, [api, flushDraft, refresh, reflectDraft, showError, adopt]);
 
   const operations = useCallback(async (operations: BoardOperation[], sessionId = sessionRef.current) => {
     try { await api.operations(sessionId, operations); await refresh(); }
@@ -255,5 +276,5 @@ export function useBoard() {
     const handler = (event: BeforeUnloadEvent) => { if ([...drafts.current.values()].some(value => value.editRevision !== value.savedEditRevision)) event.preventDefault(); };
     window.addEventListener('beforeunload', handler); return () => window.removeEventListener('beforeunload', handler);
   }, []);
-  return { api, state, draft, draftConflict, view, error, connection, saveState, switching, sending, projectChanged, setError, showError, refresh, changeDraft, changeDraftFor, updateView, switchSession, createSession, send, operations, flushDraft, resolveDraftConflict };
+  return { api, state, draft, draftConflict, view, error, connection, saveState, switching, sending, projectChanged, setError, showError, refresh, changeDraft, changeDraftFor, updateView, switchSession, createSession, send, editTask, operations, flushDraft, resolveDraftConflict };
 }

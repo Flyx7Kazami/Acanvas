@@ -32,6 +32,7 @@ task block|interrupt --session ID --task ID --run ID --consumer ID --reason TEXT
 task reply --session ID --task ID --text TEXT
 task resume --session ID --task ID [--consumer ID] --expected-run ID --resolution TEXT
 task complete --session ID --task ID --run ID --consumer ID --input completion.json
+task edit|cancel-edit --session ID --task ID --draft ID --revision NUMBER
 task cancel --session ID --task ID --reason TEXT
 
 Completion JSON: {"summary":"Delivered","assetIds":[],"validation":[],"operations":[]}
@@ -124,6 +125,7 @@ export async function cli(args: string[]): Promise<unknown> {
     if (action === 'reply') return request(`${taskPath()}/reply`, 'POST', { text: required('text') });
     if (action === 'resume') return request(`${taskPath()}/resume`, 'POST', { consumerId: options.get('consumer') ?? randomUUID(), expectedRunId: required('expected-run'), resolution: required('resolution') });
     if (action === 'complete') return request(`${taskPath()}/complete`, 'POST', { ...await input(), ...identity() });
+    if (action === 'edit' || action === 'cancel-edit') return request(`${taskPath()}/${action}`, 'POST', { draftId: required('draft'), expectedRevision: Number(required('revision')) });
     if (action === 'cancel') return request(`${taskPath()}/cancel`, 'POST', { reason: required('reason') });
   }
   throw new Error('Choose a command from --help.');
