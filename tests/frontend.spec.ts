@@ -71,6 +71,156 @@ async function png(page: Page) {
   return { name: 'reference.png', mimeType: 'image/png', buffer: Buffer.from(encoded, 'base64') };
 }
 
+test('project identity and contextual actions follow selection, pan, zoom, resize and viewport edges', async ({ page, app }, info) => {
+  await open(page, app);
+  const initial = await app.state();
+  await expect(page.locator('.project-name')).toHaveText(initial.project.name);
+  await expect(page.locator('.project-identity')).toHaveAttribute('aria-label', `acanvas project: ${initial.project.name}`);
+  await expect(page.locator('header')).toHaveCount(0);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
+  const object = page.locator('.board-object'), actions = page.locator('.selection-actions');
+  await object.focus(); await page.keyboard.press('Enter');
+  const anchorGap = async () => { const item = (await object.boundingBox())!, bar = (await actions.boundingBox())!; return item.y - bar.y - bar.height; };
+  await expect.poll(anchorGap).toBeCloseTo(8, 1);
+  const original = (await actions.boundingBox())!;
+  await page.locator('#whiteboard').hover({ position: { x: 1100, y: 250 } });
+  await page.mouse.wheel(50, 70);
+  await expect.poll(anchorGap).toBeCloseTo(8, 1);
+  await expect.poll(async () => (await actions.boundingBox())!.y).toBeCloseTo(original.y - 70, 1);
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await expect.poll(anchorGap).toBeCloseTo(8, 1);
+  expect((await actions.boundingBox())!.width).toBeCloseTo(original.width, 1);
+  await page.getByRole('button', { name: 'Resize reference.png', exact: true }).press('ArrowRight');
+  await expect.poll(async () => (await app.state()).objects[0].version).toBe(2);
+  await expect.poll(anchorGap).toBeCloseTo(8, 1);
+  const current = await app.state();
+  await app.call('/api/board/operations', 'POST', { sessionId: current.session.id, operations: [{ type: 'create', object: { assetId: current.assets[0].id, x: current.objects[0].x + 420, y: current.objects[0].y - 80, width: 200, height: 100 } }] });
+  await expect(page.locator('.board-object')).toHaveCount(2);
+  await page.locator('.board-object').nth(1).focus(); await page.keyboard.press('Shift+Enter');
+  await expect(page.locator('.board-object[data-selected=true]')).toHaveCount(2);
+  await expect.poll(async () => { const items = await page.locator('.board-object').evaluateAll(elements => elements.map(element => { const rect = element.getBoundingClientRect(); return { x: rect.x, y: rect.y, right: rect.right }; })); const bar = (await actions.boundingBox())!; return Math.abs(Math.min(...items.map(item => item.y)) - bar.y - bar.height - 8) < 1 && Math.abs(bar.x + bar.width / 2 - (Math.min(...items.map(item => item.x)) + Math.max(...items.map(item => item.right))) / 2) < 1; }).toBeTruthy();
+  await page.locator('.board-object').first().focus(); await page.keyboard.press('Enter');
+  await expect.poll(async () => (await app.state()).session.view.selectedObjectIds).toEqual([current.objects[0].id]);
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 480 });
+    const state = await app.state();
+    await app.call(`/api/sessions/${state.session.id}/view`, 'PUT', { ...state.session.view, selectedObjectIds: [state.objects[0].id], x: 70 - state.objects[0].x * .5, y: 180 - state.objects[0].y * .5, zoom: .5 });
+    await page.reload();
+    await expect.poll(async () => (await page.locator('.board-object').first().boundingBox())!.y).toBeCloseTo(180, 1);
+    await expect.poll(async () => actions.evaluate(element => { const rect = element.getBoundingClientRect(); return rect.left >= 12 && rect.right <= innerWidth - 12 && rect.top >= 12 && rect.bottom <= innerHeight - 12; })).toBeTruthy();
+    expect(await page.locator('.selection-actions button,.canvas-toolbar button,.canvas-actions button').evaluateAll(elements => elements.every(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; }))).toBeTruthy();
+    await page.screenshot({ path: info.outputPath(`context-actions-${width}x480.png`) });
+    await app.call(`/api/sessions/${state.session.id}/view`, 'PUT', { ...state.session.view, x: -state.objects[0].x * .5 - 1000, y: 180 - state.objects[0].y * .5, zoom: .5 });
+    await page.reload();
+    await expect(actions).not.toBeVisible();
+  }
+});
+
+test('composer grows with wrap and newlines, restores height, sends Enter and protects IME confirmation', async ({ page, app }, info) => {
+  await page.setViewportSize({ width: 390, height: 480 });
+  await open(page, app);
+  const input = page.locator('#instruction'), composer = page.locator('.composer');
+  expect((await composer.boundingBox())!.height).toBe(52);
+  const wrapped = 'Keep the subject in the center with enough space for a title and retain the shapes and colors from this reference.';
+  await input.fill(wrapped);
+  await expect.poll(async () => (await composer.boundingBox())!.height).toBeGreaterThan(52);
+  expect((await input.boundingBox())!.height).toBeGreaterThan(24);
+  await expect(composer).toHaveAttribute('data-save-state', 'saved');
+  const grown = (await composer.boundingBox())!.height;
+  await page.reload(); await expect(input).toHaveValue(wrapped);
+  await expect.poll(async () => (await composer.boundingBox())!.height).toBe(grown);
+  await input.fill('First line'); await input.press('Shift+Enter'); await input.pressSequentially('Second line');
+  await expect(input).toHaveValue('First line\nSecond line');
+  await expect.poll(async () => (await composer.boundingBox())!.height).toBe(76);
+  expect((await app.state()).tasks).toHaveLength(0);
+  await input.evaluate(element => {
+    element.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, data: '候选' }));
+    element.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter', code: 'Enter' }));
+    element.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: '候选' }));
+    element.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter', code: 'Enter', isComposing: true }));
+    element.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter', code: 'Enter', keyCode: 229 }));
+  });
+  await expect(composer).toHaveAttribute('data-save-state', 'saved');
+  expect((await app.state()).tasks).toHaveLength(0);
+  await expect(input).toHaveValue('First line\nSecond line');
+  await input.press('Enter'); await expect(input).toHaveValue('');
+  await expect.poll(async () => (await composer.boundingBox())!.height).toBe(52);
+  expect((await app.state()).tasks[0].snapshot.userRequest.text).toBe('First line\nSecond line');
+  for (let index = 2; index <= 6; index++) { await input.fill(`Request ${index}`); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); }
+  const long = Array.from({ length: 12 }, (_, index) => `Line ${index + 1}`).join('\n');
+  await input.fill(long);
+  await expect.poll(async () => input.evaluate(element => element.scrollHeight > element.clientHeight)).toBeTruthy();
+  await page.locator('.queue-expand').click();
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 480 });
+    await expect.poll(async () => page.locator('.queue-list').evaluate(element => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(64);
+    const queue = page.locator('.queue-list');
+    await queue.evaluate(element => { element.scrollTop = element.scrollHeight; });
+    await expect(page.locator('.queue-item').last()).toBeInViewport();
+    expect(await page.locator('.canvas-toolbar button,.canvas-actions button,.send-button,.queue-item:last-child button').evaluateAll(elements => elements.every(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; }))).toBeTruthy();
+    await page.screenshot({ path: info.outputPath(`growing-composer-${width}x480.png`) });
+  }
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(await composer.evaluate(element => getComputedStyle(element).transitionDuration)).toBe('0s');
+  expect(await page.locator('.queue-list').evaluate(element => getComputedStyle(element).animationName)).toBe('none');
+  await input.press('Enter'); await expect(input).toHaveValue('');
+  await expect.poll(async () => (await composer.boundingBox())!.height).toBe(52);
+  expect((await app.state()).tasks.at(-1)!.snapshot.userRequest.text).toBe(long);
+});
+
+test('short-screen contextual video controls stay reachable beside a clipped selection and long queued draft', async ({ page, app }, info) => {
+  await page.setViewportSize({ width: 390, height: 480 });
+  await open(page, app);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4'));
+  const object = page.locator('.board-object'), video = object.locator('video'), input = page.locator('#instruction');
+  await expect(video).toHaveJSProperty('videoWidth', 320);
+  await object.focus(); await page.keyboard.press('Enter');
+  for (let index = 1; index <= 2; index++) { await input.fill(`Queued direction ${index}`); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); }
+  await page.getByRole('button', { name: 'Add annotation', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Annotation', exact: true }).fill('Keep this moment.');
+  await page.getByRole('button', { name: 'Add to draft', exact: true }).click();
+  await expect(page.locator('.draft-annotation')).toHaveCount(1);
+  await input.fill(Array.from({ length: 50 }, (_, index) => `Draft line ${index + 1}`).join('\n'));
+  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+  const current = await app.state();
+  await app.call('/api/board/operations', 'POST', { sessionId: current.session.id, operations: [{ type: 'update', objectId: current.objects[0].id, expectedVersion: current.objects[0].version, changes: { x: 0, y: 0, width: 160 / 1.7, height: 90 / 1.7 } }] });
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 480 });
+    const state = await app.state();
+    await app.call(`/api/sessions/${state.session.id}/view`, 'PUT', { ...state.session.view, x: width - 130, y: 85, zoom: 1.7 });
+    await page.reload();
+    await expect.poll(async () => (await object.boundingBox())!.x).toBeCloseTo(width - 130, 1);
+    await expect.poll(async () => page.locator('.selection-actions button,.video-playback button,.video-playback input,.canvas-toolbar button,.canvas-actions button,.send-button').evaluateAll(elements => elements.every(element => { const rect = element.getBoundingClientRect(); const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2); return element instanceof HTMLInputElement ? hit === element : hit?.closest('button') === element; }))).toBeTruthy();
+    const mediaIdentity = await video.evaluate(element => { (element as HTMLVideoElement & { retained?: string }).retained ||= crypto.randomUUID(); return (element as HTMLVideoElement & { retained: string }).retained; });
+    await page.getByRole('button', { name: 'Play video', exact: true }).click(); await expect(video).toHaveJSProperty('paused', false);
+    await page.getByRole('button', { name: 'Pause video', exact: true }).click(); await expect(video).toHaveJSProperty('paused', true);
+    const timeline = page.getByRole('slider', { name: 'Video timeline', exact: true });
+    await timeline.click(); await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeGreaterThan(.5);
+    expect(await video.evaluate(element => (element as HTMLVideoElement & { retained: string }).retained)).toBe(mediaIdentity);
+    await expect(page.getByRole('dialog', { name: /Request [12]/ })).not.toBeVisible();
+    const queue = page.locator('.queue-list'); await queue.evaluate(element => { element.scrollTop = element.scrollHeight; });
+    expect(await page.locator('.queue-item').last().getByRole('button').first().evaluate(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; })).toBeTruthy();
+    await page.screenshot({ path: info.outputPath(`context-video-queued-${width}x480.png`) });
+  }
+  await input.press('Enter'); await expect(input).toHaveValue(''); await expect(page.locator('.queue-item')).toHaveCount(3);
+  for (let index = 4; index <= 6; index++) { await input.fill(`Queued direction ${index}`); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); }
+  await input.fill(Array.from({ length: 50 }, (_, index) => `Draft line ${index + 1}`).join('\n'));
+  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+  const six = await app.state();
+  await app.call('/api/board/operations', 'POST', { sessionId: six.session.id, operations: [{ type: 'update', objectId: six.objects[0].id, expectedVersion: six.objects[0].version, changes: { width: 150, height: 84 } }] });
+  await app.call(`/api/sessions/${six.session.id}/view`, 'PUT', { ...six.session.view, x: 130, y: 140, zoom: 1 });
+  await page.reload(); await expect(input).toHaveValue(Array.from({ length: 50 }, (_, index) => `Draft line ${index + 1}`).join('\n'));
+  await page.locator('.queue-expand').click();
+  await expect.poll(async () => page.locator('.selection-actions button,.video-playback button,.video-playback input,.canvas-toolbar button,.canvas-actions button,.send-button').evaluateAll(elements => elements.every(element => { const rect = element.getBoundingClientRect(); const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2); return element instanceof HTMLInputElement ? hit === element : hit?.closest('button') === element; }))).toBeTruthy();
+  await page.getByRole('button', { name: 'Play video', exact: true }).click(); await expect(video).toHaveJSProperty('paused', false);
+  await page.getByRole('button', { name: 'Pause video', exact: true }).click(); await expect(video).toHaveJSProperty('paused', true);
+  await page.getByRole('slider', { name: 'Video timeline', exact: true }).click();
+  await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeGreaterThan(.5);
+  await page.locator('.queue-list').evaluate(element => { element.scrollTop = element.scrollHeight; });
+  await expect(page.locator('.queue-item').last()).toBeInViewport();
+  await page.screenshot({ path: info.outputPath('context-video-six-queue-320x480.png') });
+});
+
 test('real image import, zoomed media annotation, move/resize, CLI publication and refresh', async ({ page, app }, info) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
   await open(page, app);
@@ -264,9 +414,11 @@ test('video surface selects and moves at zoom/pan, with explicit keyboard playba
     const playbackBox = (await page.getByRole('group', { name: 'Video playback', exact: true }).boundingBox())!;
     const actionsBox = (await page.locator('.selection-actions').boundingBox())!, importsBox = (await page.locator('.canvas-actions').boundingBox())!, toolsBox = (await page.locator('.canvas-toolbar').boundingBox())!;
     expect(playbackBox.x).toBeGreaterThanOrEqual(0); expect(playbackBox.x + playbackBox.width).toBeLessThanOrEqual(width);
-    expect(playbackBox.x).toBeGreaterThanOrEqual(toolsBox.x + toolsBox.width + 8);
-    expect(playbackBox.y).toBeGreaterThan(actionsBox.y + actionsBox.height);
-    expect(playbackBox.y).toBeGreaterThan(importsBox.y + importsBox.height);
+    expect(playbackBox.x >= toolsBox.x + toolsBox.width + 8 || playbackBox.y + playbackBox.height <= toolsBox.y - 8 || playbackBox.y >= toolsBox.y + toolsBox.height + 8).toBeTruthy();
+    const mediaBox = (await surface.boundingBox())!;
+    if (height > 480) expect(playbackBox.y >= mediaBox.y + mediaBox.height || playbackBox.y + playbackBox.height <= mediaBox.y).toBeTruthy();
+    expect(playbackBox.y + playbackBox.height <= actionsBox.y || playbackBox.y >= actionsBox.y + actionsBox.height).toBeTruthy();
+    expect(playbackBox.y + playbackBox.height <= importsBox.y || playbackBox.y >= importsBox.y + importsBox.height).toBeTruthy();
     expect(await page.locator('.canvas-toolbar button, .video-playback button').evaluateAll(buttons => buttons.every(button => { const bounds = button.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === button; }))).toBeTruthy();
     const timelineBox = (await timeline.boundingBox())!;
     expect(timelineBox.width).toBeGreaterThanOrEqual(100);
@@ -395,8 +547,9 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
     const composer = (await page.locator('.composer').boundingBox())!, box = (await input.boundingBox())!, send = (await page.getByRole('button', { name: 'Send request', exact: true }).boundingBox())!;
     const canvas = (await page.locator('#whiteboard').boundingBox())!, tools = (await page.getByRole('toolbar', { name: 'Board tools', exact: true }).boundingBox())!;
     expect(canvas).toEqual({ x: 0, y: 0, width, height });
-    expect(composer.height).toBe(52); expect(composer.width).toBeLessThanOrEqual(720);
-    expect(Math.abs(box.y + box.height / 2 - send.y - send.height / 2)).toBeLessThan(1);
+    await expect.poll(async () => (await page.locator('.composer').boundingBox())!.height).toBe(100);
+    expect(composer.width).toBeLessThanOrEqual(720);
+    expect(Math.abs(box.y + box.height - 12 - send.y - send.height / 2)).toBeLessThan(1);
     expect(tools.x - canvas.x).toBe(16); expect(tools.height).toBeGreaterThan(tools.width);
     expect(tools.y + tools.height / 2).toBeCloseTo(canvas.y + canvas.height / 2, 1);
     expect(tools.y).toBeGreaterThan(canvas.y); expect(tools.y + tools.height).toBeLessThan(composer.y);
@@ -410,7 +563,7 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
     await expect(page.locator('.canvas-zoom')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Draw region annotation', exact: true })).toHaveCount(0);
     await expect(page.locator('header,.canvas-heading,.draft-save,.send-hint')).toHaveCount(0);
-    expect(await input.evaluate(element => ({ rows: (element as HTMLTextAreaElement).rows, overflow: element.scrollHeight > element.clientHeight, outline: getComputedStyle(element).outlineStyle, border: getComputedStyle(element).borderWidth, shadow: getComputedStyle(element).boxShadow, surface: getComputedStyle(element).backgroundColor }))).toEqual({ rows: 1, overflow: true, outline: 'none', border: '0px', shadow: 'none', surface: 'rgba(0, 0, 0, 0)' });
+    expect(await input.evaluate(element => ({ rows: (element as HTMLTextAreaElement).rows, overflow: element.scrollHeight > element.clientHeight, outline: getComputedStyle(element).outlineStyle, border: getComputedStyle(element).borderWidth, shadow: getComputedStyle(element).boxShadow, surface: getComputedStyle(element).backgroundColor }))).toEqual({ rows: 1, overflow: false, outline: 'none', border: '0px', shadow: 'none', surface: 'rgba(0, 0, 0, 0)' });
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBeFalsy();
     measurements.push({ name, viewport: { width, height }, composer, input: box, send, canvas, tools, references: await page.locator('.draft-attachments').boundingBox() });
     await page.locator('.board-object img').evaluateAll(images => Promise.all(images.map(image => (image as HTMLImageElement).decode())));
@@ -438,7 +591,7 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
     expect(references.x).toBeGreaterThanOrEqual(tools.x + tools.width + 4);
     expect(references.height).toBeLessThanOrEqual(44); expect(references.y + references.height).toBeLessThan(composer.y);
     expect((await page.locator('.queue-item').last().boundingBox())!.y + (await page.locator('.queue-item').last().boundingBox())!.height).toBeLessThanOrEqual(references.y);
-    expect(composer.height).toBe(52);
+    expect(composer.height).toBe(100);
     expect(await page.locator('.canvas-toolbar button').evaluateAll(buttons => buttons.every(button => { const bounds = button.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === button; }))).toBeTruthy();
     measurements.push({ name: `expanded-queue-${width}`, viewport: { width, height: 844 }, queue, tools, composer, references });
     await page.screenshot({ path: info.outputPath(`floating-queue-${width}.png`) });

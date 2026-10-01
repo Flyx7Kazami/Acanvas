@@ -18,6 +18,33 @@ export function intersects(a: Rect, b: Rect): boolean {
   return a.x <= b.x + b.width && a.x + a.width >= b.x && a.y <= b.y + b.height && a.y + a.height >= b.y;
 }
 
+export function unionBounds(rects: Rect[]): Rect {
+  const x = Math.min(...rects.map(rect => rect.x)), y = Math.min(...rects.map(rect => rect.y));
+  return { x, y, width: Math.max(...rects.map(rect => rect.x + rect.width)) - x, height: Math.max(...rects.map(rect => rect.y + rect.height)) - y };
+}
+
+export function screenBounds(rect: Rect, view: View): Rect {
+  return { ...worldToScreen(rect, view), width: rect.width * view.zoom, height: rect.height * view.zoom };
+}
+
+export function placeFloatingControl(anchor: Rect, size: { width: number; height: number }, viewport: Rect, side: 'above' | 'below', obstacles: Rect[], gap = 8): Rect | null {
+  const margin = 12;
+  const minX = viewport.x + margin, maxX = viewport.x + viewport.width - size.width - margin;
+  const minY = viewport.y + margin, maxY = viewport.y + viewport.height - size.height - margin;
+  const centeredX = Math.max(minX, Math.min(maxX, anchor.x + (anchor.width - size.width) / 2));
+  const above = anchor.y - size.height - gap, below = anchor.y + anchor.height + gap;
+  const preferredY = side === 'above' ? above : below, alternateY = side === 'above' ? below : above;
+  // Nearby horizontal and vertical clearances keep controls close to their item at window edges.
+  const xs = [centeredX, ...obstacles.flatMap(rect => [rect.x + rect.width + gap, rect.x - size.width - gap])];
+  const ys = [preferredY, alternateY, anchor.y + gap, anchor.y + anchor.height - size.height - gap, minY, maxY, ...obstacles.flatMap(rect => [rect.y - size.height - gap, rect.y + rect.height + gap])];
+  const clear = (rect: Rect) => rect.x >= minX && rect.x <= maxX && rect.y >= minY && rect.y <= maxY && obstacles.every(obstacle => !intersects(rect, { x: obstacle.x - gap + 1, y: obstacle.y - gap + 1, width: obstacle.width + (gap - 1) * 2, height: obstacle.height + (gap - 1) * 2 }));
+  const nearby = ys.flatMap(y => xs.map(x => ({ x, y, ...size }))).filter(clear);
+  const outside = nearby.filter(rect => !intersects(rect, anchor));
+  const candidates = outside.length ? outside : nearby;
+  candidates.sort((a, b) => Math.abs(a.y - preferredY) + Math.abs(a.x - centeredX) * .5 - Math.abs(b.y - preferredY) - Math.abs(b.x - centeredX) * .5);
+  return candidates[0] || null;
+}
+
 export function normalizedRegion(region: Rect, object: Rect): Rect {
   const x = Math.max(0, Math.min(1, (region.x - object.x) / object.width));
   const y = Math.max(0, Math.min(1, (region.y - object.y) / object.height));
