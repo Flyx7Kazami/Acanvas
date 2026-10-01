@@ -10,7 +10,7 @@ export function useComposerLayout(input: ElementRef<HTMLTextAreaElement>, dock: 
     if (!textarea || !container) return;
     const form = textarea.closest<HTMLElement>('.composer')!;
     const toolbar = document.querySelector<HTMLElement>('.canvas-toolbar');
-    let previousWidth = -1;
+    let previousWidth = -1, previousOtherHeight = -1;
     const layout = () => {
       const containerBounds = container.getBoundingClientRect();
       const otherHeight = container.offsetHeight - form.offsetHeight;
@@ -30,7 +30,8 @@ export function useComposerLayout(input: ElementRef<HTMLTextAreaElement>, dock: 
     };
     const observer = new ResizeObserver(entries => {
       const width = textarea.getBoundingClientRect().width;
-      if (width !== previousWidth) { previousWidth = width; layout(); }
+      const otherHeight = Math.round(container.getBoundingClientRect().height - form.getBoundingClientRect().height);
+      if (width !== previousWidth || otherHeight !== previousOtherHeight) { previousWidth = width; previousOtherHeight = otherHeight; layout(); }
       if (entries.some(entry => entry.target === container || entry.target === form)) positionDock();
     });
     observer.observe(textarea); observer.observe(container); observer.observe(form);
@@ -45,8 +46,8 @@ export function useContextualControls(canvas: ElementRef, actions: ElementRef, p
   useLayoutEffect(() => {
     const board = canvas.current, actionBar = actions.current, videoBar = playback.current;
     const dock = document.querySelector<HTMLElement>('.creation-dock');
-    if (!board || !actionBar || !selected.length) { dock?.style.removeProperty('--queue-context-limit'); return; }
-    const persistent = [...document.querySelectorAll<HTMLElement>('.project-identity,.canvas-actions,.canvas-toolbar,.creation-dock,.queue-stack')];
+    if (!board || (!actionBar && !videoBar) || !selected.length) { dock?.style.removeProperty('--queue-context-limit'); return; }
+    const persistent = [...document.querySelectorAll<HTMLElement>('.project-identity,.canvas-actions,.canvas-toolbar,.composer,.dock-footer,.draft-attachments,.draft-conflict,.inline-resume,.draft-annotation-reader,.unavailable-comments,.queue-stack,.annotation-pin')].filter(element => !actionBar?.classList.contains('inline-annotation-reader') || !element.matches('.annotation-pin'));
     const layout = () => {
       const bounds = board.getBoundingClientRect();
       const viewport = { x: 0, y: 0, width: bounds.width, height: bounds.height };
@@ -61,19 +62,19 @@ export function useContextualControls(canvas: ElementRef, actions: ElementRef, p
       if (!visible) { dock?.style.removeProperty('--queue-context-limit'); return; }
       if (dock) {
         const fixedBottom = Math.max(...persistent.filter(element => element.matches('.project-identity,.canvas-actions')).map(element => element.getBoundingClientRect().bottom));
-        const queueLimit = Math.max(76, dock.getBoundingClientRect().top - fixedBottom - actionBar.offsetHeight - (videoBar?.offsetHeight || 0) - 24);
+        const queueLimit = Math.max(76, dock.getBoundingClientRect().top - fixedBottom - (actionBar?.offsetHeight || 0) - (videoBar?.offsetHeight || 0) - 24);
         dock.style.setProperty('--queue-context-limit', `${queueLimit}px`);
       }
       const obstacles = persistent.map(element => { const rect = element.getBoundingClientRect(); return { x: rect.x - bounds.x, y: rect.y - bounds.y, width: rect.width, height: rect.height }; });
       const anchor = unionBounds(projected);
-      let actionPosition = placeFloatingControl(anchor, { width: actionBar.offsetWidth, height: actionBar.offsetHeight }, viewport, 'above', obstacles);
+      let actionPosition = actionBar ? placeFloatingControl(anchor, { width: actionBar.offsetWidth, height: actionBar.offsetHeight }, viewport, 'above', obstacles) : null;
       let videoPosition: Rect | null = null;
       if (videoBar && video) {
         const videoBounds = screenBounds(video, view);
         // The caption belongs to the canvas object and scales with its geometry.
         videoBounds.height += 32 * view.zoom;
         videoPosition = placeFloatingControl(videoBounds, { width: videoBar.offsetWidth, height: videoBar.offsetHeight }, viewport, 'below', actionPosition ? [...obstacles, actionPosition] : obstacles);
-        if (!actionPosition || !videoPosition) {
+        if (actionBar && (!actionPosition || !videoPosition)) {
           const width = Math.max(actionBar.offsetWidth, videoBar.offsetWidth);
           const stack = placeFloatingControl(anchor, { width, height: actionBar.offsetHeight + 8 + videoBar.offsetHeight }, viewport, 'above', obstacles);
           if (stack) {

@@ -71,6 +71,130 @@ async function png(page: Page) {
   return { name: 'reference.png', mimeType: 'image/png', buffer: Buffer.from(encoded, 'base64') };
 }
 
+test('inline comments retain their targets through delayed snapshots and submit pending-only requests', async ({ page, app }, info) => {
+  await open(page, app);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4'));
+  await expect(page.locator('.board-object')).toHaveCount(2);
+  const videoObject = page.locator('.object-video'), video = videoObject.locator('video'), comment = page.getByRole('textbox', { name: 'Add a comment', exact: true });
+  await expect(video).toHaveJSProperty('videoWidth', 320);
+  await videoObject.focus(); await page.keyboard.press('Enter');
+  await expect(comment).toBeVisible(); await expect(comment).not.toBeFocused();
+  await expect(page.getByRole('button', { name: 'Add annotation', exact: true })).toHaveCount(0);
+  await expect(page.locator('dialog,[aria-modal=true]')).toHaveCount(0);
+  await video.evaluate(element => { (element as HTMLVideoElement).currentTime = .7; });
+  await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
+  await page.evaluate(() => { const original = HTMLCanvasElement.prototype.toBlob; HTMLCanvasElement.prototype.toBlob = function(callback, type, quality) { setTimeout(() => original.call(this, callback, type, quality), 350); }; });
+  await comment.fill('Keep this video moment');
+  await page.getByLabel('End time', { exact: true }).fill('1.2');
+  await page.locator('.object-image').focus(); await page.keyboard.press('Enter');
+  await expect(comment).toHaveValue(''); await comment.fill('Keep this image shape');
+  await videoObject.focus(); await page.keyboard.press('Enter');
+  await expect(comment).toHaveValue('Keep this video moment');
+  await expect(page.getByLabel('End time', { exact: true })).toHaveValue('1.2');
+  await comment.evaluate(element => { element.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true })); element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); element.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true })); element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 229, bubbles: true, cancelable: true })); });
+  expect((await app.state()).draft.annotations).toHaveLength(0);
+  await comment.press('End'); await comment.press('Shift+Enter'); await comment.pressSequentially('Keep its colors');
+  await expect(comment).toHaveValue('Keep this video moment\nKeep its colors');
+  await expect(page.getByRole('button', { name: 'Send request', exact: true })).toBeEnabled();
+  await page.screenshot({ path: info.outputPath('inline-comment-video.png') });
+  await page.locator('#instruction').press('Enter');
+  await expect(page.locator('.queue-item')).toHaveCount(1);
+  const saved = await app.state(), annotations = saved.tasks[0].snapshot.annotations;
+  expect(saved.tasks[0].snapshot.userRequest.text).toBe(''); expect(annotations).toHaveLength(2);
+  const frame = annotations.find(annotation => annotation.objectId === saved.objects.find(object => object.type === 'video')!.id)!;
+  expect(frame.text).toBe('Keep this video moment\nKeep its colors'); expect(frame.timeStart).toBeCloseTo(.7, 1); expect(frame.timeEnd).toBe(1.2); expect(frame.snapshotAssetId).toBeTruthy();
+  expect(annotations.find(annotation => annotation.objectId === saved.objects.find(object => object.type === 'image')!.id)!.text).toBe('Keep this image shape');
+  await expect(comment).toHaveValue(''); await expect(page.locator('#instruction')).toHaveValue('');
+  const imageObject = saved.objects.find(object => object.type === 'image')!, savedVideo = saved.objects.find(object => object.type === 'video')!;
+  await app.call('/api/board/operations', 'POST', { sessionId: saved.session.id, operations: [{ type: 'update', objectId: imageObject.id, expectedVersion: imageObject.version, changes: { x: savedVideo.x - 420 } }] });
+  await expect(page.locator('.object-image')).toHaveAttribute('data-object-version', '2');
+  await page.setViewportSize({ width: 320, height: 480 });
+  await page.getByRole('button', { name: 'Fit all files', exact: true }).click();
+  await page.locator('.object-image').focus(); await page.keyboard.press('Enter'); await comment.fill('Preserve this other unsent comment');
+  await page.getByRole('button', { name: /Annotation 1:/ }).click();
+  const reader = page.getByRole('region', { name: 'Annotation', exact: true });
+  await expect(reader).toBeVisible(); await expect(comment).toHaveCount(0);
+  const close = page.getByRole('button', { name: 'Close annotation', exact: true });
+  expect(await close.evaluate(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; })).toBeTruthy();
+  await expect(reader.locator('img')).toHaveJSProperty('naturalWidth', 320);
+  await expect.poll(async () => (await app.state()).session.view.selectedObjectIds).toEqual([frame.objectId!]);
+  const readerView = await page.locator('.canvas-world').evaluate(element => (element as HTMLElement).style.transform);
+  await reader.hover(); await page.mouse.wheel(0, 100);
+  await expect.poll(async () => reader.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+  expect(await page.locator('.canvas-world').evaluate(element => (element as HTMLElement).style.transform)).toBe(readerView);
+  expect(await close.evaluate(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; })).toBeTruthy();
+  await page.screenshot({ path: info.outputPath('inline-reader-video-320.png') });
+  await close.click(); await expect(comment).toBeVisible();
+  await page.locator('.object-image').focus(); await page.keyboard.press('Enter'); await expect(comment).toHaveValue('Preserve this other unsent comment');
+});
+
+test('inline details history media and resume fallback keep short-screen canvas controls available', async ({ page, app }, info) => {
+  await open(page, app);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
+  await page.locator('.board-object').focus(); await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: 'Attach to request', exact: true }).click();
+  await page.locator('#instruction').fill('Explore this reference'); await page.locator('#instruction').press('Enter');
+  const row = page.locator('.queue-task').first(); await row.click();
+  await expect(row).toHaveAttribute('aria-expanded', 'true');
+  const details = page.getByRole('region', { name: 'Request 1', exact: true }); await expect(details).toBeVisible();
+  await row.click(); await expect(row).toHaveAttribute('aria-expanded', 'false'); await expect(details).not.toBeVisible();
+  await row.click(); await expect(row).toHaveAttribute('aria-expanded', 'true'); await expect(details).toBeVisible();
+  await details.getByRole('button', { name: 'View reference.png', exact: true }).click();
+  await expect(page.locator('.board-object')).toHaveAttribute('data-selected', 'true');
+  await page.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(row).toBeFocused();
+  await page.setViewportSize({ width: 390, height: 480 }); await page.getByRole('button', { name: 'Fit all files', exact: true }).click();
+  await page.getByRole('button', { name: 'Remove selected files from canvas', exact: true }).click(); await expect(page.locator('.board-object')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Request history', exact: true }).click();
+  const history = page.getByRole('region', { name: 'Request history', exact: true });
+  await history.getByRole('button', { name: 'View reference.png', exact: true }).click();
+  await expect(history.getByRole('region', { name: 'Preview reference.png', exact: true }).locator('img')).toBeVisible();
+  await expect(page.locator('a[target=_blank],dialog,[aria-modal=true]')).toHaveCount(0);
+  await page.screenshot({ path: info.outputPath('inline-history-media-390.png') });
+  await page.getByRole('button', { name: 'Request history', exact: true }).click(); await expect(history).not.toBeVisible();
+  await page.evaluate(() => { Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: () => Promise.reject(new DOMException('Clipboard unavailable', 'NotAllowedError')) }); });
+  await page.getByRole('button', { name: 'Copy resume prompt', exact: true }).click();
+  const resume = page.getByRole('region', { name: 'Resume prompt', exact: true }); await expect(resume).toBeVisible();
+  expect(await resume.getByRole('textbox').inputValue()).toContain(`Project: ${(await app.state()).project.root}`);
+  await page.getByRole('button', { name: 'Pan canvas', exact: true }).click();
+  const initial = (await app.state()).session.view;
+  await page.locator('#whiteboard').hover({ position: { x: 230, y: 110 } }); await page.mouse.wheel(0, 40);
+  await expect.poll(async () => (await app.state()).session.view.y).toBe(initial.y - 40);
+  await page.getByRole('button', { name: 'Close resume prompt', exact: true }).click(); await expect(resume).not.toBeVisible();
+  await page.screenshot({ path: info.outputPath('inline-controls-390.png') });
+});
+
+test('removing a file clears only its pending comment and external removal preserves a discard path', async ({ page, app }) => {
+  await open(page, app);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
+  await expect(page.locator('.board-object')).toHaveCount(1);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
+  await expect(page.locator('.board-object')).toHaveCount(2);
+  const comment = page.getByRole('textbox', { name: 'Add a comment', exact: true });
+  await page.locator('.board-object').first().focus(); await page.keyboard.press('Enter'); await comment.fill('Comment for removed file');
+  await page.locator('.board-object').last().focus(); await page.keyboard.press('Enter'); await comment.fill('Keep this other file');
+  await page.locator('.board-object').first().focus(); await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: 'Remove selected files from canvas', exact: true }).click(); await expect(page.locator('.board-object')).toHaveCount(1);
+  await page.locator('#instruction').fill('Create with the remaining file'); await page.locator('#instruction').press('Enter');
+  await expect(page.locator('.queue-item')).toHaveCount(1);
+  const sent = await app.state(); expect(sent.tasks[0].snapshot.annotations.map(annotation => annotation.text)).toEqual(['Keep this other file']);
+  await page.locator('.board-object').focus(); await page.keyboard.press('Enter'); await comment.fill('Keep this unsent text');
+  await page.route('**/api/board/operations', route => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'object_conflict', message: 'This file was updated. Read its current layout.' } }) }));
+  await page.getByRole('button', { name: 'Remove selected files from canvas', exact: true }).click();
+  await expect(comment).toHaveValue('Keep this unsent text'); await expect(page.locator('.board-object')).toHaveCount(1);
+  await page.unroute('**/api/board/operations');
+  const current = await app.state();
+  await app.call('/api/board/operations', 'POST', { sessionId: current.session.id, operations: [{ type: 'delete', objectId: current.objects[0].id, expectedVersion: current.objects[0].version }] });
+  await expect(page.locator('.board-object')).toHaveCount(0);
+  await expect(page.getByLabel('Unavailable comments')).toContainText('Keep this unsent text');
+  await page.locator('#instruction').fill('Continue with a new direction'); await page.locator('#instruction').press('Enter');
+  await expect(page.getByRole('alert')).toContainText('Discard it from the draft to continue');
+  expect((await app.state()).draft.annotations).toHaveLength(0); expect((await app.state()).tasks).toHaveLength(1);
+  await page.getByRole('button', { name: 'Discard unavailable comment', exact: true }).click();
+  await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(2);
+  expect((await app.state()).tasks[1].snapshot.userRequest.text).toBe('Continue with a new direction');
+});
+
 test('project identity and contextual actions follow selection, pan, zoom, resize and viewport edges', async ({ page, app }, info) => {
   await open(page, app);
   const initial = await app.state();
@@ -176,9 +300,9 @@ test('short-screen contextual video controls stay reachable beside a clipped sel
   await expect(video).toHaveJSProperty('videoWidth', 320);
   await object.focus(); await page.keyboard.press('Enter');
   for (let index = 1; index <= 2; index++) { await input.fill(`Queued direction ${index}`); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); }
-  await page.getByRole('button', { name: 'Add annotation', exact: true }).click();
-  await page.getByRole('textbox', { name: 'Annotation', exact: true }).fill('Keep this moment.');
-  await page.getByRole('button', { name: 'Add to draft', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Add a comment', exact: true }).focus();
+  await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Keep this moment.');
+  await page.getByRole('button', { name: 'Save comment', exact: true }).click();
   await expect(page.locator('.draft-annotation')).toHaveCount(1);
   await input.fill(Array.from({ length: 50 }, (_, index) => `Draft line ${index + 1}`).join('\n'));
   await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
@@ -231,11 +355,11 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   await expect(object.locator('img')).toHaveJSProperty('naturalWidth', 600);
   await object.click({ position: { x: 80, y: 40 } });
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
-  await page.getByRole('button', { name: 'Add annotation', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Add annotation', exact: true })).toBeVisible();
-  await page.getByRole('textbox', { name: 'Annotation', exact: true }).fill('保留中部构图，增加呼吸感。');
-  await page.screenshot({ path: info.outputPath('annotation-dialog.png') });
-  await page.getByRole('button', { name: 'Add to draft', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Add a comment', exact: true }).focus();
+  await expect(page.getByRole('textbox', { name: 'Add a comment', exact: true })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('保留中部构图，增加呼吸感。');
+  await page.screenshot({ path: info.outputPath('inline-comment.png') });
+  await page.getByRole('button', { name: 'Save comment', exact: true }).click();
   await expect(page.locator('.draft-annotation')).toHaveCount(1);
   const before = await app.state();
   const annotation = before.draft.annotations[0];
@@ -246,6 +370,7 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   await page.mouse.move(box.x + box.width * .8, box.y + box.height * .8); await page.mouse.down();
   await page.mouse.move(box.x + box.width * .8 + 60, box.y + box.height * .8 + 30, { steps: 5 }); await page.mouse.up();
   await expect.poll(async () => (await app.state()).objects[0].version).toBe(2);
+  await expect(object).toHaveAttribute('data-object-version', '2');
   const handle = page.getByRole('button', { name: 'Resize reference.png', exact: true });
   await handle.focus(); await handle.press('ArrowRight');
   await expect.poll(async () => (await app.state()).objects[0].version).toBe(3);
@@ -272,8 +397,8 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   await page.getByRole('button', { name: /Request history/ }).click();
   await expect(page.locator('.task-card[data-status="completed"]')).toHaveCount(1);
   await expect(page.getByText('参考图已回填到共享白板。', { exact: true })).toBeVisible();
-  await page.screenshot({ path: info.outputPath('history-dialog.png') });
-  await page.keyboard.press('Escape');
+  await page.screenshot({ path: info.outputPath('inline-history.png') });
+  await page.getByRole('button', { name: 'Close request history', exact: true }).click();
   await page.getByRole('button', { name: 'Fit all files', exact: true }).click();
   await expect.poll(async () => (await app.state()).session.view.zoom).not.toBe(1.2);
   await expect(page.locator('.board-object img')).toHaveCount(2);
@@ -296,7 +421,7 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   await page.reload(); await expect(page.locator('.board-object')).toHaveCount(2);
   await page.getByRole('button', { name: /Request history/ }).click();
   await expect(page.locator('.task-card[data-status="completed"]')).toHaveCount(1);
-  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Close request history', exact: true }).click();
   expect(errors).toEqual([]);
 });
 
@@ -478,17 +603,17 @@ test('real video and file imports, time/frame annotations and decode fallback', 
   await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeCloseTo(.7, 4);
   await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
   await page.locator('.object-caption').first().click();
-  await page.getByRole('button', { name: 'Add annotation', exact: true }).click();
-  await expect(page.getByText('Video timestamp 0:00', { exact: true })).toBeVisible();
-  await page.getByRole('textbox', { name: 'Annotation', exact: true }).fill('在这个时间点保留主体。');
-  await page.getByRole('button', { name: 'Add to draft', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Add a comment', exact: true }).focus();
+  await expect(page.locator('.comment-video-meta')).toContainText('0:00');
+  await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('在这个时间点保留主体。');
+  await page.getByRole('button', { name: 'Save comment', exact: true }).click();
   await expect.poll(async () => (await app.state()).draft.annotations.length).toBe(1);
   const annotation = (await app.state()).draft.annotations[0]; expect(annotation.timeStart).toBeCloseTo(.7, 1); expect(annotation.snapshotAssetId).toBeTruthy();
   await video.evaluate(element => { (element as HTMLVideoElement).currentTime = 1.5; });
   await page.getByRole('button', { name: /Annotation 1:/ }).click();
   await expect(video).toHaveJSProperty('currentTime', annotation.timeStart!);
-  await expect(page.getByRole('dialog', { name: 'Annotation', exact: true }).locator('img')).toBeVisible();
-  await page.getByRole('button', { name: 'Close Annotation', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Annotation', exact: true }).locator('img')).toBeVisible();
+  await page.getByRole('button', { name: 'Close annotation', exact: true }).click();
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles([{ name: 'brief.txt', mimeType: 'text/plain', buffer: Buffer.from('Project reference material') }, { name: 'unsupported.mp4', mimeType: 'video/mp4', buffer: Buffer.from('Undecodable video fixture') }]);
   await expect(page.locator('.board-object')).toHaveCount(3);
   await expect(page.getByText('Preview unavailable in this browser', { exact: true })).toBeVisible();
@@ -599,7 +724,7 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
   await writeFile(info.outputPath('floating-geometry.json'), JSON.stringify(measurements, null, 2));
 });
 
-test('dark narrow composer keeps text styling stable, restores dialog focus and respects reduced motion', async ({ page, app }, info) => {
+test('dark narrow composer keeps text styling stable, restores inline focus and respects reduced motion', async ({ page, app }, info) => {
   await page.setViewportSize({ width: 390, height: 844 }); await page.emulateMedia({ reducedMotion: 'reduce' });
   await open(page, app);
   await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
@@ -614,8 +739,8 @@ test('dark narrow composer keeps text styling stable, restores dialog focus and 
   const box = (await composer.boundingBox())!; expect(box.x).toBeGreaterThanOrEqual(16); expect(box.x + box.width).toBeLessThanOrEqual(374);
   await page.screenshot({ path: info.outputPath('dark-narrow-composer.png') });
   await page.getByRole('button', { name: 'Request history', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Request history', exact: true }); await expect(dialog).toBeVisible();
-  await page.keyboard.press('Escape'); await expect(dialog).not.toBeVisible();
+  const dialog = page.getByRole('region', { name: 'Request history', exact: true }); await expect(dialog).toBeVisible();
+  await page.getByRole('button', { name: 'Close request history', exact: true }).click(); await expect(dialog).not.toBeVisible();
   await expect(page.getByRole('button', { name: 'Request history', exact: true })).toBeFocused();
   await page.screenshot({ path: info.outputPath('dark-narrow-board.png') });
 });
@@ -639,8 +764,7 @@ test('clean drafts absorb CLI edits; conflicting unsaved drafts keep both copies
   await cli(['draft', 'save', ...args, '--input', externalFile]);
   await expect(page.getByText('Draft updated elsewhere', { exact: true })).toBeVisible();
   await expect(page.locator('#instruction')).toHaveValue('本地尚未保存的想法');
-  await page.getByRole('button', { name: 'Compare drafts', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Resolve draft update', exact: true });
+  const dialog = page.getByRole('region', { name: 'Resolve draft update', exact: true });
   await expect(dialog.getByText('本地尚未保存的想法', { exact: true })).toBeVisible();
   await expect(dialog.getByText('服务端新增的完整想法', { exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath('draft-conflict.png') });
@@ -656,7 +780,6 @@ test('clean drafts absorb CLI edits; conflicting unsaved drafts keep both copies
   const latest = await app.state();
   await app.call(`/api/sessions/${first.session.id}/draft`, 'PUT', { ...latest.draft, text: '第二次服务端更新' });
   await expect(page.getByText('Draft updated elsewhere', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Compare drafts', exact: true }).click();
   await page.getByRole('button', { name: 'Use saved draft', exact: true }).click();
   await expect(page.locator('#instruction')).toHaveValue('第二次服务端更新');
 });
@@ -726,7 +849,7 @@ test('isolated production processes repeatedly restart, claim and publish withou
     await expect(page.locator('.board-object')).toHaveCount(index + 1);
     await page.getByRole('button', { name: /Request history/ }).click();
     await expect(page.locator('.task-card[data-status="completed"]')).toHaveCount(index + 1);
-    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Close request history', exact: true }).click();
   }
 });
 
@@ -873,17 +996,17 @@ test('bottom queue stacks 1, 3 and 6 tasks, expands upward by hover and focus, a
   await expect(page.locator('.queue-stack')).toHaveClass(/expanded/);
   await page.locator('.queue-task').nth(3).focus();
   await page.keyboard.press('Enter');
-  const details = page.getByRole('dialog', { name: 'Request 4', exact: true });
+  const details = page.getByRole('region', { name: 'Request 4', exact: true });
   await expect(details).toBeVisible(); await expect(details.getByText('构图探索 4', { exact: true })).toBeVisible();
-  await page.keyboard.press('Escape'); await expect(page.locator('.queue-task').nth(3)).toBeFocused();
+  await page.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(page.locator('.queue-task').nth(3)).toBeFocused();
   await page.getByRole('button', { name: 'Cancel request 4', exact: true }).click();
   await expect.poll(async () => (await app.state()).tasks[3].status).toBe('cancelled');
   await expect(page.locator('.queue-item')).toHaveCount(5);
   await page.getByRole('button', { name: /Request history/ }).click();
-  const history = page.getByRole('dialog', { name: 'Request history', exact: true });
+  const history = page.getByRole('region', { name: 'Request history', exact: true });
   await expect(history.locator('.task-card')).toHaveCount(6);
   await expect(history.locator('.task-card[data-status="cancelled"]')).toHaveCount(1);
-  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Close request history', exact: true }).click();
   const touchContext = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   try {
     const touch = await touchContext.newPage();
