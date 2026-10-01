@@ -1,9 +1,19 @@
 ---
 name: acanvas
-description: Read and update a local acanvas project whiteboard, consume the current agent conversation's task queue, publish results, and resume saved work when the user asks to work through acanvas.
+description: Help users and agents collaborate through a shared local project whiteboard, especially on visual tasks. Use when the user asks to work through acanvas or a project whiteboard to organize references, clarify selections and annotations, compare alternatives, or iterate on creative results.
 ---
 
 # acanvas
+
+Use acanvas as a shared visual workspace for communication between the user and agent. Bring reference material, user feedback, and agent-produced alternatives into the same context so both sides can point to specific content and refine the result. This is especially useful for art direction, image and video work, design review, and comparing visual alternatives.
+
+## Collaborate through visual context
+
+- Organize relevant references and candidate results on the canvas when they help the current request. Use the host tools available for finding, creating, or editing assets, and bring their outputs back to the whiteboard.
+- Read the selected objects, annotated regions, video timestamps, and referenced media to understand the user’s intended style or change. Carry the relevant object and task IDs into execution so feedback stays attached to the right material.
+- Return results to the canvas near the relevant references for comparison and further annotation. Use the queue and receipts to preserve actionable requests and progress within this visual feedback loop.
+
+Match the user’s requested stage of collaboration: discussing references, exploring alternatives, or executing and continuing queued work.
 
 Use the bundled CLI to work on the user's local project whiteboard. Project objects and assets are shared; drafts, chat, queue and view belong to the current agent conversation's internal task context. The whiteboard has one project canvas and exposes creation controls.
 
