@@ -15,7 +15,11 @@ export function useComposerLayout(input: ElementRef<HTMLTextAreaElement>, dock: 
       const containerBounds = container.getBoundingClientRect();
       const otherHeight = container.offsetHeight - form.offsetHeight;
       const references = form.querySelector<HTMLElement>('.draft-attachments');
-      const internalHeight = 28 + (references ? references.offsetHeight + 8 : 0);
+      const style = getComputedStyle(form), row = form.querySelector<HTMLElement>('.composer-input-row')!;
+      const textStyle = getComputedStyle(textarea), referenceStyle = references && getComputedStyle(references);
+      const textChrome = parseFloat(textStyle.marginTop) + parseFloat(textStyle.marginBottom);
+      const rowChrome = Math.max(textChrome, (row.querySelector<HTMLElement>('.send-button')?.offsetHeight || 40) - 24);
+      const internalHeight = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + 2 + rowChrome + (references ? references.offsetHeight + parseFloat(referenceStyle!.marginBottom) : 0);
       const bottom = innerHeight - containerBounds.bottom;
       const available = innerHeight - 64 - (toolbar?.offsetHeight || 226) - 12 - bottom - otherHeight - internalHeight;
       const maximum = Math.max(24, Math.min(144, Math.floor(available / 24) * 24));

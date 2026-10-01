@@ -62,12 +62,15 @@ h1,h2,h3,p { margin: 0; }
 .alignment-guides line { stroke: var(--muted); stroke-width: 1; opacity: .65; }
 .annotation-outline { position: absolute; border: 1px solid var(--annotation); background: var(--annotation-fill); pointer-events: none; z-index: 4; }
 .annotation-outline.draft-outline { border-style: dashed; }
-.annotation-pin { position: absolute; bottom: calc(100% + 4px); left: -1px; width: 23px; height: 23px; border-radius: 5px; background: var(--annotation-pin); color: var(--annotation-ink); font-size: 10px; pointer-events: auto; box-shadow: var(--shadow); }
+.annotation-bubble { display: block; flex-shrink: 0; overflow: visible; }
+.annotation-bubble path { fill: var(--annotation-pin); stroke: var(--annotation); stroke-width: 1.5; stroke-linejoin: round; }
+.annotation-bubble text { fill: var(--annotation-ink); font-size: 10px; font-weight: 500; }
+.annotation-pin { position: absolute; bottom: calc(100% + 3px); left: -1px; width: 28px; height: 28px; padding: 0; background: transparent; pointer-events: auto; filter: drop-shadow(0 2px 2px #00000012); }
 .whiteboard.mode-annotate .board-object .object-media { cursor: crosshair; }
 .selection-tool-control { flex-direction: column; padding: 5px; border-radius: 12px; }
 .selection-primary-tools { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .selection-primary-tools .icon-button { width: 32px; height: 32px; flex-basis: 32px; }
-.selection-tool-control:has(.alignment-actions) { width: min(224px,calc(100% - 80px)); }
+.alignment-control { gap: 6px; padding: 5px; border-radius: 12px; }
 .task-annotation-frame { width: 100%; max-height: 160px; object-fit: contain; border-radius: 7px; }
 .canvas-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 40px 24px 250px; pointer-events: none; }
 .canvas-empty .empty-mark { width: 66px; height: 66px; border: 1px solid var(--edge); border-radius: 19px; display: grid; place-items: center; background: var(--surface); color: var(--muted); box-shadow: var(--shadow); transform: rotate(-6deg); margin-bottom: 27px; }
@@ -131,7 +134,7 @@ details summary { list-style: none; display: flex; align-items: center; gap: 6px
 details summary::-webkit-details-marker { display: none; }
 details[open] summary svg { rotate: 180deg; }
 .task-annotations p { margin: 10px 0; font-size: 11px; line-height: 1.7; color: var(--ink); }
-.task-annotations p>span { font-size: 8px; padding: 2px 4px; border-radius: 3px; background: var(--soft); margin-right: 7px; }
+.task-annotations p>.annotation-bubble { display: inline-block; vertical-align: middle; margin-right: 7px; }
 .task-annotations small { font-size: 9px; color: var(--muted); }
 .task-reason { font-size: 11px; line-height: 1.7; padding: 10px; border-left: 2px solid var(--ink); background: var(--soft); margin-top: 13px; overflow-wrap: anywhere; }
 .task-progress { font-size: 10px; line-height: 1.7; margin-top: 10px; color: var(--muted); }
@@ -143,20 +146,21 @@ details[open] summary svg { rotate: 180deg; }
 .task-receipt details { margin-top: 13px; font-size: 9px; color: var(--muted); }
 .task-receipt ul { padding-left: 15px; line-height: 1.8; overflow-wrap: anywhere; }
 .task-card>time { display: block; margin-top: 12px; color: var(--muted); font-size: 8px; }
-.composer { display: flex; flex-direction: column; height: 52px; min-height: 52px; overflow: hidden; background: var(--surface); border: 1px solid color-mix(in srgb,var(--edge) 85%,transparent); border-radius: 26px; padding: 5px 8px 5px 18px; position: relative; box-shadow: var(--float-shadow); transition: height 180ms var(--ease); }
+.composer { display: flex; flex-direction: column; height: 52px; min-height: 52px; overflow: hidden; background: var(--surface); border: 1px solid color-mix(in srgb,var(--edge) 85%,transparent); border-radius: 26px; padding: 5px 8px 5px 16px; position: relative; box-shadow: var(--float-shadow); transition: height 180ms var(--ease); }
+.composer:has(.draft-attachments) { padding-top: 10px; }
 .composer-input-row { display: flex; flex: 0 0 auto; align-items: flex-end; gap: 12px; min-width: 0; }
 .composer-input-row>textarea,.composer-input-row>textarea:focus,.composer-input-row>textarea:focus-visible { flex: 1; min-width: 0; width: 100%; resize: none; height: 24px; min-height: 24px; overflow: hidden; scrollbar-width: thin; font-size: 15px; line-height: 24px; padding: 0; margin: 8px 0; background: transparent; border: 0; border-radius: 0; outline: 0; box-shadow: none; caret-color: var(--ink); display: block; }
 .composer-input-row>textarea::placeholder { color: var(--muted); }
 .send-button { width: 40px; height: 40px; flex: 0 0 40px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--on-accent); }
-.draft-attachments { position: relative; display: flex; flex: 0 0 auto; flex-wrap: nowrap; gap: 6px; max-height: 44px; overflow: auto; margin: 0 0 8px; border-radius: 9px; }
-.draft-asset,.draft-annotation { display: flex; align-items: center; gap: 8px; padding: 5px; background: var(--soft); border-radius: 9px; min-width: 0; max-width: min(100%,300px); }
+.draft-attachments { position: relative; display: flex; flex: 0 0 auto; flex-wrap: nowrap; gap: 6px; overflow-x: auto; overflow-y: hidden; margin: 0 8px 4px 0; border-radius: 10px; scrollbar-width: none; }
+.draft-asset,.draft-annotation { display: flex; align-items: center; gap: 6px; height: 32px; padding: 4px; background: var(--soft); border-radius: 10px; min-width: 0; max-width: min(100%,260px); }
 .draft-asset,.draft-annotation { flex: 0 0 auto; }
-.draft-asset>span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; flex: 1; }
+.draft-asset>span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; flex: 1; }
+.draft-attachments .asset-thumb { width: 24px; height: 24px; flex-basis: 24px; border-radius: 6px; }
 .draft-asset .icon-button,.draft-annotation .icon-button { width: 24px; height: 24px; flex-basis: 24px; padding: 5px; }
-.annotation-content { display: flex; align-items: center; gap: 8px; padding: 4px 2px; flex: 1; min-width: 0; background: transparent; text-align: left; font-size: 10px; }
+.annotation-content { display: flex; align-items: center; gap: 6px; padding: 0; flex: 1; min-width: 0; background: transparent; text-align: left; font-size: 11px; }
 .annotation-content>span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .annotation-content small { color: var(--muted); font-size: 9px; }
-.annotation-number { width: 22px; height: 22px; flex-shrink: 0; display: grid; place-items: center; background: var(--ink); color: var(--surface); font-size: 9px; border-radius: 5px; }
 .error-banner { z-index: 100; position: fixed; top: 64px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; max-width: calc(100% - 30px); padding: 9px 13px; background: var(--ink); color: var(--surface); border-radius: 9px; box-shadow: var(--float-shadow); font-size: 11px; line-height: 1.7; }
 .error-banner>span { overflow-wrap: anywhere; }
 .error-banner button { color: inherit; background: transparent; flex-shrink: 0; font-size: 10px; }
@@ -175,7 +179,7 @@ details[open] summary svg { rotate: 180deg; }
 @keyframes context-reveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 760px) { .canvas-empty h1 { font-size: 25px; } .canvas-empty p { font-size: 11px; } .creation-dock { bottom: 14px; } }
 @media (max-width: 540px) { .project-identity { top: 14px; left: 14px; gap: 8px; padding-inline: 9px; max-width: calc(100% - 122px); } .project-name { padding-left: 8px; } .canvas-actions { top: 14px; right: 14px; } .canvas-empty { padding: 40px 64px 210px; } .canvas-empty h1 { font-size: 23px; } .creation-dock { --dock-width: min(720px,calc(100vw - 32px)); bottom: 12px; } .composer { padding-left: 16px; } .composer-input-row>textarea,.comment-control textarea,.inline-resume textarea { font-size: 16px; } .queue-stack { right: 12px; } .queue-list { padding-inline: 5px; } .queue-item { gap: 3px; } .queue-task { gap: 7px; padding-inline: 6px; } .queue-title { font-size: 11px; } .queue-item .status-badge { font-size: 8px; padding-inline: 4px; } .selection-actions { padding-inline: 4px; gap: 1px; max-width: calc(100% - 24px); } .selection-actions>button:not(.icon-button) { padding-inline: 4px; gap: 4px; font-size: 9px; } }
-@media (pointer: coarse) { .icon-button { min-width: 40px; min-height: 40px; } .canvas-toolbar .icon-button { min-width: 32px; min-height: 32px; } .resize-handle { width: 16px; height: 16px; right: -8px; bottom: -8px; } .draft-asset .icon-button,.draft-annotation .icon-button { min-width: 30px; min-height: 30px; } }
+@media (pointer: coarse) { .icon-button { min-width: 40px; min-height: 40px; } .canvas-toolbar .icon-button { min-width: 32px; min-height: 32px; } .resize-handle { width: 16px; height: 16px; right: -8px; bottom: -8px; } .draft-asset,.draft-annotation { height: 36px; } .draft-asset .icon-button,.draft-annotation .icon-button { min-width: 28px; min-height: 28px; width: 28px; height: 28px; flex-basis: 28px; } }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none!important; transition: none!important; scroll-behavior: auto!important; } button:active:not(:disabled) { scale: 1; } }
 
 .draft-conflict { padding: 10px; margin-bottom: 7px; border: 1px solid var(--ink); border-radius: 9px; font-size: 10px; line-height: 1.8; }
@@ -188,13 +192,19 @@ details[open] summary svg { rotate: 180deg; }
 .comment-control textarea { min-width: 0; flex: 1; width: 100%; min-height: 20px; max-height: 80px; padding: 0 3px; resize: none; border: 0; background: transparent; font-size: 12px; line-height: 20px; scrollbar-width: thin; outline: 0; box-shadow: none; }
 .comment-control textarea::placeholder { color: var(--muted); }
 .comment-control .icon-button { flex-basis: 28px; width: 28px; height: 28px; padding: 6px; }
-.alignment-actions { display: flex; align-items: center; justify-content: center; gap: 2px; border-top: 1px solid var(--edge); margin-top: 4px; padding-top: 4px; }
-.alignment-divider { width: 1px; height: 16px; background: var(--edge); margin: 0 3px; }
+.alignment-actions { display: grid; grid-template-columns: repeat(3,32px); gap: 2px; }
+.alignment-actions .icon-button { width: 32px; height: 32px; padding: 7px; }
 @media(pointer:coarse) { .alignment-actions .icon-button { min-width: 30px; min-height: 32px; } }
 .comment-video-meta { display: flex; align-items: center; gap: 8px; padding: 3px 9px 5px; color: var(--muted); font-size: 9px; }
 .comment-video-meta label { margin-left: auto; display: flex; align-items: center; gap: 5px; }
 .comment-video-meta input { width: 62px; padding: 3px; border: 0; border-radius: 4px; background: var(--soft); font-size: 10px; }
 .queue-row { display: flex; align-items: center; gap: 6px; min-height: 36px; }
+.queue-previews { display: flex; align-items: center; gap: 3px; flex: 0 0 auto; }
+.queue-task:has(.queue-previews) .queue-task-mark { display: none; }
+.queue-preview { position: relative; display: block; width: 24px; height: 24px; flex: 0 0 24px; }
+.queue-preview .asset-thumb { width: 24px; height: 24px; flex-basis: 24px; border-radius: 6px; }
+.queue-preview.annotation-preview>.annotation-bubble:last-child:not(:first-child) { position: absolute; bottom: -1px; right: -2px; }
+.queue-preview-overflow { font-size: 10px; color: var(--muted); min-width: 15px; }
 .queue-row>.icon-button { width: 24px; height: 28px; flex-basis: 24px; padding: 5px; }
 .queue-row>.icon-button:hover:not(:disabled) { background: transparent; color: var(--muted); }
 .queue-entering { animation: queue-send 220ms var(--ease); }
@@ -231,5 +241,5 @@ details[open] summary svg { rotate: 180deg; }
 .unavailable-comments { margin: 0 0 8px var(--tool-clearance); max-height: 80px; overflow: auto; background: var(--surface); border: 1px solid var(--edge); border-radius: 9px; padding: 5px 8px; }
 .unavailable-comments>div { display: flex; align-items: center; gap: 8px; font-size: 10px; }
 .unavailable-comments span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-@media(max-width:540px) { .comment-control textarea { font-size: 16px; } .queue-row { gap: 3px; } }
+@media(max-width:540px) { .comment-control textarea { font-size: 16px; } .queue-row { gap: 3px; } .queue-previews { gap: 2px; } .queue-preview,.queue-preview .asset-thumb { width: 22px; height: 22px; flex-basis: 22px; } }
 @media(pointer:coarse) { .queue-row { min-height: 40px; } .queue-row>.icon-button { min-width: 32px; min-height: 32px; } }
