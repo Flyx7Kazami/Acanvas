@@ -79,20 +79,15 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   await expect(object.locator('img')).toHaveJSProperty('naturalWidth', 600);
   await object.click({ position: { x: 80, y: 40 } });
   await page.getByRole('button', { name: '放大画布', exact: true }).click();
-  await page.getByRole('button', { name: '绘制区域批注', exact: true }).click();
-  const imageBox = (await object.locator('img').boundingBox())!;
-  await page.mouse.move(imageBox.x + imageBox.width * .2, imageBox.y + imageBox.height * .2);
-  await page.mouse.down();
-  await page.mouse.move(imageBox.x + imageBox.width * .7, imageBox.y + imageBox.height * .6, { steps: 7 });
-  await page.mouse.up();
+  await page.getByRole('button', { name: '添加批注', exact: true }).click();
   await expect(page.getByRole('dialog', { name: '添加批注', exact: true })).toBeVisible();
   await page.getByRole('textbox', { name: '批注内容', exact: true }).fill('保留中部构图，增加呼吸感。');
   await page.getByRole('button', { name: '加入需求草稿', exact: true }).click();
   await expect(page.locator('.draft-annotation')).toHaveCount(1);
   const before = await app.state();
   const annotation = before.draft.annotations[0];
-  expect(annotation.bounds.x).toBeCloseTo(.2, 1); expect(annotation.bounds.y).toBeCloseTo(.2, 1);
-  expect(annotation.bounds.width).toBeCloseTo(.5, 1); expect(annotation.bounds.height).toBeCloseTo(.4, 1);
+  expect(annotation.bounds.x).toBe(0); expect(annotation.bounds.y).toBe(0);
+  expect(annotation.bounds.width).toBe(1); expect(annotation.bounds.height).toBe(1);
   await page.getByRole('button', { name: '选择素材', exact: true }).click();
   const box = (await object.boundingBox())!;
   await page.mouse.move(box.x + box.width * .8, box.y + box.height * .8); await page.mouse.down();
@@ -103,8 +98,8 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   await expect.poll(async () => (await app.state()).objects[0].version).toBe(3);
   const currentBox = (await object.locator('img').boundingBox())!;
   const annotationBox = (await page.locator('.annotation-outline').boundingBox())!;
-  expect((annotationBox.x - currentBox.x) / currentBox.width).toBeCloseTo(.2, 1);
-  expect((annotationBox.y - currentBox.y) / currentBox.height).toBeCloseTo(.2, 1);
+  expect((annotationBox.x - currentBox.x) / currentBox.width).toBeCloseTo(0, 1);
+  expect((annotationBox.y - currentBox.y) / currentBox.height).toBeCloseTo(0, 1);
   await page.getByLabel('创作需求', { exact: true }).fill('根据参考和批注生成一个新版本。');
   await page.getByRole('button', { name: '发送需求', exact: true }).click();
   await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(1);
@@ -216,23 +211,103 @@ test('real video and file imports, time/frame annotations and decode fallback', 
   await expect(page.locator('.board-object')).toHaveCount(3);
   await expect(page.getByText('浏览器暂时无法预览此文件', { exact: true })).toBeVisible();
   await expect(page.getByText('brief.txt', { exact: true }).first()).toBeVisible();
-  await page.getByLabel('选择需求附件文件', { exact: true }).setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('Keep the existing design') });
+  await page.getByLabel('选择画布素材文件', { exact: true }).setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('Keep the existing design') });
+  await expect(page.locator('.board-object')).toHaveCount(4);
+  await page.locator('.board-object').last().focus(); await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: '附加到需求', exact: true }).click();
   await expect(page.locator('.draft-asset')).toHaveCount(1);
-  expect((await app.state()).objects).toHaveLength(3);
+  expect((await app.state()).objects).toHaveLength(4);
   await expect.poll(async () => (await app.state()).draft.attachments.length).toBe(1);
 });
 
-test('synthetic file paste/drop route by target and preserve text editing', async ({ page, app }) => {
+test('file paste and drop add canvas objects from every input while text remains editable', async ({ page, app }) => {
   await open(page, app); const image = await png(page); const data = [...image.buffer];
   const unprevented = await page.locator('#instruction').evaluate(element => { const data = new DataTransfer(); data.setData('text/plain', '普通文字'); const event = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: data }); element.dispatchEvent(event); return !event.defaultPrevented; });
   expect(unprevented).toBeTruthy();
   await page.locator('#instruction').fill('保留这段文字');
   await page.locator('#instruction').evaluate((element, data) => { const transfer = new DataTransfer(); transfer.items.add(new File([new Uint8Array(data)], 'pasted.png', { type: 'image/png' })); element.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: transfer })); }, data);
-  await expect(page.locator('.draft-asset')).toHaveCount(1); await expect(page.locator('#instruction')).toHaveValue('保留这段文字');
-  expect((await app.state()).objects).toHaveLength(0);
-  await page.locator('#whiteboard').evaluate((element, data) => { const transfer = new DataTransfer(); transfer.items.add(new File([new Uint8Array(data)], 'dropped.png', { type: 'image/png' })); element.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: transfer })); }, data);
   await expect(page.locator('.board-object')).toHaveCount(1);
-  await expect.poll(async () => (await app.state()).draft.attachments.length).toBe(1);
+  await expect(page.locator('.draft-asset')).toHaveCount(0); await expect(page.locator('#instruction')).toHaveValue('保留这段文字');
+  const first = await app.state(), bounds = (await page.locator('#whiteboard').boundingBox())!;
+  expect(first.objects[0].x + first.objects[0].width / 2).toBeCloseTo((bounds.width / 2 - first.session.view.x) / first.session.view.zoom, 1);
+  expect(first.objects[0].y + first.objects[0].height / 2).toBeCloseTo((bounds.height / 2 - first.session.view.y) / first.session.view.zoom, 1);
+  await page.locator('#whiteboard').evaluate((element, data) => { const transfer = new DataTransfer(); transfer.items.add(new File([new Uint8Array(data)], 'dropped.png', { type: 'image/png' })); const bounds = element.getBoundingClientRect(); element.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, clientX: bounds.left + 300, clientY: bounds.top + 210, dataTransfer: transfer })); }, data);
+  await expect(page.locator('.board-object')).toHaveCount(2);
+  const dropped = await app.state();
+  expect(dropped.objects[1].x + dropped.objects[1].width / 2).toBeCloseTo((300 - dropped.session.view.x) / dropped.session.view.zoom, 1);
+  expect(dropped.objects[1].y + dropped.objects[1].height / 2).toBeCloseTo((210 - dropped.session.view.y) / dropped.session.view.zoom, 1);
+  await page.locator('.composer').evaluate((element, data) => { const transfer = new DataTransfer(); transfer.items.add(new File([new Uint8Array(data)], 'composer-drop.png', { type: 'image/png' })); element.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: transfer })); }, data);
+  await expect(page.locator('.board-object')).toHaveCount(3);
+  expect((await app.state()).draft.attachments).toEqual([]);
+  await expect(page.locator('#instruction')).toHaveValue('保留这段文字');
+});
+
+test('compact input preserves multiline drafts and references with a merged centered tool rail', async ({ page, app }, info) => {
+  await open(page, app);
+  const measurements: object[] = [];
+  const image = await png(page);
+  await page.getByLabel('选择画布素材文件', { exact: true }).setInputFiles(image);
+  await page.locator('.board-object').focus(); await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: '附加到需求', exact: true }).click();
+  const text = '保持主体的轮廓与比例。\n留出标题空间。\n使用现有参考中的色彩。';
+  await page.locator('#instruction').fill(text);
+  await expect.poll(async () => (await app.state()).draft.text).toBe(text);
+  await page.reload(); await expect(page.locator('#instruction')).toHaveValue(text);
+  await expect(page.locator('.draft-asset')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: '为当前需求添加附件', exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('选择需求附件文件', { exact: true })).toHaveCount(0);
+  await expect(page.locator('.composer .lucide-plus')).toHaveCount(0);
+  for (const [name, width, height, dark] of [['light', 1440, 1000, false], ['dark', 1440, 1000, true], ['narrow', 390, 844, true]] as const) {
+    await page.setViewportSize({ width, height });
+    if (width <= 1160) await page.getByRole('button', { name: '适配全部素材', exact: true }).click();
+    if (dark && await page.getByRole('button', { name: '切换暗色主题', exact: true }).count()) await page.getByRole('button', { name: '切换暗色主题', exact: true }).click();
+    const input = page.locator('#instruction'); await input.focus();
+    const composer = (await page.locator('.composer').boundingBox())!, box = (await input.boundingBox())!, send = (await page.getByRole('button', { name: '发送需求', exact: true }).boundingBox())!;
+    const canvas = (await page.locator('#whiteboard').boundingBox())!, tools = (await page.getByRole('toolbar', { name: '白板工具', exact: true }).boundingBox())!;
+    expect(composer.height).toBe(52); expect(composer.width).toBeLessThanOrEqual(720);
+    expect(Math.abs(box.y + box.height / 2 - send.y - send.height / 2)).toBeLessThan(1);
+    expect(tools.x - canvas.x).toBe(16); expect(tools.height).toBeGreaterThan(tools.width);
+    expect(tools.y + tools.height / 2).toBeCloseTo(canvas.y + canvas.height / 2, 1);
+    expect(tools.y).toBeGreaterThan(canvas.y); expect(tools.y + tools.height).toBeLessThan(composer.y);
+    expect(tools.width).toBe(40);
+    await expect(page.locator('.canvas-toolbar button')).toHaveCount(6);
+    await expect(page.locator('.canvas-zoom')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '绘制区域批注', exact: true })).toHaveCount(0);
+    await expect(page.locator('.draft-save')).toBeVisible();
+    expect(await input.evaluate(element => ({ rows: (element as HTMLTextAreaElement).rows, overflow: element.scrollHeight > element.clientHeight, outline: getComputedStyle(element).outlineStyle, border: getComputedStyle(element).borderWidth, shadow: getComputedStyle(element).boxShadow, surface: getComputedStyle(element).backgroundColor }))).toEqual({ rows: 1, overflow: true, outline: 'none', border: '0px', shadow: 'none', surface: 'rgba(0, 0, 0, 0)' });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBeFalsy();
+    measurements.push({ name, viewport: { width, height }, composer, input: box, send, canvas, tools, references: await page.locator('.draft-attachments').boundingBox() });
+    await page.locator('.board-object img').evaluateAll(images => Promise.all(images.map(image => (image as HTMLImageElement).decode())));
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    await page.screenshot({ path: info.outputPath(`compact-${name}.png`) });
+  }
+  await page.locator('#instruction').press(process.platform === 'darwin' ? 'Meta+Enter' : 'Control+Enter');
+  await expect(page.locator('.queue-item')).toHaveCount(1);
+  const sent = await app.state(); expect(sent.tasks[0].snapshot.userRequest.text).toBe(text); expect(sent.tasks[0].snapshot.referenceContent.assets).toHaveLength(1);
+  for (let index = 2; index <= 6; index++) {
+    await page.locator('#instruction').fill(`构图探索 ${index}`);
+    await page.getByRole('button', { name: '发送需求', exact: true }).click();
+    await expect(page.locator('.queue-item')).toHaveCount(index);
+  }
+  await page.locator('.board-object').focus(); await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: '附加到需求', exact: true }).click();
+  await page.locator('#instruction').fill(text);
+  await expect(page.locator('.draft-save')).toHaveText('已保存');
+  await expect(page.locator('.toast')).toHaveCount(0);
+  await page.locator('.queue-expand').click(); await expect(page.locator('.queue-item:visible')).toHaveCount(6);
+  for (const width of [390, 560, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 844 });
+    const queue = (await page.locator('.queue-list').boundingBox())!, tools = (await page.locator('.canvas-toolbar').boundingBox())!, composer = (await page.locator('.composer').boundingBox())!, references = (await page.locator('.draft-attachments').boundingBox())!;
+    expect(queue.x).toBeGreaterThanOrEqual(tools.x + tools.width + 4);
+    expect(references.x).toBeGreaterThanOrEqual(tools.x + tools.width + 4);
+    expect(references.height).toBeLessThanOrEqual(44); expect(references.y + references.height).toBeLessThan(composer.y);
+    expect((await page.locator('.queue-item').last().boundingBox())!.y + (await page.locator('.queue-item').last().boundingBox())!.height).toBeLessThanOrEqual(references.y);
+    expect(composer.height).toBe(52);
+    expect(await page.locator('.canvas-toolbar button').evaluateAll(buttons => buttons.every(button => { const bounds = button.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === button; }))).toBeTruthy();
+    measurements.push({ name: `expanded-queue-${width}`, viewport: { width, height: 844 }, queue, tools, composer, references });
+    await page.screenshot({ path: info.outputPath(`compact-queue-${width}.png`) });
+  }
+  await writeFile(info.outputPath('compact-geometry.json'), JSON.stringify(measurements, null, 2));
 });
 
 test('dark narrow composer keeps text styling stable, restores dialog focus and respects reduced motion', async ({ page, app }, info) => {

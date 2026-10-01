@@ -31,6 +31,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   let stopService: () => Promise<void>;
   let closing = false;
   let port = options.port ?? 4317;
+  const authenticationCookieName = () => `acanvas_auth_${port}`;
   const guardSource = (request: IncomingMessage) => {
     const hosts = [`127.0.0.1:${port}`, `localhost:${port}`];
     if (!request.headers.host || !hosts.includes(request.headers.host.toLowerCase())) throw new ApiFailure(403, 'host_rejected', 'Use the local service address.');
@@ -41,7 +42,8 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   };
   const authenticate = (request: IncomingMessage) => {
     const bearer = request.headers.authorization?.startsWith('Bearer ') ? request.headers.authorization.slice(7) : undefined;
-    const cookie = request.headers.cookie?.split(';').map((item) => item.trim()).find((item) => item.startsWith('acanvas_auth='))?.slice('acanvas_auth='.length);
+    const cookiePrefix = `${authenticationCookieName()}=`;
+    const cookie = request.headers.cookie?.split(';').map((item) => item.trim()).find((item) => item.startsWith(cookiePrefix))?.slice(cookiePrefix.length);
     if (!sameToken(bearer, token) && !(['GET', 'HEAD'].includes(request.method ?? '') && sameToken(cookie, token))) throw new ApiFailure(401, 'authentication_required', 'Connect through this local service before using its API.');
   };
   const handle = async (request: IncomingMessage, response: ServerResponse) => {
@@ -57,7 +59,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
       const path = url.pathname;
       const method = request.method;
       if (path === '/api/bootstrap' && method === 'GET') {
-        response.setHeader('Set-Cookie', `acanvas_auth=${token}; HttpOnly; SameSite=Strict; Path=/api`);
+        response.setHeader('Set-Cookie', `${authenticationCookieName()}=${token}; HttpOnly; SameSite=Strict; Path=/api`);
         const bootstrap: Bootstrap = { project: service.project, token, service: service.identity(), capabilities: { maxUploadBytes, backup: false, recovery: true, mediaPreview: 'browser', generation: 'host_tools' } };
         send(response, 200, bootstrap); return;
       }

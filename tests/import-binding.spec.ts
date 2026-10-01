@@ -69,8 +69,9 @@ test('trusted PNG keyboard paste routes BODY, button, canvas and composer once',
   await expect(page.locator('#whiteboard')).toBeFocused();
   await writePng(); await page.keyboard.press(pasteKey); await expect(page.locator('.board-object')).toHaveCount(3);
   await page.locator('#instruction').focus(); await writePng(); await page.keyboard.press(pasteKey);
-  await expect(page.locator('.draft-asset')).toHaveCount(1); await expect(page.locator('#instruction')).toHaveValue('保留原输入');
-  await expect(page.locator('.board-object')).toHaveCount(3); expect(uploads).toBe(4);
+  await expect(page.locator('.draft-asset')).toHaveCount(0); await expect(page.locator('#instruction')).toHaveValue('保留原输入');
+  await expect(page.locator('.board-object')).toHaveCount(4); expect(uploads).toBe(4);
+  expect((await app.call(`/api/state?sessionId=${await contextId(page)}`)).draft.attachments).toEqual([]);
   const evidence = await page.evaluate(() => (window as any).pasteEvidence);
   expect(evidence).toHaveLength(4); expect(evidence.every((entry: any) => entry.trusted && entry.files === 1)).toBeTruthy();
   await page.evaluate(() => navigator.clipboard.writeText('普通粘贴文字'));
