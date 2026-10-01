@@ -229,3 +229,14 @@ CUA 浏览器键盘走虚拟剪贴板，未发出读取系统原生文件剪贴�
 正式 4317 首页与当前 dist 只读核对一致，BiO0_nfk/BmsYsuu6 资源均 HTTP 200；服务、正式数据和系统剪贴板保持原样。
 
 [390px 居中队列与左侧运行标识](evidence/queue-status/centered-390.png)和[定向几何记录](evidence/queue-status/geometry.json)来自独立临时 fixture。
+
+
+## 一级批注操作的灰阶与光学尺寸
+
+一级 Annotate 使用共享气泡的灰阶描边 variant，已创建批注的画布编号和引用气泡继续使用淡蓝色。一级 Plus/Annotate/Delete 的 SVG 尺寸为 22/18/18px，按可见轮廓平衡，Align 使用同一 18px 图标族。
+
+最终构建通过。同一隔离临时 fixture 的视觉及 computed-style 核对通过、exit 0，覆盖亮/暗主题的正常、悬停与键盘焦点，蓝色批注及共享路径保持，一级 32×32px 命中区域，320/390px 中心实际命中及真实批注创建。三个图标的实测可见宽约为 12.83/12.75/13.5px；前后画面核对支持光学大小调整。验证范围为本机 Chrome。
+
+独立源码与亮暗实际渲染审查通过；图标中心/点击位置、操作灰阶与已创建标记淡蓝均已核对。探索性脚本自设高度差阈值不作为验收标准，记录其未正常通过，不计作整段测试通过。
+
+[灰阶一级操作与淡蓝批注](evidence/annotation-action/neutral-toolbar.png)来自独立临时 Cover studies 项目。

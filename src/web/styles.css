@@ -64,12 +64,13 @@ h1,h2,h3,p { margin: 0; }
 .annotation-outline.draft-outline { border-style: dashed; }
 .annotation-bubble { display: block; flex-shrink: 0; overflow: visible; }
 .annotation-bubble path { fill: var(--annotation-pin); stroke: var(--annotation); stroke-width: 1.5; stroke-linejoin: round; }
+.annotation-bubble[data-tone='neutral'] path { fill: none; stroke: currentColor; stroke-width: 2; }
 .annotation-bubble text { fill: var(--annotation-ink); font-size: 10px; font-weight: 500; }
 .annotation-pin { position: absolute; bottom: calc(100% + 3px); left: -1px; width: 28px; height: 28px; padding: 0; background: transparent; pointer-events: auto; filter: drop-shadow(0 2px 2px #00000012); }
 .whiteboard.mode-annotate .board-object .object-media { cursor: crosshair; }
 .selection-tool-control { flex-direction: column; padding: 5px; border-radius: 12px; }
 .selection-primary-tools { display: flex; align-items: center; justify-content: center; gap: 6px; }
-.selection-primary-tools .icon-button { width: 32px; height: 32px; flex-basis: 32px; }
+.selection-actions .selection-primary-tools .icon-button { width: 32px; height: 32px; flex-basis: 32px; }
 .alignment-control { gap: 6px; padding: 5px; border-radius: 12px; }
 .task-annotation-frame { width: 100%; max-height: 160px; object-fit: contain; border-radius: 7px; }
 .canvas-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 40px 24px 250px; pointer-events: none; }
