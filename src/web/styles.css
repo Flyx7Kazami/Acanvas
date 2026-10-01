@@ -89,16 +89,14 @@ h1,h2,h3,p { margin: 0; }
 .queue-peeks { position: absolute; inset: 18px 0 0; pointer-events: none; }
 .queue-peeks>span { position: absolute; inset: calc(var(--peek) * -6px) calc(var(--peek) * 8px) 0; background: var(--surface); border: 1px solid var(--edge); border-radius: 20px 20px 0 0; }
 .queue-list { position: relative; border: 1px solid var(--edge); border-radius: 20px 20px 0 0; background: var(--surface); padding: 0 10px 20px; box-shadow: var(--shadow); max-height: min(208px,var(--queue-available-height,208px),var(--queue-context-limit,360px)); overflow: auto; scrollbar-width: thin; }
-.queue-item { display: flex; align-items: center; gap: 10px; min-height: 56px; }
+.queue-item { display: block; }
 .queue-item:nth-child(n+4) { display: none; }
 .queue-item+.queue-item { border-top: 1px solid color-mix(in srgb,var(--edge) 60%,transparent); }
-.queue-task { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; align-self: stretch; text-align: left; padding: 10px 8px; background: transparent; border-radius: 9px; }
-.queue-task:hover { background: var(--soft); }
+.queue-task { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; align-self: stretch; text-align: left; padding: 6px 8px; background: transparent; border-radius: 6px; }
 .queue-task-mark { color: var(--muted); display: flex; flex-shrink: 0; }
-.queue-title { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.queue-item>.icon-button { width: 28px; height: 32px; flex-basis: 28px; }
+.queue-title { font-size: 12px; line-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .queue-expand { position: absolute; top: -7px; right: 13px; display: flex; align-items: center; gap: 5px; padding: 3px 7px; background: var(--surface); border: 1px solid var(--edge); border-radius: 6px; color: var(--muted); font-size: 9px; z-index: 1; }
-.queue-stack.expanded .queue-list { max-height: min(360px,var(--queue-available-height,45dvh),var(--queue-context-limit,360px)); animation: context-reveal 180ms var(--ease); }
+.queue-stack.expanded .queue-list { max-height: min(360px,var(--queue-available-height,45dvh),var(--queue-context-limit,360px)); }
 .queue-stack.expanded .queue-item { display: block; }
 .queue-stack.expanded .queue-expand svg { rotate: 180deg; }
 .queue-expand svg { transition: rotate 180ms var(--ease); }
@@ -185,9 +183,11 @@ details[open] summary svg { rotate: 180deg; }
 .comment-video-meta { display: flex; align-items: center; gap: 8px; padding: 3px 9px 5px; color: var(--muted); font-size: 9px; }
 .comment-video-meta label { margin-left: auto; display: flex; align-items: center; gap: 5px; }
 .comment-video-meta input { width: 62px; padding: 3px; border: 0; border-radius: 4px; background: var(--soft); font-size: 10px; }
-.queue-item { display: block; }
-.queue-row { display: flex; align-items: center; gap: 10px; min-height: 56px; }
-.queue-row>.icon-button { width: 28px; height: 32px; flex-basis: 28px; }
+.queue-row { display: flex; align-items: center; gap: 6px; min-height: 36px; }
+.queue-row>.icon-button { width: 24px; height: 28px; flex-basis: 24px; padding: 5px; }
+.queue-row>.icon-button:hover:not(:disabled) { background: transparent; color: var(--muted); }
+.queue-entering { animation: queue-send 220ms var(--ease); }
+@keyframes queue-send { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 .inline-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 11px; font-weight: 500; }
 .inline-heading>.icon-button { flex-basis: 28px; width: 28px; height: 28px; }
 .inline-task-detail { position: relative; padding: 0 8px 8px; animation: context-reveal 180ms var(--ease); }
@@ -221,3 +221,4 @@ details[open] summary svg { rotate: 180deg; }
 .unavailable-comments>div { display: flex; align-items: center; gap: 8px; font-size: 10px; }
 .unavailable-comments span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 @media(max-width:540px) { .comment-control textarea { font-size: 16px; } .queue-row { gap: 3px; } }
+@media(pointer:coarse) { .queue-row { min-height: 40px; } .queue-row>.icon-button { min-width: 32px; min-height: 32px; } }

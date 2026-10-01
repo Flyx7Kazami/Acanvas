@@ -233,12 +233,14 @@ export function useBoard() {
       const next = freshDraft(result.draft, latest.epoch + 1); drafts.current.set(current.sessionId, next);
       if (sessionRef.current === current.sessionId) reflectDraft(next);
       await refresh();
+      return result.task;
     } catch (cause) {
       const committed = await api.state(current.sessionId).catch(() => undefined);
       if (committed?.tasks.some(task => task.draftId === current.id)) {
         const next = freshDraft(committed.draft, (drafts.current.get(current.sessionId)?.epoch || 0) + 1);
         drafts.current.set(current.sessionId, next);
         if (sessionRef.current === current.sessionId) { adopt(committed); setError(''); }
+        return committed.tasks.find(task => task.draftId === current.id);
       } else showError(cause);
     }
     finally { setSending(false); }

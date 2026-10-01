@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react';
 import { ArrowDownToLine, ArrowUp, Check, ChevronDown, Copy, File, Hand, History, ImagePlus, LoaderCircle, Maximize, Minus, Moon, MousePointer2, Pause, Play, Plus, Sun, Trash2, Upload, X } from 'lucide-react';
 import type { Annotation, AnnotationInput, Asset, BoardObject, Draft, SessionView, Task, TaskStatus } from '../shared/types';
 import { fitView, intersects, mediaContentRect, normalizedRegion, objectRegion, rectangle, screenToWorld, unionBounds, zoomAt, type Point, type Rect } from './geometry';
@@ -36,6 +36,27 @@ type Gesture = { kind: 'move' | 'resize' | 'pan' | 'select'; start: Point; view:
 
 function AssetThumb({ asset, src }: { asset?: Asset; src: string }) {
   return <span className="asset-thumb">{asset?.kind === 'image' ? <img src={src} alt="" loading="lazy"/> : asset?.kind === 'video' ? <span className="video-symbol">▶</span> : <File size={18}/>}</span>;
+}
+
+function QueueItem({ task, animateSend, visible, played, children }: { task: Task; animateSend: boolean; visible: boolean; played: Set<string>; children: ReactNode }) {
+  const [entering, setEntering] = useState(false);
+  useLayoutEffect(() => {
+    if (!visible) { setEntering(false); return; }
+    if (!animateSend || played.has(task.id)) return;
+    played.add(task.id);
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setEntering(true);
+  }, [animateSend, visible, task.id, played]);
+  useEffect(() => {
+    if (!entering) return;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    const stop = () => setEntering(false);
+    const motionChange = () => { if (reduced.matches) stop(); };
+    const timer = window.setTimeout(stop, 260);
+    reduced.addEventListener('change', motionChange);
+    motionChange();
+    return () => { window.clearTimeout(timer); reduced.removeEventListener('change', motionChange); };
+  }, [entering]);
+  return <article className={`queue-item${entering ? ' queue-entering' : ''}`} role="listitem" data-task-id={task.id} data-status={task.status} onAnimationEnd={event => { if (event.target === event.currentTarget) setEntering(false); }}>{children}</article>;
 }
 
 function videoPlayback(video?: HTMLVideoElement) {
@@ -100,7 +121,9 @@ export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => localStorage.getItem('acanvas-theme') === 'dark' ? 'dark' : 'light');
   const [mode, setMode] = useState<'select' | 'pan'>('select');
   const [queueExpanded, setQueueExpanded] = useState(false);
-  const queueInteraction = useRef({ hovering: false, focused: false, pinned: false });
+  const [sentTaskId, setSentTaskId] = useState('');
+  const playedSendIds = useRef(new Set<string>());
+  const revealedSendId = useRef('');
   const [taskDetailId, setTaskDetailId] = useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
   const [cancellingTask, setCancellingTask] = useState('');
@@ -160,7 +183,15 @@ export default function App() {
 
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem('acanvas-theme', theme); document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#111111' : '#f5f5f3'); }, [theme]);
   useEffect(() => { setPreview({}); setSelectionRect(null); gesture.current = null; }, [state?.session.id]);
-  useEffect(() => { if (!pending) { setQueueExpanded(false); queueInteraction.current = { hovering: false, focused: false, pinned: false }; } }, [pending]);
+  useEffect(() => { if (!pending) setQueueExpanded(false); }, [pending]);
+  useEffect(() => { setSentTaskId(''); revealedSendId.current = ''; }, [state?.session.id]);
+  useLayoutEffect(() => {
+    if (!sentTaskId || revealedSendId.current === sentTaskId) return;
+    const row = document.querySelector<HTMLElement>(`.queue-list>.queue-item[data-task-id="${sentTaskId}"]`);
+    if (!row) return;
+    if (getComputedStyle(row).display === 'none') { setQueueExpanded(true); return; }
+    row.scrollIntoView({ block: 'nearest' }); revealedSendId.current = sentTaskId;
+  }, [sentTaskId, queueExpanded, historyOpen, state?.tasks]);
   useEffect(() => {
     const element = canvas.current;
     if (!element) return;
@@ -325,7 +356,11 @@ export default function App() {
       for (const [key, edit] of comments.current) if (edit.sessionId === owner.sessionId && edit.draftId === owner.draftId && edit.value.text.trim()) await persistComment(key, edit);
       await board.flushDraft(owner.sessionId);
       if (!sameScope(owner)) throw new Error('The request scope has changed. Continue in the original draft.');
-      await board.send();
+      const task = await board.send();
+      if (task && task.draftId === owner.draftId && task.sessionId === scope.current.sessionId) {
+        setHistoryOpen(false); setSentTaskId(task.id);
+        if (queuedTasks.length >= 3) setQueueExpanded(true);
+      }
     } catch (cause) { board.showError(cause); }
     finally { committing.current = false; setAnnotationSaving(false); }
   }
@@ -415,36 +450,21 @@ export default function App() {
     finally { setCancellingTask(''); }
   }
 
-  function queuePointerEnter(pointerType: string) {
-    if (pointerType !== 'mouse') return;
-    queueInteraction.current.hovering = true;
-    if (pending > 3) setQueueExpanded(true);
-  }
-
-  function queuePointerLeave(pointerType: string) {
-    if (pointerType !== 'mouse') return;
-    const interaction = queueInteraction.current;
-    interaction.hovering = false;
-    if (!interaction.focused && !interaction.pinned && !taskDetailId) setQueueExpanded(false);
-  }
-
   function toggleQueue() {
-    const next = !queueExpanded;
-    queueInteraction.current.pinned = next;
-    setQueueExpanded(next);
+    setQueueExpanded(current => !current);
   }
 
   const reader = annotationRead && <div className="annotation-reader" role="region" aria-label="Annotation"><div className="inline-heading"><span>Comment</span><IconButton label="Close annotation" onClick={() => setAnnotationRead(null)}><X size={14}/></IconButton></div><p>{annotationRead.text}</p>{annotationRead.timeStart !== undefined && <span>Video {timeLabel(annotationRead.timeStart)}{annotationRead.timeEnd !== undefined ? ` – ${timeLabel(annotationRead.timeEnd)}` : ''}</span>}{annotationRead.snapshotAssetId && <img src={board.api.content(annotationRead.snapshotAssetId)} alt="Annotated video frame"/>}</div>;
   const taskCard = (task: Task) => <TaskCard task={task} assets={assets} objects={objects} content={id => board.api.content(id)} locateAsset={locateAsset}/>;
   const composer = state && draft && <section ref={dock} className="creation-dock" data-canvas-control aria-label="Request composer and queue" onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); event.stopPropagation(); } }} onDrop={event => { const files = filesFromTransfer(event.dataTransfer); if (files.length) { event.preventDefault(); event.stopPropagation(); void importFiles(files); } }}>
-    {(pending > 0 || historyOpen) && <div className={`queue-stack ${queueExpanded || historyOpen ? 'expanded' : ''} ${pending > 3 && !historyOpen ? 'has-stack' : ''}`} data-pending={pending} onPointerEnter={event => queuePointerEnter(event.pointerType)} onPointerLeave={event => queuePointerLeave(event.pointerType)} onFocus={event => { if (event.currentTarget.contains(event.relatedTarget as Node)) return; queueInteraction.current.focused = true; if (!(event.target as Element).closest('.queue-expand')) setQueueExpanded(true); }} onBlur={event => { if (event.currentTarget.contains(event.relatedTarget as Node)) return; const interaction = queueInteraction.current; interaction.focused = false; if (!interaction.hovering && !interaction.pinned && !taskDetailId) setQueueExpanded(false); }}>
+    {(pending > 0 || historyOpen) && <div className={`queue-stack ${queueExpanded || historyOpen ? 'expanded' : ''} ${pending > 3 && !historyOpen ? 'has-stack' : ''}`} data-pending={pending}>
       {!queueExpanded && pending > 3 && !historyOpen && <div className="queue-peeks" aria-hidden="true">{Array.from({ length: Math.min(pending - 3, 2) }, (_, index) => <span key={index} style={{ '--peek': index + 1 } as React.CSSProperties}/>)}</div>}
       {historyOpen ? <div className="queue-list history-list" id="request-history" role="region" aria-label="Request history"><div className="inline-heading"><span>Request history</span><IconButton label="Close request history" onClick={() => { setHistoryOpen(false); document.querySelector<HTMLButtonElement>('.history-toggle')?.focus(); }}><X size={14}/></IconButton></div>{state.tasks.length ? [...state.tasks].reverse().map(task => <div key={task.id}>{taskCard(task)}</div>) : <p className="field-hint">Your requests, progress and receipts appear here.</p>}</div> : <div className="queue-list" id="creation-queue" role="list" aria-label="Task queue">
-        {queuedTasks.map(task => <article className="queue-item" role="listitem" key={task.id} data-task-id={task.id} data-status={task.status}>
+        {queuedTasks.map((task, index) => <QueueItem task={task} key={task.id} visible={queueExpanded || index < 3} animateSend={sentTaskId === task.id} played={playedSendIds.current}>
           <div className="queue-row"><button type="button" className="queue-task" aria-label={`View request ${task.sequence}: ${task.snapshot.userRequest.text || 'Attachments and annotations'}`} aria-expanded={taskDetailId === task.id} aria-controls={`request-details-${task.id}`} onClick={() => { setQueueExpanded(true); setTaskDetailId(current => current === task.id ? '' : task.id); }}><span className="queue-task-mark">{task.status === 'running' ? <LoaderCircle size={15} className="spin"/> : <ArrowUp size={15}/>}</span><span className="queue-title">{task.snapshot.userRequest.text || 'Create from the attachments and annotations.'}</span></button>
           <span className={`status-badge status-${task.status}`}>{statusLabels[task.status]}</span>{['queued', 'blocked', 'interrupted'].includes(task.status) && <IconButton label={`Cancel request ${task.sequence}`} disabled={disabled || !!cancellingTask} onClick={() => void cancelTask(task)}>{cancellingTask === task.id ? <LoaderCircle size={15} className="spin"/> : <Trash2 size={15}/>}</IconButton>}</div>
           {taskDetailId === task.id && <div className="inline-task-detail" id={`request-details-${task.id}`} role="region" aria-label={`Request ${task.sequence}`}><IconButton label="Collapse request details" onClick={() => { setTaskDetailId(''); document.querySelector<HTMLButtonElement>(`.queue-item[data-task-id="${task.id}"] .queue-task`)?.focus(); }}><X size={14}/></IconButton>{taskCard(task)}</div>}
-        </article>)}
+        </QueueItem>)}
       </div>}
       {!historyOpen && pending > 3 && <button type="button" className="queue-expand" aria-expanded={queueExpanded} aria-controls="creation-queue" onClick={toggleQueue}>{queueExpanded ? 'Collapse queue' : `${pending} requests`}<ChevronDown size={12}/></button>}
     </div>}
