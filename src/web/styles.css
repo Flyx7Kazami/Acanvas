@@ -41,8 +41,8 @@ h1,h2,h3,p { margin: 0; }
 .board-object.selected { outline: 2px solid var(--ink); }
 .object-media { width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: var(--surface); }
 .object-media>img,.object-media>video { width: 100%; height: 100%; object-fit: contain; display: block; }
-.object-media>video { background: #161616; }
-.mode-pan .object-media>video { pointer-events: none; }
+.object-media>video { background: #161616; pointer-events: none; }
+.mode-select .object-video .object-media { cursor: move; }
 .object-caption { display: flex; align-items: center; gap: 7px; position: absolute; top: calc(100% + 10px); left: 0; right: 0; min-height: 22px; font-size: 10px; color: var(--muted); cursor: move; }
 .object-caption>span:nth-child(2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .object-index { font-size: 8px; padding: 3px 4px; background: var(--surface); color: var(--muted); border-radius: 3px; flex-shrink: 0; }
@@ -72,6 +72,10 @@ h1,h2,h3,p { margin: 0; }
 .selection-actions>button:not(.icon-button) { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--ink); background: transparent; padding: 9px 8px; border-radius: 5px; }
 .selection-actions>button:hover { background: var(--soft); }
 .selection-actions .icon-button { width: 29px; height: 30px; flex-basis: 29px; }
+.video-playback { --playback-left-space: calc(var(--canvas-tool-left) + var(--canvas-tool-width) + 8px); position: absolute; z-index: 8; top: 68px; left: max(var(--playback-left-space),calc((100% - 360px) / 2)); display: flex; align-items: center; gap: 10px; width: min(360px,calc(100% - var(--playback-left-space) - 16px)); padding: 5px 8px; border: 1px solid color-mix(in srgb,var(--edge) 60%,transparent); background: var(--surface); border-radius: 9px; box-shadow: var(--float-shadow); }
+.video-playback .icon-button { width: 30px; height: 30px; flex-basis: 30px; }
+.video-playback input { min-width: 0; flex: 1; height: 26px; margin: 0; accent-color: var(--ink); cursor: pointer; }
+.video-time { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .drop-indicator,.canvas-busy { position: absolute; inset: 0; background: color-mix(in srgb,var(--surface) 85%,transparent); z-index: 12; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; font-size: 13px; }
 .drop-indicator { border: 2px dashed var(--ink); border-radius: 14px; inset: 10px; pointer-events: none; }
 .creation-dock { --dock-width: min(720px,calc(100vw - 48px)); --tool-clearance: max(0px,calc(var(--canvas-tool-left) + var(--canvas-tool-width) + 8px - (100vw - var(--dock-width)) / 2)); position: absolute; z-index: 20; bottom: 18px; left: 50%; transform: translateX(-50%); width: var(--dock-width); }
@@ -181,6 +185,7 @@ details[open] summary svg { rotate: 180deg; }
 .history-modal .task-card:last-child { border-bottom: 0; }
 @media (max-width: 760px) { .canvas-empty h1 { font-size: 25px; } .canvas-empty p { font-size: 11px; } .creation-dock { bottom: 14px; } }
 @media (max-width: 540px) { .canvas-actions { top: 14px; right: 14px; } .canvas-empty { padding: 40px 64px 210px; } .canvas-empty h1 { font-size: 23px; } .creation-dock { --dock-width: min(720px,calc(100vw - 32px)); bottom: 12px; } .composer { padding-left: 16px; } .composer>textarea,.modal input,.modal textarea { font-size: 16px; } .queue-stack { right: 12px; } .queue-list { padding-inline: 5px; } .queue-item { gap: 3px; } .queue-task { gap: 7px; padding-inline: 6px; } .queue-title { font-size: 11px; } .queue-item .status-badge { font-size: 8px; padding-inline: 4px; } .modal { padding: 21px; border-radius: 20px; } .selection-actions { top: 64px; padding-inline: 4px; gap: 1px; max-width: calc(100% - 24px); } .selection-actions>button:not(.icon-button) { padding-inline: 6px; font-size: 9px; } }
+@media (max-width: 540px) { .video-playback { top: 116px; } }
 @media (pointer: coarse) { .icon-button { min-width: 40px; min-height: 40px; } .canvas-toolbar .icon-button { min-width: 32px; min-height: 32px; } .resize-handle { width: 16px; height: 16px; right: -8px; bottom: -8px; } .draft-asset .icon-button,.draft-annotation .icon-button { min-width: 30px; min-height: 30px; } }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none!important; transition: none!important; scroll-behavior: auto!important; } button:active:not(:disabled) { scale: 1; } }
 

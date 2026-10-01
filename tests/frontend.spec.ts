@@ -193,11 +193,137 @@ test('two URL task contexts keep drafts and sends isolated through delayed saves
   await secondPage.close();
 });
 
+test('video surface selects and moves at zoom/pan, with explicit keyboard playback and persisted layout', async ({ page, app }, info) => {
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  await open(page, app);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4'));
+  const object = page.locator('.board-object.object-video'), surface = object.locator('.object-media'), video = object.locator('video');
+  await expect(video).toHaveJSProperty('videoWidth', 320);
+  await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
+  await expect(video).toHaveJSProperty('controls', false);
+  const original = (await app.state()).objects[0];
+  await surface.click({ position: { x: 90, y: 70 } });
+  await expect(object).toHaveAttribute('data-selected', 'true');
+  await expect(video).toHaveJSProperty('paused', true);
+  await expect(video).toHaveJSProperty('currentTime', 0);
+  await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeEnabled();
+  expect((await app.state()).objects[0].version).toBe(original.version);
+
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await expect.poll(async () => (await app.state()).session.view.zoom).toBeCloseTo(1.44, 4);
+  const beforePan = (await app.state()).session.view;
+  await page.getByRole('button', { name: 'Pan canvas', exact: true }).click();
+  let box = (await surface.boundingBox())!;
+  await page.mouse.move(box.x + box.width * .7, box.y + box.height * .7); await page.mouse.down();
+  await page.mouse.move(box.x + box.width * .7 - 80, box.y + box.height * .7 - 50, { steps: 5 }); await page.mouse.up();
+  await expect.poll(async () => (await app.state()).session.view.x).toBeCloseTo(beforePan.x - 80, 2);
+  await expect.poll(async () => (await app.state()).session.view.y).toBeCloseTo(beforePan.y - 50, 2);
+  expect((await app.state()).objects[0]).toEqual(original);
+  await expect(video).toHaveJSProperty('paused', true);
+
+  await page.getByRole('button', { name: 'Select files', exact: true }).click();
+  await page.locator('#whiteboard').click({ position: { x: 280, y: 180 } });
+  await expect(object).not.toHaveAttribute('data-selected');
+  box = (await surface.boundingBox())!;
+  await page.mouse.move(box.x + box.width * .7, box.y + box.height * .7); await page.mouse.down();
+  await page.mouse.move(box.x + box.width * .7 + 72, box.y + box.height * .7 + 43.2, { steps: 5 }); await page.mouse.up();
+  await expect.poll(async () => (await app.state()).objects[0].version).toBe(original.version + 1);
+  let moved = (await app.state()).objects[0];
+  expect(moved.x).toBeCloseTo(original.x + 50, 1); expect(moved.y).toBeCloseTo(original.y + 30, 1);
+  await expect(object).toHaveAttribute('data-selected', 'true');
+  await expect(video).toHaveJSProperty('paused', true);
+  await expect(video).toHaveJSProperty('currentTime', 0);
+  box = (await surface.boundingBox())!;
+  await page.mouse.move(box.x + box.width * .5, box.y + box.height * .5); await page.mouse.down();
+  await page.mouse.move(box.x + box.width * .5 + 36, box.y + box.height * .5 + 28.8, { steps: 5 }); await page.mouse.up();
+  await expect.poll(async () => (await app.state()).objects[0].version).toBe(original.version + 2);
+  moved = (await app.state()).objects[0];
+  expect(moved.x).toBeCloseTo(original.x + 75, 1); expect(moved.y).toBeCloseTo(original.y + 50, 1);
+  await expect(video).toHaveJSProperty('paused', true);
+
+  await page.getByRole('button', { name: 'Play video', exact: true }).focus(); await page.keyboard.press('Enter');
+  await expect(video).toHaveJSProperty('paused', false);
+  await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeGreaterThan(.05);
+  await surface.click({ position: { x: 90, y: 70 } });
+  await expect(video).toHaveJSProperty('paused', false);
+  await page.getByRole('button', { name: 'Pause video', exact: true }).click();
+  await expect(video).toHaveJSProperty('paused', true);
+  const timeline = page.getByRole('slider', { name: 'Video timeline', exact: true });
+  await timeline.focus(); await page.keyboard.press('Home'); await page.keyboard.press('ArrowRight');
+  await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeCloseTo(.1, 4);
+  await expect(timeline).toBeFocused();
+  await page.keyboard.press('End');
+  await expect.poll(async () => video.evaluate(element => Math.abs((element as HTMLVideoElement).currentTime - (element as HTMLVideoElement).duration))).toBeLessThan(.1);
+  await page.keyboard.press('Home');
+  expect((await app.state()).objects[0]).toEqual(moved);
+
+  for (const { width, height } of [{ width: 1440, height: 900 }, { width: 390, height: 900 }, { width: 390, height: 480 }]) {
+    await page.setViewportSize({ width, height });
+    await page.getByRole('button', { name: 'Fit all files', exact: true }).click();
+    const playbackBox = (await page.getByRole('group', { name: 'Video playback', exact: true }).boundingBox())!;
+    const actionsBox = (await page.locator('.selection-actions').boundingBox())!, importsBox = (await page.locator('.canvas-actions').boundingBox())!, toolsBox = (await page.locator('.canvas-toolbar').boundingBox())!;
+    expect(playbackBox.x).toBeGreaterThanOrEqual(0); expect(playbackBox.x + playbackBox.width).toBeLessThanOrEqual(width);
+    expect(playbackBox.x).toBeGreaterThanOrEqual(toolsBox.x + toolsBox.width + 8);
+    expect(playbackBox.y).toBeGreaterThan(actionsBox.y + actionsBox.height);
+    expect(playbackBox.y).toBeGreaterThan(importsBox.y + importsBox.height);
+    expect(await page.locator('.canvas-toolbar button, .video-playback button').evaluateAll(buttons => buttons.every(button => { const bounds = button.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === button; }))).toBeTruthy();
+    const timelineBox = (await timeline.boundingBox())!;
+    expect(timelineBox.width).toBeGreaterThanOrEqual(100);
+    expect(await timeline.evaluate(element => { const bounds = element.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2) === element; })).toBeTruthy();
+    await page.getByRole('button', { name: 'Play video', exact: true }).click();
+    await expect(video).toHaveJSProperty('paused', false);
+    await page.getByRole('button', { name: 'Pause video', exact: true }).click();
+    await expect(video).toHaveJSProperty('paused', true);
+    await timeline.click({ position: { x: timelineBox.width / 2, y: timelineBox.height / 2 } });
+    await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).currentTime / (element as HTMLVideoElement).duration)).toBeGreaterThan(.4);
+    await timeline.focus(); await page.keyboard.press('Home');
+    await page.screenshot({ path: info.outputPath(`video-controls-${width}${height === 480 ? 'x480' : ''}.png`) });
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect.poll(async () => (await app.state()).session.view.selectedObjectIds).toEqual([moved.id]);
+  await page.reload();
+  await expect(object).toHaveAttribute('data-selected', 'true');
+  await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeEnabled();
+  expect((await app.state()).objects[0]).toEqual(moved);
+  const restoredBox = (await surface.boundingBox())!, restoredView = (await app.state()).session.view;
+  expect(restoredBox.x).toBeCloseTo(moved.x * restoredView.zoom + restoredView.x, 1);
+  expect(restoredBox.y).toBeCloseTo(moved.y * restoredView.zoom + restoredView.y, 1);
+  expect(errors).toEqual([]);
+});
+
+test('video playback controls handle loading and rejected playback', async ({ page, app }) => {
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  await open(page, app);
+  let releaseMedia!: () => void;
+  const mediaReady = new Promise<void>(resolve => { releaseMedia = resolve; });
+  await page.route('**/api/assets/*/content', async route => { await mediaReady; await route.continue(); });
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4'));
+  const object = page.locator('.board-object.object-video'), video = object.locator('video');
+  await object.locator('.object-media').click({ position: { x: 90, y: 70 } });
+  await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeDisabled();
+  await expect(page.getByRole('slider', { name: 'Video timeline', exact: true })).toBeDisabled();
+  await expect(page.getByRole('slider', { name: 'Video timeline', exact: true })).toHaveAttribute('aria-valuetext', '0:00 of 0:00');
+  releaseMedia();
+  await expect(video).toHaveJSProperty('videoWidth', 320);
+  await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeEnabled();
+  await video.evaluate(element => { (element as HTMLVideoElement).play = () => Promise.reject(new DOMException('Playback permission is required.', 'NotAllowedError')); });
+  await page.getByRole('button', { name: 'Play video', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Playback permission is required.');
+  await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeEnabled();
+  await expect(video).toHaveJSProperty('paused', true);
+  expect(errors).toEqual([]);
+});
+
 test('real video and file imports, time/frame annotations and decode fallback', async ({ page, app }) => {
   await open(page, app);
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4'));
   const video = page.locator('video'); await expect(video).toHaveJSProperty('videoWidth', 320);
-  await video.evaluate(element => { (element as HTMLVideoElement).currentTime = .75; });
+  await page.locator('.object-media').first().click({ position: { x: 90, y: 70 } });
+  const timeline = page.getByRole('slider', { name: 'Video timeline', exact: true });
+  await timeline.focus(); await page.keyboard.press('Home');
+  for (let index = 0; index < 7; index++) await page.keyboard.press('ArrowRight');
+  await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeCloseTo(.7, 4);
   await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
   await page.locator('.object-caption').first().click();
   await page.getByRole('button', { name: 'Add annotation', exact: true }).click();
@@ -205,7 +331,7 @@ test('real video and file imports, time/frame annotations and decode fallback', 
   await page.getByRole('textbox', { name: 'Annotation', exact: true }).fill('在这个时间点保留主体。');
   await page.getByRole('button', { name: 'Add to draft', exact: true }).click();
   await expect.poll(async () => (await app.state()).draft.annotations.length).toBe(1);
-  const annotation = (await app.state()).draft.annotations[0]; expect(annotation.timeStart).toBeCloseTo(.75, 1); expect(annotation.snapshotAssetId).toBeTruthy();
+  const annotation = (await app.state()).draft.annotations[0]; expect(annotation.timeStart).toBeCloseTo(.7, 1); expect(annotation.snapshotAssetId).toBeTruthy();
   await video.evaluate(element => { (element as HTMLVideoElement).currentTime = 1.5; });
   await page.getByRole('button', { name: /Annotation 1:/ }).click();
   await expect(video).toHaveJSProperty('currentTime', annotation.timeStart!);
