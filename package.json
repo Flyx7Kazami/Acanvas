@@ -28,7 +28,7 @@
     "vite": "7.3.6"
   },
   "dependencies": {
-    "better-sqlite3": "12.4.1",
+    "better-sqlite3": "13.0.3",
     "lucide-react": "0.468.0",
     "react": "19.1.1",
     "react-dom": "19.1.1"
