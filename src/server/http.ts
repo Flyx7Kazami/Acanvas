@@ -4,8 +4,9 @@ import { createReadStream } from 'node:fs';
 import { open, mkdir, realpath, rename, rm, stat } from 'node:fs/promises';
 import { dirname, extname, resolve, relative } from 'node:path';
 import type { AddressInfo } from 'node:net';
-import type { Asset, Bootstrap, CompleteInput, Draft, SessionView } from '../shared/types.js';
+import type { Asset, Bootstrap, CompleteInput, Draft, ServiceRuntime, SessionView } from '../shared/types.js';
 import { ApiFailure, CanvasService, within } from './service.js';
+import { clearRuntime, publishRuntime } from './runtime.js';
 
 export interface ServerOptions { root: string; port?: number; maxUploadBytes?: number; webRoot?: string; allowedOrigins?: string[] }
 export interface RunningServer { service: CanvasService; url: string; close: () => Promise<void> }
@@ -27,6 +28,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   const responses = new Set<ServerResponse>();
   const requests = new Set<IncomingMessage>();
   const handlers = new Set<Promise<void>>();
+  let stopService: () => Promise<void>;
   let closing = false;
   let port = options.port ?? 4317;
   const guardSource = (request: IncomingMessage) => {
@@ -56,11 +58,19 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
       const method = request.method;
       if (path === '/api/bootstrap' && method === 'GET') {
         response.setHeader('Set-Cookie', `acanvas_auth=${token}; HttpOnly; SameSite=Strict; Path=/api`);
-        const bootstrap: Bootstrap = { project: service.project, token, capabilities: { maxUploadBytes, backup: false, recovery: true, mediaPreview: 'browser', generation: 'host_tools' } };
+        const bootstrap: Bootstrap = { project: service.project, token, service: service.identity(), capabilities: { maxUploadBytes, backup: false, recovery: true, mediaPreview: 'browser', generation: 'host_tools' } };
         send(response, 200, bootstrap); return;
       }
       if (path.startsWith('/api/')) {
         authenticate(request);
+        if (path === '/api/project/status' && method === 'GET') { send(response, 200, { project: service.project, service: service.identity(), status: 'running' }); return; }
+        if (path === '/api/project/stop' && method === 'POST') {
+          const input = await payload(request);
+          if (input.instanceId !== service.identity().instanceId) throw new ApiFailure(409, 'service_conflict', 'The service instance has changed. Inspect the project service before stopping it.');
+          response.once('finish', () => { void stopService(); });
+          send(response, 202, { project: service.project, service: service.identity(), status: 'stopping' }); return;
+        }
+        if (path === '/api/host-bindings' && method === 'POST') { send(response, 200, service.bindHost(await payload(request))); return; }
         if (path === '/api/events' && method === 'GET') {
           response.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
           response.write('event: ready\ndata: {}\n\n'); events.add(response);
@@ -188,7 +198,8 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   const heartbeat = setInterval(() => { for (const response of events) response.write(': alive\n\n'); }, 15_000); heartbeat.unref();
   await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch((error) => { clearInterval(heartbeat); service.close(); throw error; });
   let shutdown: Promise<void> | undefined;
-  return { service, url: `http://127.0.0.1:${port}`, close: () => {
+  const runtime: ServiceRuntime = { project: service.project, ...service.identity(), url: `http://127.0.0.1:${port}` };
+  stopService = () => {
     if (shutdown) return shutdown;
     shutdown = (async () => {
       closing = true; clearInterval(heartbeat);
@@ -201,8 +212,11 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
       server.closeIdleConnections();
       const forceTransportClose = setTimeout(() => server.closeAllConnections(), 1000); forceTransportClose.unref();
       try { await Promise.allSettled([...handlers]); await stopped; }
-      finally { clearTimeout(forceTransportClose); service.close(); }
+      finally { clearTimeout(forceTransportClose); service.close(); await clearRuntime(runtime); }
     })();
     return shutdown;
-  } };
+  };
+  try { await publishRuntime(runtime); }
+  catch (error) { await stopService(); throw error; }
+  return { service, url: runtime.url, close: stopService };
 }

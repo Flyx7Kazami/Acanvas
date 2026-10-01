@@ -2,11 +2,11 @@
 
 项目级本地创作白板，通过通用 Agent Skill 与 agent 协作。
 
-用户导入图片、视频和文件，选择对象或区域并添加批注，将附件与指令发送到当前白板会话的需求队列。Agent 通过 CLI 逐项处理任务，调用已有创作工具，将产物发布回共享白板。
+用户导入图片、视频和文件，选择对象或区域并添加批注，将附件与指令发送到当前宿主对话绑定的需求队列。Agent 通过 CLI 逐项处理任务，调用已有创作工具，将产物发布回共享白板。
 
 ## 当前状态
 
-P0 可运行纵向原型已实现。当前包括灰黑白 Giga 风格界面、素材导入、图片与视频批注、持久草稿、会话队列、CLI/Skill、产物回填和中断接续。实现范围、运行验证及待完成项见 [验证记录](docs/VALIDATION.md)。
+P0 可运行原型已完成本轮交互修订：全宽项目画布、底部输入框、上方可展开队列、素材导入与批注、宿主对话绑定、持久服务及 CLI/Skill。实现范围、运行验证及待完成项见 [验证记录](docs/VALIDATION.md)。
 
 - [项目计划](docs/PLAN.md)：需求、技术方案、实施阶段和验收标准。
 - [前端设计](docs/FRONTEND.md)：Giga 参考、灰黑白主题与交互规则。
@@ -20,12 +20,19 @@ P0 可运行纵向原型已实现。当前包括灰黑白 Giga 风格界面、�
 npm install --prefix .runtime --no-save --package-lock=false --cache .npm-cache --registry=https://registry.npmjs.org node@24
 PATH="$PWD/.runtime/node_modules/node/bin:$PATH" npm install --prefer-offline --include=dev --foreground-scripts --fetch-timeout=60000 --fetch-retries=2 --cache .npm-cache --registry=https://registry.npmjs.org
 npm run build
-npm start -- --project "$PWD" --port 4317
+npm run cli -- project open --project "$PWD" --port 4317
 ```
 
-在服务运行期间打开 [本地白板](http://127.0.0.1:4317)。在运行服务的终端按 Ctrl+C 正常停止。`--project` 指定白板数据所属项目；同一项目的重复服务启动会校验已有运行状态。
+`project open` 启动或复用本项目的独立后台服务，并返回已核对的访问地址。启动命令或 agent 回合结束后，服务继续运行。`--project` 指定数据所属项目，项目与服务实例通过检查后才连接或停止。开发时仍可用 `npm start` 以前台方式运行，Ctrl+C 正常关闭。
 
-开发界面可使用两个终端：
+```sh
+npm run cli -- project status --project "$PWD"
+npm run cli -- project stop --project "$PWD"
+```
+
+普通使用时打开 `project open` 返回的绑定 URL，延续宿主对话关联。
+
+开发界面可使用两个终端。先用 `npm run cli -- project stop --project "$PWD"` 正常停止本项目已有后台实例，再启动前台服务和 Vite。已有生产服务会拒绝重复实例与开发 Origin：
 
 ```sh
 npm start -- --project "$PWD" --port 4317 --dev-origin http://127.0.0.1:5173
@@ -34,18 +41,20 @@ npm run dev
 
 ## 使用链路
 
-1. 在白板选择或新建会话。素材和画布布局由项目共享，草稿与任务属于当前会话。
+1. 从 agent 提供的绑定链接打开项目白板。素材和布局由项目共享，需求归当前宿主对话；界面提供任务输入与队列。
 2. 向画布导入素材，或向输入区添加任务附件；选择对象/区域添加批注。视频批注关联时间与画面。
 3. 添加指令并发送。需求持久入队，界面显示真实状态及处理回执。
-4. 让 agent 读取本仓库的 Skill，使用明确项目和会话处理队列。可从界面复制恢复口令。
+4. Agent 读取本仓库 Skill，通过明确项目及任务范围处理队列。界面可复制含当前白板链接的接续口令。
 5. Agent 登记产物、发布白板变更并完成任务，继续处理下一项；队列为空或需要用户补充时停止。
 
 CLI 和 Skill 入口：
 
 ```sh
-npm run cli -- project open --project "$PWD" --url http://127.0.0.1:4317
+npm run cli -- project open --project "$PWD" --port 4317
 node skill/acanvas/scripts/acanvas.mjs --help
 ```
+
+Codex 直接调用时可使用可信的 `CODEX_THREAD_ID` 关联宿主对话；委派给子 agent 时优先传入父对话的 host/thread 或当前绑定链接。独立浏览器无绑定链接时保持每标签页独立的内部任务范围，刷新延续当前链接。旧链接和已有任务保留。
 
 每轮消费使用新的 consumer ID，循环内保持稳定；结束或交接后的执行身份保留历史。具体领取、接续和回填参数以 CLI help 与 Skill 为准。
 
@@ -71,7 +80,7 @@ Git 跟踪源码、计划、测试、依赖锁文件和必要验收材料。运�
 
 ## 当前支持边界
 
-- 已验证范围以验证记录为准；系统剪贴板、Safari、Codex 内置浏览器及第二 agent 宿主的完整矩阵仍需继续验证。
+- 用户已在实际 Codex 内置浏览器确认 Finder 文件粘贴成功；完整 OS/文件类型、Safari 与更多宿主矩阵继续验证。自动化与手工确认的范围分别记录。
 - 视频预览取决于编码；素材文件持续保留。完整视频理解由所用 agent 或解析工具提供。
 - 图片生成和 Pinterest 自动导入通过后续适配扩展；当前服务提供素材与任务接口，agent 使用其已有工具完成创作。
 - 当前按单机、同一用户设计；云端与跨设备访问、全量备份恢复和独立分发安装留待后续阶段。

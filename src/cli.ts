@@ -3,15 +3,20 @@ import { readFile, realpath, stat, writeFile } from 'node:fs/promises';
 import { basename, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import type { Bootstrap } from './shared/types.js';
+import type { HostBinding } from './shared/types.js';
 import { within } from './server/service.js';
+import { connectProject, waitForStop } from './server/client-runtime.js';
 
 const help = `acanvas: project-local whiteboard CLI (Node 24)
 
 Every API call requires --project /absolute/project. Queue calls require --session ID.
-Use --url http://127.0.0.1:4317 for a service on another local port.
+Use --url http://127.0.0.1:4317 to connect to a selected local service.
+Without --url, calls discover the project's service; project open starts it when needed.
 
-project open
+project open [--host NAME --thread ID] [--session ID] [--port NUMBER]
+  CODEX_THREAD_ID automatically binds the current Codex conversation.
+  Returns openUrl and sessionId for the current host conversation.
+project status | project stop
 session create --name NAME | session list | session read --session ID
 session resume --session ID [--consumer ID] --expected-consumer ID|none --resolution TEXT
 draft save --session ID --input draft.json | draft send --session ID --draft ID --revision NUMBER
@@ -43,12 +48,12 @@ export async function cli(args: string[]): Promise<unknown> {
   for (let i = 2; i < args.length; i += 2) { if (!args[i]?.startsWith('--') || args[i + 1] === undefined) throw new Error('Options use --name VALUE.'); options.set(args[i].slice(2), args[i + 1]); }
   const required = (key: string) => { const value = options.get(key); if (!value) throw new Error(`--${key} is required.`); return value; };
   const projectRoot = await realpath(required('project'));
-  const base = new URL(options.get('url') ?? 'http://127.0.0.1:4317');
-  if (base.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(base.hostname) || base.username || base.password || base.search || base.hash || base.pathname !== '/') throw new Error('Choose a loopback HTTP service URL.');
-  const bootstrapResponse = await fetch(new URL('/api/bootstrap', base));
-  if (!bootstrapResponse.ok) throw new Error(`The local service rejected the connection (${bootstrapResponse.status}).`);
-  const bootstrap = await bootstrapResponse.json() as Bootstrap;
-  if (bootstrap.project.root !== projectRoot) throw new Error('The service belongs to another project. Use its matching project root and local port.');
+  const connection = await connectProject(projectRoot, options.get('url'), group === 'project' && action === 'open', options.has('port') ? Number(required('port')) : 0);
+  if (!connection) {
+    if (group === 'project' && ['status', 'stop'].includes(action)) return { projectRoot, status: 'stopped' };
+    throw new Error('The project service is stopped. Run project open to start it.');
+  }
+  const { base, bootstrap } = connection;
   const request = async (path: string, method = 'GET', body?: unknown): Promise<any> => {
     const response = await fetch(new URL(path, base), { method, headers: { Authorization: `Bearer ${bootstrap.token}`, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
     const result = await response.json();
@@ -59,7 +64,25 @@ export async function cli(args: string[]): Promise<unknown> {
   const taskPath = () => `${sessionPath()}/tasks/${encodeURIComponent(required('task'))}`;
   const identity = () => ({ runId: required('run'), consumerId: required('consumer') });
   const input = async () => JSON.parse(await readFile(required('input'), 'utf8'));
-  if (group === 'project' && action === 'open') return { project: bootstrap.project, capabilities: bootstrap.capabilities };
+  if (group === 'project') {
+    if (action === 'status') return request('/api/project/status');
+    if (action === 'stop') {
+      if (!bootstrap.service?.instanceId) throw new Error('This service does not expose its runtime identity. Use its original terminal to stop it.');
+      await request('/api/project/stop', 'POST', { instanceId: bootstrap.service.instanceId });
+      await waitForStop(projectRoot, bootstrap.service.instanceId);
+      return { project: bootstrap.project, status: 'stopped' };
+    }
+    if (action === 'open') {
+      let host = options.get('host'), threadId = options.get('thread');
+      if (host || threadId) { host = required('host'); threadId = required('thread'); }
+      else if (process.env.CODEX_THREAD_ID) { host = 'codex'; threadId = process.env.CODEX_THREAD_ID; }
+      let binding: HostBinding | undefined, sessionId = options.get('session');
+      if (host && threadId) { binding = await request('/api/host-bindings', 'POST', { host, threadId, ...(sessionId ? { sessionId } : {}) }); sessionId = binding!.sessionId; }
+      else if (sessionId) { const session = await request(`/api/state?sessionId=${encodeURIComponent(sessionId)}`); sessionId = session.session.id; }
+      const openUrl = new URL(base); if (sessionId) openUrl.searchParams.set('session', sessionId);
+      return { project: bootstrap.project, service: bootstrap.service, capabilities: bootstrap.capabilities, ...(binding ? { binding } : {}), ...(sessionId ? { sessionId } : {}), openUrl: openUrl.href };
+    }
+  }
   if (group === 'session') {
     if (action === 'create') return request('/api/sessions', 'POST', { name: required('name') });
     if (action === 'list') {

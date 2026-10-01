@@ -1,17 +1,25 @@
 ---
 name: acanvas
-description: Read and update a local acanvas whiteboard, consume its explicitly selected session queue, publish results, and resume saved work when the user asks to work through acanvas.
+description: Read and update a local acanvas project whiteboard, consume the current agent conversation's task queue, publish results, and resume saved work when the user asks to work through acanvas.
 ---
 
 # acanvas
 
-Use the bundled CLI to work on the user's local project whiteboard. Project objects and assets are shared; drafts, chat, queue and view belong to the selected persistent whiteboard session.
+Use the bundled CLI to work on the user's local project whiteboard. Project objects and assets are shared; drafts, chat, queue and view belong to the current agent conversation's internal task context. The whiteboard has one project canvas and exposes creation controls.
 
-## Connect to the requested project and session
+## Connect to the project and agent conversation
 
-Resolve the acanvas installation directory, then call `node <installation>/skill/acanvas/scripts/acanvas.mjs --help` for the implemented commands. Every call includes `--project <absolute project root>`; every queue call also includes `--session <session ID>`. Add `--url http://127.0.0.1:<port>` when using a service on a chosen local port. The CLI verifies the service's project identity before sending changes.
+Resolve the acanvas installation directory, then call `node <installation>/skill/acanvas/scripts/acanvas.mjs --help` for the implemented commands. Every call includes `--project <absolute project root>`; every queue call also includes `--session <internal context ID>`. The API retains this opaque parameter to identify the current agent conversation's task scope.
 
-To start an installed build, run `npm start -- --project <absolute project root>` in the installation directory. The project wrapper selects its private Node 24 runtime. A project accepts one service process. Use `project open` and `session list` to inspect the connection. Create a new whiteboard session for a new agent conversation; connect to an existing session when the user explicitly asks to continue it. Use the session's saved name and ID when reporting the execution target.
+Call `project open --project <absolute project root>` through the helper. In Codex, the CLI uses `CODEX_THREAD_ID` when present to resolve the current conversation. For another host, or when that variable is unavailable, provide a reliable conversation ID with `--host <host> --thread <conversation ID>`. Retain the returned `sessionId` and open the returned `openUrl`. A new conversation receives its own task scope; reopening the same conversation returns its saved scope. Never infer a conversation from the latest task, the first saved context or a project-wide browser preference.
+
+For delegated execution, use the parent agent's explicitly provided `--host`/`--thread` or the current whiteboard URL's opaque context ID. A child agent's environment can identify its own temporary execution thread; pass the parent binding explicitly when working on that parent's queue.
+
+When the user explicitly asks to continue saved work, add `--session <saved context ID>` to the initial `project open`. The service connects that saved context to the current host conversation and preserves its drafts and task history. A host conversation already bound to another context receives a conflict; inspect the requested target and use its explicitly bound URL. Existing `?session=<ID>` URLs continue to identify their saved task scope.
+
+Without `--url`, `project open` discovers the project's service and starts a detached Node 24 service when needed. It remains available after the agent or launcher exits. Other commands discover that same service; add `--url http://127.0.0.1:<port>` only when connecting to an explicitly selected running service. Use `project status` to inspect it and `project stop` for a requested normal shutdown. The CLI verifies the project and service instance before changes or shutdown. Runtime metadata and logs are stored in `.acanvas/runtime/`; authentication values stay in the active connection.
+
+Opening a bare browser URL creates a tab-local task scope and records its ID in that page URL. To consume requests entered in such a page, obtain that exact URL context ID from the user or visible page URL and explicitly connect it with `project open --session <ID>`.
 
 ## Consume the queue
 
@@ -30,7 +38,7 @@ Use `task resume --expected-run <old run ID> --consumer <new consumer> --resolut
 
 When the previous consumer ended after completing a task and before releasing an idle queue, read `session read` and its completed receipt. If the remaining tasks are queued, explicitly call `session resume --consumer <new consumer> --expected-consumer <saved consumer> --resolution <review decision>`, then claim the next task. Use `--expected-consumer none` for a session with no consumer. A running, blocked or interrupted task requires the task-level recovery above.
 
-Omit `--consumer` on an initial next or explicit resume to let the CLI allocate a new ID. Idle, transferred and service-restart consumer IDs stay retired; a later continuation uses a fresh activation. The model carries these execution IDs between calls, while the user identifies the desired project and session.
+Omit `--consumer` on an initial next or explicit resume to let the CLI allocate a new ID. Idle, transferred and service-restart consumer IDs stay retired; a later continuation uses a fresh activation. Carry the returned context and execution IDs between calls while keeping the project's canvas shared.
 
 Draft writes include their current `revision`. After `draft save`, use its returned revision with `draft send --draft <ID> --revision <number>`. A revision conflict keeps the saved draft and requires an explicit decision between versions before saving again.
 

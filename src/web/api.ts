@@ -5,7 +5,7 @@ const errorMessages: Record<string, string> = {
   origin_rejected: '请从已授权的本地白板地址打开页面。',
   host_rejected: '请使用本地服务地址打开白板。',
   path_boundary: '素材需保存在当前项目允许的目录内。',
-  session_missing: '这个白板会话已不可用，请选择项目中的会话。',
+  session_missing: '任务上下文已不可用，请从 agent 重新打开白板。',
   asset_missing: '引用的素材已不可用，请重新导入。',
   asset_file_missing: '素材文件已缺失，请恢复文件或重新导入。',
   asset_integrity: '素材文件与记录不一致，请恢复文件或重新导入。',

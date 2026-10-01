@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, realpathSync, statSync } from 'node:fs';
 import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
-import type { Annotation, AnnotationInput, Asset, BoardObject, BoardOperation, BoardState, Claim, CompleteInput, Draft, Project, Run, RunIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
+import type { Annotation, AnnotationInput, Asset, BoardObject, BoardOperation, BoardState, Claim, CompleteInput, Draft, HostBinding, Project, Run, RunIdentity, ServiceIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
 
 type Row = Record<string, any>;
 export class ApiFailure extends Error {
@@ -47,6 +47,7 @@ export class CanvasService {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS metadata(key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at TEXT NOT NULL, view_json TEXT NOT NULL, consumer_id TEXT);
+      CREATE TABLE IF NOT EXISTS host_bindings(host TEXT NOT NULL, thread_id TEXT NOT NULL, session_id TEXT NOT NULL REFERENCES sessions(id), PRIMARY KEY(host,thread_id));
       CREATE TABLE IF NOT EXISTS consumers(session_id TEXT NOT NULL REFERENCES sessions(id), id TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, retired_at TEXT, PRIMARY KEY(session_id,id));
       CREATE TABLE IF NOT EXISTS drafts(id TEXT PRIMARY KEY, session_id TEXT NOT NULL UNIQUE REFERENCES sessions(id), revision INTEGER NOT NULL DEFAULT 1, text TEXT NOT NULL, attachments_json TEXT NOT NULL, annotations_json TEXT NOT NULL, references_json TEXT NOT NULL, updated_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS assets(id TEXT PRIMARY KEY, name TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, kind TEXT NOT NULL, path TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL, source_task_id TEXT, source_run_id TEXT);
@@ -81,17 +82,33 @@ export class CanvasService {
     this.db.prepare("DELETE FROM metadata WHERE key='active_service' AND value=?").run(json({ pid: process.pid, instanceId: this.instanceId }));
     this.db.close();
   }
+  identity(): ServiceIdentity { return { pid: process.pid, instanceId: this.instanceId }; }
   private transaction<T>(operation: () => T): T { const value = this.db.transaction(operation).immediate(); this.onChange(); return value; }
   private sessionRow(id: string): Row { nonempty(id, 'Session ID', 200); return this.db.prepare('SELECT * FROM sessions WHERE id=?').get(id) as Row || fail(404, 'session_missing', 'Select a session belonging to this project.'); }
   private sessionFrom(row: Row): Session { return { id: row.id, name: row.name, createdAt: row.created_at, view: parse(row.view_json), consumerId: row.consumer_id }; }
   sessions(): Session[] { return (this.db.prepare('SELECT * FROM sessions ORDER BY created_at,id').all() as Row[]).map((row) => this.sessionFrom(row)); }
   session(id: string): Session { return this.sessionFrom(this.sessionRow(id)); }
   createSession(name: unknown): Session {
+    return this.transaction(() => this.insertSession(nonempty(name, 'Session name', 200)));
+  }
+  private insertSession(name: string): Session {
+    const id = randomUUID(), time = now();
+    this.db.prepare('INSERT INTO sessions VALUES(?,?,?,?,NULL)').run(id, name, time, json({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }));
+    this.newDraft(id);
+    return this.session(id);
+  }
+  bindHost(input: { host?: unknown; threadId?: unknown; sessionId?: unknown }): HostBinding {
+    const host = nonempty(input.host, 'Host', 200), threadId = nonempty(input.threadId, 'Thread ID', 200);
+    const requested = input.sessionId === undefined ? undefined : nonempty(input.sessionId, 'Session ID', 200);
     return this.transaction(() => {
-      const id = randomUUID(), time = now();
-      this.db.prepare('INSERT INTO sessions VALUES(?,?,?,?,NULL)').run(id, nonempty(name, 'Session name', 200), time, json({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }));
-      this.newDraft(id);
-      return this.session(id);
+      const saved = this.db.prepare('SELECT session_id FROM host_bindings WHERE host=? AND thread_id=?').get(host, threadId) as Row | undefined;
+      if (saved) {
+        if (requested && requested !== saved.session_id) fail(409, 'host_binding_conflict', 'This host conversation is already connected to another task context.');
+        return { host, threadId, sessionId: saved.session_id };
+      }
+      const sessionId = requested ? this.session(requested).id : this.insertSession(`${host} 创作任务`).id;
+      this.db.prepare('INSERT INTO host_bindings(host,thread_id,session_id) VALUES(?,?,?)').run(host, threadId, sessionId);
+      return { host, threadId, sessionId };
     });
   }
   private newDraft(sessionId: string): Draft {

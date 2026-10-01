@@ -8,6 +8,9 @@ export interface AnnotationInput { id: string; scope: 'object' | 'region'; objec
 export interface Annotation extends AnnotationInput { source: 'user_annotation'; createdAt: string; sourceTaskId: string; sessionId: string }
 export interface SessionView { x: number; y: number; zoom: number; selectedObjectIds: string[] }
 export interface Session { id: string; name: string; createdAt: string; view: SessionView; consumerId: string | null }
+export interface HostBinding { host: string; threadId: string; sessionId: string }
+export interface ServiceIdentity { pid: number; instanceId: string }
+export interface ServiceRuntime extends ServiceIdentity { project: Project; url: string }
 export interface Draft { id: string; sessionId: string; revision: number; text: string; attachments: string[]; annotations: AnnotationInput[]; references: { objectIds: string[]; taskIds: string[] }; updatedAt: string }
 export interface TaskSnapshot { userRequest: { source: 'user_instruction'; text: string }; annotations: AnnotationInput[]; referenceContent: { source: 'reference_content'; assets: Asset[]; objects: BoardObject[]; taskIds: string[] } }
 export interface Progress { message: string; externalJobId?: string; assetIds?: string[]; createdAt: string }
@@ -21,7 +24,7 @@ export type BoardOperation =
   | { type: 'update'; objectId: string; expectedVersion: number; changes: Partial<Bounds> }
   | { type: 'delete'; objectId: string; expectedVersion: number };
 export interface BoardState { project: Project; sessions: Session[]; session: Session; draft: Draft; assets: Asset[]; objects: BoardObject[]; annotations: Annotation[]; tasks: Task[] }
-export interface Bootstrap { project: Project; token: string; capabilities: { maxUploadBytes: number; backup: boolean; recovery: boolean; mediaPreview: 'browser'; generation: 'host_tools' } }
+export interface Bootstrap { project: Project; token: string; service: ServiceIdentity; capabilities: { maxUploadBytes: number; backup: boolean; recovery: boolean; mediaPreview: 'browser'; generation: 'host_tools' } }
 export interface Claim { task: Task | null; run: Run | null; consumerId: string; projectId: string; sessionId: string }
 export interface RunIdentity { consumerId: string; runId: string }
 export interface CompleteInput extends RunIdentity { summary: string; assetIds: string[]; validation: string[]; operations: BoardOperation[] }

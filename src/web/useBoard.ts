@@ -70,7 +70,7 @@ export function useBoard() {
     views.current.set(next.session.id, nextView);
     sessionRef.current = next.session.id;
     viewSessionRef.current = next.session.id;
-    localStorage.setItem(`acanvas-session:${next.project.id}`, next.session.id);
+    sessionStorage.setItem(`acanvas-context:${next.project.id}`, next.session.id);
     setState(next);
     reflectDraft(local);
     setView(nextView);
@@ -110,10 +110,9 @@ export function useBoard() {
       const bootstrap = await api.bootstrap();
       if (!alive) return;
       if (!sessionRef.current) {
-        const sessions = await api.sessions(); if (!alive) return;
-        const remembered = localStorage.getItem(`acanvas-session:${bootstrap.project.id}`);
-        const session = sessions.find(value => value.id === remembered) || sessions[0] || await api.createSession('创作会话');
-        if (!alive) return; sessionRef.current = session.id;
+        const remembered = sessionStorage.getItem(`acanvas-context:${bootstrap.project.id}`);
+        const sessionId = remembered || (await api.createSession('创作任务')).id;
+        if (!alive) return; sessionRef.current = sessionId;
       }
       const next = await api.state(sessionRef.current); if (!alive) return;
       adopt(next); connectEvents();
