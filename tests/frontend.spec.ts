@@ -52,8 +52,10 @@ const test = base.extend<{ app: AppFixture }>({
 
 async function open(page: Page, app: AppFixture) {
   await page.goto(app.server.url);
-  await expect(page.getByRole('heading', { name: '给想法一个空间' })).toBeVisible();
-  await expect(page.locator('.connection-status')).toHaveText('已保存');
+  await expect(page.getByRole('heading', { name: 'Drop files to start' })).toBeVisible();
+  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await expect(page.locator('.connection-feedback')).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.lang)).toBe('en');
+  expect(await page.locator('body').innerText()).not.toMatch(/[\p{Script=Han}]/u);
   expect(await page.locator('dialog:not([open])').evaluateAll(elements => elements.every(element => getComputedStyle(element).display === 'none'))).toBeTruthy();
 }
 
@@ -73,35 +75,36 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
   await open(page, app);
   const image = await png(page);
-  await page.getByLabel('选择画布素材文件', { exact: true }).setInputFiles(image);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(image);
   const object = page.locator('.board-object').first();
   await expect(object).toBeVisible();
   await expect(object.locator('img')).toHaveJSProperty('naturalWidth', 600);
   await object.click({ position: { x: 80, y: 40 } });
-  await page.getByRole('button', { name: '放大画布', exact: true }).click();
-  await page.getByRole('button', { name: '添加批注', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: '添加批注', exact: true })).toBeVisible();
-  await page.getByRole('textbox', { name: '批注内容', exact: true }).fill('保留中部构图，增加呼吸感。');
-  await page.getByRole('button', { name: '加入需求草稿', exact: true }).click();
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await page.getByRole('button', { name: 'Add annotation', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Add annotation', exact: true })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Annotation', exact: true }).fill('保留中部构图，增加呼吸感。');
+  await page.screenshot({ path: info.outputPath('annotation-dialog.png') });
+  await page.getByRole('button', { name: 'Add to draft', exact: true }).click();
   await expect(page.locator('.draft-annotation')).toHaveCount(1);
   const before = await app.state();
   const annotation = before.draft.annotations[0];
   expect(annotation.bounds.x).toBe(0); expect(annotation.bounds.y).toBe(0);
   expect(annotation.bounds.width).toBe(1); expect(annotation.bounds.height).toBe(1);
-  await page.getByRole('button', { name: '选择素材', exact: true }).click();
+  await page.getByRole('button', { name: 'Select files', exact: true }).click();
   const box = (await object.boundingBox())!;
   await page.mouse.move(box.x + box.width * .8, box.y + box.height * .8); await page.mouse.down();
   await page.mouse.move(box.x + box.width * .8 + 60, box.y + box.height * .8 + 30, { steps: 5 }); await page.mouse.up();
   await expect.poll(async () => (await app.state()).objects[0].version).toBe(2);
-  const handle = page.getByRole('button', { name: '调整尺寸 reference.png', exact: true });
+  const handle = page.getByRole('button', { name: 'Resize reference.png', exact: true });
   await handle.focus(); await handle.press('ArrowRight');
   await expect.poll(async () => (await app.state()).objects[0].version).toBe(3);
   const currentBox = (await object.locator('img').boundingBox())!;
   const annotationBox = (await page.locator('.annotation-outline').boundingBox())!;
   expect((annotationBox.x - currentBox.x) / currentBox.width).toBeCloseTo(0, 1);
   expect((annotationBox.y - currentBox.y) / currentBox.height).toBeCloseTo(0, 1);
-  await page.getByLabel('创作需求', { exact: true }).fill('根据参考和批注生成一个新版本。');
-  await page.getByRole('button', { name: '发送需求', exact: true }).click();
+  await page.getByLabel('Request', { exact: true }).fill('根据参考和批注生成一个新版本。');
+  await page.getByRole('button', { name: 'Send request', exact: true }).click();
   await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(1);
   await expect(page.locator('.draft-annotation')).toHaveCount(0);
   const taskState = await app.state(), sessionId = taskState.session.id;
@@ -116,23 +119,24 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   await writeFile(completionFile, JSON.stringify({ summary: '参考图已回填到共享白板。', assetIds: [output.id], validation: ['读取了原图与发送时批注', '产物文件已保存'], operations: [{ type: 'create', object: { assetId: output.id, x: 800, y: 250, width: 300, height: 150 } }] }));
   await cli(['task', 'complete', ...args, '--task', claimed.task!.id, '--run', claimed.run!.id, '--consumer', 'browser-agent', '--input', completionFile]);
   await expect(page.locator('.board-object')).toHaveCount(2);
-  await page.getByRole('button', { name: /记录/ }).click();
+  await page.getByRole('button', { name: /Request history/ }).click();
   await expect(page.locator('.task-card[data-status="completed"]')).toHaveCount(1);
   await expect(page.getByText('参考图已回填到共享白板。', { exact: true })).toBeVisible();
+  await page.screenshot({ path: info.outputPath('history-dialog.png') });
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: '适配全部素材', exact: true }).click();
+  await page.getByRole('button', { name: 'Fit all files', exact: true }).click();
   await expect.poll(async () => (await app.state()).session.view.zoom).not.toBe(1.2);
   await expect(page.locator('.board-object img')).toHaveCount(2);
   await expect.poll(async () => page.locator('.board-object img').evaluateAll(images => images.every(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth === 600))).toBeTruthy();
   await page.locator('.board-object').first().focus(); await page.keyboard.press('Enter');
   await page.locator('.board-object').nth(1).focus(); await page.keyboard.press('Shift+Enter');
   await expect(page.locator('.board-object[data-selected=true]')).toHaveCount(2);
-  await page.getByRole('button', { name: '附加到需求', exact: true }).click();
+  await page.getByRole('button', { name: 'Attach to request', exact: true }).click();
   await expect(page.locator('.draft-asset')).toHaveCount(2);
-  await expect(page.locator('.draft-save')).toHaveText('已保存');
+  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   await expect(page.locator('.toast')).toHaveCount(0);
   await page.screenshot({ path: info.outputPath('light-board.png') });
-  await page.getByRole('button', { name: '切换暗色主题', exact: true }).click();
+  await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
   await expect.poll(async () => page.locator('.composer').evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(34, 34, 34)');
   await page.locator('.board-object img').evaluateAll(images => Promise.all(images.map(image => (image as HTMLImageElement).decode())));
   const pixels = await page.locator('.board-object img').evaluateAll(images => images.map(image => { const frame = document.createElement('canvas'); frame.width = 600; frame.height = 300; const context = frame.getContext('2d')!; context.drawImage(image as HTMLImageElement, 0, 0); return [...context.getImageData(130, 80, 1, 1).data]; }));
@@ -140,7 +144,7 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
   await page.screenshot({ path: info.outputPath('dark-board.png') });
   await page.reload(); await expect(page.locator('.board-object')).toHaveCount(2);
-  await page.getByRole('button', { name: /记录/ }).click();
+  await page.getByRole('button', { name: /Request history/ }).click();
   await expect(page.locator('.task-card[data-status="completed"]')).toHaveCount(1);
   await page.keyboard.press('Escape');
   expect(errors).toEqual([]);
@@ -174,7 +178,7 @@ test('two URL task contexts keep drafts and sends isolated through delayed saves
   const sendDelay = new Promise<void>(resolve => { releaseSend = resolve; });
   await page.route(`**/api/sessions/${firstId}/draft`, async route => { const response = await route.fetch(); saving(); await sendDelay; await route.fulfill({ response }); });
   await page.locator('#instruction').fill('发送这条完整需求');
-  await page.getByRole('button', { name: '发送需求', exact: true }).click(); await savingPromise;
+  await page.getByRole('button', { name: 'Send request', exact: true }).click(); await savingPromise;
   await expect(page.locator('#instruction')).toBeDisabled();
   releaseSend(); await expect(page.locator('#instruction')).toBeEnabled(); await expect(page.locator('#instruction')).toHaveValue('');
   await expect.poll(async () => (await app.state(firstId)).draft.id).not.toBe(initial.draft.id);
@@ -182,7 +186,7 @@ test('two URL task contexts keep drafts and sends isolated through delayed saves
   await expect(secondPage.locator('.queue-item')).toHaveCount(0);
   await page.locator('#instruction').fill('发送后的下一条草稿');
   await expect.poll(async () => (await app.state(firstId)).draft.text).toBe('发送后的下一条草稿');
-  await expect(page.locator('.draft-save')).toHaveText('已保存');
+  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   await page.reload(); await expect(page.locator('#instruction')).toHaveValue('发送后的下一条草稿');
   await secondPage.reload(); await expect(secondPage.locator('#instruction')).toHaveValue('第二个上下文的新想法');
   expect((await app.state(second.id)).draft.text).toBe('第二个上下文的新想法');
@@ -191,30 +195,30 @@ test('two URL task contexts keep drafts and sends isolated through delayed saves
 
 test('real video and file imports, time/frame annotations and decode fallback', async ({ page, app }) => {
   await open(page, app);
-  await page.getByLabel('选择画布素材文件', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4'));
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4'));
   const video = page.locator('video'); await expect(video).toHaveJSProperty('videoWidth', 320);
   await video.evaluate(element => { (element as HTMLVideoElement).currentTime = .75; });
   await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
   await page.locator('.object-caption').first().click();
-  await page.getByRole('button', { name: '添加批注', exact: true }).click();
-  await expect(page.getByText('视频时间点 0:00', { exact: true })).toBeVisible();
-  await page.getByRole('textbox', { name: '批注内容', exact: true }).fill('在这个时间点保留主体。');
-  await page.getByRole('button', { name: '加入需求草稿', exact: true }).click();
+  await page.getByRole('button', { name: 'Add annotation', exact: true }).click();
+  await expect(page.getByText('Video timestamp 0:00', { exact: true })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Annotation', exact: true }).fill('在这个时间点保留主体。');
+  await page.getByRole('button', { name: 'Add to draft', exact: true }).click();
   await expect.poll(async () => (await app.state()).draft.annotations.length).toBe(1);
   const annotation = (await app.state()).draft.annotations[0]; expect(annotation.timeStart).toBeCloseTo(.75, 1); expect(annotation.snapshotAssetId).toBeTruthy();
   await video.evaluate(element => { (element as HTMLVideoElement).currentTime = 1.5; });
-  await page.getByRole('button', { name: /批注 1：/ }).click();
+  await page.getByRole('button', { name: /Annotation 1:/ }).click();
   await expect(video).toHaveJSProperty('currentTime', annotation.timeStart!);
-  await expect(page.getByRole('dialog', { name: '批注内容', exact: true }).locator('img')).toBeVisible();
-  await page.getByRole('button', { name: '关闭批注内容', exact: true }).click();
-  await page.getByLabel('选择画布素材文件', { exact: true }).setInputFiles([{ name: 'brief.txt', mimeType: 'text/plain', buffer: Buffer.from('Project reference material') }, { name: 'unsupported.mp4', mimeType: 'video/mp4', buffer: Buffer.from('Undecodable video fixture') }]);
+  await expect(page.getByRole('dialog', { name: 'Annotation', exact: true }).locator('img')).toBeVisible();
+  await page.getByRole('button', { name: 'Close Annotation', exact: true }).click();
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles([{ name: 'brief.txt', mimeType: 'text/plain', buffer: Buffer.from('Project reference material') }, { name: 'unsupported.mp4', mimeType: 'video/mp4', buffer: Buffer.from('Undecodable video fixture') }]);
   await expect(page.locator('.board-object')).toHaveCount(3);
-  await expect(page.getByText('浏览器暂时无法预览此文件', { exact: true })).toBeVisible();
+  await expect(page.getByText('Preview unavailable in this browser', { exact: true })).toBeVisible();
   await expect(page.getByText('brief.txt', { exact: true }).first()).toBeVisible();
-  await page.getByLabel('选择画布素材文件', { exact: true }).setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('Keep the existing design') });
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('Keep the existing design') });
   await expect(page.locator('.board-object')).toHaveCount(4);
   await page.locator('.board-object').last().focus(); await page.keyboard.press('Enter');
-  await page.getByRole('button', { name: '附加到需求', exact: true }).click();
+  await page.getByRole('button', { name: 'Attach to request', exact: true }).click();
   await expect(page.locator('.draft-asset')).toHaveCount(1);
   expect((await app.state()).objects).toHaveLength(4);
   await expect.poll(async () => (await app.state()).draft.attachments.length).toBe(1);
@@ -242,57 +246,63 @@ test('file paste and drop add canvas objects from every input while text remains
   await expect(page.locator('#instruction')).toHaveValue('保留这段文字');
 });
 
-test('compact input preserves multiline drafts and references with a merged centered tool rail', async ({ page, app }, info) => {
+test('full-screen canvas and floating controls preserve multiline drafts and references', async ({ page, app }, info) => {
   await open(page, app);
   const measurements: object[] = [];
   const image = await png(page);
-  await page.getByLabel('选择画布素材文件', { exact: true }).setInputFiles(image);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(image);
   await page.locator('.board-object').focus(); await page.keyboard.press('Enter');
-  await page.getByRole('button', { name: '附加到需求', exact: true }).click();
+  await page.getByRole('button', { name: 'Attach to request', exact: true }).click();
   const text = '保持主体的轮廓与比例。\n留出标题空间。\n使用现有参考中的色彩。';
   await page.locator('#instruction').fill(text);
   await expect.poll(async () => (await app.state()).draft.text).toBe(text);
   await page.reload(); await expect(page.locator('#instruction')).toHaveValue(text);
   await expect(page.locator('.draft-asset')).toHaveCount(1);
-  await expect(page.getByRole('button', { name: '为当前需求添加附件', exact: true })).toHaveCount(0);
-  await expect(page.getByLabel('选择需求附件文件', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Add attachment to request', exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Select request attachments', { exact: true })).toHaveCount(0);
   await expect(page.locator('.composer .lucide-plus')).toHaveCount(0);
   for (const [name, width, height, dark] of [['light', 1440, 1000, false], ['dark', 1440, 1000, true], ['narrow', 390, 844, true]] as const) {
     await page.setViewportSize({ width, height });
-    if (width <= 1160) await page.getByRole('button', { name: '适配全部素材', exact: true }).click();
-    if (dark && await page.getByRole('button', { name: '切换暗色主题', exact: true }).count()) await page.getByRole('button', { name: '切换暗色主题', exact: true }).click();
+    if (width <= 1160) await page.getByRole('button', { name: 'Fit all files', exact: true }).click();
+    if (dark && await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).count()) await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
     const input = page.locator('#instruction'); await input.focus();
-    const composer = (await page.locator('.composer').boundingBox())!, box = (await input.boundingBox())!, send = (await page.getByRole('button', { name: '发送需求', exact: true }).boundingBox())!;
-    const canvas = (await page.locator('#whiteboard').boundingBox())!, tools = (await page.getByRole('toolbar', { name: '白板工具', exact: true }).boundingBox())!;
+    const composer = (await page.locator('.composer').boundingBox())!, box = (await input.boundingBox())!, send = (await page.getByRole('button', { name: 'Send request', exact: true }).boundingBox())!;
+    const canvas = (await page.locator('#whiteboard').boundingBox())!, tools = (await page.getByRole('toolbar', { name: 'Board tools', exact: true }).boundingBox())!;
+    expect(canvas).toEqual({ x: 0, y: 0, width, height });
     expect(composer.height).toBe(52); expect(composer.width).toBeLessThanOrEqual(720);
     expect(Math.abs(box.y + box.height / 2 - send.y - send.height / 2)).toBeLessThan(1);
     expect(tools.x - canvas.x).toBe(16); expect(tools.height).toBeGreaterThan(tools.width);
     expect(tools.y + tools.height / 2).toBeCloseTo(canvas.y + canvas.height / 2, 1);
     expect(tools.y).toBeGreaterThan(canvas.y); expect(tools.y + tools.height).toBeLessThan(composer.y);
     expect(tools.width).toBe(40);
+    const floating = page.locator('.canvas-actions .floating-control');
+    await expect(floating).toHaveCount(2);
+    expect(await floating.evaluateAll(buttons => buttons.every(button => { const bounds = button.getBoundingClientRect(); return bounds.top >= 14 && bounds.right <= innerWidth - 14 && document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === button; }))).toBeTruthy();
+    const actions = (await page.locator('.selection-actions').boundingBox())!, imports = (await page.locator('.canvas-actions').boundingBox())!;
+    expect(actions.x + actions.width <= imports.x || actions.y >= imports.y + imports.height).toBeTruthy();
     await expect(page.locator('.canvas-toolbar button')).toHaveCount(6);
     await expect(page.locator('.canvas-zoom')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: '绘制区域批注', exact: true })).toHaveCount(0);
-    await expect(page.locator('.draft-save')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Draw region annotation', exact: true })).toHaveCount(0);
+    await expect(page.locator('header,.canvas-heading,.draft-save,.send-hint')).toHaveCount(0);
     expect(await input.evaluate(element => ({ rows: (element as HTMLTextAreaElement).rows, overflow: element.scrollHeight > element.clientHeight, outline: getComputedStyle(element).outlineStyle, border: getComputedStyle(element).borderWidth, shadow: getComputedStyle(element).boxShadow, surface: getComputedStyle(element).backgroundColor }))).toEqual({ rows: 1, overflow: true, outline: 'none', border: '0px', shadow: 'none', surface: 'rgba(0, 0, 0, 0)' });
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBeFalsy();
     measurements.push({ name, viewport: { width, height }, composer, input: box, send, canvas, tools, references: await page.locator('.draft-attachments').boundingBox() });
     await page.locator('.board-object img').evaluateAll(images => Promise.all(images.map(image => (image as HTMLImageElement).decode())));
     await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
-    await page.screenshot({ path: info.outputPath(`compact-${name}.png`) });
+    await page.screenshot({ path: info.outputPath(`floating-${name}.png`) });
   }
   await page.locator('#instruction').press(process.platform === 'darwin' ? 'Meta+Enter' : 'Control+Enter');
   await expect(page.locator('.queue-item')).toHaveCount(1);
   const sent = await app.state(); expect(sent.tasks[0].snapshot.userRequest.text).toBe(text); expect(sent.tasks[0].snapshot.referenceContent.assets).toHaveLength(1);
   for (let index = 2; index <= 6; index++) {
     await page.locator('#instruction').fill(`构图探索 ${index}`);
-    await page.getByRole('button', { name: '发送需求', exact: true }).click();
+    await page.getByRole('button', { name: 'Send request', exact: true }).click();
     await expect(page.locator('.queue-item')).toHaveCount(index);
   }
   await page.locator('.board-object').focus(); await page.keyboard.press('Enter');
-  await page.getByRole('button', { name: '附加到需求', exact: true }).click();
+  await page.getByRole('button', { name: 'Attach to request', exact: true }).click();
   await page.locator('#instruction').fill(text);
-  await expect(page.locator('.draft-save')).toHaveText('已保存');
+  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   await expect(page.locator('.toast')).toHaveCount(0);
   await page.locator('.queue-expand').click(); await expect(page.locator('.queue-item:visible')).toHaveCount(6);
   for (const width of [390, 560, 768, 1024, 1440]) {
@@ -305,15 +315,15 @@ test('compact input preserves multiline drafts and references with a merged cent
     expect(composer.height).toBe(52);
     expect(await page.locator('.canvas-toolbar button').evaluateAll(buttons => buttons.every(button => { const bounds = button.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === button; }))).toBeTruthy();
     measurements.push({ name: `expanded-queue-${width}`, viewport: { width, height: 844 }, queue, tools, composer, references });
-    await page.screenshot({ path: info.outputPath(`compact-queue-${width}.png`) });
+    await page.screenshot({ path: info.outputPath(`floating-queue-${width}.png`) });
   }
-  await writeFile(info.outputPath('compact-geometry.json'), JSON.stringify(measurements, null, 2));
+  await writeFile(info.outputPath('floating-geometry.json'), JSON.stringify(measurements, null, 2));
 });
 
 test('dark narrow composer keeps text styling stable, restores dialog focus and respects reduced motion', async ({ page, app }, info) => {
   await page.setViewportSize({ width: 390, height: 844 }); await page.emulateMedia({ reducedMotion: 'reduce' });
   await open(page, app);
-  await page.getByRole('button', { name: '切换暗色主题', exact: true }).click();
+  await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
   const composer = page.locator('.composer'), input = page.locator('#instruction');
   const before = await composer.evaluate(element => ({ border: getComputedStyle(element).borderColor, surface: getComputedStyle(element).backgroundColor }));
   await input.focus(); await expect(input).toBeFocused();
@@ -324,10 +334,10 @@ test('dark narrow composer keeps text styling stable, restores dialog focus and 
   expect(await composer.evaluate(element => ({ border: getComputedStyle(element).borderColor, surface: getComputedStyle(element).backgroundColor }))).toEqual(before);
   const box = (await composer.boundingBox())!; expect(box.x).toBeGreaterThanOrEqual(16); expect(box.x + box.width).toBeLessThanOrEqual(374);
   await page.screenshot({ path: info.outputPath('dark-narrow-composer.png') });
-  await page.getByRole('button', { name: '记录', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: '需求记录', exact: true }); await expect(dialog).toBeVisible();
+  await page.getByRole('button', { name: 'Request history', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Request history', exact: true }); await expect(dialog).toBeVisible();
   await page.keyboard.press('Escape'); await expect(dialog).not.toBeVisible();
-  await expect(page.getByRole('button', { name: '记录', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Request history', exact: true })).toBeFocused();
   await page.screenshot({ path: info.outputPath('dark-narrow-board.png') });
 });
 
@@ -348,27 +358,27 @@ test('clean drafts absorb CLI edits; conflicting unsaved drafts keep both copies
   const current = await app.state();
   await writeFile(externalFile, JSON.stringify({ ...current.draft, text: '服务端新增的完整想法' }));
   await cli(['draft', 'save', ...args, '--input', externalFile]);
-  await expect(page.getByText('草稿在其他入口更新', { exact: true })).toBeVisible();
+  await expect(page.getByText('Draft updated elsewhere', { exact: true })).toBeVisible();
   await expect(page.locator('#instruction')).toHaveValue('本地尚未保存的想法');
-  await page.getByRole('button', { name: '查看两份草稿', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: '处理草稿更新', exact: true });
+  await page.getByRole('button', { name: 'Compare drafts', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Resolve draft update', exact: true });
   await expect(dialog.getByText('本地尚未保存的想法', { exact: true })).toBeVisible();
   await expect(dialog.getByText('服务端新增的完整想法', { exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath('draft-conflict.png') });
   release();
-  await expect(page.getByRole('button', { name: '发送需求', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Send request', exact: true })).toBeDisabled();
   expect((await app.state()).draft.text).toBe('服务端新增的完整想法');
-  await page.getByRole('button', { name: '保留当前草稿', exact: true }).click();
+  await page.getByRole('button', { name: 'Keep your draft', exact: true }).click();
   await expect(dialog).not.toBeVisible();
   await expect.poll(async () => (await app.state()).draft.text).toBe('本地尚未保存的想法');
-  await expect(page.locator('.draft-save')).toHaveText('已保存');
+  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   await page.unroute(`**/api/sessions/${first.session.id}/draft`);
   await page.locator('#instruction').fill('第二次本地输入');
   const latest = await app.state();
   await app.call(`/api/sessions/${first.session.id}/draft`, 'PUT', { ...latest.draft, text: '第二次服务端更新' });
-  await expect(page.getByText('草稿在其他入口更新', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: '查看两份草稿', exact: true }).click();
-  await page.getByRole('button', { name: '使用服务端草稿', exact: true }).click();
+  await expect(page.getByText('Draft updated elsewhere', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Compare drafts', exact: true }).click();
+  await page.getByRole('button', { name: 'Use saved draft', exact: true }).click();
   await expect(page.locator('#instruction')).toHaveValue('第二次服务端更新');
 });
 
@@ -384,7 +394,7 @@ test('two URL task contexts preserve their independent viewport during a delayed
   const secondPage = await page.context().newPage();
   await secondPage.route(`**/api/state?sessionId=${second.id}`, async route => { const response = await route.fetch(); entered(); await delayed; await route.fulfill({ response }); });
   const navigation = secondPage.goto(`${app.server.url}/?session=${second.id}`); await enteredPromise;
-  await page.getByRole('button', { name: '放大画布', exact: true }).click();
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
   release(); await navigation; await expect(secondPage.locator('.zoom-label')).toHaveText('50%');
   expect((await app.state(second.id)).session.view).toEqual(secondView);
   await expect.poll(async () => (await app.state(first.session.id)).session.view.zoom).toBe(1.2);
@@ -405,14 +415,14 @@ test('committed saves converge after lost responses before or after SSE confirma
     const text = `已持久保存但响应丢失 ${delay}`;
     await page.locator('#instruction').fill(text);
     await expect.poll(async () => (await app.state()).draft.text).toBe(text);
-    await expect(page.locator('.draft-save')).toHaveText('已保存');
+    await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
     await expect(page.locator('.draft-conflict')).toHaveCount(0);
     await expect(page.locator('#instruction')).toHaveValue(text);
     await handledPromise;
-    await expect(page.locator('.draft-save')).toHaveText('已保存');
+    await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
     await page.unroute(`**/api/sessions/${sessionId}/draft`);
   }
-  await page.getByRole('button', { name: '发送需求', exact: true }).click();
+  await page.getByRole('button', { name: 'Send request', exact: true }).click();
   await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(1);
   expect((await app.state()).tasks[0].snapshot.userRequest.text).toBe('已持久保存但响应丢失 180');
 });
@@ -422,7 +432,7 @@ test('isolated production processes repeatedly restart, claim and publish withou
   const sessionId = (await app.state()).session.id;
   for (let index = 0; index < 3; index++) {
     await page.locator('#instruction').fill(`生产生命周期需求 ${index + 1}`);
-    await page.getByRole('button', { name: '发送需求', exact: true }).click();
+    await page.getByRole('button', { name: 'Send request', exact: true }).click();
     await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(1);
     const args = ['--project', app.root, '--url', app.server.url, '--session', sessionId];
     const claimed = await cli(['task', 'next', ...args, '--consumer', `lifecycle-agent-${index}`]) as Claim;
@@ -435,7 +445,7 @@ test('isolated production processes repeatedly restart, claim and publish withou
     await expect(page.locator('.board-object')).toHaveCount(index + 1);
     await app.restart(); await page.goto(`${app.server.url}/?session=${sessionId}`);
     await expect(page.locator('.board-object')).toHaveCount(index + 1);
-    await page.getByRole('button', { name: /记录/ }).click();
+    await page.getByRole('button', { name: /Request history/ }).click();
     await expect(page.locator('.task-card[data-status="completed"]')).toHaveCount(index + 1);
     await page.keyboard.press('Escape');
   }
@@ -444,22 +454,22 @@ test('isolated production processes repeatedly restart, claim and publish withou
 test('same-port service restart refreshes authentication and SSE while the browser stays open', async ({ page, app }) => {
   await open(page, app);
   await page.locator('#instruction').fill('重启前已入队的需求');
-  await page.getByRole('button', { name: '发送需求', exact: true }).click();
+  await page.getByRole('button', { name: 'Send request', exact: true }).click();
   await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(1);
   await page.locator('#instruction').fill('重启前的持久草稿');
-  await expect(page.locator('.draft-save')).toHaveText('已保存');
+  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   const url = page.url();
   let bootstrapResponses = 0;
   page.on('response', response => { if (response.url().endsWith('/api/bootstrap') && response.status() === 200) bootstrapResponses++; });
   await app.restart(true);
   await expect.poll(() => bootstrapResponses, { timeout: 15_000 }).toBeGreaterThan(0);
-  await expect(page.locator('.connection-status')).toHaveText('已保存', { timeout: 15_000 });
+  await expect(page.locator('.connection-feedback')).toHaveCount(0, { timeout: 15_000 });
   expect(page.url()).toBe(url);
   await expect(page.locator('#instruction')).toHaveValue('重启前的持久草稿');
   await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(1);
   await page.locator('#instruction').fill('自动重连后的新草稿');
   await expect.poll(async () => (await app.state()).draft.text).toBe('自动重连后的新草稿');
-  await page.getByRole('button', { name: '发送需求', exact: true }).click();
+  await page.getByRole('button', { name: 'Send request', exact: true }).click();
   await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(2);
 });
 
@@ -486,13 +496,13 @@ test('a different project on the same port keeps dirty content and blocks asset/
   await page.route(`**/api/sessions/${sessionId}/draft`, async route => { entered(); await delayed; await route.continue(); });
   await page.locator('#instruction').fill('旧项目尚未保存的完整输入'); await enteredPromise;
   const nextRoot = await app.replaceProject();
-  await page.getByLabel('选择画布素材文件', { exact: true }).setInputFiles(image);
-  await expect(page.getByRole('alert')).toContainText('这个地址已连接其他项目');
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(image);
+  await expect(page.getByRole('alert')).toContainText('This address now serves another project');
   release();
   await expect(page.locator('#instruction')).toHaveValue('旧项目尚未保存的完整输入');
   await expect(page.locator('#instruction')).toHaveAttribute('readonly', '');
-  await expect(page.getByRole('button', { name: '发送需求', exact: true })).toBeDisabled();
-  await expect(page.getByRole('button', { name: '重新打开白板', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Send request', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Reopen board', exact: true })).toBeVisible();
   expect(await app.call('/api/sessions')).toEqual([]);
   expect(await readdir(join(nextRoot, '.acanvas', 'assets'))).toEqual([]);
   expect(await readdir(join(nextRoot, '.acanvas', 'tmp'))).toEqual([]);
@@ -510,13 +520,13 @@ test('lost send responses query the persisted draft association and keep one tas
   const handledPromise = new Promise<void>(resolve => { handled = resolve; });
   await page.route(`**/api/sessions/${sessionId}/tasks`, async route => { await route.fetch(); await route.abort('failed'); handled(); });
   await page.locator('#instruction').fill('响应丢失仍保留的一次需求');
-  await page.getByRole('button', { name: '发送需求', exact: true }).click(); await handledPromise;
+  await page.getByRole('button', { name: 'Send request', exact: true }).click(); await handledPromise;
   await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(1);
   await expect(page.locator('#instruction')).toHaveValue('');
   await expect(page.locator('.error-banner')).toHaveCount(0);
   await page.unroute(`**/api/sessions/${sessionId}/tasks`);
   await page.locator('#instruction').fill('后续独立需求');
-  await page.getByRole('button', { name: '发送需求', exact: true }).click();
+  await page.getByRole('button', { name: 'Send request', exact: true }).click();
   await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(2);
   expect((await app.state()).tasks.map(task => task.snapshot.userRequest.text)).toEqual(['响应丢失仍保留的一次需求', '后续独立需求']);
 });
@@ -527,7 +537,7 @@ test('bottom queue stacks 1, 3 and 6 tasks, expands upward by hover and focus, a
   const original = (await composer.boundingBox())!;
   for (let index = 1; index <= 6; index++) {
     await input.fill(`构图探索 ${index}`);
-    await page.getByRole('button', { name: '发送需求', exact: true }).click();
+    await page.getByRole('button', { name: 'Send request', exact: true }).click();
     await expect(page.locator('.queue-item')).toHaveCount(index);
     if ([1, 3, 6].includes(index)) {
       await expect(page.locator('.queue-item:visible')).toHaveCount(Math.min(index, 3));
@@ -540,10 +550,10 @@ test('bottom queue stacks 1, 3 and 6 tasks, expands upward by hover and focus, a
     }
   }
   await page.evaluate(() => { Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: async (text: string) => { (window as Window & { copiedCommand?: string }).copiedCommand = text; } }); });
-  await page.getByRole('button', { name: '复制接续口令', exact: true }).click();
+  await page.getByRole('button', { name: 'Copy resume prompt', exact: true }).click();
   const command = await page.evaluate(() => (window as Window & { copiedCommand?: string }).copiedCommand);
-  expect(command).toContain(`项目：${(await app.state()).project.root}`);
-  expect(command).toContain(`白板：${page.url()}`);
+  expect(command).toContain(`Project: ${(await app.state()).project.root}`);
+  expect(command).toContain(`Board: ${page.url()}`);
   expect(command).not.toContain('白板会话');
   expect(command).not.toContain('任务上下文');
   await page.locator('.queue-task').first().hover();
@@ -584,14 +594,14 @@ test('bottom queue stacks 1, 3 and 6 tasks, expands upward by hover and focus, a
   await expect(page.locator('.queue-stack')).toHaveClass(/expanded/);
   await page.locator('.queue-task').nth(3).focus();
   await page.keyboard.press('Enter');
-  const details = page.getByRole('dialog', { name: '需求 4', exact: true });
+  const details = page.getByRole('dialog', { name: 'Request 4', exact: true });
   await expect(details).toBeVisible(); await expect(details.getByText('构图探索 4', { exact: true })).toBeVisible();
   await page.keyboard.press('Escape'); await expect(page.locator('.queue-task').nth(3)).toBeFocused();
-  await page.getByRole('button', { name: '撤回需求 4', exact: true }).click();
+  await page.getByRole('button', { name: 'Cancel request 4', exact: true }).click();
   await expect.poll(async () => (await app.state()).tasks[3].status).toBe('cancelled');
   await expect(page.locator('.queue-item')).toHaveCount(5);
-  await page.getByRole('button', { name: /记录/ }).click();
-  const history = page.getByRole('dialog', { name: '需求记录', exact: true });
+  await page.getByRole('button', { name: /Request history/ }).click();
+  const history = page.getByRole('dialog', { name: 'Request history', exact: true });
   await expect(history.locator('.task-card')).toHaveCount(6);
   await expect(history.locator('.task-card[data-status="cancelled"]')).toHaveCount(1);
   await page.keyboard.press('Escape');

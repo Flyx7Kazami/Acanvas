@@ -106,7 +106,7 @@ export class CanvasService {
         if (requested && requested !== saved.session_id) fail(409, 'host_binding_conflict', 'This host conversation is already connected to another task context.');
         return { host, threadId, sessionId: saved.session_id };
       }
-      const sessionId = requested ? this.session(requested).id : this.insertSession(`${host} 创作任务`).id;
+      const sessionId = requested ? this.session(requested).id : this.insertSession(`${host} creative tasks`).id;
       this.db.prepare('INSERT INTO host_bindings(host,thread_id,session_id) VALUES(?,?,?)').run(host, threadId, sessionId);
       return { host, threadId, sessionId };
     });

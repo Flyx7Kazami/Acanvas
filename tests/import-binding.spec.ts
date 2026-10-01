@@ -30,7 +30,7 @@ const test = base.extend<{ app: App }>({
 });
 
 async function open(page: Page, url: string) {
-  await page.goto(url); await expect(page.locator('#instruction')).toBeVisible(); await expect(page.locator('.connection-status')).toHaveText('已保存');
+  await page.goto(url); await expect(page.locator('#instruction')).toBeVisible(); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await expect(page.locator('.connection-feedback')).toHaveCount(0);
 }
 const contextId = async (page: Page) => new URL(page.url()).searchParams.get('session')!;
 
@@ -61,11 +61,11 @@ test('trusted PNG keyboard paste routes BODY, button, canvas and composer once',
   const pasteKey = process.platform === 'darwin' ? 'Meta+V' : 'Control+V';
   await writePng(); await page.evaluate(() => (document.activeElement as HTMLElement).blur());
   await page.keyboard.press(pasteKey); await expect(page.locator('.board-object')).toHaveCount(1);
-  await writePng(); await page.getByRole('button', { name: '选择素材', exact: true }).focus();
+  await writePng(); await page.getByRole('button', { name: 'Select files', exact: true }).focus();
   await page.keyboard.press(pasteKey); await expect(page.locator('.board-object')).toHaveCount(2);
   await page.locator('#instruction').fill('保留原输入');
   const bounds = (await page.locator('#whiteboard').boundingBox())!;
-  await page.mouse.click(bounds.x + bounds.width - 20, bounds.y + 30);
+  await page.mouse.click(bounds.x + bounds.width - 20, bounds.y + bounds.height / 4);
   await expect(page.locator('#whiteboard')).toBeFocused();
   await writePng(); await page.keyboard.press(pasteKey); await expect(page.locator('.board-object')).toHaveCount(3);
   await page.locator('#instruction').focus(); await writePng(); await page.keyboard.press(pasteKey);
@@ -91,9 +91,9 @@ test('items-only file paste imports once, unsupported items and offline service 
   }, readable);
   expect(await dispatch(true)).toBeTruthy(); await expect(page.locator('.board-object')).toHaveCount(1);
   expect((await app.call(`/api/state?sessionId=${await contextId(page)}`)).assets).toHaveLength(1);
-  await dispatch(false); await expect(page.getByText('剪贴板中的文件暂时无法读取。请拖入文件或选择素材。', { exact: true })).toBeVisible();
-  await app.stop(); await expect(page.locator('.connection-status')).toHaveText('重新连接中');
-  await dispatch(true); await expect(page.getByRole('alert')).toContainText('白板连接已中断');
+  await dispatch(false); await expect(page.getByText('Clipboard files are unavailable. Drop your files or use Import files.', { exact: true })).toBeVisible();
+  await app.stop(); await expect(page.locator('.connection-feedback')).toHaveText('Reconnecting…');
+  await dispatch(true); await expect(page.getByRole('alert')).toContainText('The board is disconnected');
   await expect(page.locator('.board-object')).toHaveCount(1);
 });
 
@@ -113,5 +113,5 @@ test('bare tabs receive independent contexts while bound legacy URLs retain thei
   await page.reload(); await expect(page.locator('#instruction')).toHaveValue('第一个标签页'); expect(await contextId(page)).toBe(first);
   const legacy = await context.newPage(); await open(legacy, `${app.url}/?version=p0&session=${old.id}`);
   await expect(legacy.locator('.queue-title')).toHaveText('旧上下文中的需求'); expect(await contextId(legacy)).toBe(old.id);
-  expect(await legacy.getByRole('button', { name: /白板会话|会话列表/ }).count()).toBe(0);
+  expect(await legacy.getByRole('button', { name: /Board sessions|Session list/ }).count()).toBe(0);
 });

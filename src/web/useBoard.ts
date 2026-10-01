@@ -36,7 +36,7 @@ export function useBoard() {
     if (cause instanceof RequestError && cause.code === 'project_changed') {
       setProjectChanged(true); streamRef.current?.close(); window.clearTimeout(reconnectTimerRef.current); reconnectTimerRef.current = 0;
     }
-    setError(cause instanceof Error ? cause.message : '操作未完成，请重试。');
+    setError(cause instanceof Error ? cause.message : 'The action could not be completed. Try again.');
   }, []);
 
   const reflectDraft = useCallback((value: LocalDraft) => {
@@ -111,7 +111,7 @@ export function useBoard() {
       if (!alive) return;
       if (!sessionRef.current) {
         const remembered = sessionStorage.getItem(`acanvas-context:${bootstrap.project.id}`);
-        const sessionId = remembered || (await api.createSession('创作任务')).id;
+        const sessionId = remembered || (await api.createSession('Creative tasks')).id;
         if (!alive) return; sessionRef.current = sessionId;
       }
       const next = await api.state(sessionRef.current); if (!alive) return;
@@ -125,7 +125,7 @@ export function useBoard() {
     const pending = (draftQueues.current.get(sessionId) || Promise.resolve()).then(async () => {
       const current = drafts.current.get(sessionId);
       if (!current || current.value.id !== draftId || current.epoch !== snapshot.epoch || snapshot.editRevision <= current.savedEditRevision) return;
-      if (current.conflict) throw new RequestError('草稿已在其他入口更新，请先处理两份内容。', 409, 'draft_revision_conflict');
+      if (current.conflict) throw new RequestError('Your draft was updated elsewhere. Compare both versions to continue.', 409, 'draft_revision_conflict');
       const saving = { value: { ...snapshot.value, revision: current.confirmedRevision }, editRevision: snapshot.editRevision, expectedRevision: current.confirmedRevision };
       current.inflight = saving; current.lastAttempt = saving; current.failed = false;
       if (sessionRef.current === sessionId) setSaveState('saving');
@@ -184,7 +184,7 @@ export function useBoard() {
   const flushDraft = useCallback(async (sessionId = sessionRef.current) => {
     window.clearTimeout(draftTimers.current.get(sessionId));
     const current = drafts.current.get(sessionId);
-    if (current?.conflict) throw new RequestError('草稿已在其他入口更新，请先处理两份内容。', 409, 'draft_revision_conflict');
+    if (current?.conflict) throw new RequestError('Your draft was updated elsewhere. Compare both versions to continue.', 409, 'draft_revision_conflict');
     if (current && current.savedEditRevision !== current.editRevision) await save({ ...current });
     else await draftQueues.current.get(sessionId);
   }, [save]);

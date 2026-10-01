@@ -1,8 +1,28 @@
 # acanvas 验证记录
 
-日期：2026-10-01（Asia/Shanghai）。当前记录包含单行输入区、文件统一入画布、紧凑左侧合并工具条修订；此前宿主绑定、队列与持续服务验证保留。此前 P0 记录可从 Git 提交 `d62e8ad` 查询。
+日期：2026-10-01（Asia/Shanghai）。当前记录包含英文产品文案、全屏画布与独立悬浮控件；单行输入区、文件统一入画布、紧凑左侧合并工具条验证作为历史记录保留；此前宿主绑定、队列与持续服务验证保留。此前 P0 记录可从 Git 提交 `d62e8ad` 查询。
 
-## 本轮结果
+## 本轮英文悬浮界面结果
+
+`npm run typecheck`、`npm run build` 与 `npm test` 通过；Node 25/25，exit 0。Chrome 初次启动受环境权限阻断，没有进入产品场景；取得测试执行权限后，完整 17 场景运行中 16 项通过。另一项的旧空白画布点击位置与新主题按钮重叠；测试目标位置跟随布局更新后，该场景单独复测通过，1/1，3.4 秒，exit 0。独立验收通过：全屏悬浮布局、五种窗口宽度的控件实际命中、英文弹窗、键盘与断线反馈正常。
+
+覆盖无 header 的全屏画布、英文标签与弹窗、独立悬浮控件实际命中、亮暗主题、390/560/768/1024/1440 宽度、1/3/6 项队列、长草稿与素材引用、键盘与触屏操作、焦点恢复以及断线反馈。自有界面文案采用英文，既有任务文字、批注和文件名保持原内容。测试全部使用独立临时项目；正式服务只读检查确认原进程仍运行，首页与新构建一致，英文页面及新 bundle 均 HTTP 200。正式白板数据与系统剪贴板保持原样。
+
+本轮隔离素材截图与布局测量：
+
+- [亮色全屏画布](evidence/floating-ui/floating-light.png)
+- [暗色全屏画布](evidence/floating-ui/floating-dark.png)
+- [窄屏悬浮控件](evidence/floating-ui/floating-narrow.png)
+- [窄屏六项展开队列](evidence/floating-ui/floating-queue-390.png)
+- [中等宽度六项展开队列](evidence/floating-ui/floating-queue-768.png)
+- [英文批注弹窗](evidence/floating-ui/annotation-dialog.png)
+- [英文历史弹窗](evidence/floating-ui/history-dialog.png)
+- [英文草稿冲突弹窗](evidence/floating-ui/draft-conflict.png)
+- [全屏与悬浮布局测量](evidence/floating-ui/floating-geometry.json)
+
+截图中的中文需求与批注来自隔离测试内容，用于核验内容保持；操作标签与产品文案均为英文。
+
+## 上一轮紧凑交互结果
 
 最终组合构建通过；Node 25/25、exit 0；Chrome 17/17，普通运行 51.8 秒、exit 0。独立 UI 验收完整运行 17/17，49.0 秒、exit 0；跨项目 cookie 独立实浏览器验收通过：同一浏览器同时打开两个项目后，双方媒体预览及新建 SSE 连接正常；错误凭据、旧 cookie、Cookie 写入与跨来源请求按预期拒绝，Bearer 读取正常。Finder 原生文件粘贴由用户在实际 Codex 内置浏览器手工确认；它与自动化回归分别记录。
 
