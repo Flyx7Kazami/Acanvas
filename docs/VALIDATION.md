@@ -185,3 +185,19 @@ CUA 浏览器键盘走虚拟剪贴板，未发出读取系统原生文件剪贴�
 独立隔离验收 9 项通过、exit 0，覆盖缩放/平移下的吸附距离与参考线、预览提交一致、Alt/关闭/多选组、六向命令/无变化跳过、写入中状态、320/390 控件实际命中及刷新持久化；键盘移动、平移与正在播放的视频保持原有行为。小数对齐的无变化写入已修复并复验，当前无未解决发现。
 
 [多选吸附参考线与就地对齐工具](evidence/snapping-alignment/group-snap.png)来自独立临时 fixture。
+
+## 服务原生绑定修复与正式恢复
+
+服务中断由旧 SQLite 原生绑定在自然 GC 时触发的 RemoveEnvironmentCleanupHook 断言导致，完整日志没有 OOM 证据。Node 24.21.0 + better-sqlite3 12.4.1 在隔离 CanvasService 读取场景 1000 次前复现 SIGABRT；同 Node 及业务代码换为 13.0.3 后 6000 次读取正常退出。项目保持 Node 24 及现有 schema/业务接口，升级依赖并增加有限子进程 GC 回归。[官方 13.0 发布说明](https://github.com/WiseLibs/better-sqlite3/releases/tag/v13.0.0)说明 N-API 迁移，项目实际采用 13.0.3；后端修复提交为 8d327a2。
+
+执行完整 Node 31/31，独立新驱动 GC 回归 1/1 通过。正式服务以原绑定正常 stop/open 后运行新实例 PID 69644，HTTP 200；对象 ID/布局/版本、素材 ID/大小、批注 ID、任务及运行 ID/状态、宿主范围与草稿 ID/版本/引用前后只读核对一致，原 host/thread/session 绑定一致。9 个素材读取及 SSE ready 检查通过。首个非正常退出后的旧 metadata 交接曾出现 CLI 身份误报，实际 status/HTTP 身份随后一致；本轮保持 CLI 身份校验逻辑原样。
+
+## 本轮二级标注与任务查看可见性
+
+选中素材先显示三个并列一级操作，Annotate 后直接区域拖动与原位输入，Back/Escape 保留目标绑定的文字和区域。草稿/当前编辑使用淡蓝色标记；发送后默认隐藏，显式任务查看仅投影对应快照，与草稿显示互斥。关闭、取消、导航及新的成功发送清除投影，项目批注与任务快照保持完整。吸附保持默认启用及 Alt 绕过，移除开关与旧关闭偏好的影响。
+
+统一构建、typecheck 通过。执行初批 4/4 通过（17.9 秒，exit 0），最终互斥分支主路径 2/2 复验通过（15.3 秒，exit 0）；独立主路径 4/4 与最终聚焦 2/2 通过（12.7 秒，exit 0）。批次有重叠，分别记录。覆盖一级/二级、ROI 裁切及 Back/Escape/换选、video 固定时点/帧、task/draft 互斥、send/cancel/history/缺目标显示及吸附按钮移除/Alt；窄屏可达由执行端实测及独立布局源码检查支持。
+
+全部发现已修复并复验通过。
+
+[淡蓝区域标记与二级原位输入](evidence/annotation-levels/region-blue.png)来自独立临时 fixture。

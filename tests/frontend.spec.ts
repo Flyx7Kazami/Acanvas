@@ -71,7 +71,60 @@ async function png(page: Page) {
   return { name: 'reference.png', mimeType: 'image/png', buffer: Buffer.from(encoded, 'base64') };
 }
 
+async function beginAnnotating(page: Page) {
+  const comment = page.getByRole('textbox', { name: 'Add a comment', exact: true });
+  if (!await comment.count()) await page.getByRole('button', { name: 'Annotate', exact: true }).click();
+  await expect(comment).toBeVisible();
+  return comment;
+}
+
+test('annotation levels retain clipped regions and sent task markings follow explicit inspection only', async ({ page, app }, info) => {
+  await page.addInitScript(() => localStorage.setItem('acanvas-snapping', 'off'));
+  await open(page, app); await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
+  const object = page.locator('.board-object'); await expect(object).toBeVisible();
+  const initial = await app.state(); await app.call('/api/board/operations', 'POST', { sessionId: initial.session.id, operations: [{ type: 'update', objectId: initial.objects[0].id, expectedVersion: initial.objects[0].version, changes: { x: 550, y: 250, width: 300, height: 300 } }] });
+  await expect(object).toHaveAttribute('data-object-version', '2'); await object.focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('.selection-primary-tools button')).toHaveCount(3); await expect(page.getByRole('textbox', { name: 'Add a comment', exact: true })).toHaveCount(0); await expect(page.getByRole('button', { name: 'Snap to objects', exact: true })).toHaveCount(0);
+  const comment = await beginAnnotating(page), frame = (await object.boundingBox())!;
+  await page.mouse.move(frame.x + 60, frame.y + 105); await page.mouse.down(); await page.mouse.move(frame.x + 350, frame.y + 275, { steps: 4 }); await page.mouse.up();
+  await beginAnnotating(page); await comment.fill('Refine the lower-right detail.');
+  const region = page.locator('[data-annotation-source=editing]');
+  expect(await region.evaluate(element => ({ x: Number.parseFloat((element as HTMLElement).style.left), y: Number.parseFloat((element as HTMLElement).style.top), width: Number.parseFloat((element as HTMLElement).style.width), height: Number.parseFloat((element as HTMLElement).style.height), color: getComputedStyle(element).borderColor }))).toEqual({ x: 610, y: 355, width: 240, height: 120, color: 'rgb(123, 188, 255)' });
+  expect((await app.state()).objects[0].version).toBe(2); await expect(page.locator('.alignment-guides')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Back to selection tools', exact: true }).click(); await expect(comment).toHaveCount(0); await beginAnnotating(page); await expect(comment).toHaveValue('Refine the lower-right detail.');
+  await comment.press('Escape'); await expect(comment).toHaveCount(0); await beginAnnotating(page); await expect(region).toHaveCSS('width', '240px');
+  await page.screenshot({ path: info.outputPath('annotation-region-blue.png') });
+  await page.getByRole('button', { name: 'Save comment', exact: true }).click(); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible(); await expect(page.locator('[data-annotation-source=draft]')).toHaveCount(1);
+  const draft = (await app.state()).draft; expect(draft.annotations[0].bounds).toEqual({ x: .2, y: .2, width: .8, height: .8 });
+  await page.locator('#instruction').fill('Use this annotated detail.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1); await expect(page.locator('.annotation-outline')).toHaveCount(0);
+  const sent = await app.state(), snapshot = JSON.stringify(sent.tasks[0].snapshot); expect(sent.annotations).toHaveLength(1);
+  await beginAnnotating(page); await comment.fill('Keep this new draft separate.'); await page.getByRole('button', { name: 'Save comment', exact: true }).click(); await expect(page.locator('[data-annotation-source=draft]')).toHaveCount(1);
+  const row = page.locator('.queue-task').first(); await row.click(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(1); await expect(page.locator('[data-annotation-source=draft]')).toHaveCount(0);
+  await row.click(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(0); await expect(page.locator('[data-annotation-source=draft]')).toHaveCount(1);
+  await row.click(); await page.getByRole('button', { name: 'Cancel request 1', exact: true }).click(); await expect(page.locator('.queue-item')).toHaveCount(0); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(0);
+  expect(JSON.stringify((await app.state()).tasks[0].snapshot)).toBe(snapshot); expect((await app.state()).annotations).toHaveLength(1);
+  await page.getByRole('button', { name: 'Remove annotation 1', exact: true }).click(); await expect(page.locator('.annotation-outline')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Request history', exact: true }).click(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(0);
+  await page.locator('.task-annotations summary').click(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(1); await page.getByRole('button', { name: 'Close request history', exact: true }).click(); await expect(page.locator('.annotation-outline')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Remove selected files from canvas', exact: true }).click(); await expect(object).toHaveCount(0); await page.getByRole('button', { name: 'Request history', exact: true }).click(); await page.locator('.task-annotations summary').click(); await expect(page.locator('.annotation-outline')).toHaveCount(0); await expect(page.locator('.task-annotations p')).toContainText('Refine the lower-right detail.'); await expect(page.locator('.task-annotations p')).toBeVisible();
+  expect(JSON.stringify((await app.state()).tasks[0].snapshot)).toBe(snapshot);
+});
+
+test('second-level video annotation preserves time frame and pending target when leaving or switching', async ({ page, app }) => {
+  await open(page, app); await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4')); await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page)); await expect(page.locator('.board-object')).toHaveCount(2);
+  const state = await app.state(); await app.call('/api/board/operations', 'POST', { sessionId: state.session.id, operations: state.objects.map((object, index) => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: index ? 850 : 450, y: 250 } })) });
+  const videoObject = page.locator('.object-video'), video = videoObject.locator('video'); await expect(video).toHaveJSProperty('videoWidth', 320); await videoObject.focus(); await page.keyboard.press('Enter'); await video.evaluate(element => { (element as HTMLVideoElement).currentTime = .7; }); await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
+  const comment = await beginAnnotating(page); await comment.fill('Keep this exact moment.'); await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeDisabled(); await expect(page.getByRole('slider', { name: 'Video timeline', exact: true })).toBeDisabled();
+  const box = (await videoObject.boundingBox())!; await page.mouse.move(box.x + box.width * .2, box.y + box.height * .2); await page.mouse.down(); await page.mouse.move(box.x + box.width * .7, box.y + box.height * .7, { steps: 3 }); await page.mouse.up();
+  await page.getByRole('button', { name: 'Back to selection tools', exact: true }).click(); await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeEnabled(); await video.evaluate(element => { (element as HTMLVideoElement).currentTime = 1.2; }); await beginAnnotating(page); await expect(video).toHaveJSProperty('currentTime', .7); await expect(comment).toHaveValue('Keep this exact moment.');
+  await page.locator('.object-image').click({ position: { x: 60, y: 60 } }); await expect(page.locator('.object-image')).toHaveAttribute('data-selected', 'true'); await expect(comment).toHaveCount(0); await videoObject.click({ position: { x: 60, y: 60 } }); await beginAnnotating(page); await expect(comment).toHaveValue('Keep this exact moment.');
+  await comment.press('Escape'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1); await expect(page.locator('.annotation-outline')).toHaveCount(0);
+  const saved = await app.state(), annotation = saved.tasks[0].snapshot.annotations[0]; expect(annotation.timeStart).toBeCloseTo(.7, 4); expect(annotation.snapshotAssetId).toBeTruthy(); expect(annotation.bounds.x).toBeCloseTo(.2, 2); expect(annotation.bounds.width).toBeCloseTo(.5, 2);
+  await page.locator('.queue-task').click(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(1); await page.locator('.task-annotations summary').click(); await expect(page.locator('.task-annotation-frame')).toHaveJSProperty('naturalWidth', 320);
+});
+
 test('drag snapping preserves its preview at release, group offsets and bypass controls', async ({ page, app }, info) => {
+  await page.addInitScript(() => localStorage.setItem('acanvas-snapping', 'off'));
   await open(page, app); const image = await png(page);
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(['Cover study.png', 'Color study.png', 'Type study.png'].map(name => ({ ...image, name })));
   await expect(page.locator('.board-object')).toHaveCount(3);
@@ -101,9 +154,7 @@ test('drag snapping preserves its preview at release, group offsets and bypass c
   let start = await begin(); await page.mouse.move(start.x + 97, start.y + 120); await expect(page.locator('.alignment-guides')).toBeVisible();
   await page.keyboard.down('Alt'); await expect(page.locator('.alignment-guides')).toHaveCount(0); expect(await object().evaluate(element => Number.parseFloat((element as HTMLElement).style.left))).toBe(347);
   await page.mouse.up(); await page.keyboard.up('Alt'); await expect.poll(async () => (await app.state()).objects[0].x).toBe(347);
-  await place(); await page.getByRole('button', { name: 'Snap to objects', exact: true }).click(); await expect(page.getByRole('button', { name: 'Snap to objects', exact: true })).toHaveAttribute('aria-pressed', 'false');
-  start = await begin(); await page.mouse.move(start.x + 97, start.y + 120); await expect(page.locator('.alignment-guides')).toHaveCount(0); await page.mouse.up(); await expect.poll(async () => (await app.state()).objects[0].x).toBe(347);
-  await page.reload(); await expect(page.getByRole('button', { name: 'Snap to objects', exact: true })).toHaveAttribute('aria-pressed', 'false'); await page.getByRole('button', { name: 'Snap to objects', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Snap to objects', exact: true })).toHaveCount(0);
   await place(1, true); const groupBefore = await app.state(); start = await begin(); await page.mouse.move(start.x + 147, start.y + 40, { steps: 4 }); await expect(page.locator('[data-snap-axis=x]')).toHaveAttribute('x1', '600');
   await page.screenshot({ path: info.outputPath('snap-group-guides.png') }); await page.mouse.up();
   await expect.poll(async () => (await app.state()).objects[0].x).toBe(350); const groupAfter = await app.state();
@@ -121,7 +172,7 @@ test('six inline alignment commands batch positions without changing sizes or un
   const commands = [{ name: 'Align left', expected: [[220, 200], [220, 310]] }, { name: 'Align horizontal centers', expected: [[295, 200], [315, 310]] }, { name: 'Align right', expected: [[370, 200], [410, 310]] }, { name: 'Align top', expected: [[220, 200], [410, 200]] }, { name: 'Align vertical centers', expected: [[220, 275], [410, 255]] }, { name: 'Align bottom', expected: [[220, 350], [410, 310]] }];
   for (const command of commands) { const before = await reset(), count = requests.length; const button = page.getByRole('button', { name: command.name, exact: true }); await button.focus(); await button.press('Enter'); await expect(button).toBeEnabled(); await expect.poll(async () => (await app.state()).objects.slice(0, 2).map(object => [object.x, object.y])).toEqual(command.expected); const after = await app.state(); expect(requests.length).toBe(count + 1); for (let index = 0; index < 2; index++) { expect(after.objects[index].width).toBe(before.objects[index].width); expect(after.objects[index].height).toBe(before.objects[index].height); } expect(after.objects[2]).toEqual(before.objects[2]); const versions = after.objects.map(object => object.version); await button.press('Enter'); await page.evaluate(() => new Promise(requestAnimationFrame)); expect((await app.state()).objects.map(object => object.version)).toEqual(versions); expect(requests.length).toBe(count + 1); }
   await reset();
-  for (const width of [390, 320]) { await page.setViewportSize({ width, height: 480 }); await page.getByRole('button', { name: 'Fit all files', exact: true }).click(); await expect.poll(async () => page.locator('.alignment-actions button,.canvas-toolbar button').evaluateAll(elements => elements.every(element => { const bounds = element.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === element; }))).toBeTruthy(); await expect(page.getByRole('textbox', { name: 'Add a comment', exact: true })).toBeVisible(); if (width === 390) await page.screenshot({ path: info.outputPath('alignment-controls-390.png') }); }
+  for (const width of [390, 320]) { await page.setViewportSize({ width, height: 480 }); await page.getByRole('button', { name: 'Fit all files', exact: true }).click(); await expect.poll(async () => page.locator('.alignment-actions button,.canvas-toolbar button').evaluateAll(elements => elements.every(element => { const bounds = element.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === element; }))).toBeTruthy(); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible(); if (width === 390) await page.screenshot({ path: info.outputPath('alignment-controls-390.png') }); }
   const before = await app.state(); await page.route('**/api/board/operations', route => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'object_conflict', message: 'Updated layout' } }) })); await page.getByRole('button', { name: 'Align right', exact: true }).click(); await expect(page.getByRole('alert')).toBeVisible(); expect((await app.state()).objects).toEqual(before.objects); await expect(page.getByRole('button', { name: 'Align right', exact: true })).toBeEnabled();
 });
 
@@ -181,7 +232,7 @@ test('composer contains asset and annotation chips with quiet success feedback a
   await page.getByRole('button', { name: 'Attach to request', exact: true }).click();
   await expect(page.locator('.composer .draft-asset')).toHaveCount(3); await expect(page.locator('.toast')).toHaveCount(0);
   const comment = page.getByRole('textbox', { name: 'Add a comment', exact: true });
-  for (const text of ['Keep these proportions and the breathing room around the subject.', 'Use the reference colors across the composition.']) { await comment.fill(text); await comment.press('Enter'); await expect(comment).toBeEnabled(); await expect(page.locator('.toast')).toHaveCount(0); }
+  for (const text of ['Keep these proportions and the breathing room around the subject.', 'Use the reference colors across the composition.']) { await beginAnnotating(page); await comment.fill(text); await comment.press('Enter'); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeEnabled(); await expect(page.locator('.toast')).toHaveCount(0); }
   await expect(page.locator('.composer .draft-annotation')).toHaveCount(2);
   await input.fill('Use these references.\nKeep the visual hierarchy.');
   await expect(composer).toHaveAttribute('data-save-state', 'saved');
@@ -222,18 +273,18 @@ test('inline comments retain their targets through delayed snapshots and submit 
   const videoObject = page.locator('.object-video'), video = videoObject.locator('video'), comment = page.getByRole('textbox', { name: 'Add a comment', exact: true });
   await expect(video).toHaveJSProperty('videoWidth', 320);
   await videoObject.focus(); await page.keyboard.press('Enter');
-  await expect(comment).toBeVisible(); await expect(comment).not.toBeFocused();
+  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible(); await expect(comment).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Add annotation', exact: true })).toHaveCount(0);
   await expect(page.locator('dialog,[aria-modal=true]')).toHaveCount(0);
   await video.evaluate(element => { (element as HTMLVideoElement).currentTime = .7; });
   await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
   await page.evaluate(() => { const original = HTMLCanvasElement.prototype.toBlob; HTMLCanvasElement.prototype.toBlob = function(callback, type, quality) { setTimeout(() => original.call(this, callback, type, quality), 350); }; });
-  await comment.fill('Keep this video moment');
+  await beginAnnotating(page); await comment.fill('Keep this video moment');
   await page.getByLabel('End time', { exact: true }).fill('1.2');
   await page.locator('.object-image').focus(); await page.keyboard.press('Enter');
-  await expect(comment).toHaveValue(''); await comment.fill('Keep this image shape');
+  await beginAnnotating(page); await expect(comment).toHaveValue(''); await comment.fill('Keep this image shape');
   await videoObject.focus(); await page.keyboard.press('Enter');
-  await expect(comment).toHaveValue('Keep this video moment');
+  await beginAnnotating(page); await expect(comment).toHaveValue('Keep this video moment');
   await expect(page.getByLabel('End time', { exact: true })).toHaveValue('1.2');
   await comment.evaluate(element => { element.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true })); element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); element.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true })); element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 229, bubbles: true, cancelable: true })); });
   expect((await app.state()).draft.annotations).toHaveLength(0);
@@ -248,14 +299,14 @@ test('inline comments retain their targets through delayed snapshots and submit 
   const frame = annotations.find(annotation => annotation.objectId === saved.objects.find(object => object.type === 'video')!.id)!;
   expect(frame.text).toBe('Keep this video moment\nKeep its colors'); expect(frame.timeStart).toBeCloseTo(.7, 1); expect(frame.timeEnd).toBe(1.2); expect(frame.snapshotAssetId).toBeTruthy();
   expect(annotations.find(annotation => annotation.objectId === saved.objects.find(object => object.type === 'image')!.id)!.text).toBe('Keep this image shape');
-  await expect(comment).toHaveValue(''); await expect(page.locator('#instruction')).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible(); await expect(comment).toHaveCount(0); await expect(page.locator('#instruction')).toHaveValue('');
   const imageObject = saved.objects.find(object => object.type === 'image')!, savedVideo = saved.objects.find(object => object.type === 'video')!;
   await app.call('/api/board/operations', 'POST', { sessionId: saved.session.id, operations: [{ type: 'update', objectId: imageObject.id, expectedVersion: imageObject.version, changes: { x: savedVideo.x - 420 } }] });
   await expect(page.locator('.object-image')).toHaveAttribute('data-object-version', '2');
   await page.setViewportSize({ width: 320, height: 480 });
   await page.getByRole('button', { name: 'Fit all files', exact: true }).click();
-  await page.locator('.object-image').focus(); await page.keyboard.press('Enter'); await comment.fill('Preserve this other unsent comment');
-  await page.getByRole('button', { name: /Annotation 1:/ }).click();
+  await page.locator('.object-image').focus(); await page.keyboard.press('Enter'); await beginAnnotating(page); await comment.fill('Preserve this other unsent comment');
+  await page.locator('.queue-task').first().click(); await page.getByRole('button', { name: /Annotation 1:/ }).click();
   const reader = page.getByRole('region', { name: 'Annotation', exact: true });
   await expect(reader).toBeVisible(); await expect(comment).toHaveCount(0);
   const close = page.getByRole('button', { name: 'Close annotation', exact: true });
@@ -268,8 +319,8 @@ test('inline comments retain their targets through delayed snapshots and submit 
   expect(await page.locator('.canvas-world').evaluate(element => (element as HTMLElement).style.transform)).toBe(readerView);
   expect(await close.evaluate(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; })).toBeTruthy();
   await page.screenshot({ path: info.outputPath('inline-reader-video-320.png') });
-  await close.click(); await expect(comment).toBeVisible();
-  await page.locator('.object-image').focus(); await page.keyboard.press('Enter'); await expect(comment).toHaveValue('Preserve this other unsent comment');
+  await close.click(); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();
+  await page.locator('.object-image').focus(); await page.keyboard.press('Enter'); await beginAnnotating(page); await expect(comment).toHaveValue('Preserve this other unsent comment');
 });
 
 test('inline details history media and resume fallback keep short-screen canvas controls available', async ({ page, app }, info) => {
@@ -314,17 +365,18 @@ test('removing a file clears only its pending comment and external removal prese
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
   await expect(page.locator('.board-object')).toHaveCount(2);
   const comment = page.getByRole('textbox', { name: 'Add a comment', exact: true });
-  await page.locator('.board-object').first().focus(); await page.keyboard.press('Enter'); await comment.fill('Comment for removed file');
-  await page.locator('.board-object').last().focus(); await page.keyboard.press('Enter'); await comment.fill('Keep this other file');
+  await page.locator('.board-object').first().focus(); await page.keyboard.press('Enter'); await beginAnnotating(page); await comment.fill('Comment for removed file');
+  await page.locator('.board-object').last().focus(); await page.keyboard.press('Enter'); await beginAnnotating(page); await comment.fill('Keep this other file');
   await page.locator('.board-object').first().focus(); await page.keyboard.press('Enter');
   await page.getByRole('button', { name: 'Remove selected files from canvas', exact: true }).click(); await expect(page.locator('.board-object')).toHaveCount(1);
   await page.locator('#instruction').fill('Create with the remaining file'); await page.locator('#instruction').press('Enter');
   await expect(page.locator('.queue-item')).toHaveCount(1);
   const sent = await app.state(); expect(sent.tasks[0].snapshot.annotations.map(annotation => annotation.text)).toEqual(['Keep this other file']);
-  await page.locator('.board-object').focus(); await page.keyboard.press('Enter'); await comment.fill('Keep this unsent text');
+  await page.locator('.board-object').focus(); await page.keyboard.press('Enter'); await beginAnnotating(page); await comment.fill('Keep this unsent text');
   await page.route('**/api/board/operations', route => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'object_conflict', message: 'This file was updated. Read its current layout.' } }) }));
+  await page.getByRole('button', { name: 'Back to selection tools', exact: true }).click();
   await page.getByRole('button', { name: 'Remove selected files from canvas', exact: true }).click();
-  await expect(comment).toHaveValue('Keep this unsent text'); await expect(page.locator('.board-object')).toHaveCount(1);
+  await beginAnnotating(page); await expect(comment).toHaveValue('Keep this unsent text'); await expect(page.locator('.board-object')).toHaveCount(1);
   await page.unroute('**/api/board/operations');
   const current = await app.state();
   await app.call('/api/board/operations', 'POST', { sessionId: current.session.id, operations: [{ type: 'delete', objectId: current.objects[0].id, expectedVersion: current.objects[0].version }] });
@@ -443,7 +495,7 @@ test('short-screen contextual video controls stay reachable beside a clipped sel
   await expect(video).toHaveJSProperty('videoWidth', 320);
   await object.focus(); await page.keyboard.press('Enter');
   for (let index = 1; index <= 2; index++) { await input.fill(`Queued direction ${index}`); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); }
-  await page.getByRole('textbox', { name: 'Add a comment', exact: true }).focus();
+  await beginAnnotating(page);
   await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Keep this moment.');
   await page.getByRole('button', { name: 'Save comment', exact: true }).click();
   await expect(page.locator('.draft-annotation')).toHaveCount(1);
@@ -498,7 +550,7 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   await expect(object.locator('img')).toHaveJSProperty('naturalWidth', 600);
   await object.click({ position: { x: 80, y: 40 } });
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
-  await page.getByRole('textbox', { name: 'Add a comment', exact: true }).focus();
+  await beginAnnotating(page);
   await expect(page.getByRole('textbox', { name: 'Add a comment', exact: true })).toBeVisible();
   await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('保留中部构图，增加呼吸感。');
   await page.screenshot({ path: info.outputPath('inline-comment.png') });
@@ -746,7 +798,7 @@ test('real video and file imports, time/frame annotations and decode fallback', 
   await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeCloseTo(.7, 4);
   await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
   await page.locator('.object-caption').first().click();
-  await page.getByRole('textbox', { name: 'Add a comment', exact: true }).focus();
+  await beginAnnotating(page);
   await expect(page.locator('.comment-video-meta')).toContainText('0:00');
   await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('在这个时间点保留主体。');
   await page.getByRole('button', { name: 'Save comment', exact: true }).click();
@@ -827,7 +879,7 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
     expect(await floating.evaluateAll(buttons => buttons.every(button => { const bounds = button.getBoundingClientRect(); return bounds.top >= 14 && bounds.right <= innerWidth - 14 && document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === button; }))).toBeTruthy();
     const actions = (await page.locator('.selection-actions').boundingBox())!, imports = (await page.locator('.canvas-actions').boundingBox())!;
     expect(actions.x + actions.width <= imports.x || actions.y >= imports.y + imports.height).toBeTruthy();
-    await expect(page.locator('.canvas-toolbar button')).toHaveCount(7);
+    await expect(page.locator('.canvas-toolbar button')).toHaveCount(6);
     await expect(page.locator('.canvas-zoom')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Draw region annotation', exact: true })).toHaveCount(0);
     await expect(page.locator('header,.canvas-heading,.draft-save,.send-hint')).toHaveCount(0);
