@@ -1,0 +1,28 @@
+{
+  "build": {
+    "command": "npm run build",
+    "result": "PASS",
+    "javascript": "index-_PQwnWfQ.js",
+    "stylesheet": "index-CydqMXuS.css"
+  },
+  "node": {
+    "command": "npm test",
+    "passed": 42,
+    "failed": 0,
+    "durationMs": 3356.455209,
+    "exitCode": 0
+  },
+  "browser": {
+    "command": "npm run test:browser -- --grep 'spring queue and composer|request details group each annotation|global notices stack|inline details history media|compact queue opens on hover|explicit draft conflict|editing one removed source|real video and file imports|a different project on the same port'",
+    "passed": 9,
+    "failed": 0,
+    "durationSeconds": 47.9,
+    "exitCode": 0,
+    "projectScope": "independent temporary projects",
+    "browser": "local Chrome"
+  },
+  "runtime": {
+    "verification": "supported stop/open, exact HTTP state equality, authenticated nonexistent edit target, built homepage/resources, all asset bytes",
+    "report": "runtime-verification.json"
+  }
+}

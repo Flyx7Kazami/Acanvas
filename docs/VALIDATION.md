@@ -261,3 +261,22 @@ CUA 浏览器键盘走虚拟剪贴板，未发出读取系统原生文件剪贴�
 - [四角缩放的辅助吸附参考线](evidence/queue-edit/resize-snap.png)
 - [浏览器实际悬停动效采样](evidence/queue-edit/hover-motion.json)
 - [逐次发送原生动画事件](evidence/queue-edit/send-motion.json)
+
+## 队列编辑运行服务、批注分组与右下角通知（2026-10-02）
+
+任务详情按批注分组：每条批注显示一次文字，全部明确引用的素材预览和名称排列在同一横行；多个批注引用同一素材时，各自保留关联。其余附件单独显示一次。详情读取发送时的对象和资产快照，画布移除目标后仍可查看原引用。输入框仅在队列为空、草稿为空且失焦时收窄。
+
+错误、连接状态、导入进度和成功通知统一位于右下角。宽屏与输入区并列，横向空间相交时避让输入框及其上方队列；通知区域可滚动。鼠标或键盘进入通知后位置保持稳定，离开时重新计算位置，视口变化时更新布局。草稿冲突和批注编辑继续使用各自的就地操作区。
+
+最终 `npm run build` 通过。完整 Node 回归 **42/42**（3.356 秒，exit 0）；最终定向 Chrome 批次 **9/9**（47.9 秒，exit 0），覆盖编辑保存/取消与 FIFO、空草稿失焦的队列宽度、一个批注引用三素材、多个批注共用素材、单独附件、已移除对象的快照预览、视频批注、短屏历史、队列动效、冲突选择和同端口项目身份保护。四种通知同时显示，在 1440/390/320px、队列折叠及展开下实测右侧间距 16px、避让队列/输入框且处于视口内；320px 深色及减少动态效果下，鼠标在关闭按钮停留 250ms 后位置稳定，实际关闭错误与取消导入通过。初轮批注断言包含 SVG 编号、任务响应读取路径两项 fixture 问题已修正；通知关闭时随队列移动的问题已修复，最终批次全部通过。完整命令见[执行记录](evidence/queue-followup/validation.json)。
+
+正式 4317 服务的原 PID 69644 启动于 2026-10-01 19:55:43，早于编辑接口构建；认证后的无效任务编辑请求返回 `route_missing`，确认页面与运行中的后端接口不同步。刷新前再次核对全部任务、运行记录和消费者，运行项为 0，消费者为空。通过项目 CLI 正常 stop/open，保留端口及原 session，现运行 PID 35476；通过显式原 session 打开并关闭委派身份自动绑定，原宿主归属保持。
+
+刷新前后通过 HTTP 读取的项目、全部 session 和全部状态逐项内容完全一致：1 个任务范围、6 个画布对象、9 个资产、24 个任务；待办 21–24 的 ID、序号、快照与状态保持。无效任务编辑请求现返回业务错误 `task_missing`，编辑路由已注册；正式数据未执行编辑测试。正式首页与当前 dist 完全一致，JS/CSS HTTP 200，9 个资产全部读取成功且字节数与记录一致，见[运行核对](evidence/queue-followup/runtime-verification.json)。浏览器创作与编辑测试使用独立临时项目，验证范围为本机 Chrome，系统剪贴板使用隔离 stub。
+
+- [批注对应的横向素材组](evidence/queue-followup/annotation-groups-wide.png)
+- [320px 横向素材组](evidence/queue-followup/annotation-groups-320.png)
+- [宽屏右下角通知](evidence/queue-followup/notifications-wide.png)
+- [390px 队列与通知避让](evidence/queue-followup/notifications-390.png)
+- [320px 深色通知与队列](evidence/queue-followup/notifications-320.png)
+- [通知位置测量](evidence/queue-followup/notification-geometry.json)

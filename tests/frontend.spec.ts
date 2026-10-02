@@ -1237,11 +1237,12 @@ test('spring queue and composer keep compact references, editable FIFO slots and
   await app.call(`/api/sessions/${initial.session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision });
   for (const text of ['Second queued request', 'Third queued request']) { const state = await app.state(); saved = await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...state.draft, text }); await app.call(`/api/sessions/${initial.session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision }); }
   await page.reload(); await expect(page.locator('.queue-item')).toHaveCount(3); await expect(page.locator('.queue-stack')).not.toHaveClass(/expanded/);
+  await input.fill(''); await page.locator('#whiteboard').click({ position: { x: 1000, y: 150 } }); await expect(composer).toHaveAttribute('data-compact', 'false'); expect((await composer.boundingBox())!.width).toBe(720);
   await expect.poll(async () => page.locator('.queue-extra').first().evaluate(element => element.getBoundingClientRect().height)).toBe(0);
   await page.locator('.queue-stack').hover(); await expect(page.locator('.queue-stack')).toHaveClass(/expanded/); await expect.poll(async () => page.locator('.queue-extra').first().evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThan(30);
   await expect(page.locator('.queue-task-mark,.queue-task .lucide-circle,.queue-task .lucide-loader-circle')).toHaveCount(0); await expect(page.getByRole('button', { name: 'Collapse queue', exact: true })).toHaveCount(0);
   const first = page.locator('.queue-item').first(); await first.locator('.queue-task').click(); await expect(first.locator('.motion-disclosure')).toHaveAttribute('data-motion', 'open');
-  await expect(first.locator('.task-instruction,.task-heading')).toHaveCount(0); await expect(first.locator(`[data-reference-item="${objectA.id}"] .task-item-annotation`)).toHaveCount(2); await expect(first.locator(`[data-reference-item="${objectB.id}"] .task-item-annotation`)).toHaveCount(1);
+  await expect(first.locator('.task-instruction,.task-heading')).toHaveCount(0); await expect(first.locator('.task-reference-group[data-annotation-id]')).toHaveCount(3); await expect(first.locator(`[data-reference-item="${objectA.id}"]`)).toHaveCount(2); await expect(first.locator(`[data-reference-item="${objectB.id}"]`)).toHaveCount(1); await expect(first.locator('.task-item-annotation')).toHaveCount(3);
   expect(await first.getByRole('button', { name: 'Collapse request details', exact: true }).locator('svg').getAttribute('class')).toContain('chevron-down');
   await page.screenshot({ path: info.outputPath('spring-queue-wide.png') });
   await first.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(first.locator('.motion-disclosure')).toHaveAttribute('data-motion', 'closing'); await expect(first.locator('.motion-disclosure')).toHaveCount(0);
@@ -1255,6 +1256,85 @@ test('spring queue and composer keep compact references, editable FIFO slots and
   for (const width of [390, 320]) { await page.setViewportSize({ width, height: 480 }); await expect.poll(async () => page.locator('.dock-footer').evaluate(element => { const box = element.getBoundingClientRect(), button = element.querySelector('button')!.getBoundingClientRect(); return button.left - box.left; })).toBeLessThan(16); await page.locator('.queue-stack').hover(); await expect(page.getByRole('button', { name: 'Edit request 1', exact: true })).toBeInViewport(); await page.screenshot({ path: info.outputPath(`spring-queue-${width}.png`) }); }
   await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(input).toHaveValue('Revised request'); await input.fill('Discarded edit'); await page.getByRole('button', { name: 'Cancel edit', exact: true }).click(); await expect(input).toHaveValue('Next unsent idea'); expect((await app.state()).tasks[0].snapshot.userRequest.text).toBe('Revised request');
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' }); await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click(); await first.locator('.queue-task').click(); await expect(first.locator('.motion-disclosure')).toHaveAttribute('data-motion', 'open'); expect(await first.locator('.motion-disclosure').evaluate(element => getComputedStyle(element).transitionDuration)).toBe('0s'); await first.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(first.locator('.motion-disclosure')).toHaveCount(0); await page.screenshot({ path: info.outputPath('spring-queue-dark-reduced.png') });
+});
+
+test('request details group each annotation once with all snapshot targets in one horizontal row', async ({ page, app }, info) => {
+  await open(page, app);
+  const image = await png(page);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(Array.from({ length: 6 }, (_, index) => ({ ...image, name: `Reference ${index + 1}.png` })));
+  await expect(page.locator('.board-object')).toHaveCount(6);
+  const initial = await app.state(), objects = initial.objects;
+  const annotations = [
+    { id: 'group-three', scope: 'region', objectIds: objects.slice(0, 3).map(object => object.id), bounds: { x: 0, y: 0, width: 1200, height: 400 }, coordinateSpace: 'world', text: 'abc' },
+    { id: 'group-one', scope: 'object', objectId: objects[3].id, objectIds: [objects[3].id], assetId: objects[3].assetId, bounds: { x: 0, y: 0, width: 1, height: 1 }, coordinateSpace: 'normalized', text: 'g' },
+    { id: 'group-shared', scope: 'object', objectId: objects[0].id, objectIds: [objects[0].id], assetId: objects[0].assetId, bounds: { x: 0, y: 0, width: 1, height: 1 }, coordinateSpace: 'normalized', text: 'A separate comment on the first source' },
+  ];
+  const saved = await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...initial.draft, text: 'Study these references', attachments: initial.assets.map(asset => asset.id), references: { objectIds: objects.map(object => object.id), taskIds: [] }, annotations });
+  const task = await app.call(`/api/sessions/${initial.session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision });
+  await app.call('/api/board/operations', 'POST', { sessionId: initial.session.id, operations: [{ type: 'delete', objectId: objects[0].id, expectedVersion: objects[0].version }] });
+  await page.reload();
+  const composer = page.locator('.composer');
+  await page.locator('#whiteboard').click({ position: { x: 1000, y: 150 } }); await expect(page.locator('#instruction')).toHaveValue(''); await expect(composer).toHaveAttribute('data-compact', 'false'); expect((await composer.boundingBox())!.width).toBe(720);
+  await page.locator('.queue-task').click();
+  const details = page.getByRole('region', { name: 'Request 1', exact: true }), groups = details.locator('.task-reference-group[data-annotation-id]');
+  await expect(groups).toHaveCount(3); await expect(details.locator('.task-item-annotation')).toHaveCount(3);
+  for (const [index, annotation] of annotations.entries()) {
+    const group = groups.nth(index); await expect(group).toHaveAttribute('data-annotation-id', annotation.id); await expect(group.locator('.task-annotation-text>span')).toHaveText(annotation.text);
+    expect(await group.locator('[data-reference-item]').evaluateAll(elements => elements.map(element => element.getAttribute('data-reference-item')))).toEqual(annotation.objectIds);
+  }
+  const loose = details.locator('[data-unannotated-attachments]'); await expect(loose).toHaveCount(1); await expect(loose.locator('[data-reference-item]')).toHaveCount(2); expect(await loose.locator('[data-reference-item]').evaluateAll(elements => elements.map(element => element.getAttribute('data-reference-item')))).toEqual(initial.assets.filter(asset => objects.slice(4).some(object => object.assetId === asset.id)).map(asset => asset.id));
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: width === 1440 ? 1000 : 480 });
+    await expect(composer).toHaveAttribute('data-compact', 'false');
+    const row = groups.first().locator('.task-reference-row');
+    expect(await row.locator('[data-reference-item]').evaluateAll(elements => { const tops = elements.map(element => element.getBoundingClientRect().top); return Math.max(...tops) - Math.min(...tops); })).toBeLessThan(.1);
+    if (width < 400) { expect(await row.evaluate(element => element.scrollWidth > element.clientWidth)).toBeTruthy(); await row.evaluate(element => { element.scrollLeft = element.scrollWidth; }); expect(await row.evaluate(element => element.scrollLeft)).toBeGreaterThan(0); }
+    await page.screenshot({ path: info.outputPath(`annotation-groups-${width}.png`) });
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await groups.first().getByRole('button', { name: `View ${initial.assets.find(asset => asset.id === objects[0].assetId)!.name}`, exact: true }).click(); await expect(details.getByRole('region', { name: /^Preview Reference/ })).toBeVisible();
+  expect((await app.state()).tasks[0].snapshot).toEqual(task.task.snapshot);
+});
+
+test('global notices stack at bottom right and remain reachable beside or above the dock', async ({ page, app }, info) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => undefined } });
+    const Native = window.EventSource;
+    (window as any).noticeEventSources = [];
+    window.EventSource = class extends Native { constructor(url: string | URL, configuration?: EventSourceInit) { super(url, configuration); (window as any).noticeEventSources.push(this); } };
+  });
+  await open(page, app);
+  const initial = await app.state();
+  for (const text of ['Queued for notice checks', 'Second notice check', 'Third notice check']) { const current = await app.state(); const saved = await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...current.draft, text }); await app.call(`/api/sessions/${initial.session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision }); }
+  await expect(page.locator('.queue-item')).toHaveCount(3);
+  await page.route('**/api/sessions/*/tasks/*/edit', route => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: { code: 'notice-test', message: 'Please retry this request.' } }) }));
+  let releaseUpload!: () => void; const uploadHeld = new Promise<void>(resolve => { releaseUpload = resolve; });
+  await page.route('**/api/assets?*', async route => { await uploadHeld; await route.abort('aborted'); });
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'Notice upload.txt', mimeType: 'text/plain', buffer: Buffer.from('isolated notice test') });
+  await expect(page.locator('.upload-list')).toBeVisible();
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.getByRole('alert')).toBeVisible();
+  await page.route('**/api/bootstrap', route => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
+  await page.evaluate(() => { (window as any).noticeEventSources.at(-1).dispatchEvent(new Event('error')); });
+  await expect(page.locator('.connection-feedback')).toBeVisible();
+  const stack = page.getByRole('complementary', { name: 'Notifications', exact: true }), measurements: unknown[] = [];
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: width === 1440 ? 1000 : 480 }); await page.emulateMedia({ reducedMotion: width === 320 ? 'reduce' : 'no-preference' });
+    if (width === 320) await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+    for (const expanded of [false, true]) {
+      if (expanded) await page.locator('.queue-stack').hover(); else { await page.locator('#whiteboard').focus(); await page.mouse.move(width - 10, 80); await expect(page.locator('.queue-stack')).not.toHaveClass(/expanded/); }
+      await page.getByRole('button', { name: 'Copy resume prompt', exact: true }).click(); await expect(stack.locator('.toast')).toBeVisible();
+      await expect(stack.locator('.error-banner,.connection-feedback,.upload-list,.toast')).toHaveCount(4);
+      const geometry = () => stack.evaluate(element => { const bounds = element.getBoundingClientRect(), controls = Array.from(document.querySelectorAll('.creation-dock,.queue-stack,.queue-expand')).map(control => control.getBoundingClientRect()); return { right: innerWidth - bounds.right, clear: controls.every(control => bounds.left >= control.right + 12 || bounds.right <= control.left - 12 || bounds.bottom <= control.top - 11.9), inViewport: bounds.top >= 15.9 && bounds.bottom <= innerHeight - 15.9 }; });
+      await expect.poll(geometry).toEqual({ right: 16, clear: true, inViewport: true }); measurements.push({ width, expanded, ...await geometry() });
+      if (width === 1440) expect(await stack.evaluate(element => innerHeight - element.getBoundingClientRect().bottom)).toBe(16);
+      await page.screenshot({ path: info.outputPath(`notifications-${width}-${expanded ? 'expanded' : 'collapsed'}.png`) });
+    }
+  }
+  await writeFile(info.outputPath('notification-geometry.json'), JSON.stringify(measurements, null, 2));
+  const dismiss = page.getByRole('button', { name: 'Dismiss error', exact: true }); await dismiss.scrollIntoViewIfNeeded(); const dismissBounds = (await dismiss.boundingBox())!; await page.mouse.move(dismissBounds.x + dismissBounds.width / 2, dismissBounds.y + dismissBounds.height / 2); await page.waitForTimeout(250); expect(await dismiss.boundingBox()).toEqual(dismissBounds); await dismiss.click(); await expect(page.getByRole('alert')).toHaveCount(0);
+  const cancel = page.getByRole('button', { name: 'Cancel import Notice upload.txt', exact: true }); await cancel.scrollIntoViewIfNeeded(); await cancel.click(); await expect(page.locator('.upload-list')).toHaveCount(0); releaseUpload();
+  await page.unroute('**/api/bootstrap'); await expect(page.locator('.connection-feedback')).toHaveCount(0, { timeout: 15_000 });
+  expect((await app.state()).tasks[0].status).toBe('queued'); expect((await app.state()).assets).toHaveLength(0);
 });
 
 test('four square file corners preserve opposite anchors and commit snapped resize previews', async ({ page, app }, info) => {

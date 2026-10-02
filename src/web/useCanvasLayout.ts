@@ -4,6 +4,37 @@ import { placeFloatingControl, screenBounds, unionBounds, type Rect } from './ge
 
 type ElementRef<T extends HTMLElement = HTMLElement> = RefObject<T | null>;
 
+export function useNotificationLayout(dock: ElementRef, notifications: ElementRef, loaded: boolean) {
+  useLayoutEffect(() => {
+    const stack = notifications.current;
+    if (!stack) return;
+    const observed = new Set<Element>();
+    let pointerInside = false;
+    const observer = new ResizeObserver(() => layout());
+    const layout = (resizing = false) => {
+      const controls = dock.current ? [dock.current, ...dock.current.querySelectorAll<HTMLElement>('.queue-stack,.queue-expand')] : [];
+      controls.forEach(control => { if (!observed.has(control)) { observer.observe(control); observed.add(control); } });
+      if (!resizing && (pointerInside || stack.contains(document.activeElement))) return;
+      const notificationBounds = stack.getBoundingClientRect();
+      const adjacent = controls.map(control => control.getBoundingClientRect()).filter(bounds => notificationBounds.left < bounds.right + 12 && notificationBounds.right > bounds.left - 12);
+      const bottom = adjacent.length ? innerHeight - Math.min(...adjacent.map(bounds => bounds.top)) + 12 : 16;
+      stack.style.bottom = `${bottom}px`;
+      stack.style.maxHeight = `${Math.max(40, Math.min(240, innerHeight - bottom - 16))}px`;
+    };
+    observer.observe(stack);
+    const changes = new MutationObserver(() => layout());
+    if (dock.current) changes.observe(dock.current, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+    const enter = () => { pointerInside = true; };
+    const leave = () => { pointerInside = false; layout(); };
+    const focusOut = () => requestAnimationFrame(() => layout());
+    const resize = () => layout(true);
+    stack.addEventListener('pointerenter', enter); stack.addEventListener('pointerleave', leave); stack.addEventListener('focusout', focusOut);
+    window.addEventListener('resize', resize);
+    layout();
+    return () => { observer.disconnect(); changes.disconnect(); stack.removeEventListener('pointerenter', enter); stack.removeEventListener('pointerleave', leave); stack.removeEventListener('focusout', focusOut); window.removeEventListener('resize', resize); };
+  }, [dock, notifications, loaded]);
+}
+
 export function useComposerLayout(input: ElementRef<HTMLTextAreaElement>, dock: ElementRef, draft: Draft | null, loaded: boolean) {
   useLayoutEffect(() => {
     const textarea = input.current, container = dock.current;

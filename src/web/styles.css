@@ -36,7 +36,7 @@ h1,h2,h3,p { margin: 0; }
 .canvas-actions { position: absolute; top: 16px; right: 16px; z-index: 20; display: flex; gap: 8px; pointer-events: none; }
 .floating-control { background: var(--surface); border: 1px solid color-mix(in srgb,var(--edge) 55%,transparent); box-shadow: var(--float-shadow); pointer-events: auto; }
 .floating-control:hover:not(:disabled) { background: var(--hover); }
-.connection-feedback { position: absolute; top: 62px; left: 16px; z-index: 21; display: flex; align-items: center; gap: 7px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--edge); border-radius: 9px; font-size: 11px; color: var(--muted); box-shadow: var(--float-shadow); }
+.connection-feedback { display: flex; align-items: center; gap: 7px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--edge); border-radius: 9px; font-size: 11px; color: var(--muted); box-shadow: var(--float-shadow); }
 .whiteboard { position: relative; flex: 1; min-height: 0; overflow: hidden; background-image: radial-gradient(var(--dot) .7px,transparent .7px); background-color: var(--canvas); touch-action: none; user-select: none; outline-offset: -3px; }
 .whiteboard.mode-pan { cursor: grab; }
 .whiteboard.mode-pan:active { cursor: grabbing; }
@@ -166,15 +166,20 @@ details[open] summary svg { rotate: 180deg; }
 .annotation-content { display: flex; align-items: center; gap: 6px; padding: 0; flex: 1; min-width: 0; background: transparent; text-align: left; font-size: 11px; }
 .annotation-content>span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .annotation-content small { color: var(--muted); font-size: 9px; }
-.error-banner { z-index: 100; position: fixed; top: 64px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; max-width: calc(100% - 30px); padding: 9px 13px; background: var(--ink); color: var(--surface); border-radius: 9px; box-shadow: var(--float-shadow); font-size: 11px; line-height: 1.7; }
+.notification-stack { z-index: 120; position: fixed; right: 16px; bottom: 16px; width: min(320px,calc(100vw - 80px)); max-height: min(240px,calc(100dvh - 32px)); display: flex; flex-direction: column; align-items: stretch; gap: 7px; overflow-y: auto; scrollbar-width: thin; overscroll-behavior: contain; border-radius: 11px; }
+.notification-stack:empty { display: none; }
+.notification-stack>* { flex-shrink: 0; }
+.error-banner { display: flex; align-items: center; gap: 8px; padding: 9px 10px 9px 13px; background: var(--ink); color: var(--surface); border-radius: 9px; box-shadow: var(--float-shadow); font-size: 11px; line-height: 1.7; }
 .error-banner>span { overflow-wrap: anywhere; }
 .error-banner button { color: inherit; background: transparent; flex-shrink: 0; font-size: 10px; }
-.upload-list { position: fixed; bottom: 235px; left: 24px; max-width: min(420px,calc(100vw - 40px)); z-index: 50; display: grid; gap: 7px; }
+.error-banner>.icon-button { flex-basis: 28px; width: 28px; height: 28px; padding: 6px; }
+.upload-list { display: grid; gap: 7px; }
 .upload-list>div { display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 15px; color: var(--ink); background: var(--surface); border: 1px solid var(--edge); border-radius: 11px; box-shadow: var(--float-shadow); }
 .upload-list>div>span { font-size: 11px; min-width: 0; overflow-wrap: anywhere; }
 .upload-list small { display: block; color: var(--muted); font-size: 9px; margin-top: 4px; }
 .upload-list .icon-button { margin-left: auto; }
-.toast { position: fixed; z-index: 120; bottom: 225px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 12px 17px; background: var(--ink); color: var(--surface); box-shadow: var(--float-shadow); border-radius: 9px; display: flex; align-items: center; gap: 9px; font-size: 11px; line-height: 1.7; pointer-events: none; }
+.toast { padding: 12px 17px; background: var(--ink); color: var(--surface); box-shadow: var(--float-shadow); border-radius: 9px; display: flex; align-items: center; gap: 9px; font-size: 11px; line-height: 1.7; pointer-events: none; }
+.toast>span { overflow-wrap: anywhere; }
 .startup { min-height: 100dvh; padding: 50px; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 25px; }
 .startup .brand { margin-bottom: 25px; font-size: 32px; }
 .startup h1 { font-size: 22px; font-weight: 500; }
@@ -270,7 +275,8 @@ details[open] summary svg { rotate: 180deg; }
 .motion-disclosure-content { min-height: 0; overflow: hidden; }
 .task-reference-groups { display: grid; gap: 8px; margin-top: 8px; }
 .task-reference-group { min-width: 0; padding: 6px 0; border-top: 1px solid color-mix(in srgb,var(--edge) 55%,transparent); }
-.task-reference-source { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; min-width: 0; }
+.task-reference-row { display: flex; flex-wrap: nowrap; align-items: center; gap: 16px; max-width: 100%; padding: 2px; overflow-x: auto; scrollbar-width: thin; }
+.task-reference-source { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; min-width: 0; flex: 0 0 auto; max-width: 160px; }
 .task-reference-source>span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .task-reference-source button { background: transparent; padding: 0; flex-shrink: 0; }
 .task-reference-source a { text-decoration: none; }
