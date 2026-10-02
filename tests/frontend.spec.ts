@@ -567,6 +567,7 @@ test('short-screen contextual video controls stay reachable beside a clipped sel
     await timeline.click(); await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeGreaterThan(.5);
     expect(await video.evaluate(element => (element as HTMLVideoElement & { retained: string }).retained)).toBe(mediaIdentity);
     await expect(page.getByRole('dialog', { name: /Request [12]/ })).not.toBeVisible();
+    await page.locator('.queue-expand').click();
     const queue = page.locator('.queue-list'); await expect.poll(async () => page.locator('.queue-extra').last().evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThan(36); await queue.evaluate(element => { element.scrollTop = element.scrollHeight; });
     expect(await page.locator('.queue-item').last().getByRole('button').first().evaluate(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; })).toBeTruthy();
     await page.screenshot({ path: info.outputPath(`context-video-queued-${width}x480.png`) });
@@ -580,14 +581,24 @@ test('short-screen contextual video controls stay reachable beside a clipped sel
   await app.call(`/api/sessions/${six.session.id}/view`, 'PUT', { ...six.session.view, x: 130, y: 140, zoom: 1 });
   await page.reload(); await expect(input).toHaveValue(Array.from({ length: 50 }, (_, index) => `Draft line ${index + 1}`).join('\n'));
   await page.locator('.queue-expand').click();
+  await expect(page.locator('.queue-extra').last()).toHaveClass(/(?:^| )open(?: |$)/);
+  await expect.poll(async () => page.locator('.queue-stack').evaluate(element => element.getAnimations({ subtree: true }).length)).toBe(0);
+  await expect(page.locator('.video-playback')).not.toBeVisible();
+  await expect(page.locator('.video-playback')).toHaveAttribute('aria-hidden', 'true');
+  await expect(page.locator('.video-playback')).toHaveJSProperty('inert', true);
+  await page.locator('.queue-list').evaluate(element => { element.scrollTop = element.scrollHeight; });
+  await expect(page.locator('.queue-item').last()).toBeInViewport();
+  await page.screenshot({ path: info.outputPath('context-video-covered-six-queue-320x480.png') });
+  await page.locator('.queue-expand').focus(); await page.keyboard.press('Escape');
+  await page.mouse.move(110, 65);
+  await expect(page.locator('.queue-expand')).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('.video-playback')).toBeVisible();
   await expect.poll(async () => page.locator('.selection-actions button,.video-playback button,.video-playback input,.canvas-toolbar button,.canvas-actions button,.send-button').evaluateAll(elements => elements.every(element => { const rect = element.getBoundingClientRect(); const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2); return element instanceof HTMLInputElement ? hit === element : hit?.closest('button') === element; }))).toBeTruthy();
   await page.getByRole('button', { name: 'Play video', exact: true }).click(); await expect(video).toHaveJSProperty('paused', false);
   await page.getByRole('button', { name: 'Pause video', exact: true }).click(); await expect(video).toHaveJSProperty('paused', true);
   await page.getByRole('slider', { name: 'Video timeline', exact: true }).click();
   await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeGreaterThan(.5);
-  await page.locator('.queue-list').evaluate(element => { element.scrollTop = element.scrollHeight; });
-  await expect(page.locator('.queue-item').last()).toBeInViewport();
-  await page.screenshot({ path: info.outputPath('context-video-six-queue-320x480.png') });
+  await page.screenshot({ path: info.outputPath('context-video-recovered-six-queue-320x480.png') });
 });
 
 test('real image import, zoomed media annotation, move/resize, CLI publication and refresh', async ({ page, app }, info) => {
@@ -778,15 +789,23 @@ test('video surface selects and moves at zoom/pan, with explicit keyboard playba
   await page.keyboard.press('Home');
   expect((await app.state()).objects[0]).toEqual(moved);
 
-  for (const { width, height } of [{ width: 1440, height: 900 }, { width: 390, height: 900 }, { width: 390, height: 480 }]) {
+  for (const { width, height } of [{ width: 1440, height: 900 }, { width: 390, height: 900 }, { width: 390, height: 480 }, { width: 320, height: 700 }]) {
     await page.setViewportSize({ width, height });
     await page.getByRole('button', { name: 'Fit all files', exact: true }).click();
-    const playbackBox = (await page.getByRole('group', { name: 'Video playback', exact: true }).boundingBox())!;
-    const actionsBox = (await page.locator('.selection-actions').boundingBox())!, importsBox = (await page.locator('.canvas-actions').boundingBox())!, toolsBox = (await page.locator('.canvas-toolbar').boundingBox())!;
+    await expect.poll(async () => page.locator('.video-playback').evaluate(element => element.getAnimations().length)).toBe(0);
+    await expect.poll(async () => {
+      return page.evaluate(() => {
+        const bar = document.querySelector('.video-playback')!.getBoundingClientRect(), media = document.querySelector('.object-video .object-media')!.getBoundingClientRect();
+        return (document.querySelector('.video-playback') as HTMLElement).dataset.positioned === 'true' && bar.left >= 0 && bar.right <= innerWidth && bar.left >= media.left + 7 && bar.top >= media.top + 7 && bar.right <= media.right - 7 && Math.abs(bar.bottom - media.bottom + 8) < .05;
+      });
+    }).toBeTruthy();
+    const { playbackBox, actionsBox, importsBox, toolsBox, mediaBox } = await page.evaluate(() => {
+      const rect = (selector: string) => document.querySelector(selector)!.getBoundingClientRect().toJSON();
+      return { playbackBox: rect('.video-playback'), actionsBox: rect('.selection-actions'), importsBox: rect('.canvas-actions'), toolsBox: rect('.canvas-toolbar'), mediaBox: rect('.object-video .object-media') };
+    });
     expect(playbackBox.x).toBeGreaterThanOrEqual(0); expect(playbackBox.x + playbackBox.width).toBeLessThanOrEqual(width);
     expect(playbackBox.x >= toolsBox.x + toolsBox.width + 8 || playbackBox.y + playbackBox.height <= toolsBox.y - 8 || playbackBox.y >= toolsBox.y + toolsBox.height + 8).toBeTruthy();
-    const mediaBox = (await surface.boundingBox())!;
-    if (height > 480) expect(playbackBox.y >= mediaBox.y + mediaBox.height || playbackBox.y + playbackBox.height <= mediaBox.y).toBeTruthy();
+    expect(playbackBox.y + playbackBox.height).toBeCloseTo(mediaBox.y + mediaBox.height - 8, 1);
     expect(playbackBox.y + playbackBox.height <= actionsBox.y || playbackBox.y >= actionsBox.y + actionsBox.height).toBeTruthy();
     expect(playbackBox.y + playbackBox.height <= importsBox.y || playbackBox.y >= importsBox.y + importsBox.height).toBeTruthy();
     expect(await page.locator('.canvas-toolbar button, .video-playback button').evaluateAll(buttons => buttons.every(button => { const bounds = button.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === button; }))).toBeTruthy();
@@ -812,6 +831,53 @@ test('video surface selects and moves at zoom/pan, with explicit keyboard playba
   expect(restoredBox.x).toBeCloseTo(moved.x * restoredView.zoom + restoredView.x, 1);
   expect(restoredBox.y).toBeCloseTo(moved.y * restoredView.zoom + restoredView.y, 1);
   expect(errors).toEqual([]);
+});
+
+test('video overlay follows visible footage, compacts around fixed controls and returns after zooming a tiny video', async ({ page, app }, info) => {
+  await page.setViewportSize({ width: 390, height: 480 });
+  await open(page, app);
+  await expect(page.locator('#whiteboard')).toHaveCSS('background-image', 'none');
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4'));
+  const object = page.locator('.object-video'), video = object.locator('video'), bar = page.locator('.video-playback'), timeline = page.getByRole('slider', { name: 'Video timeline', exact: true });
+  await expect(video).toHaveJSProperty('videoWidth', 320);
+  await object.focus(); await page.keyboard.press('Enter');
+  const state = await app.state(), original = state.objects[0];
+  const setView = async (x: number, y: number, zoom: number) => {
+    await app.call(`/api/sessions/${state.session.id}/view`, 'PUT', { ...state.session.view, selectedObjectIds: [original.id], x: x - original.x * zoom, y: y - original.y * zoom, zoom });
+    await page.reload(); await expect(video).toHaveJSProperty('videoWidth', 320);
+  };
+  const operable = async () => {
+    await expect(bar).toBeVisible();
+    await expect.poll(async () => bar.evaluate(element => element.getAnimations().length)).toBe(0);
+    expect(await bar.evaluate(element => { const style = getComputedStyle(element); return { background: style.backgroundColor, border: style.borderTopWidth, shadow: style.boxShadow, blur: style.backdropFilter }; })).toEqual({ background: 'rgba(0, 0, 0, 0)', border: '0px', shadow: 'none', blur: 'none' });
+    await expect.poll(async () => bar.locator('button,input').evaluateAll(elements => elements.every(element => {
+      const rect = element.getBoundingClientRect(), hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+      return element instanceof HTMLInputElement ? hit === element : hit?.closest('button') === element;
+    }))).toBeTruthy();
+    const { mediaBox, controlBox } = await page.evaluate(() => ({ mediaBox: document.querySelector('.object-video video')!.getBoundingClientRect().toJSON(), controlBox: document.querySelector('.video-playback')!.getBoundingClientRect().toJSON() }));
+    expect(controlBox.x).toBeGreaterThanOrEqual(Math.max(0, mediaBox.x) + 8);
+    expect(controlBox.y).toBeGreaterThanOrEqual(Math.max(0, mediaBox.y) + 8);
+    expect(controlBox.x + controlBox.width).toBeLessThanOrEqual(Math.min(390, mediaBox.x + mediaBox.width) - 8);
+    expect(controlBox.y + controlBox.height).toBeLessThanOrEqual(Math.min(480, mediaBox.y + mediaBox.height) - 8);
+    await page.getByRole('button', { name: 'Play video', exact: true }).click(); await expect(video).toHaveJSProperty('paused', false);
+    await page.getByRole('button', { name: 'Pause video', exact: true }).click(); await expect(video).toHaveJSProperty('paused', true);
+    const rect = (await timeline.boundingBox())!;
+    await page.mouse.move(rect.x + 4, rect.y + rect.height / 2); await page.mouse.down(); await page.mouse.move(rect.x + rect.width * .65, rect.y + rect.height / 2, { steps: 4 }); await page.mouse.up();
+    await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).currentTime / (element as HTMLVideoElement).duration)).toBeGreaterThan(.4);
+    await timeline.focus(); await page.keyboard.press('Home'); await page.keyboard.press('ArrowRight');
+    await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeCloseTo(.1, 4);
+    expect((await app.state()).objects[0]).toEqual(original);
+  };
+  await setView(310, 95, 1); await expect(bar).toHaveAttribute('data-layout', 'stacked'); await operable();
+  await page.screenshot({ path: info.outputPath('video-overlay-clipped-390.png') });
+  await setView(-110, -70, 1); await expect(bar).toHaveAttribute('data-layout', 'compact'); await operable();
+  await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+  await expect(page.locator('#whiteboard')).toHaveCSS('background-image', 'none');
+  await page.screenshot({ path: info.outputPath('video-overlay-dark-clipped-390.png') });
+  await setView((390 - original.width * .15) / 2, (480 - original.height * .15) / 2, .15); await expect(bar).not.toBeVisible(); await expect(bar).toHaveAttribute('aria-hidden', 'true');
+  await page.getByRole('button', { name: 'Reset zoom to 100%', exact: true }).click();
+  await expect(bar).toBeVisible(); await operable();
+  await page.screenshot({ path: info.outputPath('video-overlay-zoomed-390.png') });
 });
 
 test('video playback controls handle loading and rejected playback', async ({ page, app }) => {

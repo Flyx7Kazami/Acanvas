@@ -155,6 +155,45 @@ export function placeFloatingControl(anchor: Rect, size: { width: number; height
   return candidates[0] || null;
 }
 
+export type VideoControlLayout = 'full' | 'compact' | 'stacked';
+
+export function placeVideoControl(video: Rect, viewport: Rect, obstacles: Rect[], gap = 8): { bounds: Rect; layout: VideoControlLayout } | null {
+  const left = Math.max(video.x, viewport.x) + gap, top = Math.max(video.y, viewport.y) + gap;
+  const right = Math.min(video.x + video.width, viewport.x + viewport.width) - gap;
+  const bottom = Math.min(video.y + video.height, viewport.y + viewport.height) - gap;
+  const layouts: { layout: VideoControlLayout; minWidth: number; maxWidth: number; height: number }[] = [
+    { layout: 'full', minWidth: 230, maxWidth: Infinity, height: 42 },
+    { layout: 'compact', minWidth: 100, maxWidth: Infinity, height: 38 },
+    { layout: 'stacked', minWidth: 48, maxWidth: 76, height: 48 },
+  ];
+  const candidates: { bounds: Rect; layout: VideoControlLayout; score: number }[] = [];
+  for (const [rank, size] of layouts.entries()) {
+    const ys = [bottom - size.height, top, ...obstacles.flatMap(rect => [rect.y - gap - size.height, rect.y + rect.height + gap])];
+    for (const y of ys) {
+      if (y < top || y + size.height > bottom) continue;
+      let segments = [{ left, right }];
+      for (const obstacle of obstacles) {
+        if (y >= obstacle.y + obstacle.height + gap || y + size.height <= obstacle.y - gap) continue;
+        const start = obstacle.x - gap, end = obstacle.x + obstacle.width + gap;
+        segments = segments.flatMap(segment => end <= segment.left || start >= segment.right ? [segment] : [
+          ...(start > segment.left ? [{ left: segment.left, right: start }] : []),
+          ...(end < segment.right ? [{ left: end, right: segment.right }] : []),
+        ]);
+      }
+      for (const segment of segments) {
+        const width = Math.min(size.maxWidth, segment.right - segment.left);
+        if (width < size.minWidth) continue;
+        const center = (left + right) / 2;
+        const x = Math.max(segment.left, Math.min(segment.right - width, center - width / 2));
+        candidates.push({ bounds: { x, y, width, height: size.height }, layout: size.layout, score: (bottom - y - size.height) * 4 + rank * 8 + Math.abs(x + width / 2 - center) * .1 });
+      }
+    }
+  }
+  candidates.sort((a, b) => a.score - b.score);
+  const candidate = candidates[0];
+  return candidate ? { bounds: candidate.bounds, layout: candidate.layout } : null;
+}
+
 export function normalizedRegion(region: Rect, object: Rect): Rect {
   const x = Math.max(0, Math.min(1, (region.x - object.x) / object.width));
   const y = Math.max(0, Math.min(1, (region.y - object.y) / object.height));

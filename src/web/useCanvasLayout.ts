@@ -1,6 +1,6 @@
 import { useLayoutEffect, type RefObject } from 'react';
 import type { Draft, SessionView } from '../shared/types';
-import { placeFloatingControl, screenBounds, unionBounds, type Rect } from './geometry';
+import { placeFloatingControl, placeVideoControl, screenBounds, unionBounds, type Rect } from './geometry';
 
 type ElementRef<T extends HTMLElement = HTMLElement> = RefObject<T | null>;
 
@@ -105,22 +105,13 @@ export function useContextualControls(canvas: ElementRef, actions: ElementRef, p
       }
       const obstacles = persistent.map(element => { const rect = element.getBoundingClientRect(); return { x: rect.x - bounds.x, y: rect.y - bounds.y, width: rect.width, height: rect.height }; });
       const anchor = unionBounds(projected);
-      let actionPosition = actionBar ? placeFloatingControl(anchor, { width: actionBar.offsetWidth, height: actionBar.offsetHeight }, viewport, 'above', obstacles) : null;
       let videoPosition: Rect | null = null;
       if (videoBar && video) {
-        const videoBounds = screenBounds(video, view);
-        // The caption belongs to the canvas object and scales with its geometry.
-        videoBounds.height += 32 * view.zoom;
-        videoPosition = placeFloatingControl(videoBounds, { width: videoBar.offsetWidth, height: videoBar.offsetHeight }, viewport, 'below', actionPosition ? [...obstacles, actionPosition] : obstacles);
-        if (actionBar && (!actionPosition || !videoPosition)) {
-          const width = Math.max(actionBar.offsetWidth, videoBar.offsetWidth);
-          const stack = placeFloatingControl(anchor, { width, height: actionBar.offsetHeight + 8 + videoBar.offsetHeight }, viewport, 'above', obstacles);
-          if (stack) {
-            actionPosition = { x: stack.x + (width - actionBar.offsetWidth) / 2, y: stack.y, width: actionBar.offsetWidth, height: actionBar.offsetHeight };
-            videoPosition = { x: stack.x + (width - videoBar.offsetWidth) / 2, y: stack.y + actionBar.offsetHeight + 8, width: videoBar.offsetWidth, height: videoBar.offsetHeight };
-          }
-        }
+        const position = placeVideoControl(screenBounds(video, view), viewport, obstacles);
+        videoPosition = position?.bounds || null;
+        if (position) { videoBar.dataset.layout = position.layout; videoBar.style.width = `${position.bounds.width}px`; }
       }
+      const actionPosition = actionBar ? placeFloatingControl(anchor, { width: actionBar.offsetWidth, height: actionBar.offsetHeight }, viewport, 'above', videoPosition ? [...obstacles, videoPosition] : obstacles) : null;
       for (const [control, position] of [[actionBar, actionPosition], [videoBar, videoPosition]] as const) {
         if (!control) continue;
         control.dataset.positioned = String(!!position); control.inert = !position; control.setAttribute('aria-hidden', String(!position));
