@@ -150,7 +150,8 @@ details[open] summary svg { rotate: 180deg; }
 .receipt-assets a { display: flex; align-items: center; gap: 5px; font-size: 10px; text-decoration: none; overflow-wrap: anywhere; }
 .task-receipt details { margin-top: 13px; font-size: 9px; color: var(--muted); }
 .task-receipt ul { padding-left: 15px; line-height: 1.8; overflow-wrap: anywhere; }
-.task-card>time { display: block; margin-top: 12px; color: var(--muted); font-size: 8px; }
+.task-detail-content { min-width: 0; margin: 8px 12px 10px; padding: 10px 12px; border: 1px solid color-mix(in srgb,var(--edge) 40%,transparent); border-radius: 12px; background: color-mix(in srgb,var(--canvas) 55%,var(--surface)); }
+.task-detail-content>time { display: block; margin-top: 12px; color: var(--muted); font-size: 8px; }
 .composer { display: flex; flex-direction: column; height: 52px; min-height: 52px; overflow: hidden; background: var(--surface); border: 1px solid color-mix(in srgb,var(--edge) 85%,transparent); border-radius: 26px; padding: 9px 9px 9px 16px; position: relative; box-shadow: var(--float-shadow); width: 100%; margin-inline: auto; transition: height 180ms var(--ease), width 420ms cubic-bezier(.2,.8,.25,1.16); }
 .composer:has(.draft-attachments) { padding-top: 10px; }
 .composer-input-row { display: flex; flex: 0 0 auto; align-items: flex-end; gap: 12px; min-width: 0; }
@@ -215,14 +216,14 @@ details[open] summary svg { rotate: 180deg; }
 .queue-preview.annotation-preview>.annotation-bubble:last-child:not(:first-child) { position: absolute; bottom: -1px; right: -2px; }
 .queue-preview-overflow { font-size: 10px; color: var(--muted); min-width: 15px; }
 .queue-row>.icon-button { width: 24px; height: 28px; flex-basis: 24px; padding: 5px; }
-.queue-row>.icon-button:hover:not(:disabled) { background: transparent; color: var(--muted); }
+.queue-row>.icon-button:hover:not(:disabled),.queue-row>.icon-button:focus-visible { background: var(--soft); color: var(--ink); }
 .queue-entering { animation: queue-send 220ms var(--ease); }
 @keyframes queue-send { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 .inline-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 11px; font-weight: 500; }
 .inline-heading>.icon-button { flex-basis: 28px; width: 28px; height: 28px; }
 .inline-task-detail { position: relative; }
 .inline-task-detail>.icon-button { position: absolute; right: 3px; top: 3px; z-index: 1; }
-.inline-task-detail .task-card { padding: 2px 8px 8px; border: 0; }
+.inline-task-detail .task-card { padding: 0; border: 0; }
 .history-list { padding: 8px 12px 20px; }
 .task-attachments { flex-wrap: wrap; }
 .task-attachments>button,.receipt-assets>button { padding: 0; background: transparent; color: inherit; border-radius: 6px; }
@@ -274,6 +275,8 @@ details[open] summary svg { rotate: 180deg; }
 .motion-disclosure[data-motion='open'] { grid-template-rows: 1fr; opacity: 1; transform: translateY(0) scale(1); }
 .motion-disclosure-content { min-height: 0; overflow: hidden; }
 .task-reference-groups { display: grid; gap: 8px; margin-top: 8px; }
+.task-detail-content>.task-reference-groups { margin-top: 0; gap: 12px; }
+.task-detail-content .task-reference-group { border-top: 0; padding: 0; }
 .task-reference-group { min-width: 0; padding: 6px 0; border-top: 1px solid color-mix(in srgb,var(--edge) 55%,transparent); }
 .task-reference-row { display: flex; flex-wrap: nowrap; align-items: center; gap: 16px; max-width: 100%; padding: 2px; overflow-x: auto; scrollbar-width: thin; }
 .task-reference-source { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; min-width: 0; flex: 0 0 auto; max-width: 160px; }
@@ -293,5 +296,5 @@ details[open] summary svg { rotate: 180deg; }
 
 .annotation-reader textarea { width: 100%; border: 0; resize: vertical; background: transparent; color: var(--ink); font: inherit; line-height: 1.7; min-height: 48px; }
 
-@media(max-width:540px) { .queue-row { gap: 2px; } .queue-task { gap: 5px; padding-inline: 4px; } }
+@media(max-width:540px) { .queue-row { gap: 2px; } .queue-task { gap: 5px; padding-inline: 4px; } .task-detail-content { margin-inline: 8px; padding-inline: 9px; } }
 @media(max-width:360px) { .queue-task { gap: 3px; } }

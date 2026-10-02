@@ -320,3 +320,22 @@ Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直�
 - [等待项几何记录](evidence/annotation-edit-fit/queued-circle-geometry.json)
 - [实际第 21 条任务的前后核对](evidence/annotation-edit-fit/task21-reference-correction.json)
 - [构建与聚焦执行记录](evidence/annotation-edit-fit/legacy-correction-validation.json)
+
+## 等距详情容器与队列按钮反馈（2026-10-02）
+
+队列与历史共用 12px 圆角详情容器，完整包住引用、批注、预览、进度、回执与时间。桌面左右各内缩 12px，540px 以下各内缩 8px；背景与边框使用现有亮暗主题灰阶。批注组以 12px 留白分隔，编号、横向引用和批注文字保持当前顺序。编辑、删除及详情收起按钮在悬停与键盘焦点时显示柔和背景和清晰前景色，命中区域与布局保持。
+
+`npm run build` 通过。最终 `npm run test:browser -- --grep 'request details group each annotation once' --output /tmp/acanvas-details-symmetric-20261002` **1/1** 通过（3.3 秒，exit 0）。隔离 Chrome 专项脚本通过、exit 0，覆盖 1440/390/320px × 亮/暗六组：详情侧距分别精确为 12/12px、8/8px、8/8px，圆角 12px，页面与队列横向溢出为 0；窄屏引用行保持水平且可以滚动。两种按钮的实际悬停和键盘焦点改变背景及前景色，位置与大小保持；批注、编辑/取消编辑、取消请求和详情收起实际点击通过，收起恢复摘要焦点，历史共用容器及减少动态效果行为通过。
+
+独立干净上下文验收 PASS，P0–P3 发现为空；重新核验等距容器、亮暗反馈、按钮几何、引用横滚、预览、批注键盘激活、收起焦点、编辑/取消、删除和历史操作，页面错误为 0。本轮仅修改前端表现，测试全部使用独立临时项目；正式服务及白板数据保持。浏览器范围为本机 Chrome。首次隔离服务/Chrome 启动受 sandbox EPERM 限制，取得隔离测试权限后完成验证；临时测量脚本的动效等待与批注投影数量断言按 fixture 修正，最终完整脚本正常退出。
+
+- [桌面亮色详情](evidence/details-hierarchy/queue-details-light-1440.png)
+- [桌面暗色详情](evidence/details-hierarchy/queue-details-dark-1440.png)
+- [390px 亮色详情](evidence/details-hierarchy/queue-details-light-390.png)
+- [390px 暗色详情](evidence/details-hierarchy/queue-details-dark-390.png)
+- [320px 亮色详情](evidence/details-hierarchy/queue-details-light-320.png)
+- [320px 暗色详情](evidence/details-hierarchy/queue-details-dark-320.png)
+- [亮色按钮悬停](evidence/details-hierarchy/queue-hover-light-1440.png)
+- [暗色按钮悬停](evidence/details-hierarchy/queue-hover-dark-1440.png)
+- [320px 暗色历史](evidence/details-hierarchy/history-details-dark-320.png)
+- [等距、容器、按钮反馈与横滚测量](evidence/details-hierarchy/geometry.json)

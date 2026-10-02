@@ -153,7 +153,7 @@ function TaskCard({ task, assets, objects, content, locateAsset, onAnnotationVie
   return <article className="task-card" data-task-id={task.id} data-status={task.status}>
     {!compact && <div className="task-heading"><span className="task-sequence">Request {String(task.sequence).padStart(2, '0')}</span><span className={`status-badge status-${task.status}`}>{task.status === 'completed' && <Check size={11}/>} {statusLabels[task.status]}</span></div>}
     {!compact && <p className="task-instruction">{task.snapshot.userRequest.text || 'Create from the attachments and annotations.'}</p>}
-    <div className="task-reference-groups">{(() => {
+    <div className="task-detail-content"><div className="task-reference-groups">{(() => {
       const sources = task.snapshot.referenceContent.objects;
       const frameIds = new Set(task.snapshot.annotations.map(annotation => annotation.snapshotAssetId).filter(Boolean));
       const groups = task.snapshot.annotations.map(annotation => {
@@ -173,7 +173,7 @@ function TaskCard({ task, assets, objects, content, locateAsset, onAnnotationVie
     {task.reason && <p className="task-reason">{task.reason}</p>}
     {task.runs.at(-1)?.progress.at(-1) && <p className="task-progress">{task.runs.at(-1)?.progress.at(-1)?.message}</p>}
     {task.receipt && <div className="task-receipt"><div className="receipt-label"><Check size={13}/>Receipt</div><p>{task.receipt.summary}</p>{!!task.receipt.assetIds.length && <div className="receipt-assets">{task.receipt.assetIds.map(id => { const asset = assets.find(asset => asset.id === id); return asset ? assetAction(asset, false) : <a key={id} href={content(id)} download>Download output</a>; })}</div>}{!!task.receipt.validation.length && <details><summary>Validation<ChevronDown size={12}/></summary><ul>{task.receipt.validation.map((line, index) => <li key={index}>{line}</li>)}</ul></details>}</div>}
-    <time dateTime={task.createdAt}>{new Date(task.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</time>
+    <time dateTime={task.createdAt}>{new Date(task.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</time></div>
   </article>;
 }
 
