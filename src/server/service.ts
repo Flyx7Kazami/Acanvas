@@ -217,10 +217,14 @@ export class CanvasService {
       if (previous.editingTaskId) fail(409, 'task_edit_conflict', 'Save or cancel the current edit before editing another request.');
       if (previous.id !== input.draftId || previous.revision !== input.expectedRevision) fail(409, 'draft_revision_conflict', 'The draft changed. Read the current draft before editing a request.');
       const id = randomUUID(), snapshot = task.snapshot;
+      // Explicit request references preserve the composer; snapshot content also contains annotation dependencies.
+      // Earlier snapshots retain their available references because their attachment provenance is unknown.
+      const attachments = snapshot.requestReferences?.attachmentIds ?? snapshot.referenceContent.assets.map(asset => asset.id);
+      const objectIds = snapshot.requestReferences?.objectIds ?? snapshot.referenceContent.objects.map(object => object.id);
       this.db.prepare('INSERT INTO task_edits VALUES(?,?,?,?,?)').run(id, sessionId, taskId, json(previous), 'active');
       this.db.prepare("UPDATE tasks SET status='editing',updated_at=? WHERE id=? AND status='queued'").run(now(), taskId);
       this.db.prepare('DELETE FROM drafts WHERE id=?').run(previous.id);
-      this.db.prepare('INSERT INTO drafts(id,session_id,revision,text,attachments_json,annotations_json,references_json,updated_at,editing_task_id) VALUES(?,?,1,?,?,?,?,?,?)').run(id, sessionId, snapshot.userRequest.text, json(snapshot.referenceContent.assets.map(asset => asset.id)), json(snapshot.annotations), json({ objectIds: snapshot.referenceContent.objects.map(object => object.id), taskIds: snapshot.referenceContent.taskIds }), now(), taskId);
+      this.db.prepare('INSERT INTO drafts(id,session_id,revision,text,attachments_json,annotations_json,references_json,updated_at,editing_task_id) VALUES(?,?,1,?,?,?,?,?,?)').run(id, sessionId, snapshot.userRequest.text, json(attachments), json(snapshot.annotations), json({ objectIds, taskIds: snapshot.referenceContent.taskIds }), now(), taskId);
       return { task: this.task(sessionId, taskId), draft: this.draft(sessionId) };
     });
   }
@@ -260,7 +264,7 @@ export class CanvasService {
       const objectIds = [...new Set([...draft.references.objectIds, ...draft.annotations.flatMap((annotation) => [...annotation.objectIds, ...(annotation.objectId ? [annotation.objectId] : [])])])];
       const objects = objectIds.map((id) => source?.snapshot.referenceContent.objects.find(object => object.id === id) || this.object(id));
       const assetIds = [...new Set([...draft.attachments, ...objects.map((object) => object.assetId), ...draft.annotations.flatMap((annotation) => [annotation.assetId, annotation.snapshotAssetId].filter((id): id is string => !!id))])];
-      const snapshot: TaskSnapshot = { userRequest: { source: 'user_instruction', text: draft.text }, annotations: structuredClone(draft.annotations), referenceContent: { source: 'reference_content', assets: assetIds.map((id) => { this.assetPath(id); return source?.snapshot.referenceContent.assets.find(asset => asset.id === id) || this.asset(id); }), objects, taskIds: draft.references.taskIds } };
+      const snapshot: TaskSnapshot = { userRequest: { source: 'user_instruction', text: draft.text }, requestReferences: { attachmentIds: [...draft.attachments], objectIds: [...draft.references.objectIds] }, annotations: structuredClone(draft.annotations), referenceContent: { source: 'reference_content', assets: assetIds.map((id) => { this.assetPath(id); return source?.snapshot.referenceContent.assets.find(asset => asset.id === id) || this.asset(id); }), objects, taskIds: draft.references.taskIds } };
       const id = source?.id || randomUUID(), time = now();
       if (source) {
         this.db.prepare("UPDATE tasks SET status='queued',snapshot_json=?,updated_at=? WHERE id=? AND status='editing'").run(json(snapshot), time, id);

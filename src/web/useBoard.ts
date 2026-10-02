@@ -200,10 +200,11 @@ export function useBoard() {
     await refresh();
   }, [save, refresh, reflectDraft]);
 
-  const updateView = useCallback((next: SessionView, ownerSessionId = viewSessionRef.current) => {
+  const updateView = useCallback((next: SessionView, ownerSessionId = viewSessionRef.current, persist = true) => {
     if (api.projectChanged || switchingRef.current || ownerSessionId !== sessionRef.current || ownerSessionId !== viewSessionRef.current) return;
     views.current.set(ownerSessionId, next); setView(next);
     window.clearTimeout(viewTimers.current.get(ownerSessionId));
+    if (!persist) return;
     viewTimers.current.set(ownerSessionId, window.setTimeout(() => {
       const previous = viewQueues.current.get(ownerSessionId) || Promise.resolve();
       const request = previous.catch(() => undefined).then(() => api.view(ownerSessionId, next));

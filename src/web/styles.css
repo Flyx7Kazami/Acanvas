@@ -281,8 +281,11 @@ details[open] summary svg { rotate: 180deg; }
 .task-reference-source button { background: transparent; padding: 0; flex-shrink: 0; }
 .task-reference-source a { text-decoration: none; }
 .task-reference-source .asset-thumb { width: 24px; height: 24px; flex-basis: 24px; }
+.task-annotation-header { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.task-annotation-badge { display: flex; align-items: center; justify-content: center; flex: 0 0 24px; width: 24px; height: 28px; background: transparent; padding: 0; }
+.task-annotation-header>.task-reference-row { min-width: 0; }
 .task-item-annotation { margin: 6px 0 0 31px; }
-.task-annotation-text { display: flex; align-items: flex-start; gap: 7px; padding: 0; background: transparent; text-align: left; font-size: 11px; line-height: 1.6; }
+.task-annotation-text { display: flex; align-items: flex-start; gap: 7px; margin: 0; padding: 0; background: transparent; text-align: left; font-size: 11px; line-height: 1.6; }
 .task-annotation-text>span { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
 .task-annotation-text small { color: var(--muted); font-size: 9px; }
 .task-annotation-frame { display: block; margin-top: 5px; max-width: 100%; width: 128px; max-height: 84px; object-fit: contain; }

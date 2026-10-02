@@ -394,3 +394,52 @@ test('claim and edit share one reservation boundary while the losing action reta
   if (state.tasks[0].status === 'editing') { assert.equal(state.draft.text, task.snapshot.userRequest.text); assert.equal(state.tasks[0].runs.length, 0); }
   else { assert.equal(state.tasks[0].status, 'running'); assert.equal(state.draft.id, draft.id); assert.equal(state.tasks[0].runs.length, 1); }
 });
+
+test('request edit restores explicit references while annotation dependencies remain in the snapshot', async t => {
+  const f = await fixture(t), session = await f.session('Annotation references');
+  const assets = await Promise.all(['one', 'two', 'three', 'four', 'video frame'].map(value => f.upload(value)));
+  const objects = assets.slice(0, 4).map((asset, index) => ({ id: `annotation-source-${index}`, assetId: asset.id, x: index * 120, y: 20, width: 100, height: 80 }));
+  await f.call('/api/board/operations', 'POST', { sessionId: session.id, operations: objects.map(object => ({ type: 'create', object })) });
+  const annotations = [
+    { id: 'region-note', scope: 'region', coordinateSpace: 'world', objectIds: objects.slice(0, 3).map(object => object.id), bounds: { x: 0, y: 0, width: 400, height: 100 }, text: 'Three sources' },
+    { id: 'object-note', scope: 'object', coordinateSpace: 'normalized', objectId: objects[3].id, objectIds: [objects[3].id], assetId: assets[3].id, snapshotAssetId: assets[4].id, timeStart: 4, bounds: { x: 0, y: 0, width: 1, height: 1 }, text: 'One source with frame' },
+  ];
+  const initial: Draft = (await f.state(session.id)).draft;
+  const saved = await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...initial, annotations });
+  const sent: Task = (await f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision })).task;
+  assert.deepEqual(sent.snapshot.requestReferences, { attachmentIds: [], objectIds: [] });
+  assert.deepEqual(sent.snapshot.referenceContent.assets.map(asset => asset.id), assets.map(asset => asset.id));
+  const ordinary: Draft = (await f.state(session.id)).draft;
+  let edit = await f.call(`/api/sessions/${session.id}/tasks/${sent.id}/edit`, 'POST', { draftId: ordinary.id, expectedRevision: ordinary.revision });
+  assert.deepEqual(edit.draft.attachments, []); assert.deepEqual(edit.draft.references.objectIds, []); assert.deepEqual(edit.draft.annotations, annotations);
+  await f.restart(); assert.deepEqual((await f.state(session.id)).draft, edit.draft);
+  const explicit = await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...edit.draft, attachments: [assets[0].id], references: { objectIds: [objects[0].id], taskIds: [] } });
+  const revised: Task = (await f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: explicit.id, expectedRevision: explicit.revision })).task;
+  assert.deepEqual(revised.snapshot.requestReferences, { attachmentIds: [assets[0].id], objectIds: [objects[0].id] });
+  const current: Draft = (await f.state(session.id)).draft;
+  edit = await f.call(`/api/sessions/${session.id}/tasks/${sent.id}/edit`, 'POST', { draftId: current.id, expectedRevision: current.revision });
+  assert.deepEqual(edit.draft.attachments, [assets[0].id]); assert.deepEqual(edit.draft.references.objectIds, [objects[0].id]);
+  const removed = await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...edit.draft, annotations: [] });
+  const final: Task = (await f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: removed.id, expectedRevision: removed.revision })).task;
+  assert.deepEqual(final.snapshot.referenceContent.assets.map(asset => asset.id), [assets[0].id]);
+  assert.deepEqual(final.snapshot.referenceContent.objects.map(object => object.id), [objects[0].id]);
+  assert.equal(final.id, sent.id); assert.equal(final.sequence, sent.sequence);
+});
+
+test('earlier reference provenance and active edit additions remain available across restart', async t => {
+  const f = await fixture(t), session = await f.session('Earlier request'), asset = await f.upload('source');
+  await f.call('/api/board/operations', 'POST', { sessionId: session.id, operations: [{ type: 'create', object: { id: 'earlier-object', assetId: asset.id, x: 0, y: 0, width: 100, height: 80 } }] });
+  const initial = (await f.state(session.id)).draft;
+  const saved = await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...initial, attachments: [asset.id], annotations: [{ id: 'earlier-note', scope: 'object', coordinateSpace: 'normalized', objectId: 'earlier-object', objectIds: ['earlier-object'], assetId: asset.id, bounds: { x: 0, y: 0, width: 1, height: 1 }, text: 'An explicitly attached source' }] });
+  const task: Task = (await f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision })).task;
+  delete task.snapshot.requestReferences;
+  f.running.service.db.prepare('UPDATE tasks SET snapshot_json=? WHERE id=?').run(JSON.stringify(task.snapshot), task.id);
+  const current = (await f.state(session.id)).draft;
+  const edit = await f.call(`/api/sessions/${session.id}/tasks/${task.id}/edit`, 'POST', { draftId: current.id, expectedRevision: current.revision });
+  assert.deepEqual(edit.draft.attachments, [asset.id]);
+  const extra = await f.upload('added during editing');
+  const modified = await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...edit.draft, text: 'My unsent additions', attachments: [...edit.draft.attachments, extra.id] });
+  await f.restart();
+  const resumed = await f.call(`/api/sessions/${session.id}/tasks/${task.id}/edit`, 'POST', { draftId: modified.id, expectedRevision: modified.revision });
+  assert.deepEqual(resumed.draft, modified); assert.deepEqual(resumed.task.snapshot, task.snapshot);
+});

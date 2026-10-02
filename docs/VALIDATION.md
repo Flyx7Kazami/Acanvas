@@ -280,3 +280,24 @@ CUA 浏览器键盘走虚拟剪贴板，未发出读取系统原生文件剪贴�
 - [390px 队列与通知避让](evidence/queue-followup/notifications-390.png)
 - [320px 深色通知与队列](evidence/queue-followup/notifications-320.png)
 - [通知位置测量](evidence/queue-followup/notification-geometry.json)
+
+## 编辑引用来源、批注顺序与画布适配动效（2026-10-02）
+
+新发送及编辑保存的任务快照记录明确附件和对象引用；素材与对象快照继续保存批注目标、区域内引用及视频帧图等依赖。编辑按明确引用恢复输入框，图片同时作为明确附件和批注目标时保留两项语义。已有编辑草稿保持当前内容和 revision，服务重启与重复进入编辑保留用户添加的文字和附件。
+
+历史快照只有合并后的依赖列表，原发送草稿已删除；`task_edits` 留存进入编辑前的另一份输入草稿。针对用户截图中的第 21 条任务，只读核对确认没有原始明确引用列表可恢复，且当前任务已保存为待办、输入草稿为空。历史来源未知时保留现有引用，用户确认后可通过正常编辑纠正；本轮保持正式任务原样。
+
+队列和历史详情共用批注组：编号气泡在前，缩略图和名称横向排列，随后显示一次批注文字。编号与文字均保留查看操作；键盘激活编号后焦点保持。320/390/1440px 下素材行保持横排并可滚动。
+
+Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直接滚轮、缩放按钮、原生指针平移和新的 Fit 操作结束前次运动；减少动态效果时即时适配。每帧只更新本地视图，完成或中断后保存最终视图。实浏览器采样得到 47 帧、25 个不同变换、20 个中间值；测试开始后约 412ms 到达精确终点 `(-3166, 1304, 1.34)`，刷新恢复相同视图。正常适配、四种输入中断及减少动态效果场景分别只有一次视图 PUT。
+
+`npm run build` 通过；完整 Node **44/44**（3.36 秒，exit 0）。最终定向 Chrome **5/5**（17.0 秒，exit 0），包含真实界面多选三张图片创建一条区域批注、第四张图片创建第二条批注、发送和编辑仅恢复两条批注，以及明确附件与批注目标重叠、依赖闭包、历史未知来源保留、注释操作、视频载入与拒绝播放、顺序与焦点、动画采样和持久视图。初轮浏览器 4/5 通过；删除素材后的批注投影数量 fixture 断言修正后，最终相关场景通过。测试全部使用独立临时项目，Chrome 为本轮浏览器范围。
+
+正式服务刷新前重新核对全部任务、运行记录和消费者，执行项和消费者均为空。通过项目 CLI 正常 stop/open，保留 4317、原项目及明确 session；服务 PID 35476 → 43450。完整项目状态刷新前后逐项一致，当前前端资源 `index-BBEf5EzD.js` HTTP 200，后端由本次构建重新启动。正式任务和草稿保持原样。
+
+- [宽屏批注顺序](evidence/annotation-edit-fit/annotation-order-1440.png)
+- [390px 批注顺序与横向滚动](evidence/annotation-edit-fit/annotation-order-390.png)
+- [320px 批注顺序](evidence/annotation-edit-fit/annotation-order-320.png)
+- [浏览器适配动画逐帧采样](evidence/annotation-edit-fit/fit-motion.json)
+- [构建与执行记录](evidence/annotation-edit-fit/validation.json)
+- [正式服务刷新核对](evidence/annotation-edit-fit/runtime-verification.json)

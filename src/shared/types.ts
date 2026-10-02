@@ -12,7 +12,7 @@ export interface HostBinding { host: string; threadId: string; sessionId: string
 export interface ServiceIdentity { pid: number; instanceId: string }
 export interface ServiceRuntime extends ServiceIdentity { project: Project; url: string }
 export interface Draft { editingTaskId?: string; id: string; sessionId: string; revision: number; text: string; attachments: string[]; annotations: AnnotationInput[]; references: { objectIds: string[]; taskIds: string[] }; updatedAt: string }
-export interface TaskSnapshot { userRequest: { source: 'user_instruction'; text: string }; annotations: AnnotationInput[]; referenceContent: { source: 'reference_content'; assets: Asset[]; objects: BoardObject[]; taskIds: string[] } }
+export interface TaskSnapshot { userRequest: { source: 'user_instruction'; text: string }; requestReferences?: { attachmentIds: string[]; objectIds: string[] }; annotations: AnnotationInput[]; referenceContent: { source: 'reference_content'; assets: Asset[]; objects: BoardObject[]; taskIds: string[] } }
 export interface Progress { message: string; externalJobId?: string; assetIds?: string[]; createdAt: string }
 export interface Receipt { summary: string; assetIds: string[]; objectIds: string[]; validation: string[]; createdAt: string }
 export interface TaskReply { text: string; source: 'user_instruction'; createdAt: string }

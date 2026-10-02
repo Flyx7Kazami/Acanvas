@@ -3,6 +3,7 @@ import { AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEn
 import type { AnnotationInput, Asset, BoardObject, BoardOperation, Draft, SessionView, Task, TaskStatus } from '../shared/types';
 import { alignedPositions, fitView, intersects, mediaContentRect, normalizedRegion, objectRegion, rectangle, screenToWorld, resizeBounds, snapResize, snapTranslation, unionBounds, zoomAt, type Alignment, type Point, type Rect, type SnapGuide, type ResizeCorner } from './geometry';
 import { useBoard } from './useBoard';
+import { useAnimatedView } from './useAnimatedView';
 import { filesFromTransfer } from './import';
 import { useComposerLayout, useContextualControls, useNotificationLayout } from './useCanvasLayout';
 import { AnnotationBubble } from './AnnotationBubble';
@@ -164,8 +165,8 @@ function TaskCard({ task, assets, objects, content, locateAsset, onAnnotationVie
       const attachments = sourceAssets.filter((asset, index) => !annotatedAssetIds.has(asset.id) && !frameIds.has(asset.id) && sourceAssets.findIndex(value => value.id === asset.id) === index);
       const sourceItem = (key: string, asset?: Asset) => <div className="task-reference-source" key={key} data-reference-item={key}>{asset ? <>{assetAction(asset, true)}<span title={asset.name}>{asset.name}</span></> : <span>Canvas region</span>}</div>;
       return <>{groups.map(({ annotation, items }, index) => <div className="task-reference-group" key={annotation.id} data-annotation-id={annotation.id}>
-        <div className="task-reference-row">{items.length ? items.map(item => sourceItem(item.key, item.asset)) : sourceItem('region')}</div>
-        <div className="task-item-annotation"><button type="button" className="task-annotation-text" onClick={() => onAnnotationView(task, true)}><AnnotationBubble number={index + 1} size={18}/><span>{annotation.text}{annotation.timeStart !== undefined && <small> · {timeLabel(annotation.timeStart)}{annotation.timeEnd !== undefined && ` – ${timeLabel(annotation.timeEnd)}`}</small>}</span></button>{annotation.snapshotAssetId && <img className="task-annotation-frame" src={content(annotation.snapshotAssetId)} alt="Annotated video frame"/>}</div>
+        <div className="task-annotation-header"><button type="button" className="task-annotation-badge" aria-label={`View annotation ${index + 1}: ${annotation.text}`} onClick={() => onAnnotationView(task, true)}><AnnotationBubble number={index + 1} size={18}/></button><div className="task-reference-row">{items.length ? items.map(item => sourceItem(item.key, item.asset)) : sourceItem('region')}</div></div>
+        <div className="task-item-annotation"><button type="button" className="task-annotation-text" onClick={() => onAnnotationView(task, true)}><span>{annotation.text}{annotation.timeStart !== undefined && <small> · {timeLabel(annotation.timeStart)}{annotation.timeEnd !== undefined && ` – ${timeLabel(annotation.timeEnd)}`}</small>}</span></button>{annotation.snapshotAssetId && <img className="task-annotation-frame" src={content(annotation.snapshotAssetId)} alt="Annotated video frame"/>}</div>
       </div>)}{!!attachments.length && <div className="task-reference-group" data-unannotated-attachments><div className="task-reference-row">{attachments.map(asset => sourceItem(asset.id, asset))}</div></div>}</>;
     })()}</div>
     {previewAsset && <div className="task-media-preview" role="region" aria-label={`Preview ${previewAsset.name}`}><IconButton label="Close media preview" onClick={() => setPreviewId('')}><ChevronDown size={14}/></IconButton>{previewAsset.kind === 'image' ? <img src={content(previewAsset.id)} alt={previewAsset.name}/> : <video src={content(previewAsset.id)} controls playsInline preload="metadata"/>}</div>}
@@ -240,6 +241,7 @@ export default function App() {
   const assets = state?.assets || [];
   const assetFor = (id: string) => assets.find(asset => asset.id === id);
   const disabled = board.projectChanged || board.switching || board.sending || editingTask || annotationSaving || removingObjects || layoutSaving;
+  const fitMotion = useAnimatedView(view, state?.session.id || '', disabled, board.updateView);
   const queuedTasks = state?.tasks.filter(task => ['queued', 'editing', 'running', 'blocked', 'interrupted'].includes(task.status)) || [];
   const pending = queuedTasks.length;
   const queueOpen = queueExpanded || queueHovered || queueFocused || !!taskDetailId || historyOpen;
@@ -288,16 +290,17 @@ export default function App() {
       event.preventDefault();
       const current = wheelState.current;
       if (current.disabled || gesture.current) return;
+      fitMotion.interrupt();
       const rect = element.getBoundingClientRect();
       if (event.ctrlKey || event.metaKey) board.updateView({ ...current.view, ...zoomAt(current.view, Math.exp(-event.deltaY * .005), { x: event.clientX - rect.left, y: event.clientY - rect.top }) }, current.sessionId);
       else board.updateView({ ...current.view, x: current.view.x - event.deltaX, y: current.view.y - event.deltaY }, current.sessionId);
     };
     element.addEventListener('wheel', wheel, { passive: false });
     return () => element.removeEventListener('wheel', wheel);
-  }, [!!state, board.updateView]);
+  }, [!!state, board.updateView, fitMotion.interrupt]);
   useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(''), 2800); return () => clearTimeout(timer); }, [notice]);
 
-  const viewUpdate = (next: Partial<SessionView>) => { if (!disabled && state) board.updateView({ ...view, ...next }, state.session.id); };
+  const viewUpdate = (next: Partial<SessionView>) => { if (!disabled && state) { fitMotion.interrupt(); board.updateView({ ...view, ...next }, state.session.id); } };
   const selectObjects = (ids: string[]) => viewUpdate({ selectedObjectIds: unique(ids) });
   const localPoint = (event: { clientX: number; clientY: number }): Point => { const bounds = canvas.current!.getBoundingClientRect(); return { x: event.clientX - bounds.left, y: event.clientY - bounds.top }; };
   const contentBounds = (object: BoardObject) => mediaContentRect(object, mediaSizes[object.id]);
@@ -507,6 +510,7 @@ export default function App() {
 
   function pointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     if (disabled || layoutBusy.current || !state || event.button !== 0 || (event.target as HTMLElement).closest('[data-canvas-control]')) return;
+    fitMotion.interrupt();
     canvas.current?.focus({ preventScroll: true });
     const point = localPoint(event);
     const objectId = (event.target as HTMLElement).closest<HTMLElement>('[data-object-id]')?.dataset.objectId;
@@ -674,7 +678,7 @@ export default function App() {
       </div>}
       {!readerInDraft && reader && <div ref={selectionActions} className="inline-annotation-reader context-control" data-canvas-control onKeyDown={event => { event.stopPropagation(); if (event.key === 'Escape') setAnnotationRead(null); }}>{reader}</div>}
       {selectedVideo && <VideoPlaybackControls key={selectedVideo.id} objectId={selectedVideo.id} videos={videoRefs.current} disabled={disabled || annotating} onError={board.showError} controlRef={playbackControls}/> }
-      <div className="canvas-toolbar" data-canvas-control role="toolbar" aria-label="Board tools"><IconButton disabled={disabled} label="Select files" aria-pressed={mode === 'select'} onClick={() => setMode('select')}><MousePointer2 size={16}/></IconButton><IconButton disabled={disabled} label="Pan canvas" aria-pressed={mode === 'pan'} onClick={() => setMode('pan')}><Hand size={16}/></IconButton><span className="toolbar-divider"/><IconButton disabled={disabled} label="Zoom out" onClick={() => zoom(1 / 1.2)}><Minus size={16}/></IconButton><button disabled={disabled} className="zoom-label" title="Reset zoom to 100%" aria-label="Reset zoom to 100%" onClick={() => { const size = canvas.current!.getBoundingClientRect(); viewUpdate(zoomAt(view, 1 / view.zoom, { x: size.width / 2, y: size.height / 2 })); }}>{Math.round(view.zoom * 100)}%</button><IconButton disabled={disabled} label="Zoom in" onClick={() => zoom(1.2)}><Plus size={16}/></IconButton><span className="toolbar-divider"/><IconButton disabled={disabled} label="Fit all files" onClick={() => { const size = canvas.current!.getBoundingClientRect(); viewUpdate(fitView(objects, size)); }}><Maximize size={16}/></IconButton></div>
+      <div className="canvas-toolbar" data-canvas-control role="toolbar" aria-label="Board tools"><IconButton disabled={disabled} label="Select files" aria-pressed={mode === 'select'} onClick={() => setMode('select')}><MousePointer2 size={16}/></IconButton><IconButton disabled={disabled} label="Pan canvas" aria-pressed={mode === 'pan'} onClick={() => setMode('pan')}><Hand size={16}/></IconButton><span className="toolbar-divider"/><IconButton disabled={disabled} label="Zoom out" onClick={() => zoom(1 / 1.2)}><Minus size={16}/></IconButton><button disabled={disabled} className="zoom-label" title="Reset zoom to 100%" aria-label="Reset zoom to 100%" onClick={() => { const size = canvas.current!.getBoundingClientRect(); viewUpdate(zoomAt(view, 1 / view.zoom, { x: size.width / 2, y: size.height / 2 })); }}>{Math.round(view.zoom * 100)}%</button><IconButton disabled={disabled} label="Zoom in" onClick={() => zoom(1.2)}><Plus size={16}/></IconButton><span className="toolbar-divider"/><IconButton disabled={disabled} label="Fit all files" onClick={() => { const size = canvas.current!.getBoundingClientRect(); fitMotion.animate({ ...view, ...fitView(objects, size) }); }}><Maximize size={16}/></IconButton></div>
       {board.switching && <div className="canvas-busy"><LoaderCircle size={20} className="spin"/>Connecting to the board</div>}
     </div><div className="project-identity" aria-label={`acanvas project: ${state.project.name}`} title={state.project.name}><span className="brand">acanvas<span aria-hidden="true">●</span></span><span className="project-name">{state.project.name}</span></div><div className="canvas-actions"><IconButton className="floating-control import-button" label="Import files" disabled={disabled} onClick={() => boardInput.current?.click()}><Upload size={17}/></IconButton><IconButton className="floating-control" label={theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'} onClick={() => setTheme(current => current === 'light' ? 'dark' : 'light')}>{theme === 'light' ? <Moon size={17}/> : <Sun size={17}/>}</IconButton></div>{composer}</main>
     <input className="sr-only" aria-label="Import files into canvas" tabIndex={-1} type="file" multiple ref={boardInput} onChange={event => { void importFiles(Array.from(event.target.files || [])); event.target.value = ''; }}/>

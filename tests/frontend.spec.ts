@@ -1280,6 +1280,10 @@ test('request details group each annotation once with all snapshot targets in on
   await expect(groups).toHaveCount(3); await expect(details.locator('.task-item-annotation')).toHaveCount(3);
   for (const [index, annotation] of annotations.entries()) {
     const group = groups.nth(index); await expect(group).toHaveAttribute('data-annotation-id', annotation.id); await expect(group.locator('.task-annotation-text>span')).toHaveText(annotation.text);
+    expect(await group.evaluate(element => {
+      const badge = element.querySelector('.task-annotation-badge')!, row = element.querySelector('.task-reference-row')!, text = element.querySelector('.task-item-annotation')!;
+      return !!(badge.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING) && !!(row.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING) && badge.getBoundingClientRect().right <= row.getBoundingClientRect().left;
+    })).toBeTruthy();
     expect(await group.locator('[data-reference-item]').evaluateAll(elements => elements.map(element => element.getAttribute('data-reference-item')))).toEqual(annotation.objectIds);
   }
   const loose = details.locator('[data-unannotated-attachments]'); await expect(loose).toHaveCount(1); await expect(loose.locator('[data-reference-item]')).toHaveCount(2); expect(await loose.locator('[data-reference-item]').evaluateAll(elements => elements.map(element => element.getAttribute('data-reference-item')))).toEqual(initial.assets.filter(asset => objects.slice(4).some(object => object.assetId === asset.id)).map(asset => asset.id));
@@ -1294,6 +1298,99 @@ test('request details group each annotation once with all snapshot targets in on
   await page.setViewportSize({ width: 1440, height: 1000 });
   await groups.first().getByRole('button', { name: `View ${initial.assets.find(asset => asset.id === objects[0].assetId)!.name}`, exact: true }).click(); await expect(details.getByRole('region', { name: /^Preview Reference/ })).toBeVisible();
   expect((await app.state()).tasks[0].snapshot).toEqual(task.task.snapshot);
+  const badge = groups.nth(1).getByRole('button', { name: 'View annotation 2: g', exact: true }); await badge.focus(); await badge.press('Enter'); await expect(badge).toBeFocused(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Request history', exact: true }).click();
+  const historyGroups = page.getByRole('region', { name: 'Request history', exact: true }).locator('.task-reference-group[data-annotation-id]');
+  await expect(historyGroups).toHaveCount(3);
+  for (const group of await historyGroups.all()) {
+    expect(await group.evaluate(element => Array.from(element.children).map(child => child.className))).toEqual(['task-annotation-header', 'task-item-annotation']);
+    await expect(group.locator('.task-annotation-text')).toHaveCount(1); await expect(group.locator('.annotation-bubble[data-numbered=true]')).toHaveCount(1);
+  }
+});
+
+test('editing annotations restores their chips and preserves an explicit attachment to an annotated image', async ({ page, app }) => {
+  await open(page, app); const image = await png(page);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(Array.from({ length: 4 }, (_, index) => ({ ...image, name: `Editing source ${index + 1}.png` })));
+  await expect(page.locator('.board-object')).toHaveCount(4);
+  const initial = await app.state(), objects = initial.objects, sessionId = initial.session.id;
+  await app.call('/api/board/operations', 'POST', { sessionId, operations: objects.map((object, index) => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: index < 3 ? 180 + index * 360 : 180, y: index < 3 ? 180 : 420 } })) });
+  await page.reload();
+  for (let index = 0; index < 3; index++) await page.locator(`[data-object-id="${objects[index].id}"]`).click({ position: { x: 120, y: 90 }, modifiers: index ? ['Shift'] : [] });
+  await expect(page.locator('.board-object.selected')).toHaveCount(3);
+  let comment = await beginAnnotating(page); await comment.fill('abc'); await page.getByRole('button', { name: 'Save comment', exact: true }).click(); await expect(page.locator('.draft-annotation')).toHaveCount(1);
+  await page.locator(`[data-object-id="${objects[3].id}"]`).click({ position: { x: 120, y: 90 } });
+  comment = await beginAnnotating(page); await comment.fill('g'); await page.getByRole('button', { name: 'Save comment', exact: true }).click();
+  await expect(page.locator('.draft-annotation')).toHaveCount(2); await expect(page.locator('.draft-asset')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Send request', exact: true }).click(); await expect(page.locator('.draft-annotation')).toHaveCount(0);
+  const original = (await app.state()).tasks[0]; expect(original.snapshot.annotations.map(annotation => annotation.text)).toEqual(['abc', 'g']); expect(original.snapshot.referenceContent.assets).toHaveLength(4);
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click();
+  await expect(page.locator('.draft-annotation')).toHaveCount(2); await expect(page.locator('.draft-asset')).toHaveCount(0);
+  await page.locator('#instruction').fill('efg'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+  await page.reload(); await expect(page.locator('#instruction')).toHaveValue('efg'); await expect(page.locator('.draft-asset')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Save request', exact: true }).click(); await expect(page.locator('.composer-editing')).toHaveCount(0);
+  const revised = (await app.state()).tasks[0]; expect(revised.id).toBe(original.id); expect(revised.snapshot.referenceContent.assets).toEqual(original.snapshot.referenceContent.assets); expect(revised.snapshot.requestReferences).toEqual({ attachmentIds: [], objectIds: [] });
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.locator('.draft-asset')).toHaveCount(0);
+  const editing = await app.state();
+  await app.call(`/api/sessions/${sessionId}/draft`, 'PUT', { ...editing.draft, attachments: [objects[3].assetId], references: { objectIds: [objects[3].id], taskIds: [] } });
+  await expect(page.locator('.draft-asset')).toHaveCount(1); await expect(page.locator('.draft-annotation')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Save request', exact: true }).click(); await expect(page.locator('.composer-editing')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.locator('.draft-asset')).toHaveCount(1);
+  const exact = await app.state(); expect(exact.draft.attachments).toEqual([objects[3].assetId]); expect(exact.draft.references.objectIds).toEqual([objects[3].id]);
+});
+
+test('fit all files animates exact bounds, interrupts on input and persists one final view', async ({ page, app }, info) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' }); await open(page, app);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page)); await expect(page.locator('.board-object')).toHaveCount(1);
+  const initial = await app.state(), sessionId = initial.session.id;
+  await app.call('/api/board/operations', 'POST', { sessionId, operations: [{ type: 'update', objectId: initial.objects[0].id, expectedVersion: initial.objects[0].version, changes: { x: 2400, y: -900, width: 1000, height: 600 } }] });
+  const start = { x: 80, y: 120, zoom: .5, selectedObjectIds: [initial.objects[0].id] };
+  const reset = async () => { await app.call(`/api/sessions/${sessionId}/view`, 'PUT', start); await page.reload(); await expect(page.locator('.canvas-world')).toHaveCSS('transform', 'matrix(0.5, 0, 0, 0.5, 80, 120)'); };
+  await reset();
+  const requests: any[] = []; page.on('request', request => { if (request.method() === 'PUT' && request.url().endsWith('/view')) requests.push(request.postDataJSON()); });
+  const expected = { x: -3166, y: 1304, zoom: 1.34, selectedObjectIds: start.selectedObjectIds };
+  const measure = async (interrupt?: 'wheel' | 'zoom' | 'fit') => page.evaluate(async interrupt => {
+    const world = document.querySelector<HTMLElement>('.canvas-world')!, board = document.querySelector<HTMLElement>('#whiteboard')!, fit = document.querySelector<HTMLButtonElement>('button[aria-label="Fit all files"]')!;
+    const samples: { time: number; x: number; y: number; zoom: number }[] = [];
+    const read = (time: number) => { const matrix = new DOMMatrix(getComputedStyle(world).transform); samples.push({ time, x: matrix.e, y: matrix.f, zoom: matrix.a }); };
+    const began = performance.now(); let interrupted = false;
+    read(0); fit.click();
+    await new Promise<void>(resolve => {
+      const frame = () => {
+        const time = performance.now() - began; read(time);
+        if (interrupt && time >= 110 && !interrupted) {
+          interrupted = true;
+          if (interrupt === 'wheel') board.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaX: 30, deltaY: 40 }));
+          if (interrupt === 'zoom') document.querySelector<HTMLButtonElement>('button[aria-label="Zoom in"]')!.click();
+          if (interrupt === 'fit') fit.click();
+        }
+        if (time < 750) requestAnimationFrame(frame); else resolve();
+      }; requestAnimationFrame(frame);
+    });
+    return samples;
+  }, interrupt);
+  const frames = await measure();
+  expect(new Set(frames.map(frame => `${frame.x},${frame.y},${frame.zoom}`)).size).toBeGreaterThan(10);
+  const motion = frames.filter(frame => frame.zoom > start.zoom + .001 && frame.zoom < expected.zoom - .001); expect(motion.length).toBeGreaterThan(8);
+  expect(frames.find(frame => frame.time > 75 && frame.time < 120)!.zoom).toBeLessThan(start.zoom + .84 * .25);
+  expect(frames.at(-1)).toMatchObject({ x: expected.x, y: expected.y, zoom: expected.zoom });
+  await expect.poll(async () => (await app.state()).session.view).toEqual(expected); expect(requests).toHaveLength(1);
+  await page.reload(); await expect(page.locator('.canvas-world')).toHaveCSS('transform', 'matrix(1.34, 0, 0, 1.34, -3166, 1304)');
+  const interruptions: Record<string, unknown> = {};
+  for (const action of ['wheel', 'zoom', 'fit'] as const) {
+    await reset(); requests.length = 0; const samples = await measure(action); const final = samples.at(-1)!; interruptions[action] = samples;
+    if (action === 'fit') expect(final).toMatchObject({ x: expected.x, y: expected.y, zoom: expected.zoom });
+    else { expect(final.zoom === expected.zoom && final.x === expected.x && final.y === expected.y).toBeFalsy(); expect(samples.filter(sample => sample.time > 350).every(sample => sample.x === final.x && sample.y === final.y && sample.zoom === final.zoom)).toBeTruthy(); }
+    await expect.poll(async () => { const view = (await app.state()).session.view; return Math.abs(view.x - final.x) < .01 && Math.abs(view.y - final.y) < .01 && Math.abs(view.zoom - final.zoom) < .00001; }).toBeTruthy(); expect(requests).toHaveLength(1);
+  }
+  await reset(); requests.length = 0; await page.getByRole('button', { name: 'Pan canvas', exact: true }).click();
+  const panFrames = measure(); await page.waitForTimeout(110); await page.mouse.move(1000, 200); await page.mouse.down(); await page.mouse.move(1050, 260, { steps: 3 }); await page.mouse.up();
+  const panned = await panFrames, panFinal = panned.at(-1)!; interruptions.pan = panned;
+  expect(panFinal.zoom).toBeLessThan(expected.zoom); expect(panned.filter(frame => frame.time > 400).every(frame => frame.x === panFinal.x && frame.y === panFinal.y && frame.zoom === panFinal.zoom)).toBeTruthy();
+  await expect.poll(async () => { const view = (await app.state()).session.view; return Math.abs(view.x - panFinal.x) < .01 && Math.abs(view.y - panFinal.y) < .01 && Math.abs(view.zoom - panFinal.zoom) < .00001; }).toBeTruthy(); expect(requests).toHaveLength(1);
+  await reset(); requests.length = 0; await page.emulateMedia({ reducedMotion: 'reduce' });
+  const reduced = await measure(); expect(new Set(reduced.slice(1).map(frame => `${frame.x},${frame.y},${frame.zoom}`)).size).toBe(1); expect(reduced[1]).toMatchObject({ x: expected.x, y: expected.y, zoom: expected.zoom });
+  await expect.poll(async () => (await app.state()).session.view).toEqual(expected); expect(requests).toHaveLength(1);
+  await writeFile(info.outputPath('fit-motion.json'), JSON.stringify({ frames, interruptions, reduced }, null, 2));
 });
 
 test('global notices stack at bottom right and remain reachable beside or above the dock', async ({ page, app }, info) => {
