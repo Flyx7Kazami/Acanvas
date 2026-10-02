@@ -301,3 +301,22 @@ Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直�
 - [浏览器适配动画逐帧采样](evidence/annotation-edit-fit/fit-motion.json)
 - [构建与执行记录](evidence/annotation-edit-fit/validation.json)
 - [正式服务刷新核对](evidence/annotation-edit-fit/runtime-verification.json)
+
+
+## 已有任务引用修正与等待项空心圆（2026-10-02）
+
+等待项恢复 14px 空心圆，任务按钮的无障碍名称继续包含 Queued；运行项沿用当前状态呈现。320px 下引用维持一个预览及正确的 +N，任务内间距为 3px，富预览标题实测 61px；390px 标题为 79px。队列仍保持居中、36px 行高，编辑、取消和详情控件可实际操作。
+
+用户再次说明已有任务 Edit 仍把图片呈现为附件后，核对实际第 21 条任务：两条批注引用四个对象和四张图片，快照缺少原始明确附件列表。按用户已说明的两条批注内容，通过原有本地服务正常进入编辑、revision 条件保存与发送，记录明确附件和对象选择为空。任务保留 ID、序号 21、queued、文字 efg、两条批注的全部内容和目标，以及四份对象/资产快照。随后实际重新进入编辑，读取到 **0 个附件、2 条批注、0 个明确对象选择**，再取消编辑恢复 queued。原输入草稿 ID 和内容保持，revision 由 25 增至 27；正常编辑发送新增两条项目批注历史记录。全部其他任务、资产、画布对象、任务范围和执行记录逐项相同。正式服务继续使用 PID 43450 和原端口 4317，当前前端资源为 index-CnB8qxzu.js。
+
+其余历史快照继续保留可读取的引用，已有明确附件与批注目标重叠的内容保持。正式修正范围仅为已明确原始意图的第 21 条任务，持久写入全部经服务接口完成。
+
+最终构建通过；服务端聚焦回归 **3/3**（574.6ms，exit 0），Chrome 聚焦回归 **4/4**（16.4 秒，exit 0）。隔离旧快照先复现四个图片附件，再经普通输入框移除附件、保存、服务重启及再次 Edit，验证两个批注标签和四张依赖图片保持。服务端同时覆盖原草稿恢复、关联任务引用、重复提交及另一个历史任务的明确附件保留；浏览器覆盖明确附件与批注重叠、等待圆圈、运行状态、窄屏实际操作、深色和减少动态效果。初轮发现 320px 标题为 57px，调整紧凑间距后达到 61px；新增 fixture 的取消按钮选择器同步产品文案后，最终批次正常退出。
+
+独立源码、旧快照正常修正流程、实际操作脚本及窄屏空心圆检查通过；独立正式只读复核确认第 21 条任务、当前草稿、素材依赖及运行页面资源全部正确，最终验收 PASS。当前浏览器范围为本机 Chrome，已有打开页面刷新后载入空心圆资源。
+
+- [旧快照修正后再次 Edit 的两个批注标签](evidence/annotation-edit-fit/earlier-annotations-edit.png)
+- [320px 等待项空心圆](evidence/annotation-edit-fit/queued-circle-320.png)
+- [等待项几何记录](evidence/annotation-edit-fit/queued-circle-geometry.json)
+- [实际第 21 条任务的前后核对](evidence/annotation-edit-fit/task21-reference-correction.json)
+- [构建与聚焦执行记录](evidence/annotation-edit-fit/legacy-correction-validation.json)

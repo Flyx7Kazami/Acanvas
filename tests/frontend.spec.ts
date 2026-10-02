@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 import { spawn, execFile } from 'node:child_process';
 import { once } from 'node:events';
 import { promisify } from 'node:util';
+import Database from 'better-sqlite3';
 import type { BoardState, Claim, Asset } from '../src/shared/types.js';
 
 const runtime = resolve('.runtime/node_modules/node/bin/node');
@@ -1184,7 +1185,7 @@ test('queue accessible statuses and symmetric insets stay usable across viewport
   await page.getByRole('button', { name: 'Attach to request', exact: true }).click(); await page.locator('#instruction').fill('Compose a quiet cover from these references.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1);
   await page.locator('#instruction').fill('Refine the title spacing and hierarchy.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(2);
   const first = page.locator('.queue-item').first(), second = page.locator('.queue-item').nth(1), measurements: unknown[] = [];
-  for (const row of [first, second]) { await expect(row.locator('.queue-task-mark')).toHaveCount(0); await expect(row.locator('.queue-row>.status-badge')).toHaveCount(0); await expect(row.locator('.queue-task')).toHaveAttribute('aria-label', /Queued$/); }
+  for (const row of [first, second]) { await expect(row.locator('.queue-task-mark')).toHaveAttribute('aria-hidden', 'true'); await expect(row.locator('.queue-task-mark svg.lucide-circle')).toHaveCount(1); await expect(row.locator('.queue-row>.status-badge')).toHaveCount(0); await expect(row.locator('.queue-task')).toHaveAttribute('aria-label', /Queued$/); }
   await expect(first.locator('.queue-preview')).toHaveCount(3); await expect(first.locator('.queue-preview-overflow')).toHaveText('+1');
   for (const width of [320, 390, 560, 768, 1440]) {
     await page.setViewportSize({ width, height: width > 1000 ? 900 : 480 }); await page.locator('.queue-stack').hover();
@@ -1195,7 +1196,7 @@ test('queue accessible statuses and symmetric insets stay usable across viewport
     await first.locator('.queue-task').click(); await expect(first.locator('.queue-task')).toHaveAttribute('aria-expanded', 'true'); await first.locator('.queue-task').click(); await expect(first.locator('.queue-task')).toHaveAttribute('aria-expanded', 'false');
   }
   const state = await app.state(), session = state.session.id, claim = await app.call(`/api/sessions/${session}/claim`, 'POST', { consumerId: 'queue-status-fixture' }) as Claim;
-  await expect(first).toHaveAttribute('data-status', 'running'); await expect(first.locator('.queue-task')).toHaveAttribute('aria-label', /Running$/); await expect(first.locator('.queue-task svg.lucide-loader-circle')).toHaveCount(0); await expect(first.getByRole('button', { name: 'Edit request 1', exact: true })).toHaveCount(0);
+  await expect(first).toHaveAttribute('data-status', 'running'); await expect(first.locator('.queue-task')).toHaveAttribute('aria-label', /Running$/); await expect(first.locator('.queue-task-mark')).toHaveCount(0); await expect(first.locator('.queue-task svg.lucide-loader-circle')).toHaveCount(0); await expect(first.getByRole('button', { name: 'Edit request 1', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Request history', exact: true }).click(); await expect(page.locator('.history-list .status-running')).toHaveText('Running'); await page.getByRole('button', { name: 'Close request history', exact: true }).click();
   await app.call(`/api/sessions/${session}/tasks/${claim.task!.id}/complete`, 'POST', { runId: claim.run!.id, consumerId: claim.consumerId, summary: 'Cover direction prepared.', assetIds: [], validation: [], operations: [] });
   const textClaim = await app.call(`/api/sessions/${session}/claim`, 'POST', { consumerId: claim.consumerId }) as Claim;
@@ -1240,7 +1241,7 @@ test('spring queue and composer keep compact references, editable FIFO slots and
   await input.fill(''); await page.locator('#whiteboard').click({ position: { x: 1000, y: 150 } }); await expect(composer).toHaveAttribute('data-compact', 'false'); expect((await composer.boundingBox())!.width).toBe(720);
   await expect.poll(async () => page.locator('.queue-extra').first().evaluate(element => element.getBoundingClientRect().height)).toBe(0);
   await page.locator('.queue-stack').hover(); await expect(page.locator('.queue-stack')).toHaveClass(/expanded/); await expect.poll(async () => page.locator('.queue-extra').first().evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThan(30);
-  await expect(page.locator('.queue-task-mark,.queue-task .lucide-circle,.queue-task .lucide-loader-circle')).toHaveCount(0); await expect(page.getByRole('button', { name: 'Collapse queue', exact: true })).toHaveCount(0);
+  await expect(page.locator('.queue-task-mark svg.lucide-circle')).toHaveCount(3); await expect(page.locator('.queue-task .lucide-loader-circle')).toHaveCount(0); await expect(page.getByRole('button', { name: 'Collapse queue', exact: true })).toHaveCount(0);
   const first = page.locator('.queue-item').first(); await first.locator('.queue-task').click(); await expect(first.locator('.motion-disclosure')).toHaveAttribute('data-motion', 'open');
   await expect(first.locator('.task-instruction,.task-heading')).toHaveCount(0); await expect(first.locator('.task-reference-group[data-annotation-id]')).toHaveCount(3); await expect(first.locator(`[data-reference-item="${objectA.id}"]`)).toHaveCount(2); await expect(first.locator(`[data-reference-item="${objectB.id}"]`)).toHaveCount(1); await expect(first.locator('.task-item-annotation')).toHaveCount(3);
   expect(await first.getByRole('button', { name: 'Collapse request details', exact: true }).locator('svg').getAttribute('class')).toContain('chevron-down');
@@ -1336,6 +1337,39 @@ test('editing annotations restores their chips and preserves an explicit attachm
   await page.getByRole('button', { name: 'Save request', exact: true }).click(); await expect(page.locator('.composer-editing')).toHaveCount(0);
   await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.locator('.draft-asset')).toHaveCount(1);
   const exact = await app.state(); expect(exact.draft.attachments).toEqual([objects[3].assetId]); expect(exact.draft.references.objectIds).toEqual([objects[3].id]);
+});
+
+test('an earlier annotation-only request keeps its references after a normal composer correction', async ({ page, app }, info) => {
+  await open(page, app); const image = await png(page);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(Array.from({ length: 4 }, (_, index) => ({ ...image, name: `Earlier source ${index + 1}.png` })));
+  await expect(page.locator('.board-object')).toHaveCount(4);
+  const initial = await app.state(), sessionId = initial.session.id, objects = initial.objects;
+  const annotations = [
+    { id: 'earlier-region', scope: 'region', objectIds: objects.slice(0, 3).map(object => object.id), bounds: { x: 0, y: 0, width: 1200, height: 400 }, coordinateSpace: 'world', text: 'abc' },
+    { id: 'earlier-single', scope: 'object', objectId: objects[3].id, objectIds: [objects[3].id], assetId: objects[3].assetId, bounds: { x: 0, y: 0, width: 1, height: 1 }, coordinateSpace: 'normalized', text: 'g' },
+  ];
+  const saved = await app.call(`/api/sessions/${sessionId}/draft`, 'PUT', { ...initial.draft, text: 'efg', annotations });
+  const original = (await app.call(`/api/sessions/${sessionId}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision })).task;
+  delete original.snapshot.requestReferences;
+  const database = new Database(join(app.root, '.acanvas', 'board.sqlite'));
+  try { database.prepare('UPDATE tasks SET snapshot_json=? WHERE id=?').run(JSON.stringify(original.snapshot), original.id); } finally { database.close(); }
+  await page.reload();
+  await page.locator('#instruction').fill('Unsent next idea'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click();
+  await expect(page.locator('.draft-asset')).toHaveCount(4); await expect(page.locator('.draft-annotation')).toHaveCount(2);
+  for (let index = 1; index <= 4; index++) await page.getByRole('button', { name: `Remove attachment Earlier source ${index}.png`, exact: true }).click();
+  await expect(page.locator('.draft-asset')).toHaveCount(0); await expect(page.locator('.draft-annotation')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Save request', exact: true }).click(); await expect(page.locator('.composer-editing')).toHaveCount(0);
+  await expect(page.locator('#instruction')).toHaveValue('Unsent next idea');
+  const revised = (await app.state()).tasks[0];
+  expect(revised.id).toBe(original.id); expect(revised.sequence).toBe(original.sequence); expect(revised.status).toBe('queued');
+  expect(revised.snapshot).toEqual({ ...original.snapshot, requestReferences: { attachmentIds: [], objectIds: [] } });
+  await app.restart(true); await page.reload(); await expect(page.locator('.queue-item')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click();
+  await expect(page.locator('.draft-asset')).toHaveCount(0); await expect(page.locator('.draft-annotation')).toHaveCount(2); await expect(page.locator('#instruction')).toHaveValue('efg');
+  await page.screenshot({ path: info.outputPath('earlier-annotations-edit.png') });
+  await page.getByRole('button', { name: 'Cancel edit', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Unsent next idea');
+  expect((await app.state()).tasks[0].snapshot).toEqual(revised.snapshot);
 });
 
 test('fit all files animates exact bounds, interrupts on input and persists one final view', async ({ page, app }, info) => {

@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { request as rawRequest } from 'node:http';
 import { execFile, spawn, type ChildProcess } from 'node:child_process';
 import { promisify } from 'node:util';
-import type { Asset, Claim, Draft, Task } from '../src/shared/types.js';
+import type { AnnotationInput, Asset, Claim, Draft, Task } from '../src/shared/types.js';
 import { startServer, type RunningServer } from '../src/server/http.js';
 import { cli } from '../src/cli.js';
 
@@ -442,4 +442,47 @@ test('earlier reference provenance and active edit additions remain available ac
   await f.restart();
   const resumed = await f.call(`/api/sessions/${session.id}/tasks/${task.id}/edit`, 'POST', { draftId: modified.id, expectedRevision: modified.revision });
   assert.deepEqual(resumed.draft, modified); assert.deepEqual(resumed.task.snapshot, task.snapshot);
+});
+
+test('a user specified annotation-only correction preserves an earlier request and surrounding drafts', async t => {
+  const f = await fixture(t), session = await f.session('Earlier annotation-only request');
+  const prior = await f.sendTask(session.id, 'Related request');
+  const assets = await Promise.all(['one', 'two', 'three', 'four'].map(value => f.upload(value)));
+  const objects = assets.map((asset, index) => ({ id: `earlier-annotation-${index}`, assetId: asset.id, x: index * 120, y: 20, width: 100, height: 80 }));
+  await f.call('/api/board/operations', 'POST', { sessionId: session.id, operations: objects.map(object => ({ type: 'create', object })) });
+  const annotations: AnnotationInput[] = [
+    { id: 'earlier-region', scope: 'region', coordinateSpace: 'world', objectIds: objects.slice(0, 3).map(object => object.id), bounds: { x: 0, y: 0, width: 400, height: 100 }, text: 'abc' },
+    { id: 'earlier-single', scope: 'object', coordinateSpace: 'normalized', objectId: objects[3].id, objectIds: [objects[3].id], assetId: assets[3].id, bounds: { x: 0, y: 0, width: 1, height: 1 }, text: 'g' },
+  ];
+  const send = async (changes: Partial<Draft>) => {
+    const draft = (await f.state(session.id)).draft;
+    const saved = await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...draft, ...changes });
+    return (await f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision })).task as Task;
+  };
+  const target = await send({ text: 'efg', annotations, references: { objectIds: [], taskIds: [prior.id] } });
+  const overlap = await send({ text: 'Keep the explicit attachment', attachments: [assets[3].id], annotations: [annotations[1]] });
+  for (const task of [target, overlap]) {
+    delete task.snapshot.requestReferences;
+    f.running.service.db.prepare('UPDATE tasks SET snapshot_json=? WHERE id=?').run(JSON.stringify(task.snapshot), task.id);
+  }
+  let state = await f.state(session.id);
+  const previous = await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...state.draft, text: 'Unsent next idea', attachments: [assets[0].id], references: { objectIds: [objects[0].id], taskIds: [prior.id] } });
+  const edit = await f.call(`/api/sessions/${session.id}/tasks/${target.id}/edit`, 'POST', { draftId: previous.id, expectedRevision: previous.revision });
+  assert.deepEqual(edit.draft.attachments, assets.map(asset => asset.id));
+  const saved = await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...edit.draft, attachments: [], references: { ...edit.draft.references, objectIds: [] } });
+  const result = await f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision });
+  assert.equal(result.task.id, target.id); assert.equal(result.task.sequence, target.sequence); assert.equal(result.task.status, 'queued');
+  assert.deepEqual(result.task.snapshot, { ...target.snapshot, requestReferences: { attachmentIds: [], objectIds: [] } });
+  assert.deepEqual(result.task.runs, []);
+  assert.deepEqual({ ...result.draft, revision: previous.revision, updatedAt: previous.updatedAt }, previous);
+  assert.deepEqual((await f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision })).task, result.task);
+  await f.restart();
+  state = await f.state(session.id);
+  assert.deepEqual(state.tasks.find((task: Task) => task.id === overlap.id)?.snapshot, overlap.snapshot);
+  const reopened = await f.call(`/api/sessions/${session.id}/tasks/${target.id}/edit`, 'POST', { draftId: state.draft.id, expectedRevision: state.draft.revision });
+  assert.deepEqual(reopened.draft.attachments, []); assert.deepEqual(reopened.draft.references, { objectIds: [], taskIds: [prior.id] }); assert.deepEqual(reopened.draft.annotations, annotations);
+  const cancelled = await f.call(`/api/sessions/${session.id}/tasks/${target.id}/cancel-edit`, 'POST', { draftId: reopened.draft.id, expectedRevision: reopened.draft.revision });
+  assert.deepEqual(cancelled.task.snapshot, result.task.snapshot);
+  const explicit = await f.call(`/api/sessions/${session.id}/tasks/${overlap.id}/edit`, 'POST', { draftId: cancelled.draft.id, expectedRevision: cancelled.draft.revision });
+  assert.deepEqual(explicit.draft.attachments, [assets[3].id]); assert.deepEqual(explicit.draft.annotations, [annotations[1]]);
 });

@@ -294,3 +294,4 @@ details[open] summary svg { rotate: 180deg; }
 .annotation-reader textarea { width: 100%; border: 0; resize: vertical; background: transparent; color: var(--ink); font: inherit; line-height: 1.7; min-height: 48px; }
 
 @media(max-width:540px) { .queue-row { gap: 2px; } .queue-task { gap: 5px; padding-inline: 4px; } }
+@media(max-width:360px) { .queue-task { gap: 3px; } }
