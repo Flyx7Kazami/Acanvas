@@ -1,0 +1,32 @@
+{
+  "build": {
+    "command": "npm run build",
+    "exitCode": 0,
+    "includes": "server and frontend TypeScript compilation"
+  },
+  "browser": {
+    "command": ".runtime/node_modules/node/bin/node /private/tmp/acanvas-queue-surface-check-20261003.mjs",
+    "passed": 3,
+    "exitCode": 0,
+    "scope": "Initial isolated three groups: 1440 light/dark and 320 dark; collapsed, hover-expanded, detail-expanded, edit/cancel hover and keyboard focus, collapse focus restoration, layer shades and ordering, horizontal overflow. Final light surface adjustment verified separately; dark palette unchanged.",
+    "initialAttempt": "localhost EPERM before product scenarios; isolated localhost and Chrome execution permission granted"
+  },
+  "sourceCheck": {
+    "command": "git diff --check",
+    "exitCode": 0
+  },
+  "production": "No board data writes or service restart",
+  "artifacts": {
+    "css": "index-B2DRGIv1.css",
+    "js": "index-e7KV2gOe.js"
+  },
+  "finalLightAdjustment": {
+    "command": ".runtime/node_modules/node/bin/node /private/tmp/acanvas-queue-surface-light-check-20261003.mjs",
+    "passed": 1,
+    "exitCode": 0,
+    "scope": "1440 light; collapsed, hover-expanded, detail-expanded, near/far depth order, button hover/focus and collapse focus restoration",
+    "surface": "#ecece8",
+    "canvas": "#fcfcfa",
+    "screenshotInspection": "collapsed and expanded viewed"
+  }
+}

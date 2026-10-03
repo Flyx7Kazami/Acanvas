@@ -395,3 +395,14 @@ Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直�
 - [四组样式与交互测量](evidence/queue-borderless/geometry.json)
 - [执行结果](evidence/queue-borderless/validation.json)
 - [当前页面资源核对](evidence/queue-borderless/runtime-frontend.json)
+
+## 近白画布与稳定队列灰阶（2026-10-03）
+
+亮色画布采用 `#fcfcfa`，输入框保持白色及当前边框；队列主面为亮色 `#ecece8`、暗色 `#363636`。折叠、悬停展开与任务详情展开共用主面，任务行及详情透明接续。折叠叠层按近层 70%、远层 35% 的队列主面与画布混色，并按前后顺序绘制。实际亮色前/近/远层为 RGB `236/236/232`、`241/241/237`、`246/246/244`；暗色为 `54/54/54`、`43/43/43`、`30/30/30`。编辑、删除和详情收回按钮采用队列局部悬停色，键盘焦点保留 2px outline。
+
+最终 `npm run build`（含前后端 TypeScript 编译）与 `git diff --check` 通过。初轮隔离 Chrome 三组检查 **3/3**、exit 0，覆盖 1440px 亮/暗主题及 320px 暗主题的折叠、悬停展开、详情展开、叠层灰度及绘制顺序。最终亮色队列调浅至 `#ecece8` 后，1440px 亮色定向复测 **1/1**、exit 0，通过相同颜色、基本操作和焦点检查，并替换亮色折叠/展开截图；暗色沿用同一配色的已通过结果。主面与任务详情的实际背景保持一致。编辑/删除的悬停与键盘焦点、详情收回后的焦点恢复、0px 队列边框、无队列阴影及零横向溢出通过，页面错误为 0。六张状态截图经实际查看，近白画布、队列边界与叠层深浅可辨。首次隔离 localhost 启动受 sandbox EPERM 限制，尚未进入场景；取得隔离服务与 Chrome 执行权限后完成检查。测试使用独立临时项目，正式白板数据和服务进程保持。本轮仅验证颜色及基本展开/收回，布局与动效继续沿用既有验收范围。
+
+- [1440px 亮色折叠](evidence/queue-surface/queue-light-1440-collapsed.png)与[展开](evidence/queue-surface/queue-light-1440-expanded.png)
+- [1440px 暗色折叠](evidence/queue-surface/queue-dark-1440-collapsed.png)与[展开](evidence/queue-surface/queue-dark-1440-expanded.png)
+- [320px 暗色折叠](evidence/queue-surface/queue-dark-320-collapsed.png)与[展开](evidence/queue-surface/queue-dark-320-expanded.png)
+- [状态颜色与按钮反馈](evidence/queue-surface/colors.json)、[执行结果](evidence/queue-surface/validation.json)
