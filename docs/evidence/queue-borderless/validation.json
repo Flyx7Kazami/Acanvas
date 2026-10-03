@@ -1,0 +1,32 @@
+{
+  "changed": [
+    "src/web/styles.css"
+  ],
+  "build": {
+    "command": "npm run build",
+    "result": "PASS",
+    "includes": [
+      "server TypeScript",
+      "web TypeScript",
+      "production Vite build"
+    ]
+  },
+  "inlineSmoke": {
+    "command": "npm run test:browser -- --grep 'inline queue references move below the instruction' --output /tmp/acanvas-borderless-inline-executor-20261003-permitted",
+    "passed": 1,
+    "total": 1,
+    "durationSeconds": 10.8,
+    "exitCode": 0
+  },
+  "renderChecks": {
+    "passed": 4,
+    "states": [
+      "light 1440",
+      "light 320",
+      "dark 1440",
+      "dark 320"
+    ],
+    "measurements": "geometry.json"
+  },
+  "scope": "Temporary projects and isolated Chrome; read-only GET of the production index and assets; current service remains running."
+}

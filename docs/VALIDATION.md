@@ -383,3 +383,15 @@ Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直�
 - [六组布局与圆点中心测量](evidence/queue-inline-morph/inline-reference-geometry.json)
 
 独立干净上下文最终验收 PASS，五项需求及动画连续性全部通过，两项 P2 动画发现已关闭。正式 4317 页面的 index、当前 JS 和 CSS 经只读 HTTP GET 返回 200，字节内容与当前 dist 一致，见[运行资源核对](evidence/queue-inline-morph/runtime-frontend.json)。
+
+## 队列无边框与主题表面层级（2026-10-03）
+
+队列主体沿用主题 `--soft`，与输入框 `--surface`、画布 `--canvas` 形成灰阶层级；叠层使用 soft/canvas 混色，展开任务整行使用轻微 surface/soft 色差。主体、叠层、展开入口和任务分隔线均为 0px 边框，队列无阴影；引用详情继续以透明背景、0px 圆角接续指令。编辑、删除及收回按钮沿用主题 `--hover` 反馈，键盘焦点保留 2px outline。
+
+`npm run build`（含服务端与前端 TypeScript 编译）和 `git diff --check` 通过。既有引用连续展开专项 **1/1** 通过（10.8 秒，exit 0），覆盖双向首尾、快速反向、减少动态效果、焦点恢复及 1440/390/320px 亮暗六组。额外隔离 Chrome 检查 1440/320px 亮暗四组的边框、颜色、悬停、键盘焦点和页面横向溢出全部通过，页面错误为 0。首次 Chrome 启动受沙箱限制，取得隔离浏览器执行权限后完成测试。全部写入使用临时项目；正式服务保持运行，4317 的 index、JS 和 CSS 经只读 GET 返回 200，字节与当前 dist 一致。
+
+- [宽屏亮色队列与键盘焦点](evidence/queue-borderless/queue-light-1440.png)
+- [320px 暗色队列与键盘焦点](evidence/queue-borderless/queue-dark-320.png)
+- [四组样式与交互测量](evidence/queue-borderless/geometry.json)
+- [执行结果](evidence/queue-borderless/validation.json)
+- [当前页面资源核对](evidence/queue-borderless/runtime-frontend.json)
