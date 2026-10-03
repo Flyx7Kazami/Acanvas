@@ -211,7 +211,7 @@ details[open] summary svg { rotate: 180deg; }
 .draft-conflict p { color: var(--muted); margin-top: 3px; }
 .draft-conflict button { display: flex; align-items: center; gap: 3px; background: transparent; font-size: 10px; padding: 4px 0 0; }
 
-.comment-control { width: min(360px,calc(100% - 80px)); padding: 5px; border-radius: 18px; flex-direction: column; align-items: stretch; gap: 0; white-space: normal; }
+.comment-control { width: min(360px,calc(100vw - 80px)); max-width: min(360px,calc(100vw - 80px)); min-height: 40px; padding: 5px; border-radius: 18px; flex-direction: column; align-items: stretch; justify-content: center; gap: 0; white-space: normal; }
 .comment-control form { display: flex; align-items: center; gap: 3px; }
 .comment-control textarea { min-width: 0; flex: 1; width: 100%; min-height: 20px; max-height: 80px; padding: 0 3px; resize: none; border: 0; background: transparent; font-size: 12px; line-height: 20px; scrollbar-width: thin; outline: 0; box-shadow: none; }
 .comment-control textarea::placeholder { color: var(--muted); }
@@ -248,8 +248,14 @@ details[open] summary svg { rotate: 180deg; }
 .annotation-reader>.inline-heading { position: sticky; top: 0; z-index: 1; background: var(--surface); }
 .annotation-reader>span { display: block; font-size: 10px; color: var(--muted); margin-top: 6px; }
 .annotation-reader img { display: block; width: 100%; max-height: 120px; object-fit: contain; margin-top: 8px; }
-.inline-annotation-reader { position: absolute; z-index: 9; width: min(300px,calc(100% - 80px)); background: var(--surface); border: 1px solid var(--edge); border-radius: 12px; box-shadow: var(--float-shadow); }
-.draft-annotation-reader,.inline-resume,.draft-conflict { margin: 0 0 8px var(--tool-clearance); background: var(--surface); border: 1px solid var(--edge); border-radius: 12px; box-shadow: var(--float-shadow); }
+.canvas-annotation-group { position: absolute; z-index: 7; pointer-events: none; }
+.canvas-annotation-group[data-active='true'] { z-index: 9; }
+.canvas-annotation-group>.annotation-pin { top: 50%; bottom: auto; left: 0; transform: translateY(-50%); }
+.canvas-annotation-group>.canvas-annotation-note { left: 36px; top: 50%; transform: translateY(-50%); animation: none; }
+.canvas-annotation-group>.inline-annotation-reader { pointer-events: auto; }
+.canvas-annotation-comment { pointer-events: none; }
+.canvas-annotation-comment[data-comment-editable='true'] { pointer-events: auto; cursor: text; }
+.inline-resume,.draft-conflict { margin: 0 0 8px var(--tool-clearance); background: var(--surface); border: 1px solid var(--edge); border-radius: 12px; box-shadow: var(--float-shadow); }
 .inline-resume { padding: 8px 12px; }
 .inline-resume textarea { display: block; width: 100%; border: 0; background: transparent; resize: none; font-size: 11px; line-height: 1.6; max-height: 72px; }
 .draft-conflict { padding: 10px; }

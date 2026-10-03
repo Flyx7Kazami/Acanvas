@@ -406,3 +406,17 @@ Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直�
 - [1440px 暗色折叠](evidence/queue-surface/queue-dark-1440-collapsed.png)与[展开](evidence/queue-surface/queue-dark-1440-expanded.png)
 - [320px 暗色折叠](evidence/queue-surface/queue-dark-320-collapsed.png)与[展开](evidence/queue-surface/queue-dark-320-expanded.png)
 - [状态颜色与按钮反馈](evidence/queue-surface/colors.json)、[执行结果](evidence/queue-surface/validation.json)
+
+## 画布批注展示与待办编辑（2026-10-03）
+
+新增、展示和修改复用 `AnnotationCommentControl` 与原有宽输入条样式：1440px 视口宽度为 360px，390px 为 310px，320px 为 240px；圆角、内边距与最小 40px 高度保持一致。普通新增和展示保留原有返回/发送图形；待办编辑状态隐藏这两个按钮及其占位，评论输入沿用当前编辑草稿，由底部保存需求动作提交任务。画布评论文字和输入框批注标签均可进入同一处编辑，按 session、draft、annotation ID 更新；原任务快照在保存需求前保持原值。连续 Escape/重新打开及再次点击当前批注标签均恢复输入焦点。
+
+批注编号与评论作为同一组显示在关联素材上方，组底部距素材顶部 8px，编号与输入条垂直中心一致；区域数据保持原值。同起点批注按实际输入条高度与 8px 间距向上排列。点击批注标签、画布文字或编号均保持当前平移和缩放。素材浮动工具条通过既有布局避开完整批注条，批注位置保持固定；390px 选中素材场景验证正文实际命中 textarea，Annotate 仍可操作。手动平移至视口边缘时，控件保留素材锚点和宽度，边缘按画布范围裁切。
+
+最终 `npm run build` 和 `git diff --check` 通过。五个聚焦 Chrome 场景全部通过（失败项完成根因修复或测试同步/测量修订后定向复测）：双入口编辑及显示/编辑绝对边界相等、编辑状态无内部按钮、外层保存保持任务 ID/序号、单条草稿更新隔离；1440/390/320px 亮暗主题与 0.5/1.6 缩放共十二组测量；四边远距离平移保持控件尺寸；普通批注显示与任务投影规则；多对象区域、视频时间/快照及移除来源的编辑快照；既有队列修改、刷新恢复和提交响应丢失链路。编号与评论中心差小于 0.5px，评论位于引用素材上方。测试使用独立临时项目与素材，正式白板数据和服务进程保持。当前验证范围为 Google Chrome；其他浏览器本轮未验证。
+
+- [待办批注在画布中编辑](evidence/annotation-canvas-edit/queued-annotation-canvas-edit.png)
+- [十二组尺寸与定位测量](evidence/annotation-canvas-edit/canvas-comments-placement.json)
+- [构建和聚焦场景执行结果](evidence/annotation-canvas-edit/validation.json)
+
+两项既有视频 reader 回归已按共享宽输入条与固定视图规则更新：时间点/区间和快照资产继续由发送快照与队列帧缩略图验证，普通查看保持 readonly；点击编号保持平移、缩放和当前选择。延迟快照场景在创建新未发送评论前完成隔离素材布局，Escape 焦点返回后通过普通发送动作验证该评论的原文字、对象 ID、对象引用及资产 ID，原视频快照保持。两项最终分别通过（2.1 秒、2.7 秒）；首个双用例命令为 1 通过、1 失败，完成相关 fixture 与当前 UI 断言维护后仅复测失败项，结果 1/1、exit 0。连同前述五项，七个聚焦场景全部通过；具体命令与结果见执行记录。此维护仅修改测试和验证记录，产品源码及构建资源保持。

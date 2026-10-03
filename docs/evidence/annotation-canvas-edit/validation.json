@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-03",
+  "candidate": {
+    "javascript": "index-BFhNiu9c.js",
+    "stylesheet": "index-BaY6XZio.css"
+  },
+  "runtime": "Project Node 24; isolated headless Google Chrome fixtures",
+  "build": {
+    "status": "PASS",
+    "command": "npm run build"
+  },
+  "diffCheck": {
+    "status": "PASS",
+    "command": "git diff --check"
+  },
+  "scenarios": [
+    {
+      "name": "Both annotation entry paths retain identical bounds and camera; repeated active chip and rapid Escape/reopen restore focus; 390px selected toolbar avoids actual text clicks; outer save preserves task ID and sequence",
+      "status": "PASS",
+      "seconds": 4.9
+    },
+    {
+      "name": "12 viewport/theme/zoom measurements plus four far-edge pans: original wide width, centers, source-exterior position, stable dimensions",
+      "status": "PASS",
+      "seconds": 2.5
+    },
+    {
+      "name": "Queued task editing preserves region, video time/frame and removed snapshot source",
+      "status": "PASS",
+      "seconds": 1.8
+    },
+    {
+      "name": "Draft and explicitly inspected task markers preserve their visibility rules",
+      "status": "PASS",
+      "seconds": 5.0
+    },
+    {
+      "name": "Existing queue edit, draft recovery, FIFO slot and submit-response-loss regression",
+      "status": "PASS",
+      "seconds": 4.7
+    },
+    {
+      "name": "Legacy delayed-video annotations keep exact time/frame snapshots, use the wide readonly control without camera/selection changes, and preserve the pending image target through normal submission",
+      "status": "PASS",
+      "seconds": 2.1
+    },
+    {
+      "name": "Legacy real video/file imports preserve the draft video timestamp, exact sent annotation and 320px queue frame preview through decode fallback",
+      "status": "PASS",
+      "seconds": 2.7
+    }
+  ],
+  "scope": "Frontend only. Seven focused scenarios passed across the final targeted runs. Tests used temporary projects and media. Production board data and service process were unchanged.",
+  "limits": "Google Chrome automation verified. Other browsers were not exercised in this change. Annotation controls retain material anchors and may clip when the user pans them outside the viewport.",
+  "legacyVideoCommands": {
+    "initial": {
+      "command": "npm run test:browser -- --grep 'inline comments retain their targets through delayed snapshots|real video and file imports, time/frame annotations and decode fallback'",
+      "result": "1 passed, 1 failed; real video/file imports passed"
+    },
+    "finalFailedCaseRerun": {
+      "command": "npm run test:browser -- --grep 'inline comments retain their targets through delayed snapshots'",
+      "result": "1 passed, exit 0; 2.1 seconds in the case, 3.4 seconds for the run"
+    },
+    "finalStatus": "Both legacy cases passed. Product source and built assets remained unchanged during this regression maintenance."
+  }
+}

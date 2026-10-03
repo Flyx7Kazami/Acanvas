@@ -79,6 +79,110 @@ async function beginAnnotating(page: Page) {
   return comment;
 }
 
+test('queued annotation chips edit beside canvas markers and preserve the draft scope', async ({ page, app }, info) => {
+  await open(page, app);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
+  const object = page.locator('.board-object'); await expect(object).toBeVisible();
+  await object.click();
+  for (const text of ['Keep the framing generous.', 'Preserve the quiet palette.']) {
+    await (await beginAnnotating(page)).fill(text); await page.getByRole('button', { name: 'Save comment', exact: true }).click(); await expect(page.getByRole('textbox', { name: 'Add a comment', exact: true })).toHaveCount(0); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();
+  }
+  await expect(page.locator('.canvas-annotation-comment')).toHaveCount(2);
+  const initial = await app.state(), annotationIds = initial.draft.annotations.map(annotation => annotation.id);
+  for (const id of annotationIds) {
+    const pin = await page.locator(`.canvas-annotation-group[data-annotation-id="${id}"] .annotation-pin`).boundingBox(), note = await page.locator(`.canvas-annotation-comment[data-annotation-id="${id}"]`).boundingBox();
+    expect(note!.x).toBeGreaterThan(pin!.x + pin!.width); expect(Math.abs(note!.y + note!.height / 2 - pin!.y - pin!.height / 2)).toBeLessThan(.5); expect(note!.y + note!.height).toBeLessThanOrEqual((await object.boundingBox())!.y - 7.5);
+  }
+  await page.getByRole('button', { name: 'Send request', exact: true }).click(); await expect(page.locator('.annotation-pin')).toHaveCount(0);
+  const original = (await app.state()).tasks[0], snapshot = JSON.stringify(original.snapshot), shared = JSON.stringify((await app.state()).annotations);
+  await page.locator('#instruction').fill('The next unsent request.'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click();
+  await page.locator('.queue-task').click(); await expect(page.locator('[data-annotation-source=draft]')).toHaveCount(2);
+  const initialView = await page.locator('.canvas-world').getAttribute('style');
+  const displayBounds = await page.locator(`.canvas-annotation-comment[data-annotation-id="${annotationIds[0]}"]`).boundingBox();
+  const chip = page.locator('.annotation-content').first(); await chip.click();
+  expect(await page.locator('.inline-annotation-reader').boundingBox()).toEqual(displayBounds); expect(await page.locator('.canvas-world').getAttribute('style')).toBe(initialView); await expect(page.locator('.inline-annotation-reader button')).toHaveCount(0);
+  const input = page.getByRole('textbox', { name: 'Annotation text', exact: true }); await expect(input).toBeFocused();
+  await expect(page.locator('.draft-annotation-reader')).toHaveCount(0); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(0);
+  await expect(page.locator('.canvas-annotation-comment')).toHaveCount(1); await expect(page.locator('.inline-annotation-reader')).toHaveCount(1);
+  const reader = page.getByRole('region', { name: 'Annotation', exact: true }); await reader.hover(); await page.waitForTimeout(250); await expect(input).toBeVisible();
+  const pin = (await page.locator(`.canvas-annotation-group[data-annotation-id="${annotationIds[0]}"] .annotation-pin`).boundingBox())!, editor = (await page.locator('.inline-annotation-reader').boundingBox())!;
+  expect(editor.x).toBeGreaterThan(pin.x + pin.width); expect(Math.abs(editor.y + editor.height / 2 - pin.y - pin.height / 2)).toBeLessThan(.5);
+  await input.fill('Use the revised framing.'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+  const edited = await app.state(); expect(edited.draft.annotations.map(annotation => annotation.text)).toEqual(['Use the revised framing.', 'Preserve the quiet palette.']);
+  expect(edited.draft.annotations.map(annotation => annotation.id)).toEqual(annotationIds); expect(JSON.stringify(edited.tasks[0].snapshot)).toBe(snapshot); expect(JSON.stringify(edited.annotations)).toBe(shared);
+  await input.press('Escape'); await expect(input).toHaveCount(0); await expect(chip).toBeFocused(); await expect(page.locator('.canvas-annotation-comment')).toHaveCount(2);
+  const secondDisplay = page.locator(`.canvas-annotation-comment[data-annotation-id="${annotationIds[1]}"]`), secondBounds = await secondDisplay.boundingBox();
+  await secondDisplay.locator('textarea').click(); expect(await page.locator('.inline-annotation-reader').boundingBox()).toEqual(secondBounds); await expect(input).toBeFocused(); await expect(input).toHaveValue('Preserve the quiet palette.'); await input.fill('Keep the revised palette.'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await input.press('Escape');
+  await chip.press('Enter'); await expect(input).toHaveValue('Use the revised framing.'); await expect(input).toBeFocused();
+  await page.locator('#instruction').focus(); await chip.click(); await expect(input).toBeFocused();
+  await expect(page.locator('.inline-annotation-reader button')).toHaveCount(0); await input.press('Escape'); await expect(chip).toBeFocused();
+  await page.setViewportSize({ width: 390, height: 700 });
+  await app.call(`/api/sessions/${initial.session.id}/view`, 'PUT', { ...initial.session.view, x: 40 - initial.objects[0].x, y: 380 - initial.objects[0].y, zoom: 1, selectedObjectIds: [initial.objects[0].id] });
+  await page.reload(); await expect(page.locator('.annotation-content').first()).toContainText('Use the revised framing.');
+  const narrowText = page.locator(`.canvas-annotation-comment[data-annotation-id="${annotationIds[0]}"] textarea`); await expect(narrowText).toBeVisible();
+  expect(await narrowText.evaluate(element => { const box = element.getBoundingClientRect(); return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2) === element; })).toBeTruthy();
+  const narrowView = await page.locator('.canvas-world').getAttribute('style'); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible(); await narrowText.click(); await expect(input).toBeFocused(); expect(await page.locator('.canvas-world').getAttribute('style')).toBe(narrowView); await input.press('Escape');
+
+  await page.getByRole('button', { name: 'Save request', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('The next unsent request.');
+  const result = await app.state(); expect(result.tasks[0].id).toBe(original.id); expect(result.tasks[0].sequence).toBe(original.sequence); expect(result.tasks[0].snapshot.annotations[0]).toEqual({ ...original.snapshot.annotations[0], text: 'Use the revised framing.' }); expect(result.tasks[0].snapshot.annotations[1]).toEqual({ ...original.snapshot.annotations[1], text: 'Keep the revised palette.' });
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await page.locator('.annotation-content').first().click(); await expect(input).toHaveValue('Use the revised framing.');
+  await page.screenshot({ path: info.outputPath('queued-annotation-canvas-edit.png') });
+});
+
+test('canvas annotation comments wrap and follow markers across edges themes zoom and pan', async ({ page, app }, info) => {
+  await open(page, app); await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page)); await expect(page.locator('.board-object')).toBeVisible();
+  const initial = await app.state(), object = initial.objects[0], annotations = ['Keep the relationship between the shapes clear. '.repeat(5), 'Use this second treatment of the same source.'].map((text, index) => ({ id: `canvas-note-${index}`, scope: 'object', objectId: object.id, objectIds: [object.id], assetId: object.assetId, bounds: { x: 0, y: 0, width: 1, height: 1 }, coordinateSpace: 'normalized', text }));
+  await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...initial.draft, annotations }); await expect(page.locator('.canvas-annotation-comment')).toHaveCount(2);
+  const samples: unknown[] = [];
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 760 });
+    for (const dark of [false, true]) {
+      const themeButton = page.getByRole('button', { name: dark ? 'Switch to dark theme' : 'Switch to light theme', exact: true }); if (await themeButton.count()) await themeButton.click();
+      for (const zoom of [.5, 1.6]) {
+        await app.call(`/api/sessions/${initial.session.id}/view`, 'PUT', { ...initial.session.view, x: width - 46 - object.x * zoom, y: 300 - object.y * zoom, zoom, selectedObjectIds: [] });
+        await page.reload(); await expect(page.locator('.zoom-label')).toHaveText(`${Math.round(zoom * 100)}%`);
+        const notes = page.locator('.canvas-annotation-comment');
+        const metrics = await notes.evaluateAll(elements => elements.map(element => { const note = element.getBoundingClientRect(), style = getComputedStyle(element), id = (element as HTMLElement).dataset.annotationId, pin = document.querySelector(`.canvas-annotation-group[data-annotation-id="${id}"] .annotation-pin`)!.getBoundingClientRect(); return { note, pin, side: (element as HTMLElement).dataset.side, font: getComputedStyle(element.querySelector('textarea')!).fontSize, overflow: document.documentElement.scrollWidth - innerWidth, hit: document.elementFromPoint(pin.x + pin.width / 2, pin.y + pin.height / 2)?.closest('.annotation-pin')?.getAttribute('aria-label') }; }));
+        expect(metrics).toHaveLength(2); for (const metric of metrics) { expect(metric.note.width).toBe(Math.min(360, width - 80)); expect(metric.note.x - metric.pin.x - metric.pin.width).toBeCloseTo(8, 1); expect(Math.abs(metric.note.y + metric.note.height / 2 - metric.pin.y - metric.pin.height / 2)).toBeLessThan(.5); expect(metric.note.height).toBeLessThanOrEqual(92.1); expect(metric.font).toBe(width > 540 ? '12px' : '16px'); expect(metric.pin.width).toBeCloseTo(28, 0); expect(metric.hit).toContain('Annotation'); expect(metric.overflow).toBe(0); }
+        expect(metrics[1].note.bottom).toBeLessThan(metrics[0].note.y); expect(metrics[0].note.bottom).toBeLessThanOrEqual(292); expect(metrics[1].note.bottom).toBeLessThanOrEqual(292);
+        samples.push({ width, dark, zoom, metrics });
+      }
+      await page.screenshot({ path: info.outputPath(`canvas-comments-${width}-${dark ? 'dark' : 'light'}.png`) });
+    }
+  }
+  await writeFile(info.outputPath('canvas-comments-placement.json'), JSON.stringify(samples, null, 2));
+  const before = await page.locator('.annotation-pin').first().boundingBox(); await page.locator('#whiteboard').hover({ position: { x: 250, y: 400 } }); await page.mouse.wheel(30, 20); await expect.poll(async () => (await page.locator('.annotation-pin').first().boundingBox())!.x).toBeLessThan(before!.x - 20);
+  const fixed = await page.locator('.canvas-annotation-comment').evaluateAll(elements => elements.map(element => { const box = element.getBoundingClientRect(); return { width: box.width, height: box.height }; }));
+  for (const [x, y] of [[1700, 0], [-3400, 0], [1700, 1700], [0, -3400]]) {
+    const before = await page.locator('.canvas-annotation-comment').first().boundingBox(); await page.mouse.wheel(x, y); await expect.poll(async () => { const after = (await page.locator('.canvas-annotation-comment').first().boundingBox())!; return Math.abs(after.x - before!.x) + Math.abs(after.y - before!.y); }).toBeGreaterThan(1000);
+    const edges = await page.locator('.canvas-annotation-comment').evaluateAll(elements => elements.map(element => { const box = element.getBoundingClientRect(); return { width: box.width, height: box.height }; })); expect(edges).toEqual(fixed);
+  }
+  expect((await app.state()).draft.annotations).toEqual(annotations);
+});
+
+test('queued canvas editing preserves region video and removed snapshot sources', async ({ page, app }, info) => {
+  await open(page, app); await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles([{ ...await png(page), name: 'Source.png' }, { name: 'Second.png', mimeType: 'image/png', buffer: (await png(page)).buffer }, { name: 'Motion.mp4', mimeType: 'video/mp4', buffer: await import('node:fs/promises').then(fs => fs.readFile(resolve('tests/fixtures/frontend-video.mp4'))) }]);
+  await expect(page.locator('.board-object')).toHaveCount(3); await expect(page.locator('.object-video video')).toHaveJSProperty('readyState', 4);
+  const initial = await app.state(), video = initial.objects.find(object => object.type === 'video')!, images = initial.objects.filter(object => object.type === 'image');
+  const annotations = [
+    { id: 'edit-source', scope: 'object', objectId: images[0].id, objectIds: [images[0].id], assetId: images[0].assetId, coordinateSpace: 'normalized', bounds: { x: .2, y: .2, width: .5, height: .5 }, text: 'Retain this detail.' },
+    { id: 'edit-region', scope: 'region', objectIds: images.map(object => object.id), coordinateSpace: 'world', bounds: { x: images[0].x, y: images[0].y, width: 370, height: 210 }, text: 'Keep these sources together.' },
+    { id: 'edit-video', scope: 'object', objectId: video.id, objectIds: [video.id], assetId: video.assetId, snapshotAssetId: images[1].assetId, coordinateSpace: 'normalized', bounds: { x: .1, y: .1, width: .6, height: .6 }, timeStart: .7, timeEnd: 1, text: 'Preserve this motion.' },
+  ];
+  const saved = await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...initial.draft, annotations }); await app.call(`/api/sessions/${initial.session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision });
+  await app.call('/api/board/operations', 'POST', { sessionId: initial.session.id, operations: [{ type: 'delete', objectId: images[0].id, expectedVersion: images[0].version }] }); await expect(page.locator('.board-object')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.locator('.annotation-outline[data-source-removed=true]')).toHaveCount(2);
+  const input = page.getByRole('textbox', { name: 'Annotation text', exact: true });
+  await page.locator('.annotation-content').nth(0).click(); await expect(input).toBeFocused(); await expect(page.locator('.annotation-outline[data-annotation-id=edit-source]')).toHaveAttribute('data-source-removed', 'true'); await input.fill('Retain the updated detail.'); await input.press('Escape');
+  await page.locator('.annotation-content').nth(1).click(); await expect(page.locator('.inline-annotation-reader[data-annotation-id=edit-region]')).toHaveCount(1); await input.fill('Keep the revised source relationship.'); await input.press('Escape');
+  await page.locator('.annotation-content').nth(2).click(); await expect(page.locator('.object-video video')).toHaveJSProperty('currentTime', .7); expect((await app.state()).draft.annotations[2].snapshotAssetId).toBe(images[1].assetId); await input.fill('Preserve the updated motion.'); await input.press('Escape'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+  const editing = await app.state(); expect(editing.tasks[0].snapshot.annotations).toEqual(annotations); expect(editing.draft.annotations.map(annotation => ({ ...annotation, text: '' }))).toEqual(annotations.map(annotation => ({ ...annotation, text: '' })));
+  await page.locator('.annotation-content').nth(0).click(); await page.screenshot({ path: info.outputPath('removed-source-canvas-edit.png') });
+  await page.getByRole('button', { name: 'Save request', exact: true }).click(); await expect(page.locator('.inline-annotation-reader')).toHaveCount(0); await expect(page.locator('.annotation-pin')).toHaveCount(0);
+  const result = await app.state(); expect(result.objects).toHaveLength(2); expect(result.tasks[0].snapshot.annotations.map(annotation => annotation.text)).toEqual(['Retain the updated detail.', 'Keep the revised source relationship.', 'Preserve the updated motion.']); expect(result.tasks[0].snapshot.annotations.map(annotation => ({ ...annotation, text: '' }))).toEqual(annotations.map(annotation => ({ ...annotation, text: '' })));
+});
+
 test('annotation levels retain clipped regions and sent task markings follow explicit inspection only', async ({ page, app }, info) => {
   await page.addInitScript(() => localStorage.setItem('acanvas-snapping', 'off'));
   await open(page, app); await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
@@ -351,26 +455,35 @@ test('inline comments retain their targets through delayed snapshots and submit 
   expect(annotations.find(annotation => annotation.objectId === saved.objects.find(object => object.type === 'image')!.id)!.text).toBe('Keep this image shape');
   await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible(); await expect(comment).toHaveCount(0); await expect(page.locator('#instruction')).toHaveValue('');
   const imageObject = saved.objects.find(object => object.type === 'image')!, savedVideo = saved.objects.find(object => object.type === 'video')!;
-  await app.call('/api/board/operations', 'POST', { sessionId: saved.session.id, operations: [{ type: 'update', objectId: imageObject.id, expectedVersion: imageObject.version, changes: { x: savedVideo.x - 420 } }] });
-  await expect(page.locator('.object-image')).toHaveAttribute('data-object-version', '2');
   await page.setViewportSize({ width: 320, height: 480 });
-  await page.getByRole('button', { name: 'Fit all files', exact: true }).click();
-  await page.locator('.object-image').focus(); await page.keyboard.press('Enter'); await beginAnnotating(page); await comment.fill('Preserve this other unsent comment');
-  await page.locator('.queue-task').first().click(); await page.getByRole('button', { name: /Annotation 1:/ }).click();
+  await app.call('/api/board/operations', 'POST', { sessionId: saved.session.id, operations: [
+    { type: 'update', objectId: savedVideo.id, expectedVersion: savedVideo.version, changes: { x: 72, y: 225, width: 160, height: 90 } },
+    { type: 'update', objectId: imageObject.id, expectedVersion: imageObject.version, changes: { x: 72, y: 340, width: 160, height: 80 } },
+  ] });
+  await app.call(`/api/sessions/${saved.session.id}/view`, 'PUT', { x: 0, y: 0, zoom: 1, selectedObjectIds: [imageObject.id] });
+  await page.reload(); await expect(page.locator('.board-object')).toHaveCount(2); await expect(video).toHaveJSProperty('videoWidth', 320);
+  await beginAnnotating(page); await comment.fill('Preserve this other unsent comment'); await comment.press('Escape');
+  await page.locator('.queue-task').first().click();
+  await expect(page.locator(`.task-reference-group[data-annotation-id="${frame.id}"] .task-annotation-frame`)).toHaveJSProperty('naturalWidth', 320);
+  const selectedBefore = await page.locator('.board-object[data-selected=true]').evaluateAll(elements => elements.map(element => (element as HTMLElement).dataset.objectId));
+  const readerView = await page.locator('.canvas-world').evaluate(element => (element as HTMLElement).style.transform);
+  await page.getByRole('button', { name: /Annotation 1:/ }).click();
+  expect(await page.locator('.canvas-world').evaluate(element => (element as HTMLElement).style.transform)).toBe(readerView);
+  expect(await page.locator('.board-object[data-selected=true]').evaluateAll(elements => elements.map(element => (element as HTMLElement).dataset.objectId))).toEqual(selectedBefore);
   const reader = page.getByRole('region', { name: 'Annotation', exact: true });
   await expect(reader).toBeVisible(); await expect(comment).toHaveCount(0);
-  const close = page.getByRole('button', { name: 'Close annotation', exact: true });
-  expect(await close.evaluate(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; })).toBeTruthy();
-  await expect(reader.locator('img')).toHaveJSProperty('naturalWidth', 320);
-  await expect.poll(async () => (await app.state()).session.view.selectedObjectIds).toEqual([frame.objectId!]);
-  const readerView = await page.locator('.canvas-world').evaluate(element => (element as HTMLElement).style.transform);
-  await reader.hover(); await page.mouse.wheel(0, 100);
-  await expect.poll(async () => reader.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+  const readerText = reader.getByRole('textbox', { name: 'Annotation comment', exact: true });
+  await expect(readerText).toHaveValue(frame.text); await expect(readerText).toHaveAttribute('readonly', '');
+  await expect(reader).toHaveCSS('width', '240px'); await expect(reader).toHaveCSS('border-radius', '18px');
+  expect((await app.state()).tasks[0].snapshot.annotations.find(annotation => annotation.id === frame.id)).toEqual(frame);
   expect(await page.locator('.canvas-world').evaluate(element => (element as HTMLElement).style.transform)).toBe(readerView);
-  expect(await close.evaluate(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; })).toBeTruthy();
   await page.screenshot({ path: info.outputPath('inline-reader-video-320.png') });
-  await close.click(); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();
-  await page.locator('.object-image').focus(); await page.keyboard.press('Enter'); await beginAnnotating(page); await expect(comment).toHaveValue('Preserve this other unsent comment');
+  await readerText.evaluate(element => element.focus({ preventScroll: true })); await readerText.press('Escape'); await expect(reader).toHaveCount(0); await expect(page.getByRole('button', { name: /Annotation 1:/ })).toBeFocused();
+  await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(2);
+  const result = await app.state(), retained = result.tasks[1].snapshot.annotations;
+  expect(retained).toHaveLength(1); expect(retained[0].text).toBe('Preserve this other unsent comment'); expect(retained[0].objectId).toBe(imageObject.id); expect(retained[0].objectIds).toEqual([imageObject.id]); expect(retained[0].assetId).toBe(imageObject.assetId);
+  expect(result.tasks[0].snapshot.annotations.find(annotation => annotation.id === frame.id)).toEqual(frame); expect(result.draft.annotations).toHaveLength(0);
+
 });
 
 test('inline details history media and resume fallback keep short-screen canvas controls available', async ({ page, app }, info) => {
@@ -921,10 +1034,16 @@ test('real video and file imports, time/frame annotations and decode fallback', 
   await expect.poll(async () => (await app.state()).draft.annotations.length).toBe(1);
   const annotation = (await app.state()).draft.annotations[0]; expect(annotation.timeStart).toBeCloseTo(.7, 1); expect(annotation.snapshotAssetId).toBeTruthy();
   await video.evaluate(element => { (element as HTMLVideoElement).currentTime = 1.5; });
+  const annotationView = await page.locator('.canvas-world').getAttribute('style');
   await page.getByRole('button', { name: /Annotation 1:/ }).click();
   await expect(video).toHaveJSProperty('currentTime', annotation.timeStart!);
-  await expect(page.getByRole('region', { name: 'Annotation', exact: true }).locator('img')).toBeVisible();
+  expect(await page.locator('.canvas-world').getAttribute('style')).toBe(annotationView);
+  const reader = page.getByRole('region', { name: 'Annotation', exact: true }), readerText = reader.getByRole('textbox', { name: 'Annotation comment', exact: true });
+  await expect(readerText).toHaveValue(annotation.text); await expect(readerText).toHaveAttribute('readonly', ''); await expect(reader).toHaveCSS('width', '360px');
   await page.getByRole('button', { name: 'Close annotation', exact: true }).click();
+  await page.getByRole('button', { name: 'Send request', exact: true }).click(); await expect(page.locator('.queue-item')).toHaveCount(1);
+  expect((await app.state()).tasks[0].snapshot.annotations[0]).toEqual(annotation);
+  await page.locator('.queue-task').click(); await expect(page.locator(`.task-reference-group[data-annotation-id="${annotation.id}"] .task-annotation-frame`)).toHaveJSProperty('naturalWidth', 320); await page.locator('.queue-task').click();
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles([{ name: 'brief.txt', mimeType: 'text/plain', buffer: Buffer.from('Project reference material') }, { name: 'unsupported.mp4', mimeType: 'video/mp4', buffer: Buffer.from('Undecodable video fixture') }]);
   await expect(page.locator('.board-object')).toHaveCount(3);
   await expect(page.getByText('Preview unavailable in this browser', { exact: true })).toBeVisible();
@@ -1316,7 +1435,7 @@ test('spring queue and composer keep compact references, editable FIFO slots and
   const queued = await app.state(), ids = queued.tasks.map(task => task.id); saved = await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...queued.draft, text: 'Next unsent idea' }); await expect(input).toHaveValue('Next unsent idea');
   await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(input).toHaveValue('Create from each reference.'); await expect(page.locator('.draft-annotation')).toHaveCount(3); await expect(page.locator('.composer-editing')).toBeVisible();
   await input.fill('Revised request'); await expect(composer).toHaveAttribute('data-save-state', 'saved'); await page.reload(); await expect(input).toHaveValue('Revised request'); await expect(page.getByRole('button', { name: 'Cancel edit', exact: true })).toBeVisible();
-  await page.locator('.annotation-content').first().click(); const annotationText = page.getByRole('textbox', { name: 'Annotation text', exact: true }); await annotationText.fill('Revised first comment'); await page.getByRole('button', { name: 'Close annotation', exact: true }).click();
+  await page.locator('.annotation-content').first().click(); const annotationText = page.getByRole('textbox', { name: 'Annotation text', exact: true }); await annotationText.fill('Revised first comment'); await annotationText.press('Escape');
   await page.route(`**/api/sessions/${initial.session.id}/tasks`, async route => { await route.fetch(); await route.abort('failed'); });
   await page.getByRole('button', { name: 'Save request', exact: true }).click(); await expect(input).toHaveValue('Next unsent idea'); await expect(page.getByRole('alert')).toHaveCount(0); await page.unroute(`**/api/sessions/${initial.session.id}/tasks`);
   const result = await app.state(); expect(result.tasks.map(task => task.id)).toEqual(ids); expect(result.tasks[0].snapshot.userRequest.text).toBe('Revised request'); expect(result.tasks[0].snapshot.annotations[0].text).toBe('Revised first comment'); expect(result.tasks[0].sequence).toBe(1);
