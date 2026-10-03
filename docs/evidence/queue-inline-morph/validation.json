@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-03",
+  "scope": "Frontend-only isolated temporary projects; real whiteboard data and service process preserved",
+  "runtime": "Project Node 24 script runtime; local Chrome",
+  "assets": {
+    "script": "index-xbMooN_o.js",
+    "style": "index-BW1a2auN.css"
+  },
+  "checks": [
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run build",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run test:browser -- --grep 'inline queue references move|request details group each annotation once|spring queue and composer keep compact' --output /tmp/acanvas-inline-reviewed-final-20261003",
+      "result": "3/3 PASS; 19.1 seconds; exit 0"
+    },
+    {
+      "command": "npm run test:browser -- --grep 'annotation levels retain|uniform annotation bubbles|queue accessible statuses|editing annotations restores their chips|an earlier annotation-only request' --output /tmp/acanvas-inline-related-20261003",
+      "result": "4/4 PASS; 49.2 seconds; exit 0"
+    },
+    {
+      "command": "npm run test:browser -- --grep 'second-level video annotation preserves|shared annotation bubbles and static queue previews' --output /tmp/acanvas-inline-frames-20261003",
+      "result": "Video time/frame path PASS; shared thumbnail selector required request-region scope for persistent hidden references"
+    },
+    {
+      "command": "npm run test:browser -- --grep 'shared annotation bubbles and static queue previews' --output /tmp/acanvas-inline-frames-final-20261003",
+      "result": "1/1 PASS; 6.4 seconds; exit 0"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "motion": {
+    "opening": {
+      "referenceDownDistance": 46,
+      "textLeftDistance": 104,
+      "lateThumbMaxDelta": 0.49224853515625,
+      "lateTitleMaxDelta": 0.71685791015625
+    },
+    "closing": {
+      "referenceDownDistance": -46,
+      "textLeftDistance": -104,
+      "lateThumbMaxDelta": 0.4920654296875,
+      "lateTitleMaxDelta": 0.71685791015625
+    }
+  },
+  "notes": [
+    "Initial sandbox Chrome launch failed before tests; isolated browser permission then approved.",
+    "Independent review identified coordinate read/write ordering and margin ownership; all target positions now read before animations and queue items contain child margins.",
+    "Continuity assertions cover screen-space first frames, all intermediate local positions, all frame deltas after 280 ms, rapid reverse and reduced motion."
+  ]
+}

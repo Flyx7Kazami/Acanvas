@@ -49,26 +49,52 @@ function AssetThumb({ asset, src }: { asset?: Asset; src: string }) {
   return <span className="asset-thumb" data-kind={asset?.kind}>{image ? <img src={image} alt="" loading="lazy"/> : asset?.kind === 'video' ? <Play size={13}/> : <File size={15}/>}</span>;
 }
 
-function TaskPreviews({ task, content }: { task: Task; content: (id: string) => string }) {
-  const [previewLimit, setPreviewLimit] = useState(() => matchMedia('(max-width: 360px)').matches ? 1 : 3);
-  useEffect(() => { const compact = matchMedia('(max-width: 360px)'); const update = () => setPreviewLimit(compact.matches ? 1 : 3); update(); compact.addEventListener('change', update); return () => compact.removeEventListener('change', update); }, []);
-  const sourceIds = (annotation: AnnotationInput) => task.snapshot.referenceContent.objects.filter(object => object.id === annotation.objectId || annotation.objectIds.includes(object.id)).map(object => object.assetId);
-  const included = new Set(task.snapshot.annotations.flatMap(annotation => [annotation.snapshotAssetId, annotation.assetId, ...sourceIds(annotation)].filter((id): id is string => !!id)));
-  const assets = task.snapshot.referenceContent.assets.filter((asset, index, values) => !included.has(asset.id) && values.findIndex(value => value.id === asset.id) === index);
-  const references = [...assets.map(asset => ({ key: `asset-${asset.id}`, asset, annotation: undefined as AnnotationInput | undefined, number: undefined as number | undefined })), ...task.snapshot.annotations.map((annotation, index) => ({ key: `annotation-${annotation.id}`, asset: task.snapshot.referenceContent.assets.find(asset => asset.id === (annotation.snapshotAssetId || annotation.assetId || sourceIds(annotation)[0])), annotation, number: index + 1 }))];
-  if (!references.length) return null;
-  return <span className="queue-previews" aria-label={`${references.length} references`}>
-    {references.slice(0, previewLimit).map(reference => <span className={`queue-preview${reference.annotation ? ' annotation-preview' : ''}`} key={reference.key} title={reference.annotation?.text || reference.asset?.name}>
-      {reference.asset ? <AssetThumb asset={reference.asset} src={content(reference.asset.id)}/> : <AnnotationBubble number={reference.number} size={24}/>}
-      {reference.annotation && reference.asset && <AnnotationBubble number={reference.number} size={15}/>}
-    </span>)}
-    {references.length > previewLimit && <span className="queue-preview-overflow" aria-label={`${references.length - previewLimit} more references; ${references.length} references total`}>+{references.length - previewLimit}</span>}
-  </span>;
+function taskReferences(task: Task) {
+  const { assets, objects } = task.snapshot.referenceContent;
+  const groups = task.snapshot.annotations.map(annotation => {
+    const items = objects.filter(object => object.id === annotation.objectId || annotation.objectIds.includes(object.id)).map(object => ({ key: object.id, asset: assets.find(asset => asset.id === object.assetId), frame: false }));
+    for (const id of [annotation.assetId, annotation.snapshotAssetId]) if (id && !items.some(item => item.asset?.id === id)) items.push({ key: id, asset: assets.find(asset => asset.id === id), frame: id === annotation.snapshotAssetId });
+    return { annotation, items, primary: items.find(item => item.asset?.id === annotation.snapshotAssetId) || items.find(item => item.asset?.id === annotation.assetId) || items[0] };
+  });
+  const included = new Set(groups.flatMap(group => group.items.map(item => item.asset?.id)));
+  const attachments = assets.filter((asset, index) => !included.has(asset.id) && assets.findIndex(value => value.id === asset.id) === index);
+  return { groups, attachments, count: groups.length + attachments.length };
 }
 
-function QueueItem({ task, animateSend, visible, played, children }: { task: Task; animateSend: boolean; visible: boolean; played: Set<string>; children: ReactNode }) {
+type QueueLayout = { height: number; items: Map<string, { x: number; y: number }> };
+const queueLayouts = new WeakMap<HTMLElement, QueueLayout>();
+function rememberQueueLayout() {
+  document.querySelectorAll<HTMLElement>('.queue-item').forEach(element => {
+    const bounds = element.getBoundingClientRect(), items = new Map<string, { x: number; y: number }>();
+    element.querySelectorAll<HTMLElement>('[data-queue-layout]').forEach(item => { if (item.offsetWidth) { const box = item.getBoundingClientRect(); items.set(item.dataset.queueLayout!, { x: box.x - bounds.x, y: box.y - bounds.y }); } });
+    queueLayouts.set(element, { height: bounds.height, items });
+  });
+}
+
+function QueueItem({ task, detailOpen, animateSend, visible, played, children }: { task: Task; detailOpen: boolean; animateSend: boolean; visible: boolean; played: Set<string>; children: ReactNode }) {
   const [entering, setEntering] = useState(false);
   const element = useRef<HTMLElement>(null);
+  const animations = useRef<Animation[]>([]);
+  const count = taskReferences(task).count;
+  const previewSpace = (limit: number, size: number, gap: number, titleGap: number) => count ? Math.min(count, limit) * size + Math.max(0, Math.min(count, limit) - 1) * gap + (count > limit ? 15 + gap : 0) + titleGap : 0;
+  useLayoutEffect(() => {
+    const node = element.current, before = node && queueLayouts.get(node);
+    animations.current.forEach(animation => animation.cancel()); animations.current = [];
+    if (!node || !before) return;
+    queueLayouts.delete(node);
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const bounds = node.getBoundingClientRect(), options = { duration: 340, easing: 'cubic-bezier(.22,.85,.25,1.08)' };
+    const targets = Array.from(node.querySelectorAll<HTMLElement>('[data-queue-layout]')).filter(item => item.offsetWidth).map(item => {
+      const box = item.getBoundingClientRect(), previous = before.items.get(item.dataset.queueLayout!);
+      const x = previous ? previous.x - (box.x - bounds.x) : 0, y = previous ? previous.y - (box.y - bounds.y) : -12;
+      return { item, previous, x, y };
+    });
+    if (Math.abs(before.height - bounds.height) > .5) animations.current.push(node.animate([{ height: `${before.height}px` }, { height: `${bounds.height}px` }], options));
+    targets.forEach(({ item, previous, x, y }) => {
+      animations.current.push(item.animate([{ transform: `translate(${x}px,${y}px)`, opacity: previous ? 1 : 0 }, { transform: 'translate(0,0)', opacity: 1 }], options));
+    });
+  }, [detailOpen]);
+  useEffect(() => { const reduced = matchMedia('(prefers-reduced-motion: reduce)'); const stop = () => { if (reduced.matches) animations.current.forEach(animation => animation.cancel()); }; reduced.addEventListener('change', stop); return () => { reduced.removeEventListener('change', stop); animations.current.forEach(animation => animation.cancel()); }; }, []);
   useLayoutEffect(() => {
     if (!visible) { setEntering(false); return; }
     if (!animateSend || played.has(task.id)) return;
@@ -86,25 +112,19 @@ function QueueItem({ task, animateSend, visible, played, children }: { task: Tas
     motionChange();
     return () => { node?.removeEventListener('animationcancel', cancelled); reduced.removeEventListener('change', motionChange); };
   }, [entering]);
-  return <article ref={element} className={`queue-item${entering ? ' queue-entering' : ''}`} role="listitem" data-task-id={task.id} data-status={task.status} onAnimationEnd={event => { if (event.target === event.currentTarget) setEntering(false); }}>{children}</article>;
+  return <article ref={element} className={`queue-item${entering ? ' queue-entering' : ''}`} style={{ '--queue-preview-space': `${previewSpace(3, 24, 3, 8)}px`, '--queue-preview-space-narrow': `${previewSpace(3, 22, 2, 5)}px`, '--queue-preview-space-small': `${previewSpace(1, 22, 2, 3)}px` } as React.CSSProperties} role="listitem" data-task-id={task.id} data-status={task.status} data-detail-open={detailOpen} onAnimationEnd={event => { if (event.target === event.currentTarget) setEntering(false); }}>{children}</article>;
 }
 
 function MotionDisclosure({ open, children, ...props }: { open: boolean; children: ReactNode } & React.HTMLAttributes<HTMLDivElement>) {
-  const [mounted, setMounted] = useState(open);
-  const [expanded, setExpanded] = useState(false);
+  const [moving, setMoving] = useState(false);
   useLayoutEffect(() => {
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-    let frame = 0, timer = 0;
-    const sync = () => {
-      cancelAnimationFrame(frame); window.clearTimeout(timer);
-      if (open) { setMounted(true); if (reduced.matches) setExpanded(true); else frame = requestAnimationFrame(() => { frame = requestAnimationFrame(() => setExpanded(true)); }); }
-      else { setExpanded(false); if (reduced.matches) setMounted(false); else timer = window.setTimeout(() => setMounted(false), 340); }
-    };
+    let timer = 0;
+    const sync = () => { window.clearTimeout(timer); setMoving(!reduced.matches); if (!reduced.matches) timer = window.setTimeout(() => setMoving(false), 340); };
     sync(); reduced.addEventListener('change', sync);
-    return () => { cancelAnimationFrame(frame); window.clearTimeout(timer); reduced.removeEventListener('change', sync); };
+    return () => { window.clearTimeout(timer); reduced.removeEventListener('change', sync); };
   }, [open]);
-  if (!mounted) return null;
-  return <div {...props} className={`motion-disclosure ${props.className || ''}`} data-motion={expanded ? 'open' : 'closing'} inert={!open} aria-hidden={!open}><div className="motion-disclosure-content">{children}</div></div>;
+  return <div {...props} className={`${open || moving ? 'motion-disclosure ' : ''}${props.className || ''}`} data-motion={open ? 'open' : 'closing'} inert={!open} aria-hidden={!open}>{children}</div>;
 }
 
 function videoPlayback(video?: HTMLVideoElement) {
@@ -145,30 +165,33 @@ function VideoPlaybackControls({ objectId, videos, disabled, onError, controlRef
   </div>;
 }
 
-function TaskCard({ task, assets, objects, content, locateAsset, onAnnotationView, compact = false }: { task: Task; assets: Asset[]; objects: BoardObject[]; content: (id: string) => string; locateAsset: (id: string) => void; onAnnotationView: (task: Task, open: boolean) => void; compact?: boolean }) {
+function TaskCard({ task, assets, objects, content, locateAsset, onAnnotationView, compact = false, summary = false }: { task: Task; assets: Asset[]; objects: BoardObject[]; content: (id: string) => string; locateAsset: (id: string) => void; onAnnotationView: (task: Task, open: boolean) => void; compact?: boolean; summary?: boolean }) {
   const sourceAssets = task.snapshot.referenceContent.assets;
+  const references = taskReferences(task);
+  const [previewLimit, setPreviewLimit] = useState(() => matchMedia('(max-width: 360px)').matches ? 1 : 3);
+  useEffect(() => { const narrow = matchMedia('(max-width: 360px)'); const update = () => setPreviewLimit(narrow.matches ? 1 : 3); narrow.addEventListener('change', update); return () => narrow.removeEventListener('change', update); }, []);
   const [previewId, setPreviewId] = useState('');
+  useEffect(() => { if (summary) setPreviewId(''); }, [summary]);
   const previewAsset = [...assets, ...sourceAssets].find(asset => asset.id === previewId);
-  const assetAction = (asset: Asset, thumbnail: boolean) => asset.kind === 'file' ? <a href={content(asset.id)} download={asset.name} title={asset.name} key={asset.id}>{thumbnail ? <AssetThumb asset={asset} src={content(asset.id)}/> : <><ArrowDownToLine size={12}/>{asset.name}</>}</a> : <button type="button" title={asset.name} aria-label={`View ${asset.name}`} key={asset.id} onClick={() => { if (objects.some(object => object.assetId === asset.id)) locateAsset(asset.id); else setPreviewId(current => current === asset.id ? '' : asset.id); }}>{thumbnail ? <AssetThumb asset={asset} src={content(asset.id)}/> : asset.name}</button>;
+  const assetAction = (asset: Asset, thumbnail: boolean) => asset.kind === 'file' ? <a href={content(asset.id)} download={asset.name} title={asset.name} aria-label={`Download ${asset.name}`} key={asset.id}>{thumbnail ? <AssetThumb asset={asset} src={content(asset.id)}/> : <><ArrowDownToLine size={12}/>{asset.name}</>}</a> : <button type="button" title={asset.name} aria-label={`View ${asset.name}`} key={asset.id} onClick={() => { if (objects.some(object => object.assetId === asset.id)) locateAsset(asset.id); else setPreviewId(current => current === asset.id ? '' : asset.id); }}>{thumbnail ? <AssetThumb asset={asset} src={content(asset.id)}/> : asset.name}</button>;
   return <article className="task-card" data-task-id={task.id} data-status={task.status}>
     {!compact && <div className="task-heading"><span className="task-sequence">Request {String(task.sequence).padStart(2, '0')}</span><span className={`status-badge status-${task.status}`}>{task.status === 'completed' && <Check size={11}/>} {statusLabels[task.status]}</span></div>}
     {!compact && <p className="task-instruction">{task.snapshot.userRequest.text || 'Create from the attachments and annotations.'}</p>}
-    <div className="task-detail-content"><div className="task-reference-groups">{(() => {
-      const sources = task.snapshot.referenceContent.objects;
-      const frameIds = new Set(task.snapshot.annotations.map(annotation => annotation.snapshotAssetId).filter(Boolean));
-      const groups = task.snapshot.annotations.map(annotation => {
-        const items = sources.filter(object => object.id === annotation.objectId || annotation.objectIds.includes(object.id)).map(object => ({ key: object.id, asset: sourceAssets.find(asset => asset.id === object.assetId) }));
-        if (annotation.assetId && !items.some(item => item.asset?.id === annotation.assetId)) items.push({ key: annotation.assetId, asset: sourceAssets.find(asset => asset.id === annotation.assetId) });
-        return { annotation, items };
-      });
-      const annotatedAssetIds = new Set(groups.flatMap(group => group.items.map(item => item.asset?.id).filter(Boolean)));
-      const attachments = sourceAssets.filter((asset, index) => !annotatedAssetIds.has(asset.id) && !frameIds.has(asset.id) && sourceAssets.findIndex(value => value.id === asset.id) === index);
-      const sourceItem = (key: string, asset?: Asset) => <div className="task-reference-source" key={key} data-reference-item={key}>{asset ? <>{assetAction(asset, true)}<span title={asset.name}>{asset.name}</span></> : <span>Canvas region</span>}</div>;
-      return <>{groups.map(({ annotation, items }, index) => <div className="task-reference-group" key={annotation.id} data-annotation-id={annotation.id}>
-        <div className="task-annotation-header"><button type="button" className="task-annotation-badge" aria-label={`View annotation ${index + 1}: ${annotation.text}`} onClick={() => onAnnotationView(task, true)}><AnnotationBubble number={index + 1} size={18}/></button><div className="task-reference-row">{items.length ? items.map(item => sourceItem(item.key, item.asset)) : sourceItem('region')}</div></div>
-        <div className="task-item-annotation"><button type="button" className="task-annotation-text" onClick={() => onAnnotationView(task, true)}><span>{annotation.text}{annotation.timeStart !== undefined && <small> · {timeLabel(annotation.timeStart)}{annotation.timeEnd !== undefined && ` – ${timeLabel(annotation.timeEnd)}`}</small>}</span></button>{annotation.snapshotAssetId && <img className="task-annotation-frame" src={content(annotation.snapshotAssetId)} alt="Annotated video frame"/>}</div>
-      </div>)}{!!attachments.length && <div className="task-reference-group" data-unannotated-attachments><div className="task-reference-row">{attachments.map(asset => sourceItem(asset.id, asset))}</div></div>}</>;
-    })()}</div>
+    <div className="task-detail-content"><div className={`task-reference-groups${compact ? ' queue-previews' : ''}`} aria-label={compact ? `${references.count} references` : undefined}>
+      {references.groups.map(({ annotation, items, primary }, index) => {
+        const summaryIndex = references.attachments.length + index, shown = summary && summaryIndex < previewLimit;
+        return <div className={`task-reference-group${shown ? ' summary-group' : ''}`} key={annotation.id} data-annotation-id={annotation.id}>
+          <button type="button" className="task-annotation-badge" data-queue-layout={`badge-${annotation.id}`} aria-label={`View annotation ${index + 1}: ${annotation.text}`} onClick={() => onAnnotationView(task, true)}><AnnotationBubble number={index + 1} size={18}/></button>
+          <div className="task-reference-row">{(items.length ? items : [{ key: 'region', asset: undefined, frame: false }]).map(item => {
+            const preview = shown && (!primary || item.key === primary.key);
+            return <div className={`task-reference-source${preview ? ' queue-preview' : ''}`} key={item.key} data-reference-item={item.key} data-queue-layout={`source-${annotation.id}-${item.key}`}>{item.asset ? item.frame ? <button type="button" title={item.asset.name} aria-label={`View ${item.asset.name}`} onClick={() => setPreviewId(current => current === item.asset!.id ? '' : item.asset!.id)}><span className="asset-thumb" data-kind="image"><img className="task-annotation-frame" src={content(item.asset.id)} alt="Annotated video frame"/></span></button> : assetAction(item.asset, true) : <span className="asset-thumb" aria-label="Canvas region"><Maximize size={14}/></span>}</div>;
+          })}</div>
+          <div className="task-item-annotation"><button type="button" className="task-annotation-text" onClick={() => onAnnotationView(task, true)}><span>{annotation.text}{annotation.timeStart !== undefined && <small> · {timeLabel(annotation.timeStart)}{annotation.timeEnd !== undefined && ` – ${timeLabel(annotation.timeEnd)}`}</small>}</span></button></div>
+        </div>;
+      })}
+      {!!references.attachments.length && <div className="task-reference-group" data-unannotated-attachments><div className="task-reference-row">{references.attachments.map((asset, index) => <div className={`task-reference-source${summary && index < previewLimit ? ' queue-preview' : ''}`} key={asset.id} data-reference-item={asset.id} data-queue-layout={`attachment-${asset.id}`}>{assetAction(asset, true)}</div>)}</div></div>}
+      {compact && summary && references.count > previewLimit && <span className="queue-preview-overflow" aria-label={`${references.count - previewLimit} more references; ${references.count} references total`}>+{references.count - previewLimit}</span>}
+    </div>
     {previewAsset && <div className="task-media-preview" role="region" aria-label={`Preview ${previewAsset.name}`}><IconButton label="Close media preview" onClick={() => setPreviewId('')}><ChevronDown size={14}/></IconButton>{previewAsset.kind === 'image' ? <img src={content(previewAsset.id)} alt={previewAsset.name}/> : <video src={content(previewAsset.id)} controls playsInline preload="metadata"/>}</div>}
     {task.reason && <p className="task-reason">{task.reason}</p>}
     {task.runs.at(-1)?.progress.at(-1) && <p className="task-progress">{task.runs.at(-1)?.progress.at(-1)?.message}</p>}
@@ -194,7 +217,8 @@ export default function App() {
   const [queueExpanded, setQueueExpanded] = useState(false);
   const [sentTaskId, setSentTaskId] = useState('');
   const playedSendIds = useRef(new Set<string>());
-  const [taskDetailId, setTaskDetailId] = useState('');
+  const [taskDetailId, updateTaskDetailId] = useState('');
+  function setTaskDetailId(value: React.SetStateAction<string>) { rememberQueueLayout(); updateTaskDetailId(value); }
   const [inspectedTaskId, setInspectedTaskId] = useState('');
   const [annotatingKey, setAnnotatingKey] = useState('');
   const [aligningKey, setAligningKey] = useState('');
@@ -626,13 +650,13 @@ export default function App() {
 
 
   const reader = annotationRead && <div className="annotation-reader" role="region" aria-label="Annotation"><div className="inline-heading"><span>Comment</span><IconButton label="Close annotation" onClick={() => setAnnotationRead(null)}><X size={14}/></IconButton></div>{readerInDraft && draft?.editingTaskId ? <textarea aria-label="Annotation text" value={annotationRead.text} rows={3} disabled={disabled} onChange={event => { const value = { ...annotationRead, text: event.target.value }; setAnnotationRead(value); board.changeDraft(current => ({ ...current, annotations: current.annotations.map(annotation => annotation.id === value.id ? value : annotation) })); }}/> : <p>{annotationRead.text}</p>}{annotationRead.timeStart !== undefined && <span>Video {timeLabel(annotationRead.timeStart)}{annotationRead.timeEnd !== undefined ? ` – ${timeLabel(annotationRead.timeEnd)}` : ''}</span>}{annotationRead.snapshotAssetId && <img src={board.api.content(annotationRead.snapshotAssetId)} alt="Annotated video frame"/>}</div>;
-  const taskCard = (task: Task, compact = false) => <TaskCard compact={compact} task={task} assets={assets} objects={objects} content={id => board.api.content(id)} locateAsset={locateAsset} onAnnotationView={(value, open) => { if (open) { exitAnnotation(); setInspectedTaskId(value.id); setAnnotationRead(null); } else if (historyOpen) { setInspectedTaskId(current => current === value.id ? '' : current); setAnnotationRead(null); } }}/>;
+  const taskCard = (task: Task, compact = false) => <TaskCard compact={compact} summary={compact && taskDetailId !== task.id} task={task} assets={assets} objects={objects} content={id => board.api.content(id)} locateAsset={locateAsset} onAnnotationView={(value, open) => { if (open) { exitAnnotation(); setInspectedTaskId(value.id); setAnnotationRead(null); } else if (historyOpen) { setInspectedTaskId(current => current === value.id ? '' : current); setAnnotationRead(null); } }}/>;
   const composer = state && draft && <section ref={dock} className="creation-dock" data-canvas-control aria-label="Request composer and queue" onPointerLeave={leaveDock} onPointerEnter={() => window.clearTimeout(queueCloseTimer.current)} onKeyDown={event => { if (event.key === 'Escape') { clearInspection(); setTaskDetailId(''); setQueueExpanded(false); setQueueHovered(false); setQueueFocused(false); instruction.current?.focus(); } }} onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); event.stopPropagation(); } }} onDrop={event => { const files = filesFromTransfer(event.dataTransfer); if (files.length) { event.preventDefault(); event.stopPropagation(); void importFiles(files); } }}>
     {(pending > 0 || historyOpen) && <div className={`queue-stack ${queueOpen ? 'expanded' : ''} ${pending > 1 && !historyOpen ? 'has-stack' : ''}`} data-pending={pending} onPointerEnter={event => { if (event.pointerType === 'mouse') hoverQueue(); }} onFocusCapture={event => { if ((event.target as HTMLElement).matches(':focus-visible')) setQueueFocused(true); }} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setQueueFocused(false); }}>
       {pending > 1 && !historyOpen && <div className="queue-peeks" aria-hidden="true">{Array.from({ length: Math.min(pending - 1, 2) }, (_, index) => <span key={index} style={{ '--peek': index + 1 } as React.CSSProperties}/>)}</div>}
       {historyOpen ? <div className="queue-list history-list" id="request-history" role="region" aria-label="Request history"><div className="inline-heading"><span>Request history</span><IconButton label="Close request history" onClick={() => { clearInspection(); setHistoryOpen(false); document.querySelector<HTMLButtonElement>('.history-toggle')?.focus(); }}><ChevronDown size={14}/></IconButton></div>{state.tasks.length ? [...state.tasks].reverse().map(task => <div key={task.id}>{taskCard(task)}</div>) : <p className="field-hint">Your requests, progress and receipts appear here.</p>}</div> : <div className="queue-list" id="creation-queue" role="list" aria-label="Task queue">
-        {queuedTasks.map((task, index) => <div key={task.id} className={index ? `queue-extra ${queueOpen ? 'open' : ''}` : 'queue-first'} inert={index > 0 && !queueOpen} aria-hidden={index > 0 && !queueOpen}><div className="queue-extra-content"><QueueItem task={task} visible={queueOpen || index === 0} animateSend={sentTaskId === task.id} played={playedSendIds.current}>
-          <div className={`queue-row ${taskDetailId === task.id ? 'detail-open' : ''}`}><button type="button" className="queue-task" aria-label={`View request ${task.sequence}: ${task.snapshot.userRequest.text || 'Attachments and annotations'} — ${statusLabels[task.status]}`} aria-expanded={taskDetailId === task.id} aria-controls={`request-details-${task.id}`} onClick={() => toggleTaskDetail(task)}>{task.status === 'queued' && <span className="queue-task-mark" aria-hidden="true"><Circle size={14}/></span>}<TaskPreviews task={task} content={id => board.api.content(id)}/><span className="queue-title">{task.snapshot.userRequest.text || 'Create from the attachments and annotations.'}</span></button>
+        {queuedTasks.map((task, index) => <div key={task.id} className={index ? `queue-extra ${queueOpen ? 'open' : ''}` : 'queue-first'} inert={index > 0 && !queueOpen} aria-hidden={index > 0 && !queueOpen}><div className="queue-extra-content"><QueueItem task={task} detailOpen={taskDetailId === task.id} visible={queueOpen || index === 0} animateSend={sentTaskId === task.id} played={playedSendIds.current}>
+          <div className={`queue-row ${taskDetailId === task.id ? 'detail-open' : ''}`}><button type="button" className="queue-task" aria-label={`View request ${task.sequence}: ${task.snapshot.userRequest.text || 'Attachments and annotations'} — ${statusLabels[task.status]}`} aria-expanded={taskDetailId === task.id} aria-controls={`request-details-${task.id}`} onClick={() => toggleTaskDetail(task)}>{task.status === 'queued' && <span className="queue-task-mark" aria-hidden="true"><Circle size={14}/></span>}<span className="queue-title" data-queue-layout="title">{task.snapshot.userRequest.text || 'Create from the attachments and annotations.'}</span></button>
           {['blocked', 'interrupted', 'editing'].includes(task.status) && <span className={`status-badge status-${task.status}`} aria-hidden="true">{statusLabels[task.status]}</span>}{task.status === 'queued' && <IconButton label={`Edit request ${task.sequence}`} disabled={disabled || !!draft.editingTaskId} onClick={() => void editRequest(task)}><Pencil size={14}/></IconButton>}{['queued', 'blocked', 'interrupted'].includes(task.status) && <IconButton label={`Cancel request ${task.sequence}`} disabled={disabled || !!cancellingTask} onClick={() => void cancelTask(task)}>{cancellingTask === task.id ? <LoaderCircle size={14} className="spin"/> : <Trash2 size={14}/>}</IconButton>}{taskDetailId === task.id && <IconButton label="Collapse request details" onClick={() => { clearInspection(); setTaskDetailId(''); document.querySelector<HTMLButtonElement>(`.queue-item[data-task-id="${task.id}"] .queue-task`)?.focus({ preventScroll: true }); }}><ChevronDown size={14}/></IconButton>}</div>
           <MotionDisclosure open={taskDetailId === task.id} className="inline-task-detail" id={`request-details-${task.id}`} role="region" aria-label={`Request ${task.sequence}`}>{taskCard(task, true)}</MotionDisclosure>
         </QueueItem></div></div>)}

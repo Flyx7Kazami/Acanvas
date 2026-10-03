@@ -196,7 +196,7 @@ test('shared annotation bubbles and static queue previews preserve snapshot refe
   for (const width of [390, 320]) { await page.setViewportSize({ width, height: 480 }); await expect.poll(async () => row.locator('.queue-title').evaluate(element => element.getBoundingClientRect().width)).toBeGreaterThan(20); expect(await row.locator('.queue-row').evaluate(element => element.getBoundingClientRect().height)).toBe(36); await row.locator('.queue-task').click(); await expect(row.locator('.queue-task')).toHaveAttribute('aria-expanded', 'true'); await row.locator('.queue-task').click(); await expect(row.locator('.queue-task')).toHaveAttribute('aria-expanded', 'false'); }
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.reload(); await expect(page.locator('.queue-item')).toHaveCount(3); expect(JSON.stringify((await app.state()).tasks[1].snapshot)).toBe(immutable); await expect(page.locator('.queue-item').nth(1).locator('.queue-preview-overflow')).toHaveText('+3');
-  await page.locator('.queue-task').first().click(); await expect(page.locator('.inline-task-detail .asset-thumb[data-kind=video] img')).toHaveAttribute('src', firstFrame); await page.getByRole('button', { name: 'Cancel request 1', exact: true }).click(); await page.getByRole('button', { name: 'Request history', exact: true }).click(); await expect(page.locator('.history-list .asset-thumb[data-kind=video] img').first()).toHaveAttribute('src', firstFrame);
+  await page.locator('.queue-task').first().click(); await expect(page.getByRole('region', { name: 'Request 1', exact: true }).locator('.asset-thumb[data-kind=video] img')).toHaveAttribute('src', firstFrame); await page.getByRole('button', { name: 'Cancel request 1', exact: true }).click(); await page.getByRole('button', { name: 'Request history', exact: true }).click(); await expect(page.locator('.history-list .asset-thumb[data-kind=video] img').first()).toHaveAttribute('src', firstFrame);
 });
 
 test('six inline alignment commands batch positions without changing sizes or unselected files', async ({ page, app }, info) => {
@@ -1344,6 +1344,7 @@ test('request details group each annotation once with all snapshot targets in on
   await page.locator('#whiteboard').click({ position: { x: 1000, y: 150 } }); await expect(page.locator('#instruction')).toHaveValue(''); await expect(composer).toHaveAttribute('data-compact', 'false'); expect((await composer.boundingBox())!.width).toBe(720);
   await page.locator('.queue-task').click();
   const details = page.getByRole('region', { name: 'Request 1', exact: true }), groups = details.locator('.task-reference-group[data-annotation-id]');
+  await page.locator('.queue-item').evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
   await expect(groups).toHaveCount(3); await expect(details.locator('.task-item-annotation')).toHaveCount(3);
   for (const [index, annotation] of annotations.entries()) {
     const group = groups.nth(index); await expect(group).toHaveAttribute('data-annotation-id', annotation.id); await expect(group.locator('.task-annotation-text>span')).toHaveText(annotation.text);
@@ -1359,7 +1360,7 @@ test('request details group each annotation once with all snapshot targets in on
     await expect(composer).toHaveAttribute('data-compact', 'false');
     const row = groups.first().locator('.task-reference-row');
     expect(await row.locator('[data-reference-item]').evaluateAll(elements => { const tops = elements.map(element => element.getBoundingClientRect().top); return Math.max(...tops) - Math.min(...tops); })).toBeLessThan(.1);
-    if (width < 400) { expect(await row.evaluate(element => element.scrollWidth > element.clientWidth)).toBeTruthy(); await row.evaluate(element => { element.scrollLeft = element.scrollWidth; }); expect(await row.evaluate(element => element.scrollLeft)).toBeGreaterThan(0); }
+    if (await row.evaluate(element => element.scrollWidth > element.clientWidth)) { await row.evaluate(element => { element.scrollLeft = element.scrollWidth; }); expect(await row.evaluate(element => element.scrollLeft)).toBeGreaterThan(0); }
     await page.screenshot({ path: info.outputPath(`annotation-groups-${width}.png`) });
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -1370,7 +1371,7 @@ test('request details group each annotation once with all snapshot targets in on
   const historyGroups = page.getByRole('region', { name: 'Request history', exact: true }).locator('.task-reference-group[data-annotation-id]');
   await expect(historyGroups).toHaveCount(3);
   for (const group of await historyGroups.all()) {
-    expect(await group.evaluate(element => Array.from(element.children).map(child => child.className))).toEqual(['task-annotation-header', 'task-item-annotation']);
+    expect(await group.evaluate(element => Array.from(element.children).map(child => child.className))).toEqual(['task-annotation-badge', 'task-reference-row', 'task-item-annotation']);
     await expect(group.locator('.task-annotation-text')).toHaveCount(1); await expect(group.locator('.annotation-bubble[data-numbered=true]')).toHaveCount(1);
   }
 });
@@ -1568,4 +1569,74 @@ test('editing one removed source attachment preserves the other original object 
   await app.call('/api/board/operations', 'POST', { sessionId, operations: initial.objects.map(object => ({ type: 'delete', objectId: object.id, expectedVersion: object.version })) }); await expect(page.locator('.board-object')).toHaveCount(0);
   await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Use these sources'); await page.getByRole('button', { name: 'Remove attachment A.txt', exact: true }).click(); await page.getByRole('button', { name: 'Save request', exact: true }).click(); await expect(page.locator('.composer-editing')).toHaveCount(0);
   const task = (await app.state()).tasks[0]; expect(task.snapshot.referenceContent.objects).toEqual([sourceB]); expect(task.snapshot.referenceContent.assets.map(asset => asset.id)).toEqual([sourceB.assetId]);
+});
+
+test('inline queue references move below the instruction and expose every thumbnail in grouped rows', async ({ page, app }, info) => {
+  await open(page, app);
+  const image = await png(page);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(Array.from({ length: 9 }, (_, index) => ({ ...image, name: `Inline reference ${index + 1}.png` })));
+  await expect(page.locator('.board-object')).toHaveCount(9);
+  const initial = await app.state(), sources = initial.objects;
+  const annotations = [
+    { id: 'inline-seven', scope: 'region', objectIds: sources.slice(0, 7).map(object => object.id), bounds: { x: 0, y: 0, width: 2400, height: 400 }, coordinateSpace: 'world', text: 'Keep all seven image references together with this comment.' },
+    { id: 'inline-shared', scope: 'object', objectId: sources[0].id, objectIds: [sources[0].id], assetId: sources[0].assetId, bounds: { x: 0, y: 0, width: 1, height: 1 }, coordinateSpace: 'normalized', text: 'A distinct comment on the same first source.' },
+  ];
+  const saved = await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...initial.draft, text: 'Build a quiet composition from these references. Keep the framing generous and preserve the relationships between the images, even when the instruction spans several lines.', attachments: initial.assets.map(asset => asset.id), annotations });
+  const sent = await app.call(`/api/sessions/${initial.session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision });
+  await page.reload();
+  const item = page.locator('.queue-item'), details = item.locator('.inline-task-detail'), taskButton = item.locator('.queue-task');
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  const settled = () => item.evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
+  await expect(item.locator('.queue-preview')).toHaveCount(3); await expect(item.locator('.queue-preview-overflow')).toHaveText('+1');
+  await taskButton.focus();
+  const motion = await item.evaluate(async element => {
+    const source = element.querySelector<HTMLElement>('.queue-preview')!, title = element.querySelector<HTMLElement>('.queue-title')!;
+    const position = () => { const box = element.getBoundingClientRect(), thumb = source.getBoundingClientRect(), text = title.getBoundingClientRect(); return { time: performance.now(), x: thumb.x - box.x, y: thumb.y - box.y, textX: text.x - box.x, textY: text.y - box.y, pageY: thumb.y, titlePageY: text.y }; };
+    const sample = async () => { const frames = [position()], start = performance.now(); while (performance.now() - start < 430) { await new Promise(requestAnimationFrame); frames.push(position()); } return frames; };
+    const before = position(); element.querySelector<HTMLButtonElement>('.queue-task')!.click(); const opening = await sample();
+    const sameNode = element.contains(source); element.querySelector<HTMLButtonElement>('[aria-label="Collapse request details"]')!.click(); const closing = await sample();
+    return { before, opening, closing, sameNode };
+  });
+  await writeFile(info.outputPath('inline-reference-motion.json'), JSON.stringify(motion, null, 2));
+  expect(motion.sameNode).toBeTruthy();
+  expect(motion.opening.at(-1)!.y - motion.before.y).toBeGreaterThan(30); expect(motion.before.textX - motion.opening.at(-1)!.textX).toBeGreaterThan(50);
+  expect(new Set(motion.opening.map(frame => Math.round(frame.y))).size).toBeGreaterThan(8); expect(new Set(motion.closing.map(frame => Math.round(frame.y))).size).toBeGreaterThan(8);
+  expect(Math.abs(motion.closing.at(-1)!.y - motion.before.y)).toBeLessThan(.5); expect(Math.abs(motion.closing.at(-1)!.textX - motion.before.textX)).toBeLessThan(.5);
+  for (const frames of [motion.opening, motion.closing]) {
+    const start = frames[0], end = frames.at(-1)!;
+    for (const key of ['y', 'textY'] as const) { expect(Math.min(...frames.map(frame => frame[key]))).toBeGreaterThanOrEqual(Math.min(start[key], end[key]) - 12); expect(Math.max(...frames.map(frame => frame[key]))).toBeLessThanOrEqual(Math.max(start[key], end[key]) + 12); }
+    expect(Math.abs(frames[1].pageY - start.pageY)).toBeLessThan(35); expect(Math.abs(frames[1].titlePageY - start.titlePageY)).toBeLessThan(35);
+    expect(Math.abs(frames.at(-2)!.pageY - end.pageY)).toBeLessThan(.5); expect(Math.abs(frames.at(-2)!.titlePageY - end.titlePageY)).toBeLessThan(.5);
+    for (let index = 1; index < frames.length; index++) if (frames[index - 1].time - start.time > 280) { expect(Math.abs(frames[index].pageY - frames[index - 1].pageY)).toBeLessThan(2); expect(Math.abs(frames[index].titlePageY - frames[index - 1].titlePageY)).toBeLessThan(2); }
+  }
+  const geometry: unknown[] = [];
+  for (const theme of ['light', 'dark']) {
+    if (theme === 'dark') await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+    for (const width of [1440, 390, 320]) {
+      await page.setViewportSize({ width, height: width === 1440 ? 1000 : 700 });
+      await expect(item.locator('.queue-preview')).toHaveCount(width <= 360 ? 1 : 3); await expect(item.locator('.queue-preview-overflow')).toHaveText(width <= 360 ? '+3' : '+1');
+      await taskButton.click(); await settled();
+      const groups = details.locator('.task-reference-group[data-annotation-id]'); await expect(groups).toHaveCount(2); await expect(details.locator('.task-reference-source')).toHaveCount(10); await expect(details.locator('.queue-preview-overflow')).toHaveCount(0);
+      expect(await item.innerText()).not.toMatch(/Inline reference \d+\.png/);
+      const measure = await item.evaluate(element => {
+        const row = element.querySelector('.queue-row')!.getBoundingClientRect(), mark = element.querySelector('.queue-task-mark')!.getBoundingClientRect(), content = element.querySelector('.task-detail-content')!, style = getComputedStyle(content), groups = Array.from(element.querySelectorAll('[data-annotation-id]')).map(group => { const badge = group.querySelector('.task-annotation-badge')!.getBoundingClientRect(), images = group.querySelector('.task-reference-row')!.getBoundingClientRect(), comment = group.querySelector('.task-item-annotation')!.getBoundingClientRect(); return { badge, images, comment }; });
+        return { circleDelta: mark.y + mark.height / 2 - (row.y + row.height / 2), background: style.backgroundColor, border: style.borderWidth, radius: style.borderRadius, overflow: document.documentElement.scrollWidth - innerWidth, groups };
+      });
+      expect(Math.abs(measure.circleDelta)).toBeLessThan(.5); expect(measure.background).toBe('rgba(0, 0, 0, 0)'); expect(measure.border).toBe('0px'); expect(measure.radius).toBe('0px'); expect(measure.overflow).toBe(0);
+      for (const group of measure.groups) { expect(group.badge.right).toBeLessThanOrEqual(group.images.left); expect(group.images.right).toBeLessThanOrEqual(group.comment.left); expect(Math.abs(group.badge.y + group.badge.height / 2 - (group.comment.y + group.comment.height / 2))).toBeLessThan(.5); }
+      const imageRow = groups.first().locator('.task-reference-row');
+      if (width < 400) { expect(await imageRow.evaluate(element => element.scrollWidth > element.clientWidth)).toBeTruthy(); await imageRow.evaluate(element => { element.scrollLeft = element.scrollWidth; }); expect(await imageRow.evaluate(element => element.scrollLeft)).toBeGreaterThan(0); }
+      geometry.push({ width, theme, ...measure }); await page.screenshot({ path: info.outputPath(`inline-queue-${theme}-${width}.png`) });
+      await item.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await settled(); await expect(taskButton).toBeFocused(); await expect(details).toHaveAttribute('aria-hidden', 'true');
+    }
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await item.evaluate(async element => { const button = element.querySelector<HTMLButtonElement>('.queue-task')!; button.click(); await new Promise(resolve => setTimeout(resolve, 75)); button.click(); await new Promise(resolve => setTimeout(resolve, 65)); button.click(); }); await settled(); await expect(taskButton).toHaveAttribute('aria-expanded', 'true');
+  await expect(details.locator('.task-reference-source')).toHaveCount(10); expect(await item.evaluate(element => element.getAnimations({ subtree: true }).filter(animation => animation.playState === 'running').length)).toBe(0);
+  const badge = details.getByRole('button', { name: `View annotation 1: ${annotations[0].text}`, exact: true }); await badge.focus(); await badge.press('Enter'); await expect(badge).toBeFocused(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(2);
+  await page.emulateMedia({ reducedMotion: 'reduce' }); await item.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await taskButton.press('Enter');
+  expect(await item.evaluate(element => element.getAnimations({ subtree: true }).length)).toBe(0); await expect(taskButton).toHaveAttribute('aria-expanded', 'true');
+  await item.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(taskButton).toBeFocused();
+  expect((await app.state()).tasks[0].snapshot).toEqual(sent.task.snapshot); expect(errors).toEqual([]);
+  await writeFile(info.outputPath('inline-reference-geometry.json'), JSON.stringify(geometry, null, 2));
 });

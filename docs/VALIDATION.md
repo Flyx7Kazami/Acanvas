@@ -360,3 +360,26 @@ Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直�
 - [收回队列后恢复播放与定位](evidence/video-overlay/context-video-recovered-six-queue-320x480.png)
 
 前三张来自独立审查的隔离 fixture，后两张来自最终执行专项。其它浏览器与更多编码的完整媒体矩阵继续按既有范围推进。
+
+## 队列正文下方引用与连续展开（2026-10-03）
+
+任务详情直接接续在指令下方，保持当前灰阶表面；引用区域为透明背景、0px 边框与 0px 圆角。收起时使用三个引用预览及 +N，360px 以下使用一个预览及 +N；展开时同一组引用节点移到正文下方，显示全部来源。每条批注是一行编号、全部关联缩略图与正文，正文可换行，素材较多时横向滚动；独立附件各显示一次。同一素材属于两条不同批注时保留两条独立关联。所有来源只显示缩略图，文件名保留在辅助名称与悬浮标题中。
+
+标题行在展开后使用释放出的预览宽度，空心圆与正文、操作入口统一居中。缩略图与标题采用双向非线性位移，保留轻微超伸；快速反向从当前显示位置继续，减少动态效果时直接切换。布局先读取容器及全部子节点坐标，再启动高度和位移动画；队列条目完整包含内部留白，动画高度恢复为自然高度时位置连续。
+
+最终 `npm run typecheck`、`npm run build` 和 `git diff --check` 通过。最终聚焦 Chrome 批次 **3/3**（19.1 秒，exit 0）覆盖双向运动、历史快照分组、编辑与 FIFO、键盘焦点、减少动态效果及六组 1440/390/320px × 亮/暗布局。关联回归 **4/4**（49.2 秒，exit 0）覆盖任务批注投影、各状态入口、窄屏控件、显式附件与批注依赖，以及历史 annotation-only 编辑恢复。视频时点/帧批注路径通过；持久引用 DOM 的视频首帧断言改为当前任务区域后，快照预览专项 **1/1**（6.4 秒，exit 0）通过。各批次分别记录，浏览器范围为本机 Chrome。
+
+逐帧实测保留同一缩略图节点；展开时预览下移 46px、正文左移 104px，收回到原坐标，两个方向均有连续中间帧。长指令下圆点与标题行的中心差小于 0.5px；七素材批注、共享素材的不同批注和两个独立附件共十个缩略图全部保留，窄屏实际横滚到末尾。六组布局的页面横向溢出为 0，来源区无可见文件名。75ms/65ms 快速反向后动画结束且控件可操作，批注编号的 Enter 激活及收回后的摘要焦点通过。
+
+初轮测量遗漏动画启动与收尾的屏幕坐标连续性；独立审查识别出先写动画后读坐标导致的大幅跳帧，以及底部外边距在显式高度/自然高度之间折叠产生的 10px 上弹。两项根因已修复。最终采样在 280ms 后逐帧验证标题与缩略图的屏幕坐标变化均小于 2px，包含动画结束的高度交接帧；具体值见[执行记录](evidence/queue-inline-morph/validation.json)。首帧、整个移动范围与收尾均有回归断言。首次 Chrome 启动受沙箱限制，尚未进入场景；取得隔离浏览器权限后完成验证。所有写入测试均使用独立临时项目与素材，正式白板数据、服务进程和系统剪贴板保持。
+
+- [宽屏亮色引用](evidence/queue-inline-morph/inline-queue-light-1440.png)
+- [宽屏暗色引用](evidence/queue-inline-morph/inline-queue-dark-1440.png)
+- [390px 亮色长指令与引用](evidence/queue-inline-morph/inline-queue-light-390.png)
+- [390px 暗色长指令与引用](evidence/queue-inline-morph/inline-queue-dark-390.png)
+- [320px 亮色长指令与引用](evidence/queue-inline-morph/inline-queue-light-320.png)
+- [320px 暗色长指令与引用](evidence/queue-inline-morph/inline-queue-dark-320.png)
+- [双向首尾逐帧坐标](evidence/queue-inline-morph/inline-reference-motion.json)
+- [六组布局与圆点中心测量](evidence/queue-inline-morph/inline-reference-geometry.json)
+
+独立干净上下文最终验收 PASS，五项需求及动画连续性全部通过，两项 P2 动画发现已关闭。正式 4317 页面的 index、当前 JS 和 CSS 经只读 HTTP GET 返回 200，字节内容与当前 dist 一致，见[运行资源核对](evidence/queue-inline-morph/runtime-frontend.json)。
