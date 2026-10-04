@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 export default defineConfig({
   testDir: '.',
-  testMatch: ['frontend.spec.ts', 'import-binding.spec.ts'],
+  testMatch: ['frontend.spec.ts', 'import-binding.spec.ts', 'annotation-system.spec.ts'],
   fullyParallel: false,
   workers: 1,
   timeout: 45_000,

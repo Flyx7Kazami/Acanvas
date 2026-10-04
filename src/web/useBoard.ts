@@ -176,6 +176,11 @@ export function useBoard() {
     return true;
   }, [save, reflectDraft, api]);
 
+  const getDraftFor = useCallback((sessionId: string, draftId?: string) => {
+    const current = drafts.current.get(sessionId)?.value;
+    return current && (!draftId || current.id === draftId) ? current : undefined;
+  }, []);
+
   const changeDraft = useCallback((change: (value: Draft) => Draft) => {
     const current = drafts.current.get(sessionRef.current)?.value;
     if (current && !switchingRef.current) changeDraftFor(current.sessionId, current.id, change);
@@ -277,5 +282,5 @@ export function useBoard() {
     const handler = (event: BeforeUnloadEvent) => { if ([...drafts.current.values()].some(value => value.editRevision !== value.savedEditRevision)) event.preventDefault(); };
     window.addEventListener('beforeunload', handler); return () => window.removeEventListener('beforeunload', handler);
   }, []);
-  return { api, state, draft, draftConflict, view, error, connection, saveState, switching, sending, projectChanged, setError, showError, refresh, changeDraft, changeDraftFor, updateView, switchSession, createSession, send, editTask, operations, flushDraft, resolveDraftConflict };
+  return { api, state, draft, draftConflict, view, error, connection, saveState, switching, sending, projectChanged, setError, showError, refresh, changeDraft, changeDraftFor, getDraftFor, updateView, switchSession, createSession, send, editTask, operations, flushDraft, resolveDraftConflict };
 }
