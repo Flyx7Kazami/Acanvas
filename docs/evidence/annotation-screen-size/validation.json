@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-04",
+  "baseCommit": "b28781c",
+  "change": "Annotation group screen size; world source anchor projected with screenBounds",
+  "frontend": {
+    "javascript": "index-BYFfthA1.js",
+    "css": "index-DKhL6NSy.css"
+  },
+  "checks": [
+    {
+      "command": "npm run build",
+      "result": "PASS",
+      "includes": "frontend and server TypeScript compilation"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run test:browser -- tests/annotation-system.spec.ts --grep 'screen sizes|draft annotations'",
+      "passed": 1,
+      "total": 1,
+      "seconds": 6.6,
+      "exitCode": 0,
+      "scope": "24 fixed-screen size and anchor samples; same active input through pan and zoom"
+    },
+    {
+      "command": "npm run test:browser -- tests/annotation-system.spec.ts --grep 'draft comments autosave|TaskEdit autosaves'",
+      "passed": 2,
+      "total": 2,
+      "seconds": 7.9,
+      "exitCode": 0
+    },
+    {
+      "command": "npm run test:browser -- tests/frontend.spec.ts --grep 'canvas annotation comments|inline comments retain'",
+      "passed": 2,
+      "total": 2,
+      "seconds": 7.7,
+      "exitCode": 0
+    }
+  ],
+  "geometry": {
+    "sampleCount": 24,
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "viewportWidths": [
+      1440,
+      390,
+      320
+    ],
+    "zooms": [
+      0.5,
+      1,
+      1.5,
+      2
+    ],
+    "bubbleScreenSize": 28,
+    "summaryScreenWidth": 220,
+    "fontScreenSize": 13,
+    "fullScreenWidthsByViewport": [
+      360,
+      310,
+      240
+    ],
+    "fullScreenHeight": 160,
+    "sourceScreenGap": 8,
+    "coincidentStackScreenGap": 8,
+    "assetWidthsByZoom": [
+      150,
+      300,
+      450,
+      600
+    ]
+  },
+  "boundaries": {
+    "backendChanged": false,
+    "dataModelChanged": false,
+    "annotationBubbleChanged": false,
+    "productionBoardWrites": false,
+    "productionServiceRestart": false,
+    "tests": "isolated temporary projects",
+    "browser": "Google Chrome"
+  }
+}

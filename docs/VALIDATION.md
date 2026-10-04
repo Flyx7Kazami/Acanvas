@@ -441,3 +441,18 @@ Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直�
 - [390px 亮色全文](evidence/annotation-system/annotation-full-light-390.png)与[暗色全文](evidence/annotation-system/annotation-full-dark-390.png)
 - [320px 亮色全文](evidence/annotation-system/annotation-full-light-320.png)与[暗色全文](evidence/annotation-system/annotation-full-dark-320.png)
 - [构建及各测试批次](evidence/annotation-system/validation.json)
+
+
+## Annotation 屏幕尺寸与素材锚点（2026-10-04 后续调整）
+
+按用户最新确认，批注编号、短评、全文及正文在画布缩放时保持屏幕尺寸。统一的 `CanvasAnnotationNote` 组件位于白板屏幕层，通过 `screenBounds` 将素材世界坐标转换一次后定位；素材和区域轮廓继续使用画布世界变换。编号 28px、短评宽 220px、正文 13px、素材外间距及同锚点堆叠间距 8px 均保持。全文高 160px，宽度仅由实际窗口决定：1440px 为 360px、390px 为 310px、320px 为 240px；同一窗口内各缩放级别保持宽度，靠近边缘时保持锚点与方位，允许画布裁切。来源缩略图区按全文可用宽度横向滚动。原 `AnnotationBubble` 图形与现有批注身份、草稿自动保存、任务快照、视频帧及局部完成逻辑沿用。
+
+`npm run build`（含前后端 TypeScript 编译）及 `git diff --check` 通过。缩放与焦点专项 **1/1**（6.6 秒，exit 0）覆盖 1440/390/320px × 亮/暗 × 0.5/1/1.5/2 共 24 组：素材实测宽 150/300/450/600px，编号始终 28px、短评始终 220px、文字实际高度及全文框在各窗口内保持稳定；全文与素材始终保持 8px 外间距，横向编号/正文间距保持 8px。全文已打开时继续平移和缩放，同一 textarea 节点、正文、尺寸及焦点样式保持；原缩放控件可操作，固定工具尺寸保持，批注入口保持相机位置，页面横向溢出为 0。
+
+草稿创建/自动保存/刷新/双入口和任务 Save edit/Cancel edit 专项 **2/2**（7.9 秒，exit 0）通过。相同素材多批注堆叠、四边远距离平移及 320px 视频全文阅读的既有回归 **2/2**（7.7 秒，exit 0）通过。此轮共五个聚焦场景；验证使用独立临时项目与素材，正式白板数据、服务进程、系统配置和剪贴板保持。本轮浏览器范围为本机 Google Chrome。独立验收由主智能体记录。
+
+- [24 组固定屏幕尺寸与锚点测量](evidence/annotation-screen-size/annotation-screen-geometry.json)
+- [1440px 亮色全文](evidence/annotation-screen-size/annotation-full-light-1440.png)与[暗色全文](evidence/annotation-screen-size/annotation-full-dark-1440.png)
+- [390px 亮色全文](evidence/annotation-screen-size/annotation-full-light-390.png)与[暗色全文](evidence/annotation-screen-size/annotation-full-dark-390.png)
+- [320px 亮色边缘全文](evidence/annotation-screen-size/annotation-full-light-320.png)与[暗色边缘全文](evidence/annotation-screen-size/annotation-full-dark-320.png)
+- [本轮构建与聚焦验证](evidence/annotation-screen-size/validation.json)

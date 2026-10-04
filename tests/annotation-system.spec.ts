@@ -340,7 +340,7 @@ test('running and history annotations render real text without writes and seek v
   expect((await app.state()).draft).toEqual(before.draft); expect((await app.state()).tasks[0].snapshot).toEqual(original.snapshot);
 });
 
-test('annotation text, bubble and full panel share world scaling while focus and fixed toolbar stay stable', async ({ page, app }, info) => {
+test('annotation text, bubble and full panel keep screen sizes while anchors follow zoom and focus stays stable', async ({ page, app }, info) => {
   await open(page, app); const [object] = await importImages(page, app);
   const text = 'Keep the relationships clear and preserve the quiet light. '.repeat(36), note = annotation(object, 'scale-note', text);
   await seedDraft(app, [note]); await page.reload();
@@ -363,17 +363,17 @@ test('annotation text, bubble and full panel share world scaling while focus and
           range.selectNodeContents(summary.querySelector('span') || summary);
           return { pin, summary: rect, textHeight: range.getBoundingClientRect().height, object, cssWidth: getComputedStyle(summary).width, inWorld: !!element.closest('.canvas-world'), overflow: document.documentElement.scrollWidth - innerWidth };
         });
-        expect(metrics.inWorld).toBeTruthy(); expect(metrics.cssWidth).toBe('220px'); expect(metrics.summary.width).toBeCloseTo(220 * target, 3);
-        expect(metrics.pin.width).toBeCloseTo(28 * target, 3); expect(metrics.object.width).toBeCloseTo(300 * target, 3); expect(metrics.overflow).toBe(0);
-        expect(metrics.summary.width / metrics.object.width).toBeCloseTo(220 / 300, 4); expect(metrics.pin.width / metrics.object.width).toBeCloseTo(28 / 300, 4);
-        const normalizedText = metrics.textHeight / target; textHeight ??= normalizedText; expect(normalizedText).toBeCloseTo(textHeight, 1);
+        expect(metrics.inWorld).toBeFalsy(); expect(metrics.cssWidth).toBe('220px'); expect(metrics.summary.width).toBeCloseTo(220, 3);
+        expect(metrics.pin.width).toBeCloseTo(28, 3); expect(metrics.object.width).toBeCloseTo(300 * target, 3); expect(metrics.overflow).toBe(0);
+        expect(metrics.summary.x - metrics.pin.right).toBeCloseTo(8, 3); expect(metrics.pin.x).toBeCloseTo(metrics.object.x, 3); expect(metrics.object.y - metrics.summary.bottom).toBeCloseTo(8, 3);
+        textHeight ??= metrics.textHeight; expect(metrics.textHeight).toBeCloseTo(textHeight, 1);
         const camera = await page.locator('.canvas-world').getAttribute('style'); await page.locator('.annotation-content').click();
         const panel = full(page), input = editInput(page); await expect(panel).toHaveAttribute('data-comment-mode', 'edit');
-        const panelBounds = (await panel.boundingBox())!; expect(panelBounds.width).toBeCloseTo(360 * target, 3); expect(panelBounds.height).toBeCloseTo(160 * target, 3);
+        const panelBounds = (await panel.boundingBox())!; expect(panelBounds.width).toBeCloseTo(Math.min(360, width - 80), 3); expect(panelBounds.height).toBeCloseTo(160, 3); expect(panelBounds.x - metrics.object.x).toBeCloseTo(36, 3); expect(metrics.object.y - (panelBounds.y + panelBounds.height)).toBeCloseTo(8, 3);
         const font = await input.evaluate(element => getComputedStyle(element).fontSize); inputFont ??= font; expect(font).toBe(inputFont);
         await input.evaluate(element => (element as HTMLTextAreaElement).blur());
         const unfocused = { panel: await appearance(panel), input: await appearance(input) };
-        await input.focus(); expect({ panel: await appearance(panel), input: await appearance(input) }).toEqual(unfocused);
+        await input.evaluate(element => element.focus({ preventScroll: true })); expect({ panel: await appearance(panel), input: await appearance(input) }).toEqual(unfocused);
         expect(await page.locator('.canvas-world').getAttribute('style')).toBe(camera);
         const scroll = await input.evaluate(element => { const field = element as HTMLTextAreaElement; field.scrollTop = field.scrollHeight; return { max: field.scrollHeight - field.clientHeight, top: field.scrollTop }; });
         expect(scroll.max).toBeGreaterThan(0); expect(scroll.top).toBeGreaterThan(0);
@@ -383,7 +383,7 @@ test('annotation text, bubble and full panel share world scaling while focus and
         if (target === 1) await page.screenshot({ path: info.outputPath(`annotation-full-${theme}-${width}.png`) });
         await input.press('Escape'); await expect(page.locator('.annotation-full')).toHaveCount(0); await expect(summary).toHaveCount(1);
       }
-      await page.screenshot({ path: info.outputPath(`annotation-world-${theme}-${width}.png`) });
+      await page.screenshot({ path: info.outputPath(`annotation-screen-${theme}-${width}.png`) });
     }
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -394,8 +394,23 @@ test('annotation text, bubble and full panel share world scaling while focus and
   const done = page.getByRole('button', { name: 'Done', exact: true }); await done.evaluate(element => (element as HTMLElement).blur());
   const idle = await appearance(done); await page.keyboard.press('Tab'); await done.focus(); await expect(done).toBeFocused();
   expect(await appearance(done)).not.toEqual(idle);
+  const retainedInput = await editInput(page).elementHandle();
+  const beforePan = await full(page).boundingBox(), sourceBeforePan = await page.locator('.board-object').boundingBox();
+  await page.locator('#whiteboard').dispatchEvent('wheel', { deltaX: 35, deltaY: 45, clientX: 1000, clientY: 100, bubbles: true, cancelable: true });
+  await expect.poll(async () => (await full(page).boundingBox())!.x).toBeCloseTo(beforePan!.x - 35, 3);
+  const afterPan = (await full(page).boundingBox())!, sourceAfterPan = (await page.locator('.board-object').boundingBox())!;
+  expect(afterPan.width).toBeCloseTo(beforePan!.width, 3); expect(afterPan.height).toBeCloseTo(beforePan!.height, 3);
+  expect(afterPan.y).toBeCloseTo(beforePan!.y - 45, 3); expect(sourceAfterPan.x).toBeCloseTo(sourceBeforePan!.x - 35, 3); expect(sourceAfterPan.y).toBeCloseTo(sourceBeforePan!.y - 45, 3);
+  for (const target of [.5, 1, 1.5, 2]) {
+    const current = await worldZoom();
+    await page.locator('#whiteboard').dispatchEvent('wheel', { deltaY: -Math.log(target / current) / .005, ctrlKey: true, clientX: 720, clientY: 400, bubbles: true, cancelable: true });
+    await expect.poll(worldZoom).toBeCloseTo(target, 5);
+    const panel = (await full(page).boundingBox())!, source = (await page.locator('.board-object').boundingBox())!;
+    expect(panel.width).toBeCloseTo(360, 3); expect(panel.height).toBeCloseTo(160, 3); expect(source.y - (panel.y + panel.height)).toBeCloseTo(8, 3); expect(panel.x - source.x).toBeCloseTo(36, 3);
+    expect(await retainedInput!.evaluate(element => element.isConnected)).toBeTruthy(); await expect(editInput(page)).toHaveValue(text);
+  }
   expect((await app.state()).draft.annotations).toEqual([note]);
-  await writeFile(info.outputPath('annotation-world-geometry.json'), JSON.stringify(samples, null, 2));
+  await writeFile(info.outputPath('annotation-screen-geometry.json'), JSON.stringify(samples, null, 2));
 });
 
 test('TaskEdit keeps removed-source and multi-source snapshot references while editing the existing annotation identity', async ({ page, app }) => {

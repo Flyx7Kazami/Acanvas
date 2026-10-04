@@ -1,19 +1,20 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
-import type { Rect } from './geometry';
+import type { SessionView } from '../shared/types';
+import { screenBounds, type Rect } from './geometry';
 import { AnnotationBubble } from './AnnotationBubble';
 import { AnnotationCommentControl, type AnnotationCommentControlProps } from './AnnotationCommentControl';
 
-export function CanvasAnnotationNote({ canvas, bounds, annotationId, number, active, control, onOpen }: { canvas: RefObject<HTMLDivElement | null>; bounds: Rect; annotationId: string; number: number; active: boolean; control: AnnotationCommentControlProps; onOpen: () => void }) {
+export function CanvasAnnotationNote({ canvas, bounds, view, annotationId, number, active, control, onOpen }: { canvas: RefObject<HTMLDivElement | null>; bounds: Rect; view: SessionView; annotationId: string; number: number; active: boolean; control: AnnotationCommentControlProps; onOpen: () => void }) {
   const group = useRef<HTMLDivElement>(null), element = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const board = canvas.current, node = group.current, note = element.current;
     if (!board || !node || !note) return;
     const previous = [...board.querySelectorAll<HTMLElement>('.canvas-annotation-group')].filter(value => !!(node.compareDocumentPosition(value) & Node.DOCUMENT_POSITION_PRECEDING));
     const layout = () => {
-      const height = Math.max(28, note.offsetHeight);
+      const anchor = screenBounds(bounds, view), height = Math.max(28, note.offsetHeight);
       node.dataset.anchorX = String(bounds.x); node.dataset.anchorY = String(bounds.y);
       const offset = previous.filter(value => Number(value.dataset.anchorX) === bounds.x && Number(value.dataset.anchorY) === bounds.y).reduce((sum, value) => sum + value.offsetHeight + 8, 0);
-      node.style.left = `${bounds.x}px`; node.style.top = `${bounds.y - 8 - height - offset}px`; node.style.height = `${height}px`;
+      node.style.left = `${anchor.x}px`; node.style.top = `${anchor.y - 8 - height - offset}px`; node.style.height = `${height}px`;
       node.dataset.positioned = 'true';
       const viewport = board.getBoundingClientRect(), rect = node.getBoundingClientRect();
       node.inert = rect.right <= viewport.left || rect.left >= viewport.right || rect.bottom <= viewport.top || rect.top >= viewport.bottom;

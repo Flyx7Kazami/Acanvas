@@ -242,13 +242,13 @@ details[open] summary svg { rotate: 180deg; }
 .canvas-annotation-note { position: relative; pointer-events: auto; }
 .canvas-annotation-summary { display: block; width: 220px; height: 28px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; padding: 4px 0; font-size: 13px; line-height: 20px; background: transparent; }
 .canvas-annotation-summary:hover { color: var(--annotation); }
-.annotation-full { display: flex; flex-direction: column; width: 360px; height: 160px; padding: 12px; border: 0; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+.annotation-full { display: flex; flex-direction: column; width: min(360px,calc(100vw - 80px)); height: 160px; padding: 12px; border: 0; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
 .annotation-fulltext { display: block; flex: 1; min-height: 0; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; font-size: 13px; line-height: 22px; white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; scrollbar-width: thin; resize: none; outline: 0; box-shadow: none; }
 .annotation-fulltext::placeholder { color: var(--muted); }
 .annotation-fulltext:focus,.annotation-fulltext:focus-visible,.annotation-full input:focus,.annotation-full input:focus-visible { outline: 0; box-shadow: none; }
 .annotation-footer { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; min-height: 30px; margin-top: 8px; }
 .annotation-context { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
-.annotation-source-thumbs { display: flex; gap: 4px; max-width: 220px; overflow: auto; }
+.annotation-source-thumbs { display: flex; min-width: 0; gap: 4px; max-width: 220px; overflow: auto; }
 .annotation-source-thumbs .asset-thumb { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 0; }
 .annotation-done,.annotation-media-action { display: inline-flex; align-items: center; flex-shrink: 0; padding: 4px 6px; border-radius: 5px; background: transparent; color: var(--muted); font-size: 12px; }
 .annotation-done:hover,.annotation-media-action:hover { background: var(--soft); color: var(--ink); }

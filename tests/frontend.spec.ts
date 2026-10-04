@@ -146,8 +146,8 @@ test('canvas annotation comments wrap and follow markers across edges themes zoo
         await page.reload(); await expect(page.locator('.zoom-label')).toHaveText(`${Math.round(zoom * 100)}%`);
         const notes = page.locator('.canvas-annotation-comment');
         const metrics = await notes.evaluateAll(elements => elements.map(element => { const note = element.getBoundingClientRect(), style = getComputedStyle(element), id = (element as HTMLElement).dataset.annotationId, pin = document.querySelector(`.canvas-annotation-group[data-annotation-id="${id}"] .annotation-pin`)!.getBoundingClientRect(); return { note, pin, side: (element as HTMLElement).dataset.side, font: getComputedStyle(element.querySelector('.canvas-annotation-summary')!).fontSize, overflow: document.documentElement.scrollWidth - innerWidth, hit: document.elementFromPoint(pin.x + pin.width / 2, pin.y + pin.height / 2)?.closest('.annotation-pin')?.getAttribute('aria-label') }; }));
-        expect(metrics).toHaveLength(2); for (const metric of metrics) { expect(metric.note.width).toBeCloseTo(220 * zoom, 1); expect(metric.note.x - metric.pin.x - metric.pin.width).toBeCloseTo(8 * zoom, 1); expect(Math.abs(metric.note.y + metric.note.height / 2 - metric.pin.y - metric.pin.height / 2)).toBeLessThan(.5); expect(metric.note.height).toBeCloseTo(28 * zoom, 1); expect(metric.font).toBe('13px'); expect(metric.pin.width).toBeCloseTo(28 * zoom, 1); expect(metric.hit).toContain('Annotation'); expect(metric.overflow).toBe(0); }
-        expect(metrics[1].note.bottom).toBeLessThan(metrics[0].note.y); expect(metrics[0].note.bottom).toBeLessThanOrEqual(300 - 8 * zoom + .1); expect(metrics[1].note.bottom).toBeLessThanOrEqual(300 - 8 * zoom + .1);
+        expect(metrics).toHaveLength(2); for (const metric of metrics) { expect(metric.note.width).toBeCloseTo(220, 1); expect(metric.note.x - metric.pin.x - metric.pin.width).toBeCloseTo(8, 1); expect(Math.abs(metric.note.y + metric.note.height / 2 - metric.pin.y - metric.pin.height / 2)).toBeLessThan(.5); expect(metric.note.height).toBeCloseTo(28, 1); expect(metric.font).toBe('13px'); expect(metric.pin.width).toBeCloseTo(28, 1); expect(metric.hit).toContain('Annotation'); expect(metric.overflow).toBe(0); }
+        expect(metrics[1].note.bottom).toBeLessThan(metrics[0].note.y); expect(metrics[0].note.bottom).toBeLessThanOrEqual(292.1); expect(metrics[1].note.bottom).toBeLessThanOrEqual(292.1);
         samples.push({ width, dark, zoom, metrics });
       }
       await page.screenshot({ path: info.outputPath(`canvas-comments-${width}-${dark ? 'dark' : 'light'}.png`) });
@@ -477,7 +477,7 @@ test('inline comments retain their targets through delayed snapshots and submit 
   await expect(reader).toBeVisible(); await expect(comment).toHaveCount(0);
   const readerText = reader.locator('.annotation-fulltext');
   await expect(readerText).toHaveText(frame.text); await expect(reader.locator('textarea')).toHaveCount(0);
-  await expect(reader).toHaveCSS('width', '360px'); await expect(reader).toHaveCSS('border-radius', '8px');
+  await expect(reader).toHaveCSS('width', '240px'); await expect(reader).toHaveCSS('border-radius', '8px');
   expect((await app.state()).tasks[0].snapshot.annotations.find(annotation => annotation.id === frame.id)).toEqual(frame);
   expect(await page.locator('.canvas-world').evaluate(element => (element as HTMLElement).style.transform)).toBe(readerView);
   await page.screenshot({ path: info.outputPath('inline-reader-video-320.png') });
