@@ -113,6 +113,10 @@ async function appearance(locator: Locator) {
   });
 }
 
+async function settleNote(locator: Locator) {
+  await locator.evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
+}
+
 test('draft comments autosave, restore and share one editor across numbered canvas and composer entries', async ({ page, app }) => {
   await open(page, app); const [object] = await importImages(page, app);
   await select(page, object);
@@ -368,7 +372,7 @@ test('annotation text, bubble and full panel keep screen sizes while anchors fol
         expect(metrics.summary.x - metrics.pin.right).toBeCloseTo(8, 3); expect(metrics.pin.x).toBeCloseTo(metrics.object.x, 3); expect(metrics.object.y - metrics.summary.bottom).toBeCloseTo(8, 3);
         textHeight ??= metrics.textHeight; expect(metrics.textHeight).toBeCloseTo(textHeight, 1);
         const camera = await page.locator('.canvas-world').getAttribute('style'); await page.locator('.annotation-content').click();
-        const panel = full(page), input = editInput(page); await expect(panel).toHaveAttribute('data-comment-mode', 'edit');
+        const panel = full(page), input = editInput(page); await expect(panel).toHaveAttribute('data-comment-mode', 'edit'); await settleNote(group(page, note.id));
         const panelBounds = (await panel.boundingBox())!; expect(panelBounds.width).toBeCloseTo(Math.min(360, width - 80), 3); expect(panelBounds.height).toBeCloseTo(160, 3); expect(panelBounds.x - metrics.object.x).toBeCloseTo(36, 3); expect(metrics.object.y - (panelBounds.y + panelBounds.height)).toBeCloseTo(8, 3);
         const font = await input.evaluate(element => getComputedStyle(element).fontSize); inputFont ??= font; expect(font).toBe(inputFont);
         await input.evaluate(element => (element as HTMLTextAreaElement).blur());
@@ -381,7 +385,7 @@ test('annotation text, bubble and full panel keep screen sizes while anchors fol
         await expect(page.getByRole('button', { name: /Locate/i })).toHaveCount(0);
         samples.push({ theme, width, target, metrics, panelBounds, font, toolbar: size });
         if (target === 1) await page.screenshot({ path: info.outputPath(`annotation-full-${theme}-${width}.png`) });
-        await input.press('Escape'); await expect(page.locator('.annotation-full')).toHaveCount(0); await expect(summary).toHaveCount(1);
+        await input.press('Escape'); await expect(page.locator('.annotation-full')).toHaveCount(0); await expect(summary).toHaveCount(1); await settleNote(group(page, note.id));
       }
       await page.screenshot({ path: info.outputPath(`annotation-screen-${theme}-${width}.png`) });
     }
@@ -391,6 +395,7 @@ test('annotation text, bubble and full panel keep screen sizes while anchors fol
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click(); await expect.poll(worldZoom).toBeCloseTo(1.2, 5);
   await page.getByRole('button', { name: 'Zoom out', exact: true }).click(); await expect.poll(worldZoom).toBeCloseTo(1, 5);
   await page.locator('.annotation-content').click();
+  await settleNote(group(page, note.id));
   const done = page.getByRole('button', { name: 'Done', exact: true }); await done.evaluate(element => (element as HTMLElement).blur());
   const idle = await appearance(done); await page.keyboard.press('Tab'); await done.focus(); await expect(done).toBeFocused();
   expect(await appearance(done)).not.toEqual(idle);
@@ -411,6 +416,159 @@ test('annotation text, bubble and full panel keep screen sizes while anchors fol
   }
   expect((await app.state()).draft.annotations).toEqual([note]);
   await writeFile(info.outputPath('annotation-screen-geometry.json'), JSON.stringify(samples, null, 2));
+});
+
+test('annotation expansion and retraction keep continuous screen bounds and support interruption and reduced motion', async ({ page, app }, info) => {
+  await open(page, app); const [object, other] = await importImages(page, app, 2);
+  const notes = [annotation(object, 'motion-first', 'Keep the quiet light.\nRetain the soft palette.'), annotation(object, 'motion-second', 'Preserve the spacing.'), annotation(object, 'motion-third', 'Keep this relationship.'), annotation(other, 'motion-other', 'Retain the contrast.')];
+  await seedDraft(app, notes); await page.reload();
+  await page.locator('#whiteboard').dispatchEvent('wheel', { deltaX: 320, deltaY: 0, bubbles: true, cancelable: true });
+  await page.evaluate(() => {
+    const original = Element.prototype.animate;
+    (window as any).noteMotionStarts = 0;
+    Element.prototype.animate = function(...args) {
+      if (this.classList.contains('canvas-annotation-note') || this.classList.contains('canvas-annotation-group')) (window as any).noteMotionStarts++;
+      return original.apply(this, args);
+    };
+  });
+  const first = group(page, notes[0].id), pin = first.locator('.annotation-pin');
+  const geometry = () => page.evaluate(() => {
+    const rect = (element: Element) => { const { x, y, width, height } = element.getBoundingClientRect(); return { x, y, width, height }; };
+    return { notes: Array.from(document.querySelectorAll('.canvas-annotation-group')).map(element => ({ group: rect(element), box: rect(element.querySelector('.canvas-annotation-note')!), pin: rect(element.querySelector('.annotation-pin')!) })), sources: Array.from(document.querySelectorAll('.board-object')).map(rect), camera: (document.querySelector('.canvas-world') as HTMLElement).style.transform };
+  });
+  const frames = async () => first.evaluate(async element => {
+    const animations = element.getAnimations({ subtree: true });
+    if (animations.length !== 2) throw new Error(`Expected two note geometry animations, received ${animations.length}.`);
+    const rect = (element: Element) => { const { x, y, width, height } = element.getBoundingClientRect(); return { x, y, width, height }; };
+    animations.forEach(animation => animation.pause());
+    const samples = [];
+    for (const time of [0, 65, 130, 195, 260]) {
+      animations.forEach(animation => { animation.currentTime = time; });
+      await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+      const field = element.querySelector<HTMLElement>('.annotation-fulltext'), footer = element.querySelector('.annotation-footer');
+      samples.push({ time, box: rect(element.querySelector('.canvas-annotation-note')!), pin: rect(element.querySelector('.annotation-pin')!), groups: Array.from(document.querySelectorAll('.canvas-annotation-group')).map(rect), source: rect(document.querySelector('.board-object')!), background: getComputedStyle(element.querySelector('.canvas-annotation-note')!).backgroundColor, field: field && { ...rect(field), lineHeight: parseFloat(getComputedStyle(field).lineHeight) }, footer: footer && rect(footer) });
+    }
+    animations.forEach(animation => animation.finish());
+    return samples;
+  });
+  const compare = (actual: { x: number; y: number; width: number; height: number }, expected: typeof actual, tolerance = .1) => {
+    for (const key of ['x', 'y', 'width', 'height'] as const) expect(Math.abs(actual[key] - expected[key]), key).toBeLessThan(tolerance);
+  };
+  const evidence = [];
+  for (const width of [1440, 320]) {
+    await page.setViewportSize({ width, height: 760 });
+    for (const zoom of [.5, 1, 1.5, 2]) {
+      const current = await page.locator('.canvas-world').evaluate(element => new DOMMatrix(getComputedStyle(element).transform).a);
+      await page.locator('#whiteboard').dispatchEvent('wheel', { deltaY: -Math.log(zoom / current) / .005, ctrlKey: true, clientX: 80, clientY: 330, bubbles: true, cancelable: true });
+      const before = await geometry();
+      await pin.evaluate(element => (element as HTMLButtonElement).click()); await expect(editInput(page)).toBeFocused();
+      const opened = await frames();
+      compare(opened[0].box, before.notes[0].box); compare(opened[0].pin, before.notes[0].pin);
+      expect(opened[0].field!.height).toBeGreaterThan(22); expect(opened[0].field!.y + opened[0].field!.lineHeight).toBeLessThanOrEqual(opened[0].box.y + opened[0].box.height);
+      expect(opened[0].footer!.y).toBeGreaterThanOrEqual(opened[0].box.y + opened[0].box.height);
+      for (const sample of opened) {
+        expect(sample.source.y - sample.box.y - sample.box.height).toBeCloseTo(8, 1); expect(sample.pin.width).toBe(28);
+        expect(sample.box.x - sample.pin.x - sample.pin.width).toBeCloseTo(8, 2);
+        expect(Math.abs(sample.groups[0].y - sample.groups[1].y - sample.groups[1].height - 8)).toBeLessThan(1);
+        expect(Math.abs(sample.groups[1].y - sample.groups[2].y - sample.groups[2].height - 8)).toBeLessThan(1);
+        compare(sample.groups[3], before.notes[3].group); compare(sample.source, before.sources[0]);
+      }
+      expect(opened[1].box.height).toBeGreaterThan(28 + 132 * .5); expect(opened[1].box.height).toBeLessThan(160);
+      expect(opened.at(-1)!.box.width).toBe(Math.min(360, width - 80)); expect(opened.at(-1)!.box.height).toBe(160);
+      expect((await geometry()).camera).toBe(before.camera);
+      const expanded = await geometry(); await editInput(page).dispatchEvent('keydown', { key: 'Escape', bubbles: true });
+      const closed = await frames(); compare(closed[0].box, expanded.notes[0].box); compare(closed[0].pin, expanded.notes[0].pin);
+      for (const sample of closed) expect(sample.source.y - sample.box.y - sample.box.height).toBeCloseTo(8, 1);
+      expect(closed[1].box.height).toBeLessThan(160 - 132 * .5); expect(closed.at(-1)!.box.height).toBe(28); expect(closed.at(-1)!.box.width).toBe(220);
+      evidence.push({ width, zoom, opened, closed });
+    }
+  }
+  await page.setViewportSize({ width: 1440, height: 760 });
+  await pin.evaluate(element => (element as HTMLButtonElement).click());
+  await first.evaluate(element => { element.getAnimations({ subtree: true }).forEach(animation => { animation.pause(); animation.currentTime = 65; }); });
+  const interrupted = await geometry(); await editInput(page).dispatchEvent('keydown', { key: 'Escape', bubbles: true });
+  const reversed = await frames(); compare(reversed[0].box, interrupted.notes[0].box); compare(reversed[0].pin, interrupted.notes[0].pin);
+  await pin.evaluate(element => (element as HTMLButtonElement).click()); await settleNote(first);
+  const sharedBefore = await geometry();
+  await group(page, notes[1].id).locator('.annotation-pin').evaluate(element => (element as HTMLButtonElement).click());
+  const shared = await page.evaluate(async () => {
+    const animations = document.getAnimations().filter(animation => (animation.effect as KeyframeEffect).target instanceof Element && ((animation.effect as KeyframeEffect).target as Element).closest('.canvas-annotation-group'));
+    if (animations.length !== 4) throw new Error(`Expected four shared-anchor animations, received ${animations.length}.`);
+    const rect = (element: Element) => { const { x, y, width, height } = element.getBoundingClientRect(); return { x, y, width, height }; };
+    animations.forEach(animation => animation.pause()); const samples = [];
+    for (const time of [0, 65, 130, 195, 260]) {
+      animations.forEach(animation => { animation.currentTime = time; });
+      await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+      samples.push(Array.from(document.querySelectorAll('.canvas-annotation-group')).map(element => ({ group: rect(element), box: rect(element.querySelector('.canvas-annotation-note')!), pin: rect(element.querySelector('.annotation-pin')!) })));
+    }
+    animations.forEach(animation => animation.finish()); return samples;
+  });
+  for (let index = 0; index < sharedBefore.notes.length; index++) { compare(shared[0][index].box, sharedBefore.notes[index].box); compare(shared[0][index].pin, sharedBefore.notes[index].pin); }
+  for (const sample of shared) for (let index = 1; index < 3; index++) expect(Math.abs(sample[index - 1].group.y - sample[index].group.y - sample[index].group.height - 8)).toBeLessThan(1);
+  await editInput(page).press('Escape'); await settleNote(group(page, notes[1].id)); await pin.evaluate(element => (element as HTMLButtonElement).click()); await settleNote(first);
+  const input = editInput(page), retained = await input.elementHandle(), starts = await page.evaluate(() => (window as any).noteMotionStarts);
+  await pin.evaluate(element => (element as HTMLButtonElement).click()); expect(await page.evaluate(() => (window as any).noteMotionStarts)).toBe(starts);
+  await input.evaluate(element => (element as HTMLTextAreaElement).blur()); const idleAppearance = await appearance(input); await input.focus(); expect(await appearance(input)).toEqual(idleAppearance);
+  await input.fill('Keep the focused text stable.'); await input.press('End'); const selection = await input.evaluate(element => (element as HTMLTextAreaElement).selectionStart);
+  await input.evaluate(element => { element.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true })); element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', isComposing: true, bubbles: true })); });
+  await expect(input).toBeFocused(); expect(await input.evaluate(element => (element as HTMLTextAreaElement).selectionStart)).toBe(selection);
+  await input.evaluate(element => { element.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true })); });
+  await page.locator('#whiteboard').dispatchEvent('wheel', { deltaX: 15, deltaY: 25, bubbles: true, cancelable: true });
+  await page.locator('#whiteboard').dispatchEvent('wheel', { deltaY: 15, ctrlKey: true, clientX: 80, clientY: 330, bubbles: true, cancelable: true });
+  expect(await retained!.evaluate(element => element.isConnected)).toBeTruthy(); expect(await page.evaluate(() => (window as any).noteMotionStarts)).toBe(starts);
+  await expect(input).toHaveValue('Keep the focused text stable.');
+  await page.emulateMedia({ reducedMotion: 'reduce' }); await input.press('Escape'); await expect(first.locator('.canvas-annotation-note')).toHaveCSS('height', '28px');
+  await first.locator('.canvas-annotation-summary').focus(); await expect(first.locator('.canvas-annotation-note')).toHaveCSS('overflow', 'visible');
+  await pin.evaluate(element => (element as HTMLButtonElement).click()); await expect(first.locator('.canvas-annotation-note')).toHaveCSS('height', '160px');
+  expect(await first.evaluate(element => element.getAnimations({ subtree: true }).length)).toBe(0); expect(await page.evaluate(() => (window as any).noteMotionStarts)).toBe(starts);
+  await page.screenshot({ path: info.outputPath('annotation-motion-light-1440.png') });
+  await writeFile(info.outputPath('annotation-motion-geometry.json'), JSON.stringify({ evidence, reversed, shared, starts }, null, 2));
+});
+
+test('Cancel edit has theme-aware hover and keyboard feedback with stable bounds and restores the ordinary draft', async ({ page, app }, info) => {
+  await open(page, app); await seedDraft(app, [], 'Original queued request.'); const task = await submitDraft(app);
+  await seedDraft(app, [], 'Keep the ordinary draft.'); await page.reload();
+  const samples = [];
+  for (const theme of ['light', 'dark']) for (const width of [1440, 320]) {
+    await page.setViewportSize({ width, height: 760 });
+    const switchTheme = page.getByRole('button', { name: theme === 'dark' ? 'Switch to dark theme' : 'Switch to light theme', exact: true });
+    if (await switchTheme.count()) await switchTheme.click();
+    await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Original queued request.');
+    const cancel = page.getByRole('button', { name: 'Cancel edit', exact: true }); await page.mouse.move(0, 0); await settleNote(page.locator('.composer'));
+    const style = () => cancel.evaluate(element => { const value = getComputedStyle(element), { x, y, width, height } = element.getBoundingClientRect(); return { background: value.backgroundColor, color: value.color, outline: value.outlineStyle, rect: { x, y, width, height } }; });
+    const idle = await style(); await cancel.hover(); await expect.poll(async () => (await style()).background).not.toBe(idle.background);
+    await expect.poll(async () => (await style()).color).not.toBe(idle.color); const hover = await style(); expect(hover.rect).toEqual(idle.rect);
+    await page.mouse.move(0, 0); await page.keyboard.press('Tab'); await cancel.focus(); await expect(cancel).toBeFocused();
+    await expect.poll(async () => (await style()).background).not.toBe(idle.background); const focus = await style(); expect(focus.outline).toBe('solid'); expect(focus.rect).toEqual(idle.rect);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+    if (theme === 'dark' && width === 320) await page.screenshot({ path: info.outputPath('cancel-edit-dark-320.png') });
+    samples.push({ theme, width, idle, hover, focus });
+    await page.locator('#instruction').fill('Discard this edit.'); await cancel.click();
+    await expect(page.locator('#instruction')).toHaveValue('Keep the ordinary draft.'); await expect(cancel).toHaveCount(0);
+    expect((await app.state()).tasks[0].snapshot).toEqual(task.snapshot); expect((await app.state()).tasks[0].status).toBe('queued');
+  }
+  await writeFile(info.outputPath('cancel-edit-feedback.json'), JSON.stringify(samples, null, 2));
+});
+
+test('an open task annotation keeps its full box while ownership changes to the task edit draft', async ({ page, app }) => {
+  await open(page, app); const [object] = await importImages(page, app);
+  const note = annotation(object, 'owner-transition', 'Keep the first comment line.\nRetain its context.');
+  await seedDraft(app, [note], 'Original request.'); const task = await submitDraft(app);
+  await seedDraft(app, [], 'Ordinary draft.'); await page.reload(); await page.locator('.queue-task').click();
+  const ownerNote = group(page, note.id); await ownerNote.locator('.annotation-pin').click(); await expect(full(page)).toHaveAttribute('data-comment-mode', 'view'); await settleNote(ownerNote);
+  const before = await full(page).boundingBox(), retained = await ownerNote.elementHandle();
+  await page.evaluate(() => { const original = Element.prototype.animate; (window as any).ownerTransitionStarts = 0; Element.prototype.animate = function(...args) { if (this.classList.contains('canvas-annotation-note') || this.classList.contains('canvas-annotation-group')) (window as any).ownerTransitionStarts++; return original.apply(this, args); }; });
+  let releaseState!: () => void, enteredState!: () => void;
+  const heldState = new Promise<void>(resolve => { enteredState = resolve; }), stateBarrier = new Promise<void>(resolve => { releaseState = resolve; });
+  await page.route('**/api/state?**', async route => { enteredState(); await stateBarrier; await route.continue(); });
+  try {
+    await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await heldState;
+    await expect(full(page)).toHaveAttribute('data-comment-mode', 'view'); expect(await full(page).boundingBox()).toEqual(before); expect(await retained!.evaluate(element => element.isConnected)).toBeTruthy();
+    releaseState(); await expect(editInput(page)).toHaveValue(note.text); await expect(editInput(page)).toBeFocused();
+    expect(await full(page).boundingBox()).toEqual(before); expect(await retained!.evaluate(element => element.isConnected)).toBeTruthy(); expect(await page.evaluate(() => (window as any).ownerTransitionStarts)).toBe(0);
+    expect((await app.state()).tasks[0].snapshot).toEqual(task.snapshot);
+    await page.getByRole('button', { name: 'Cancel edit', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Ordinary draft.');
+  } finally { releaseState(); await page.unrouteAll({ behavior: 'wait' }); }
 });
 
 test('TaskEdit keeps removed-source and multi-source snapshot references while editing the existing annotation identity', async ({ page, app }) => {

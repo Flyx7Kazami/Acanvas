@@ -242,7 +242,8 @@ details[open] summary svg { rotate: 180deg; }
 .canvas-annotation-note { position: relative; pointer-events: auto; }
 .canvas-annotation-summary { display: block; width: 220px; height: 28px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; padding: 4px 0; font-size: 13px; line-height: 20px; background: transparent; }
 .canvas-annotation-summary:hover { color: var(--annotation); }
-.annotation-full { display: flex; flex-direction: column; width: min(360px,calc(100vw - 80px)); height: 160px; padding: 12px; border: 0; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+.annotation-full { --annotation-height: 160px; --annotation-padding: 12px; display: flex; flex-direction: column; width: min(360px,calc(100vw - 80px)); height: var(--annotation-height); padding: var(--annotation-padding); border: 0; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+.annotation-full-body { display: flex; flex-direction: column; flex: 0 0 calc(var(--annotation-height) - 2 * var(--annotation-padding)); min-height: 0; }
 .annotation-fulltext { display: block; flex: 1; min-height: 0; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; font-size: 13px; line-height: 22px; white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; scrollbar-width: thin; resize: none; outline: 0; box-shadow: none; }
 .annotation-fulltext::placeholder { color: var(--muted); }
 .annotation-fulltext:focus,.annotation-fulltext:focus-visible,.annotation-full input:focus,.annotation-full input:focus-visible { outline: 0; box-shadow: none; }
@@ -277,7 +278,8 @@ details[open] summary svg { rotate: 180deg; }
 
 .composer[data-compact='true'] { width: min(460px,calc(100% - 40px)); }
 .composer-editing { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 2px 6px 0; color: var(--muted); font-size: 10px; }
-.composer-editing button { background: transparent; color: var(--ink); padding: 2px 0; font-size: 10px; }
+.composer-editing button { background: transparent; color: var(--muted); padding: 4px 6px; border-radius: 5px; font-size: 10px; flex-shrink: 0; }
+.composer-editing button:hover:not(:disabled),.composer-editing button:focus-visible { background: var(--hover); color: var(--ink); }
 .queue-list { max-height: min(360px,var(--queue-available-height,45dvh),var(--queue-context-limit,360px)); }
 .queue-extra { display: grid; grid-template-rows: 0fr; opacity: 0; transform: translateY(8px) scale(.985); transform-origin: bottom; transition: grid-template-rows 340ms cubic-bezier(.22,.85,.25,1.14), opacity 200ms var(--ease), transform 340ms cubic-bezier(.22,.85,.25,1.14); }
 .queue-extra.open { grid-template-rows: 1fr; opacity: 1; transform: translateY(0) scale(1); }

@@ -456,3 +456,17 @@ Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直�
 - [390px 亮色全文](evidence/annotation-screen-size/annotation-full-light-390.png)与[暗色全文](evidence/annotation-screen-size/annotation-full-dark-390.png)
 - [320px 亮色边缘全文](evidence/annotation-screen-size/annotation-full-light-320.png)与[暗色边缘全文](evidence/annotation-screen-size/annotation-full-dark-320.png)
 - [本轮构建与聚焦验证](evidence/annotation-screen-size/validation.json)
+
+
+## Annotation 非线性开合与 Cancel edit 反馈（2026-10-04）
+
+短评与全文采用同一批注组件，展开与收回以 260ms `cubic-bezier(.16,1,.3,1)` 连续改变真实屏幕宽高、内边距、表面和编号位置，保持素材外侧 8px 锚点关系。快速反向从当前视觉边界接续；同源批注随当前展开高度保持稳定顺序与间距。全文阅读/编辑、正文输入、IME、平移与缩放沿用现有状态和定位；系统减少动态效果设置直接切换到目标布局。全文在动画期间裁切内容，短评保留外置键盘焦点反馈。Cancel edit 的浅/深主题悬停和键盘焦点分别改变背景及前景，按钮大小和位置保持，取消逻辑沿用原普通草稿恢复。
+
+最终构建（含前后端 TypeScript）和 `git diff --check` 通过，资源为 `index-X_dwDj-c.js` / `index-DCIvxO8w.css`。隔离 Chrome 原普通草稿与 TaskEdit 自动保存/Save edit/Cancel edit **2/2**（9.4 秒，exit 0）；固定屏幕尺寸、动效、取消按钮聚焦批次 **3/3**（46.1 秒，exit 0）；裁切范围调整后的普通草稿、动效及取消按钮 **3/3**（15.0 秒，exit 0）通过；最终首帧内容与归属切换修复后的普通草稿、TaskEdit、动效及真实只读→编辑 **4/4**（16.7 秒，exit 0）通过。固定几何覆盖 1440/390/320px × 浅/深 × 0.5/1/1.5/2 共 24 组；动效在 1440/320px × 四种缩放下测量 0/65/130/195/260ms 的实际屏幕边界，验证首尾连续、非线性进度、8px 素材间距、编号 28px、同源三条及其它来源位置。同源 A 全文→B 全文同时收展、快速反向、textarea 节点/选区/IME、输入和平移缩放保持、减少动态效果及摘要键盘焦点通过。Cancel edit 在 1440/320px × 浅/深四组实际悬停与键盘焦点中保持 hitbox，取消后原草稿、任务内容及队列状态正确恢复。
+
+4317 正式服务首页引用最终资源，两个静态文件与构建产物逐字节一致；此项仅使用 GET 读取。首次受限 Chrome 启动在测试前受 sandbox 限制；隔离测试取得执行权限后完成。取消按钮首批测量遇到输入框原有高度过渡，测试现于布局稳定后测量，最终通过。所有写入使用独立临时项目与素材，正式白板数据、服务进程、系统配置和剪贴板保持。独立验收确认两项 P2 根因修复：内部正文保持最终 136px 布局区域，首帧正文实测高 98px、第一行可见，footer 保持在裁切区外；同一 task/session 批注以任务归属保持组件身份，服务回刷期间继续只读全文，当前编辑草稿 reader 绑定后转为编辑。真实只读→Edit request 全过程保持一个 360×160px 全文框和原位置，动效启动次数为 0；自动聚焦、IME、取消恢复及原快照通过。两项失败用例修复前已复现，最终独立专项验收 PASS。useBoard 和后端保存接口保持。本轮浏览器范围为本机 Google Chrome；主智能体记录完整验收结论。
+
+- [开合与同源切换几何汇总](evidence/annotation-note-motion/motion-geometry-summary.json)
+- [Cancel edit 浅深主题反馈与稳定边界](evidence/annotation-note-motion/cancel-edit-feedback.json)
+- [1440px 展开首帧正文](evidence/annotation-note-motion/annotation-opening-first-frame-1440.png)与[320px 深色取消按钮](evidence/annotation-note-motion/cancel-edit-dark-320.png)
+- [构建与聚焦验证批次](evidence/annotation-note-motion/validation.json)
