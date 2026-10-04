@@ -470,3 +470,30 @@ Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直�
 - [Cancel edit 浅深主题反馈与稳定边界](evidence/annotation-note-motion/cancel-edit-feedback.json)
 - [1440px 展开首帧正文](evidence/annotation-note-motion/annotation-opening-first-frame-1440.png)与[320px 深色取消按钮](evidence/annotation-note-motion/cancel-edit-dark-320.png)
 - [构建与聚焦验证批次](evidence/annotation-note-motion/validation.json)
+
+
+## 首轮多模态画布执行验证（2026-10-04）
+
+统一细分类型与静态能力用于画布、缩略图及任务详情，继续保存既有 image/video/file 资产类型与原文件。CLI、文件选择、粘贴和拖入共用 MIME/扩展名补救。Markdown 使用 markdown-it 14.3.2，禁用 raw HTML，手动链接使用协议允许列表，图片采用路径占位。文档与 HTML 通过布局和内容交互状态分配指针、键盘及滚轮，明确入口和固定屏幕退出条保持可达；文档自由调整宽高，音频仅横向调整宽度并保留当前形态高度。音频显式展开/收回分别保存 220/130px 高度，每次动作写入一次布局；音视频保持单路播放。音频整段或明确时点/区间批注保存原素材和时间，任务编辑保持身份和原起点。移除画布对象后，任务详情继续呈现原 Markdown、音频与 HTML；详细音频的形态切换只影响查看状态。
+
+最终构建（前后端 TypeScript 与 Vite）、类型/几何单元 **2/2**、多模态集成 **7/7**（15.5 秒）与 MP3/M4A 专项 **2/2**（4.3 秒）通过。集成覆盖实际 GIF 屏幕帧变化、Markdown 安全与内部滚动、源字节及整节点引用、音频真实播放和明确时间区间、已有任务编辑、HTML 按需运行/按钮/输入/Escape/外部停止与状态重置、全部导入入口、服务重启后的明确重新加载及草稿保留、已移除来源的详情呈现。MP3 与 AAC M4A 由开发机已有 ffmpeg 生成自有合成素材，实际 Chrome 解码、播放、FFT 条变化、键盘定位、206 原字节范围及音频 MIME 均通过；WAV 由测试生成并实测。既有图片/视频导入、区域/帧/移除来源批注、播放器、四角缩放、固定批注尺寸与行内队列专项 **7/7**（46.7 秒）通过。依赖安装的最终审计报告为 0 vulnerabilities，`git diff --check` 通过。播放器和 HTML 服务边界的独立执行材料分别见相关证据目录；此节只记录集成执行事实。
+
+执行测试只在独立临时项目和自有素材上运行。正式白板与服务在测试期间保持原状态；2026-10-04T14:02:08Z 仅通过 CLI 读取项目与服务身份和任务统计，consumer/running task/active run 均为 0，既有 4 项 queued 保留。最初的新独立审查受线程上限及 CLI 模型可用性限制；用户随后明确授权主智能体亲自审查并本地提交，本轮最终采用下述主审查结果。浏览器实测范围为本机 Google Chrome；其它浏览器、资源包、源码编辑、段落定位、HTML 任意运行状态保存与 GIF 逐帧控制保持既定后续范围。
+
+- [集成执行记录](evidence/multimodal-integration/validation.json)
+- [Markdown 原文占位与阅读](evidence/multimodal-integration/markdown-whole-reference.png)、[GIF 画布引用](evidence/multimodal-integration/gif-reference.png)
+- [音频区间引用](evidence/multimodal-integration/audio-range-reference.png)、[HTML 隔离交互](evidence/multimodal-integration/html-isolated-counter.png)
+- [MP3 实际播放与定位](evidence/multimodal-integration/mp3-real-playback.png)、[M4A 实际播放与定位](evidence/multimodal-integration/m4a-real-playback.png)
+
+### 主智能体最终审查与组件截图
+
+按用户当轮明确指示，由主智能体直接检查最终源码、测试和真实截图。审查覆盖 MIME 分派、Markdown 内容处理、音频图连接与生命周期、播放状态、画布交互、任务原始引用、HTML 授权/来源/权限及服务关闭流程。三项发现完成修复：音频外壳高度与内部形态使用同步非线性过渡，画布和任务详情双向开合保持连续；正常播放取消保留播放器，旧启动请求的拒绝保持新播放，实际媒体错误提供失败处理；HTML 退出消息只作用于本节点的当前交互状态。
+
+主智能体亲自复跑 HTML 安全浏览器 **3/3**（4.2 秒）、类型与 HTML HTTP **7/7**、上述修复 **3/3**（7.6 秒）、真实音频频谱/时间/清理 **3/3**（7.9 秒），全部 exit 0。共 16 项复验通过，最终主审查 **PASS**，无未解决发现。主审查的隔离无限循环停止实测 29.17ms；该场景关闭追踪快照，浏览器安全参数保持默认。播放取消使用 WHATWG 的 AbortError 契约注入验证，随后播放、时钟和 FFT 使用原生媒体；完整预加载与一次慢流尝试未稳定产生原生 pending-play 取消，记录明确区分契约覆盖与原生信号覆盖。
+
+新增截图来自真实应用的临时画板：自有 Markdown 创作简报、可选择配色的单文件 HTML、生成的 GIF 与 24 秒合成音频。实际点击 HTML 配色、启动音频后截图，捕获时音频持续播放；画板素材、任务与宿主队列保持各自原始归属。
+
+- [组件总览](evidence/multimodal-components/overview-expanded.png)
+- [音频紧凑播放](evidence/multimodal-components/audio-compact-playing.png)与[展开频谱](evidence/multimodal-components/audio-expanded-playing.png)
+- [Markdown](evidence/multimodal-components/markdown-creative-brief.png)、[HTML](evidence/multimodal-components/html-color-notes.png)、[GIF](evidence/multimodal-components/gif-drift-study.png)
+- [主审查范围与复验记录](evidence/multimodal-components/main-review.md)

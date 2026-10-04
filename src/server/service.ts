@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync, realpathSync, statSync } from 'node:fs';
 import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
 import type { Annotation, AnnotationInput, Asset, BoardObject, BoardOperation, BoardState, Claim, CompleteInput, Draft, HostBinding, Project, Run, RunIdentity, ServiceIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
+import { contentCapabilities, resolveContentKind } from '../shared/content-types.js';
 
 type Row = Record<string, any>;
 export class ApiFailure extends Error {
@@ -175,8 +176,23 @@ export class CanvasService {
     if (value.coordinateSpace === 'normalized' && (value.bounds.x < 0 || value.bounds.y < 0 || value.bounds.x + value.bounds.width > 1.000001 || value.bounds.y + value.bounds.height > 1.000001)) fail(400, 'invalid_annotation', 'Object annotations must fit within normalized object coordinates.');
     if (value.scope === 'object' && (!value.objectId || value.coordinateSpace !== 'normalized')) fail(400, 'invalid_annotation', 'Object annotations require an object and normalized coordinates.');
     if (value.scope === 'region' && value.coordinateSpace !== 'world') fail(400, 'invalid_annotation', 'Canvas regions require world coordinates.');
-    if (value.timeStart !== undefined && finite(value.timeStart, 'Video time') < 0) fail(400, 'invalid_annotation', 'Video time must be positive.');
-    if (value.timeEnd !== undefined && (finite(value.timeEnd, 'Video end time') < (value.timeStart ?? 0))) fail(400, 'invalid_annotation', 'The video interval must follow its start time.');
+    if (value.timeStart !== undefined && finite(value.timeStart, 'Media time') < 0) fail(400, 'invalid_annotation', 'Media time must be positive.');
+    if (value.timeEnd !== undefined && finite(value.timeEnd, 'Media end time') < (value.timeStart ?? 0)) fail(400, 'invalid_annotation', 'The media interval must follow its start time.');
+    const contentTarget = (annotation: AnnotationInput) => json({ scope: annotation.scope, coordinateSpace: annotation.coordinateSpace, objectId: annotation.objectId, objectIds: [...new Set(annotation.objectIds)].sort(), assetId: annotation.assetId, bounds: { x: annotation.bounds.x, y: annotation.bounds.y, width: annotation.bounds.width, height: annotation.bounds.height }, timeStart: annotation.timeStart, timeEnd: annotation.timeEnd, snapshotAssetId: annotation.snapshotAssetId });
+    const preserved = source?.annotations.some(annotation => annotation.id === value.id && contentTarget(annotation) === contentTarget(value));
+    const referenced = [...new Set([...objectIds, ...(value.objectId ? [value.objectId] : [])])].map(id => source?.referenceContent.objects.find(object => object.id === id) || this.object(id));
+    const targetObject = referenced.find(object => object.id === value.objectId);
+    const targetId = targetObject?.assetId ?? value.assetId;
+    const target = targetId ? source?.referenceContent.assets.find(asset => asset.id === targetId) || this.asset(targetId) : undefined;
+    const kind = resolveContentKind(target);
+    if (!preserved) {
+      if (value.scope === 'object' && !contentCapabilities[kind].region && (value.bounds.x !== 0 || value.bounds.y !== 0 || value.bounds.width !== 1 || value.bounds.height !== 1)) fail(400, 'invalid_annotation', 'This content uses whole-file annotations.');
+      if (value.scope === 'region' && referenced.some(object => !contentCapabilities[resolveContentKind(source?.referenceContent.assets.find(asset => asset.id === object.assetId) || this.asset(object.assetId))].region)) fail(400, 'invalid_annotation', 'Canvas regions reference image or video content.');
+      if ((value.timeStart !== undefined || value.timeEnd !== undefined) && (value.scope !== 'object' || !contentCapabilities[kind].time)) fail(400, 'invalid_annotation', 'Time annotations reference audio or video content.');
+      if (value.timeEnd !== undefined && value.timeStart === undefined) fail(400, 'invalid_annotation', 'A media interval requires its start time.');
+      if (kind === 'audio' && value.snapshotAssetId) fail(400, 'invalid_annotation', 'Audio annotations reference the original audio and its time.');
+      if (value.scope === 'object' && value.assetId && targetObject?.assetId !== value.assetId) fail(400, 'invalid_annotation', 'The annotation asset must match its object.');
+    }
     return structuredClone(value);
   }
   saveDraft(sessionId: string, input: Draft): Draft {

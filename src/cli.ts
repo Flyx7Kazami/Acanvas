@@ -1,9 +1,10 @@
 import { createReadStream } from 'node:fs';
 import { readFile, realpath, stat, writeFile } from 'node:fs/promises';
-import { basename, extname, resolve } from 'node:path';
+import { basename, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import type { HostBinding } from './shared/types.js';
+import { resolveContentMime } from './shared/content-types.js';
 import { within } from './server/service.js';
 import { connectProject, waitForStop } from './server/client-runtime.js';
 
@@ -41,7 +42,6 @@ Empty task next returns task:null and releases the queue consumer.
 The first next/resume can generate a new consumer ID; reuse the returned ID inside that loop.
 Idle and transferred consumer IDs are retired. Start a new activation with a new ID.
 `;
-const fileMime: Record<string, string> = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.avif': 'image/avif', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime', '.pdf': 'application/pdf', '.zip': 'application/zip', '.txt': 'text/plain', '.html': 'text/html' };
 export async function cli(args: string[]): Promise<unknown> {
   if (!args.length || args.includes('--help') || args.includes('-h')) return { help };
   const [group, action] = args;
@@ -105,7 +105,7 @@ export async function cli(args: string[]): Promise<unknown> {
       const allowed = options.has('allow-directory') ? await realpath(required('allow-directory')) : projectRoot;
       if (!within(allowed, file)) throw new Error('The file must be within the project or the explicitly selected --allow-directory.');
       const info = await stat(file); if (!info.isFile()) throw new Error('Choose a regular file.');
-      const params = new URLSearchParams({ name: basename(file), mime: options.get('mime') ?? fileMime[extname(file).toLowerCase()] ?? 'application/octet-stream' });
+      const params = new URLSearchParams({ name: basename(file), mime: resolveContentMime(basename(file), options.get('mime')) });
       if (options.has('task')) { params.set('taskId', required('task')); params.set('sessionId', required('session')); params.set('runId', required('run')); params.set('consumerId', required('consumer')); }
       const response = await fetch(new URL(`/api/assets?${params}`, base), { method: 'POST', headers: { Authorization: `Bearer ${bootstrap.token}`, 'Content-Type': 'application/octet-stream', 'Content-Length': String(info.size) }, body: createReadStream(file) as unknown as BodyInit, duplex: 'half' } as RequestInit & { duplex: string });
       const result = await response.json(); if (!response.ok) throw new Error(JSON.stringify(result)); return result;

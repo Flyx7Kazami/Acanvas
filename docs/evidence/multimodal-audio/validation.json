@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-04",
+  "scope": "Standalone player; isolated temporary Vite root and generated 8-second WAV; original project data and service unchanged",
+  "implementation": [
+    "src/web/AudioCanvasPlayer.tsx",
+    "src/web/useAudioSpectrum.ts",
+    "src/web/audio-canvas.css"
+  ],
+  "tests": [
+    "tests/audio-player.config.ts",
+    "tests/audio-player.spec.ts"
+  ],
+  "commands": [
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run test:browser -- --config tests/audio-player.config.ts --output /tmp/acanvas-audio-final-20261004",
+      "result": "3/3 PASS; 8.5 seconds; exit 0"
+    }
+  ],
+  "verified": [
+    "Actual HTMLAudioElement time advances and native range seeks with pointer and keyboard.",
+    "440Hz and1760Hz sections use actual WebAudio FFT; silence has zero band levels.",
+    "One AudioContext and media source after repeated play; source-to-analyser and analyser-to-destination each connect once.",
+    "Paused and ended states stop FFT reads and rAF; unmount disconnects both nodes and closes context.",
+    "Compact420x130 and280x130; expanded280x220; current/total clocks visible in both forms; controls inside actual bounds.",
+    "Reduced motion and control pointer isolation; card body pointer remains available to canvas.",
+    "Decode failure retains source download."
+  ],
+  "notes": [
+    "No microphone, synthetic waveform, playlist or invented metadata.",
+    "Initial sandbox Chrome launch stopped before tests; isolated execution then approved.",
+    "Native-ended assertions wait for media.ended, not a transient transport label.",
+    "P2 compact clock visibility identified during integration and corrected; final test verifies opacity, text and min-size bounds."
+  ]
+}

@@ -1,3 +1,4 @@
+import { resolveContentMime } from '../shared/content-types';
 import type { ApiError, Asset, BoardOperation, BoardState, Bootstrap, Draft, Session, SessionView, Task } from '../shared/types';
 
 const errorMessages: Record<string, string> = {
@@ -22,12 +23,18 @@ const errorMessages: Record<string, string> = {
   invalid_input: 'Check the entered content and try again.',
   invalid_view: 'Adjust the canvas view and try again.',
   invalid_object: 'Check the file dimensions and try again.',
+  preview_type: 'Choose an HTML file to run a preview.',
+  preview_too_large: 'HTML previews support files up to 10 MB. Download the original file.',
+  preview_missing: 'This preview has expired. Run it again.',
+  preview_unavailable: 'The HTML preview is unavailable. Download the original file.',
   server_error: 'The local service could not complete this action. Try again shortly.',
 };
 
 export class RequestError extends Error {
   constructor(message: string, public status: number, public code: string) { super(message); }
 }
+
+export interface HtmlPreviewGrant { id: string; url: string; origin: string; expiresAt: string }
 
 export class BoardApi {
   private token = '';
@@ -78,6 +85,8 @@ export class BoardApi {
   editTask(sessionId: string, taskId: string, draftId: string, expectedRevision: number, cancel = false) { return this.request<{ task: Task; draft: Draft }>(`/api/sessions/${encodeURIComponent(sessionId)}/tasks/${encodeURIComponent(taskId)}/${cancel ? 'cancel-edit' : 'edit'}`, { method: 'POST', body: JSON.stringify({ draftId, expectedRevision }) }); }
   view(sessionId: string, view: SessionView) { return this.request<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/view`, { method: 'PUT', body: JSON.stringify(view) }); }
   operations(sessionId: string, operations: BoardOperation[]) { return this.request<{ objects: BoardState['objects'] }>('/api/board/operations', { method: 'POST', body: JSON.stringify({ sessionId, operations }) }); }
-  upload(file: Blob, name: string, signal?: AbortSignal) { return this.request<Asset>(`/api/assets?name=${encodeURIComponent(name)}&mime=${encodeURIComponent(file.type || 'application/octet-stream')}`, { method: 'POST', body: file, signal }); }
+  upload(file: Blob, name: string, signal?: AbortSignal) { return this.request<Asset>(`/api/assets?name=${encodeURIComponent(name)}&mime=${encodeURIComponent(resolveContentMime(name, file.type))}`, { method: 'POST', body: file, signal }); }
   content(assetId: string) { return `/api/assets/${encodeURIComponent(assetId)}/content`; }
+  createHtmlPreview(assetId: string) { return this.request<HtmlPreviewGrant>(`/api/assets/${encodeURIComponent(assetId)}/html-preview`, { method: 'POST', body: '{}' }); }
+  revokeHtmlPreview(id: string) { return this.request<{ revoked: boolean }>(`/api/html-previews/${encodeURIComponent(id)}`, { method: 'DELETE' }); }
 }

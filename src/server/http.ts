@@ -1,12 +1,14 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { open, mkdir, realpath, rename, rm, stat } from 'node:fs/promises';
+import { open, mkdir, readFile, realpath, rename, rm, stat } from 'node:fs/promises';
 import { dirname, extname, resolve, relative } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import type { Asset, Bootstrap, CompleteInput, Draft, ServiceRuntime, SessionView } from '../shared/types.js';
+import { resolveContentKind, resolveContentMime, storageAssetKind } from '../shared/content-types.js';
 import { ApiFailure, CanvasService, within } from './service.js';
 import { clearRuntime, publishRuntime } from './runtime.js';
+import { startHtmlPreview } from './html-preview.js';
 
 export interface ServerOptions { root: string; port?: number; maxUploadBytes?: number; webRoot?: string; allowedOrigins?: string[] }
 export interface RunningServer { service: CanvasService; url: string; close: () => Promise<void> }
@@ -22,6 +24,7 @@ const payload = async (request: IncomingMessage): Promise<any> => {
 
 export async function startServer(options: ServerOptions): Promise<RunningServer> {
   const service = new CanvasService(options.root);
+  const preview = await startHtmlPreview(service).catch(error => { service.close(); throw error; });
   const token = randomBytes(32).toString('base64url');
   const maxUploadBytes = options.maxUploadBytes ?? 512 * 1024 * 1024;
   const events = new Set<ServerResponse>();
@@ -51,10 +54,12 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
     response.on('close', () => responses.delete(response));
     response.setHeader('X-Content-Type-Options', 'nosniff');
     response.setHeader('Referrer-Policy', 'no-referrer');
-    response.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
+    const parentPolicy = (parentOrigin: string) => `default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; object-src 'none'; frame-src ${preview.originFor(parentOrigin)}; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`;
+    response.setHeader('Content-Security-Policy', parentPolicy(`http://127.0.0.1:${port}`));
     try {
       if (closing) { response.setHeader('Connection', 'close'); request.resume(); send(response, 503, { error: { code: 'service_closing', message: 'Reconnect after the local service starts.' } }); return; }
       guardSource(request);
+      response.setHeader('Content-Security-Policy', parentPolicy(`http://${request.headers.host}`));
       const url = new URL(request.url ?? '/', `http://127.0.0.1:${port}`);
       const path = url.pathname;
       const method = request.method;
@@ -82,12 +87,18 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
         if (path === '/api/sessions' && method === 'POST') { send(response, 201, service.createSession((await payload(request)).name)); return; }
         if (path === '/api/sessions' && method === 'GET') { send(response, 200, service.sessions()); return; }
         if (path === '/api/board/operations' && method === 'POST') { const input = await payload(request); send(response, 200, service.boardOperations(input.sessionId, input.operations)); return; }
+        const previewAssetMatch = path.match(/^\/api\/assets\/([^/]+)\/html-preview$/);
+        if (previewAssetMatch && method === 'POST') {
+          await payload(request);
+          send(response, 201, preview.issue(decodeURIComponent(previewAssetMatch[1]), request.headers.origin ?? `http://${request.headers.host}`)); return;
+        }
+        const previewMatch = path.match(/^\/api\/html-previews\/([A-Za-z0-9_-]{43})$/);
+        if (previewMatch && method === 'DELETE') { preview.revoke(previewMatch[1]); send(response, 200, { revoked: true }); return; }
         if (path === '/api/assets' && method === 'POST') {
           const declaredLength = Number(request.headers['content-length']);
           if (Number.isFinite(declaredLength) && declaredLength > maxUploadBytes) { request.resume(); throw new ApiFailure(413, 'upload_too_large', `Files may contain up to ${maxUploadBytes} bytes.`); }
           const name = (url.searchParams.get('name') ?? 'attachment').slice(0, 500);
-          const suppliedMime = url.searchParams.get('mime') ?? 'application/octet-stream';
-          const mime = /^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i.test(suppliedMime) ? suppliedMime.toLowerCase() : 'application/octet-stream';
+          const mime = resolveContentMime(name, url.searchParams.get('mime') ?? 'application/octet-stream');
           const id = randomUUID();
           const extension = extname(name).toLowerCase();
           const safeExtension = /^\.[a-z0-9]{1,12}$/.test(extension) ? extension : '';
@@ -112,7 +123,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
             await file.sync(); await file.close();
             await rename(temporary, destination);
             retained = true;
-            const asset: Asset = { id, name, mime, size, kind: mime.startsWith('image/') ? 'image' : mime.startsWith('video/') ? 'video' : 'file', createdAt: new Date().toISOString() };
+            const asset: Asset = { id, name, mime, size, kind: storageAssetKind({ name, mime }), createdAt: new Date().toISOString() };
             send(response, 201, service.registerAsset(asset, relative(service.dataDir, destination), source));
           } finally {
             await file.close().catch(() => {});
@@ -137,8 +148,10 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
             if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start > end || start >= asset.size) { response.setHeader('Content-Range', `bytes */${asset.size}`); throw new ApiFailure(416, 'range_invalid', 'The range is outside this file.'); }
             status = 206; response.setHeader('Content-Range', `bytes ${start}-${end}/${asset.size}`);
           }
-          const download = asset.kind === 'file' || /html|javascript|xml/.test(asset.mime) && asset.mime !== 'image/svg+xml';
-          response.setHeader('Content-Type', download ? 'application/octet-stream' : asset.mime);
+          const normalizedMime = resolveContentMime(asset.name, asset.mime), kind = resolveContentKind(asset);
+          const playableAudio = kind === 'audio' && ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/wave', 'audio/vnd.wave', 'audio/mp4', 'audio/x-m4a', 'audio/aac', 'audio/ogg', 'audio/flac', 'audio/x-flac', 'audio/webm'].includes(normalizedMime);
+          const download = asset.kind === 'file' && !playableAudio || /\.html?$/i.test(asset.name) || /html|javascript|xml/.test(normalizedMime) && normalizedMime !== 'image/svg+xml';
+          response.setHeader('Content-Type', download ? 'application/octet-stream' : normalizedMime);
           response.setHeader('Content-Disposition', `${download || url.searchParams.get('download') === '1' ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(asset.name).replace(/'/g, '%27')}`);
           if (asset.mime === 'image/svg+xml') response.setHeader('Content-Security-Policy', "sandbox; default-src 'none'; style-src 'unsafe-inline'");
           response.setHeader('Cache-Control', 'private, no-store'); response.setHeader('Accept-Ranges', 'bytes');
@@ -186,6 +199,13 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
       let actual: string;
       try { actual = await realpath(candidate); } catch { throw new ApiFailure(404, 'file_missing', 'The application file is unavailable.'); }
       if (!within(webRoot, actual) || !(await stat(actual)).isFile()) throw new ApiFailure(403, 'path_boundary', 'Open an application file.');
+      if (extname(actual) === '.html') {
+        const html = await readFile(actual, 'utf8');
+        const metadata = `<meta name="acanvas-html-preview-origin" content="${preview.originFor(`http://${request.headers.host}`)}">`;
+        const document = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${metadata}</head>`) : `${metadata}${html}`;
+        response.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache', 'Content-Length': Buffer.byteLength(document) });
+        response.end(method === 'HEAD' ? undefined : document); return;
+      }
       response.writeHead(200, { 'Content-Type': mimeTypes[extname(actual)] ?? 'application/octet-stream', 'Cache-Control': 'no-cache' });
       if (method === 'HEAD') response.end(); else createReadStream(actual).pipe(response);
     } catch (error) {
@@ -200,7 +220,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   });
   service.onChange = () => { for (const response of events) response.write('event: change\ndata: {}\n\n'); };
   const heartbeat = setInterval(() => { for (const response of events) response.write(': alive\n\n'); }, 15_000); heartbeat.unref();
-  await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch((error) => { clearInterval(heartbeat); service.close(); throw error; });
+  await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch(async error => { clearInterval(heartbeat); await preview.close(); service.close(); throw error; });
   let shutdown: Promise<void> | undefined;
   const runtime: ServiceRuntime = { project: service.project, ...service.identity(), url: `http://127.0.0.1:${port}` };
   stopService = () => {
@@ -216,7 +236,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
       server.closeIdleConnections();
       const forceTransportClose = setTimeout(() => server.closeAllConnections(), 1000); forceTransportClose.unref();
       try { await Promise.allSettled([...handlers]); await stopped; }
-      finally { clearTimeout(forceTransportClose); service.close(); await clearRuntime(runtime); }
+      finally { clearTimeout(forceTransportClose); await preview.close(); service.close(); await clearRuntime(runtime); }
     })();
     return shutdown;
   };

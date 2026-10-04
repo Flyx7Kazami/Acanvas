@@ -53,6 +53,39 @@ export function resizeBounds(original: Rect, corner: ResizeCorner, delta: Point,
   return boundsAtResizeScale(original, corner, scale);
 }
 
+export function resizeViewportBounds(original: Rect, corner: ResizeCorner, delta: Point, minimum: { width: number; height: number }): Rect {
+  const west = corner.endsWith('w'), north = corner.startsWith('n');
+  const width = Math.max(minimum.width, original.width + (west ? -delta.x : delta.x));
+  const height = Math.max(minimum.height, original.height + (north ? -delta.y : delta.y));
+  return { x: west ? original.x + original.width - width : original.x, y: north ? original.y + original.height - height : original.y, width, height };
+}
+
+export function snapViewportResize(original: IdentifiedRect, corner: ResizeCorner, delta: Point, objects: IdentifiedRect[], view: View, viewport: { width: number; height: number }, minimum: { width: number; height: number }, bypass = false, thresholdPixels = 6, axes: ('x' | 'y')[] = ['x', 'y']): { bounds: Rect; guides: SnapGuide[] } {
+  const bounds = resizeViewportBounds(original, corner, delta, minimum), guides: SnapGuide[] = [];
+  if (bypass) return { bounds, guides };
+  for (const axis of axes) {
+    const size = axis === 'x' ? 'width' : 'height', reverse = axis === 'x' ? corner.endsWith('w') : corner.startsWith('n');
+    const anchor = original[axis] + (reverse ? original[size] : 0), moving = bounds[axis] + (reverse ? 0 : bounds[size]);
+    let nearest: { position: number; target: Rect; distance: number } | undefined;
+    for (const target of objects) {
+      if (target.id === original.id) continue;
+      const screen = screenBounds(target, view);
+      if (screen.x >= viewport.width || screen.x + screen.width <= 0 || screen.y >= viewport.height || screen.y + screen.height <= 0) continue;
+      for (const position of [target[axis], target[axis] + target[size] / 2, target[axis] + target[size]]) {
+        const distance = Math.abs(position - moving) * view.zoom;
+        if (distance <= thresholdPixels && (reverse ? anchor - position : position - anchor) >= minimum[size] && (!nearest || distance < nearest.distance)) nearest = { position, target, distance };
+      }
+    }
+    if (nearest) {
+      bounds[axis] = reverse ? nearest.position : anchor;
+      bounds[size] = Math.abs(anchor - nearest.position);
+      const across = axis === 'x' ? 'y' : 'x', acrossSize = axis === 'x' ? 'height' : 'width';
+      guides.push({ axis, position: nearest.position, start: Math.min(bounds[across], nearest.target[across]), end: Math.max(bounds[across] + bounds[acrossSize], nearest.target[across] + nearest.target[acrossSize]) });
+    }
+  }
+  return { bounds, guides };
+}
+
 export function snapResize(original: IdentifiedRect, corner: ResizeCorner, delta: Point, objects: IdentifiedRect[], view: View, viewport: { width: number; height: number }, bypass = false, thresholdPixels = 6): { bounds: Rect; guides: SnapGuide[] } {
   const bounds = resizeBounds(original, corner, delta);
   if (bypass) return { bounds, guides: [] };

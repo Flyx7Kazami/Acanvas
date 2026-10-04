@@ -26,8 +26,8 @@ async function fixture(t: test.TestContext, maxUploadBytes = 512 * 1024 * 1024) 
     const saved = await call(`/api/sessions/${sessionId}/draft`, 'PUT', { ...draft, text: message });
     return (await call(`/api/sessions/${sessionId}/tasks`, 'POST', { draftId: draft.id, expectedRevision: saved.revision })).task as Task;
   };
-  const upload = async (body: string | Buffer, query = '', expected = 201) => {
-    const response = await fetch(`${running.url}/api/assets?name=sample.png&mime=image/png${query}`, { method: 'POST', body: typeof body === 'string' ? body : new Uint8Array(body), headers: { Authorization: `Bearer ${bootstrap.token}` } });
+  const upload = async (body: string | Buffer, query = '', expected = 201, source = { name: 'sample.png', mime: 'image/png' }) => {
+    const response = await fetch(`${running.url}/api/assets?name=${encodeURIComponent(source.name)}&mime=${encodeURIComponent(source.mime)}${query}`, { method: 'POST', body: typeof body === 'string' ? body : new Uint8Array(body), headers: { Authorization: `Bearer ${bootstrap.token}` } });
     const value = await response.json(); assert.equal(response.status, expected, JSON.stringify(value)); return value as Asset;
   };
   return { root, call, session, state, sendTask, upload, get running() { return running; }, get token() { return bootstrap.token; }, async restart() { await running.close(); running = await startServer({ root, port: 0, maxUploadBytes }); bootstrap = await (await fetch(`${running.url}/api/bootstrap`)).json(); } };
@@ -397,7 +397,7 @@ test('claim and edit share one reservation boundary while the losing action reta
 
 test('request edit restores explicit references while annotation dependencies remain in the snapshot', async t => {
   const f = await fixture(t), session = await f.session('Annotation references');
-  const assets = await Promise.all(['one', 'two', 'three', 'four', 'video frame'].map(value => f.upload(value)));
+  const assets = await Promise.all(['one', 'two', 'three', 'four', 'video frame'].map((value, index) => f.upload(value, '', 201, index === 3 ? { name: 'sample.mp4', mime: 'video/mp4' } : undefined)));
   const objects = assets.slice(0, 4).map((asset, index) => ({ id: `annotation-source-${index}`, assetId: asset.id, x: index * 120, y: 20, width: 100, height: 80 }));
   await f.call('/api/board/operations', 'POST', { sessionId: session.id, operations: objects.map(object => ({ type: 'create', object })) });
   const annotations = [
