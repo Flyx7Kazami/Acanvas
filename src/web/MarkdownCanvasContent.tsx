@@ -29,7 +29,7 @@ export function MarkdownCanvasContent({ src, title }: { src: string; title: stri
     void load(); return () => controller.abort();
   }, [src]);
   const current = content?.src === src ? content : undefined;
-  return <div className="markdown-content" role="document" aria-label={title} tabIndex={0}>
+  return <div className="markdown-content" data-canvas-wheel="content" role="document" aria-label={title} tabIndex={0}>
     {current?.error ? <p className="content-message">{current.error}</p> : current?.html !== undefined ? <div className="markdown-body" dangerouslySetInnerHTML={{ __html: current.html }}/> : <p className="content-message">Loading document…</p>}
   </div>;
 }

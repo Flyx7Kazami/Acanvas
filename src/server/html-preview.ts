@@ -6,6 +6,7 @@ import type { HtmlBundle } from '../shared/types.js';
 import { bundleMime, validBundlePath } from '../shared/html-bundle.js';
 import { isContentInteraction } from '../shared/content-hit.js';
 import { resolveContentKind } from '../shared/content-types.js';
+import { installHtmlInputBridge } from '../shared/html-preview-input.js';
 import { installHtmlSnapshotBridge } from '../shared/html-preview-snapshot.js';
 import { ApiFailure, type CanvasService } from './service.js';
 
@@ -72,7 +73,8 @@ export async function startHtmlPreview(service: CanvasService, options: { lifeti
       if (closing || !grants.has(match![1]) || grant.expires <= Date.now()) { deny(response, 404, 'preview_missing'); return; }
       const bridge = `(()=>{const hit=${isContentInteraction.toString()};const send=parent.postMessage.bind(parent),instanceId=${JSON.stringify(match![1])},target=${JSON.stringify(grant.parentOrigin)};${bundle ? 'window' : 'document'}.addEventListener('${bundle ? 'load' : 'DOMContentLoaded'}',()=>send({type:'acanvas:preview-ready',instanceId},target),{once:true});let blankDown=false;document.addEventListener('dragstart',event=>{if(blankDown)event.preventDefault();},{capture:true});document.addEventListener('pointerdown',event=>{blankDown=false;if(event.isTrusted&&event.button===0&&!hit(document.documentElement,event.clientX,event.clientY,event.target)){blankDown=true;send({type:'acanvas:preview-drag',instanceId,pointerId:event.pointerId,x:event.clientX/innerWidth,y:event.clientY/innerHeight},target);}},{capture:true});})();`;
       const snapshotBridge = `(${installHtmlSnapshotBridge.toString()})(${JSON.stringify(match![1])},${JSON.stringify(grant.parentOrigin)});`;
-      const document = `<!doctype html><script>${bridge}${snapshotBridge}</script>${source}`;
+      const inputBridge = `(${installHtmlInputBridge.toString()})(${JSON.stringify(match![1])},${JSON.stringify(grant.parentOrigin)});`;
+      const document = `<!doctype html><script>${inputBridge}${bridge}${snapshotBridge}</script>${source}`;
       const resources = bundle ? `${grant.origin}/preview/${match![1]}/files/` : '';
       response.setHeader('Content-Security-Policy', `sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline'${resources ? ` ${resources}` : ''}; style-src 'unsafe-inline'${resources ? ` ${resources}` : ''}; img-src data:${resources ? ` ${resources}` : ''}; connect-src ${resources || "'none'"}; media-src 'none'; font-src ${resources || "'none'"}; worker-src 'none'; child-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors ${grant.parentOrigin}`);
       response.setHeader('Content-Type', 'text/html; charset=utf-8');

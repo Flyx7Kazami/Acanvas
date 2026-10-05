@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react';
 import { AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignStartHorizontal, AlignStartVertical, ArrowDownToLine, ArrowLeft, ArrowUp, Check, ChevronDown, Circle, Copy, Hand, History, LoaderCircle, Maximize, Minus, Moon, MousePointer2, Pause, Pencil, Play, Plus, Sun, Trash2, Upload, X } from 'lucide-react';
 import type { AnnotationInput, Asset, BoardObject, BoardOperation, Draft, SessionView, Task, TaskStatus } from '../shared/types';
 import { alignedPositions, fitView, intersects, mediaContentRect, normalizedRegion, objectRegion, rectangle, screenToWorld, resizeBounds, resizeViewportBounds, snapViewportResize, snapResize, snapTranslation, unionBounds, zoomAt, type Alignment, type Point, type Rect, type SnapGuide, type ResizeCorner, type ResizeHandle } from './geometry';
@@ -8,6 +8,7 @@ import { filesFromTransfer } from './import';
 import { useComposerLayout, useContextualControls, useNotificationLayout } from './useCanvasLayout';
 import { AnnotationBubble } from './AnnotationBubble';
 import type { BoardApi } from './api';
+import { canvasWheelView, routesWheelToCanvas, type CanvasWheelInput } from './canvas-wheel';
 import { AssetThumb, ContentRenderer } from './ContentRenderer';
 import { contentCapabilities, resolveContentKind, resolveContentMime } from '../shared/content-types';
 import { CanvasAnnotationNote } from './CanvasAnnotationNote';
@@ -328,22 +329,22 @@ export default function App() {
     document.addEventListener('pointerdown', close);
     return () => { document.removeEventListener('pointerdown', close); window.clearTimeout(queueCloseTimer.current); };
   }, []);
+  const canvasWheel = useCallback((event: CanvasWheelInput) => {
+    const element = canvas.current, current = wheelState.current;
+    if (!element || current.disabled || gesture.current) return;
+    fitMotion.interrupt();
+    board.updateView(canvasWheelView(current.view, event, element.getBoundingClientRect()), current.sessionId);
+  }, [board.updateView, fitMotion.interrupt]);
   useEffect(() => {
     const element = canvas.current;
     if (!element) return;
     const wheel = (event: WheelEvent) => {
-      if ((event.target as HTMLElement).closest('[data-canvas-control]')) return;
-      event.preventDefault();
-      const current = wheelState.current;
-      if (current.disabled || gesture.current) return;
-      fitMotion.interrupt();
-      const rect = element.getBoundingClientRect();
-      if (event.ctrlKey || event.metaKey) board.updateView({ ...current.view, ...zoomAt(current.view, Math.exp(-event.deltaY * .005), { x: event.clientX - rect.left, y: event.clientY - rect.top }) }, current.sessionId);
-      else board.updateView({ ...current.view, x: current.view.x - event.deltaX, y: current.view.y - event.deltaY }, current.sessionId);
+      if (!routesWheelToCanvas(element, event)) return;
+      event.preventDefault(); event.stopPropagation(); canvasWheel(event);
     };
-    element.addEventListener('wheel', wheel, { passive: false });
-    return () => element.removeEventListener('wheel', wheel);
-  }, [!!state, board.updateView, fitMotion.interrupt]);
+    element.addEventListener('wheel', wheel, { capture: true, passive: false });
+    return () => element.removeEventListener('wheel', wheel, true);
+  }, [!!state, canvasWheel]);
   useEffect(() => {
     const singlePlayback = (event: Event) => { const active = event.target; if (!(active instanceof HTMLMediaElement)) return; document.querySelectorAll<HTMLMediaElement>('audio,video').forEach(element => { if (element !== active && !element.paused) element.pause(); }); };
     document.addEventListener('play', singlePlayback, true); return () => document.removeEventListener('play', singlePlayback, true);
@@ -791,7 +792,7 @@ export default function App() {
   return <div className="app-shell"><a className="skip-link" href="#whiteboard">Skip to canvas</a>
     <main className="canvas-main"><div id="whiteboard" className={`whiteboard mode-${annotating && !spacePan && mode === 'select' ? 'annotate' : spacePan ? 'pan' : mode} ${dragOver ? 'drag-over' : ''} ${board.switching ? 'is-loading' : ''}`} ref={canvas} tabIndex={0} role="region" aria-label="Project board. Enter selects files, arrow keys move them, and Space pans the canvas." onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={() => { gesture.current = null; setPreview({}); setSelectionRect(null); setSnapGuides([]); setMarkPreview(null); }} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === ' ') { event.preventDefault(); setSpacePan(true); } if (event.key === 'Escape') { if (annotationRead) closeAnnotation(); else if (annotating) exitAnnotation(); else if (aligning) exitAlignment(); else { clearInspection(); selectObjects([]); setMode('select'); } } if (event.key === '+' || event.key === '=') { event.preventDefault(); zoom(1.2); } if (event.key === '-') { event.preventDefault(); zoom(1 / 1.2); } }} onKeyUp={event => { if (event.key === ' ') setSpacePan(false); }} onBlur={() => setSpacePan(false)} onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); setDragOver(true); } }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragOver(false); }} onDrop={event => { event.preventDefault(); setDragOver(false); void importFiles(filesFromTransfer(event.dataTransfer), localPoint(event)); }}>
       <div className="canvas-world" style={{ transform: `translate(${view.x}px,${view.y}px) scale(${view.zoom})` }}>{objects.map((object, index) => { const asset = assetFor(object.assetId); const isSelected = selectedIds.includes(object.id); return <article key={object.id} className={`board-object object-${object.type} ${isSelected ? 'selected' : ''}`} data-object-id={object.id} data-content-kind={resolveContentKind(asset)} data-object-version={object.version} data-selected={isSelected || undefined} style={{ left: object.x, top: object.y, width: object.width, height: object.height }} tabIndex={0} role="group" aria-label={`${asset?.name || 'File'}${isSelected ? ', selected' : ''}`} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectObjects(event.shiftKey ? unique([...selectedIds, object.id]) : [object.id]); } const delta = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key]; if (delta) { event.preventDefault(); event.stopPropagation(); void board.operations([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: object.x + delta[0], y: object.y + delta[1] } }]).catch(() => undefined); } }}>
-        <div className="object-media"><ContentRenderer asset={asset} src={board.api.content(object.assetId)} api={board.api} onReloadBoard={reloadBoard} onBlankPointerDown={event => { event.stopPropagation(); pointerDown(event, true); }} onFrameDrag={(frame, start, event) => frameDrag(object.id, frame, start, event)} disabled={disabled || annotating} error={mediaErrors[object.id]} onSize={size => setMediaSizes(current => ({ ...current, [object.id]: size }))} onError={() => setMediaErrors(current => ({ ...current, [object.id]: true }))} onMediaElement={element => { const refs = resolveContentKind(asset) === 'audio' ? audioRefs.current : videoRefs.current; if (element) (refs as Map<string, HTMLMediaElement>).set(object.id, element); else refs.delete(object.id); }}/></div>
+        <div className="object-media"><ContentRenderer asset={asset} src={board.api.content(object.assetId)} api={board.api} onReloadBoard={reloadBoard} onBlankPointerDown={event => { event.stopPropagation(); pointerDown(event, true); }} onFrameWheel={canvasWheel} onFrameDrag={(frame, start, event) => frameDrag(object.id, frame, start, event)} disabled={disabled || annotating} error={mediaErrors[object.id]} onSize={size => setMediaSizes(current => ({ ...current, [object.id]: size }))} onError={() => setMediaErrors(current => ({ ...current, [object.id]: true }))} onMediaElement={element => { const refs = resolveContentKind(asset) === 'audio' ? audioRefs.current : videoRefs.current; if (element) (refs as Map<string, HTMLMediaElement>).set(object.id, element); else refs.delete(object.id); }}/></div>
         <div className="object-caption"><span className="object-index">{String(index + 1).padStart(2, '0')}</span><span title={asset?.name}>{asset?.name || 'File'}</span>{object.sourceTaskId && <span className="generated-label">Output</span>}</div>{isSelected && ((capabilityFor(object).freeResize ? ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] : ['nw', 'ne', 'sw', 'se']) as ResizeHandle[]).map(corner => <button key={corner} type="button" className="resize-handle" data-resize-id={object.id} data-resize-corner={corner} aria-label={`Resize ${asset?.name || 'File'} ${ { nw: 'top left', n: 'top', ne: 'top right', e: 'right', se: 'bottom right', s: 'bottom', sw: 'bottom left', w: 'left' }[corner]}`} onKeyDown={event => { if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key) || layoutBusy.current || disabled) return; event.preventDefault(); event.stopPropagation(); const delta = { x: event.key === 'ArrowRight' ? 10 : event.key === 'ArrowLeft' ? -10 : 0, y: event.key === 'ArrowDown' ? 10 : event.key === 'ArrowUp' ? -10 : 0 }; const capability = capabilityFor(object), bounds = capability.freeResize ? resizeViewportBounds(object, corner, delta, capability.minimum) : resizeBounds(object, corner as ResizeCorner, delta); void writeLayout([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: bounds }], state.session.id); }}/>) }</article>; })}
       {allAnnotations.map(annotation => { const bounds = annotationBounds(annotation); if (!bounds || annotation.scope === 'group' || annotating && annotation.id === comment?.value.id) return null; return <div className={`annotation-outline ${!annotation.inspectionTaskId ? 'draft-outline' : ''}`} key={`${annotation.inspectionTaskId || 'draft'}-${annotation.id}`} data-annotation-id={annotation.id} data-annotation-source={annotation.inspectionTaskId ? 'task' : 'draft'} data-source-removed={annotation.objectIds.some(id => !objects.some(object => object.id === id)) || undefined} style={{ left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height }}/>; })}
       {editingBounds && <div className="annotation-outline editing-outline" data-annotation-source="editing" style={{ left: editingBounds.x, top: editingBounds.y, width: editingBounds.width, height: editingBounds.height }}/>}

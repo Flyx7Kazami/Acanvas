@@ -48,7 +48,7 @@ For an HTML output with separate CSS, JavaScript or images, place the publishabl
 
 The service saves the original files and relative-path mapping under the target project's `.acanvas/`; previews read these copies and do not depend on the source directory. Finish generating the source directory before importing it; changes during import cause the operation to stop. Keep HTML/CSS references relative to files inside the bundle. Remote resources and host-specific APIs are unavailable. Do not include unrelated project files or credentials in the selected directory.
 
-Publish the returned entry asset ID through the normal `task complete` operation and receipt, or `board operations` for an authorized canvas edit outside the queue. Import alone does not create a canvas item. The existing change stream displays a new item without reloading the browser, and visible HTML generates a static snapshot before the user chooses Interact.
+Publish the returned entry asset ID through the normal `task complete` operation and receipt, or `board operations` for an authorized canvas edit outside the queue. Import alone does not create a canvas item. The existing change stream displays a new item without reloading the browser. Visible HTML generates a static snapshot; hovering, keyboard focus, or touch activates its controls automatically. The page keeps at most four instances and releases the least recently used preview as needed. Wheel gestures over canvas HTML control the canvas.
 
 ## Resume saved work
 

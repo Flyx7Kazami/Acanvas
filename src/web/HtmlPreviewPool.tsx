@@ -5,7 +5,7 @@ export const HTML_PREVIEW_LIMIT = 4;
 export const HTML_SNAPSHOT_LIMIT = 64;
 export const HTML_SNAPSHOT_BYTES = 64 * 1024 * 1024;
 type Slot = 'hidden' | 'waiting' | 'capturing' | 'live' | 'freezing' | 'frozen' | 'stopped';
-type Entry = { element: HTMLElement; intersecting: boolean; attempted: boolean; requested: boolean; phase?: 'capturing' | 'live' | 'freezing'; width: number; height: number; generation: number; resizeTimer?: number };
+type Entry = { element: HTMLElement; intersecting: boolean; attempted: boolean; requested: boolean; phase?: 'capturing' | 'live' | 'freezing'; width: number; height: number; generation: number; used: number; hovered: boolean; resizeTimer?: number };
 type Cached = { image: HtmlSnapshot; cost: number };
 
 // Both initial screenshot jobs and explicit interactive previews reserve slots,
@@ -17,6 +17,7 @@ class HtmlPreviewPool {
   private cacheBytes = 0;
   private listeners = new Set<() => void>();
   private version = 0;
+  private usage = 0;
   private permits = 0;
   private permitQueue: (() => void)[] = [];
   private intersection?: IntersectionObserver;
@@ -43,6 +44,10 @@ class HtmlPreviewPool {
       if (this.permits < HTML_PREVIEW_LIMIT) grant(); else this.permitQueue.push(grant);
     });
   }
+  private pointer = (event: PointerEvent) => {
+    if (!event.isTrusted || !(event.target instanceof Node)) return;
+    for (const entry of this.entries.values()) entry.hovered = entry.element.contains(event.target);
+  };
   private visible(entry: Entry) {
     return entry.intersecting && !document.hidden && !entry.element.closest('[inert], [hidden], [aria-hidden="true"]') && entry.element.checkVisibility({ checkVisibilityCSS: true });
   }
@@ -61,14 +66,17 @@ class HtmlPreviewPool {
       }
     }
     // Explicit requests have priority. Warm-up never evicts an interactive frame.
-    for (const [id, entry] of this.entries) {
+    for (const [id, entry] of [...this.entries].sort((a, b) => b[1].used - a[1].used)) {
       if (!entry.requested || !this.visible(entry) || this.active.has(id)) continue;
       if (this.active.size >= HTML_PREVIEW_LIMIT) {
         const warming = [...this.active].find(key => this.entries.get(key)?.phase === 'capturing');
         if (warming) this.release(warming);
         else {
           if (![...this.active].some(key => this.entries.get(key)?.phase === 'freezing')) {
-            const oldest = this.entries.get(this.active.values().next().value!); if (oldest) oldest.phase = 'freezing';
+            const candidates = [...this.active].map(key => this.entries.get(key)!);
+            const protectedEntry = (candidate: Entry) => candidate.hovered || candidate.element.matches(':focus-within') || candidate.element.contains(document.activeElement);
+            candidates.sort((a, b) => Number(protectedEntry(a)) - Number(protectedEntry(b)) || a.used - b.used);
+            if (candidates[0]) candidates[0].phase = 'freezing';
           }
           break;
         }
@@ -104,8 +112,9 @@ class HtmlPreviewPool {
         }
       });
       document.addEventListener('visibilitychange', this.reconcile);
+      document.addEventListener('pointermove', this.pointer, true);
     }
-    this.entries.set(id, { element, intersecting: false, attempted: false, requested: false, width: element.clientWidth, height: element.clientHeight, generation: 0 });
+    this.entries.set(id, { element, intersecting: false, attempted: false, requested: false, width: element.clientWidth, height: element.clientHeight, generation: 0, used: 0, hovered: false });
     this.intersection.observe(element); this.resize!.observe(element);
     return () => {
       clearTimeout(this.entries.get(id)?.resizeTimer);
@@ -116,6 +125,7 @@ class HtmlPreviewPool {
         this.mutations?.disconnect(); this.mutations = undefined;
         this.resize?.disconnect(); this.resize = undefined;
         document.removeEventListener('visibilitychange', this.reconcile);
+        document.removeEventListener('pointermove', this.pointer, true);
       }
     };
   }
@@ -144,9 +154,12 @@ class HtmlPreviewPool {
     if (entry.phase === 'live') entry.phase = 'freezing'; else this.release(id);
     this.reconcile();
   }
+  setHovered(id: symbol, hovered: boolean) {
+    for (const [key, entry] of this.entries) if (key === id || hovered) entry.hovered = key === id && hovered;
+  }
   request(id: symbol) {
     const entry = this.entries.get(id); if (!entry) return;
-    entry.attempted = true;
+    entry.used = ++this.usage; entry.attempted = true;
     if (entry.phase) entry.phase = 'live'; else entry.requested = true;
     this.reconcile();
   }
@@ -171,6 +184,7 @@ export function useHtmlPreviewSlot(element: RefObject<HTMLDivElement | null>) {
   const complete = useCallback((generation: number, image?: HtmlSnapshot) => pool.complete(id, generation, image), [pool, id]);
   const fail = useCallback((generation: number) => pool.fail(id, generation), [pool, id]);
   const acquire = useCallback((signal: AbortSignal) => pool.acquire(signal), [pool]);
+  const setHovered = useCallback((hovered: boolean) => pool.setHovered(id, hovered), [pool, id]);
   const retry = useCallback(() => pool.retry(id), [pool, id]);
-  return { ...pool.read(id), stop, request, complete, retry, fail, acquire };
+  return { ...pool.read(id), stop, request, complete, retry, fail, acquire, setHovered };
 }

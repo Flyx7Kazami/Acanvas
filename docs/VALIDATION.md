@@ -573,3 +573,16 @@ Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直�
 - 所有测试使用隔离临时夹具；独立审查无未关闭P0–P3。
 
 证据：[执行记录](evidence/audio-player-refinements/verification.json)、[真实两曲](evidence/audio-player-refinements/real-audio-results.json)。
+
+## 2026-10-06 · HTML悬停交互与统一画布滚轮
+
+HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统一滚轮策略覆盖HTML、音频时间轴、其他控件及声明为正文滚动的区域。测试使用独立临时项目，真实用户白板只进行服务版本更新和页面刷新。
+
+- 执行构建通过；HTML/Markdown定向12/12、服务HTML preview/bundle10/10、隔离浏览器3/3、bundle/snapshot4/4通过，后续hover owner与键盘第5实例针对回归通过。
+- 独立验证真实鼠标跨iframe重入、Stop与键盘/触屏恢复、4实例上限、最近使用淘汰、0.5/1倍滚轮平移和Ctrl/Meta锚点，按钮、输入、静态快照与详情原生滚动均通过。
+- 私有通道拒绝公开输入消息、后续端口替换、原型窃取和document.open伪造；capturing通知保持预热职责。无限循环外部Stop按既有要求关闭trace后通过，781ms；trace开启时的观测超时单独记录，不作为产品通过证据。
+- 通用入口增量执行4/4、独立20/20通过：音频时间轴wheel保持播放位置，点击/拖动定位正常；无组件类型的data-canvas-control及其冒泡wheel处理器继承默认canvas；content正文普通scroll与修饰键zoom、nested canvas覆盖、画布外输入区、活动gesture抑制通过。HTML四项及Markdown六项在0.5/1倍复验通过。
+- 内容外壳统一pointer标记后，空白HTML拖动单项复验通过；首次并发运行出现一次未移动，同源码单项复验通过，未宣称并行拖动稳定性已单独验证。
+- 正常服务更新前复核无运行任务，PID 75920 → 90714；前后完整用户BoardState一致（12对象、21素材、3个任务范围及其视图/草稿/任务/批注）。最终前端构建已在当前IAB加载，Interact按钮为0。无未关闭P0–P3。
+
+可复现检查位于 `tests/multimodal.spec.ts`、`tests/content-surface.spec.ts`、HTML隔离及bundle/snapshot相关测试。设计与新增组件规则见[画布输入职责](CANVAS_INPUT.md)和[HTML悬停交互](HTML_HOVER_INTERACTION.md)。

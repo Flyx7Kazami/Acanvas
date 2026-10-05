@@ -31,13 +31,13 @@ test('CLI bundle appears without reload with nested CSS, module JS and snapshot 
     await expect(page.locator('.html-snapshot')).toBeVisible(); expect(navigations).toBe(0);
     const pixels = await page.locator('.html-snapshot').evaluate(async element => { const image = element as HTMLImageElement; await image.decode(); const c = document.createElement('canvas'); c.width = image.naturalWidth; c.height = image.naturalHeight; const context = c.getContext('2d')!; context.drawImage(image, 0, 0); return [context.getImageData(20, 20, 1, 1).data, context.getImageData(20, 70, 1, 1).data, context.getImageData(200, 150, 1, 1).data].map(value => [...value]); });
     expect(pixels).toEqual([[240, 30, 50, 255], [240, 30, 50, 255], [10, 20, 30, 255]]);
-    await page.getByRole('button', { name: 'Interact with index.html' }).click();
+    await page.mouse.move(5, 5); await page.locator('.html-content').hover();
     const frame = page.frameLocator('.html-live-frame');
     await expect(frame.locator('#result')).toHaveText('Module ready'); await expect(frame.locator('#result')).toHaveCSS('color', 'rgb(1, 120, 230)');
     await rm(source, { recursive: true, force: true });
     await server.close(); server = await startServer({ root, port: 0, webRoot: resolve('dist/web') });
     await page.goto(`${server.url}/?session=${session.id}`); await expect(page.locator('.html-snapshot')).toBeVisible();
-    await page.getByRole('button', { name: 'Interact with index.html' }).click(); await expect(page.frameLocator('.html-live-frame').locator('#result')).toHaveText('Module ready');
+    await page.mouse.move(5, 5); await page.locator('.html-content').hover(); await expect(page.frameLocator('.html-live-frame').locator('#result')).toHaveText('Module ready');
     const evidence = process.env.HTML_BUNDLE_EVIDENCE_DIR;
     const metrics = { appearedMs, navigationsBeforeRestart: 0, bundleFiles: Object.keys(imported.htmlBundle.files).length, pixels, persistedAfterSourceRemoval: true };
     if (evidence) { await mkdir(evidence, { recursive: true }); await page.screenshot({ path: join(evidence, 'bundle-after-restart.png') }); await writeFile(join(evidence, 'bundle-validation.json'), JSON.stringify(metrics, null, 2) + '\n'); }

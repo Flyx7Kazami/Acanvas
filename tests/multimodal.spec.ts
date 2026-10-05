@@ -47,6 +47,13 @@ test('Markdown reads safely with direct selection and scrolling and persists who
   await object.locator('.object-caption').click(); const state = await app.state(), original = state.objects[0], originalAsset = state.assets[0];
   const world = await page.locator('.canvas-world').getAttribute('style'); await expect(page.getByRole('button', { name: 'Interact with content', exact: true })).toHaveCount(0);
   const document = object.locator('.markdown-content'); await document.hover(); await page.mouse.wheel(0, 220); await expect.poll(() => document.evaluate(element => element.scrollTop)).toBeGreaterThan(0); expect(await page.locator('.canvas-world').getAttribute('style')).toBe(world);
+  const markdownScroll = await document.evaluate(element => element.scrollTop);
+  for (const modifier of ['Control', 'Meta'] as const) {
+    const beforeZoom = (await app.state()).session.view.zoom;
+    await document.hover(); await page.keyboard.down(modifier); await page.mouse.wheel(0, -20); await page.keyboard.up(modifier);
+    await expect.poll(async () => (await app.state()).session.view.zoom).toBeGreaterThan(beforeZoom);
+    expect(await document.evaluate(element => element.scrollTop)).toBe(markdownScroll);
+  }
   await document.focus(); await document.press('Escape');
   const resize = object.getByRole('button', { name: /Resize field-notes.md bottom right/ }); await resize.focus(); await resize.press('ArrowRight'); await expect.poll(async () => (await app.state()).objects[0].width).toBe(original.width + 10); expect((await app.state()).objects[0].height).toBe(original.height);
   await page.getByRole('button', { name: 'Annotate', exact: true }).click(); await page.getByLabel('Add a comment', { exact: true }).fill('Read this document.'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await page.getByLabel('Add a comment', { exact: true }).press('Escape');
@@ -86,13 +93,13 @@ test('audio plays real media in one row and saves explicit time range without fr
   await page.screenshot({ path: info.outputPath('audio-range-reference.png') });
 });
 
-test('HTML captures rendered content, activates on request and saves the latest stopped view', async ({ page, app }, info) => {
+test('HTML captures rendered content, activates on hover and saves the latest stopped view', async ({ page, app }, info) => {
   const source = '<!doctype html><style>body{margin:0;background:rgb(20,120,200)}</style><button onclick="this.textContent=Number(this.textContent)+1;document.body.style.backgroundColor=\'rgb(240,40,80)\'">0</button><input aria-label="Label"><script>document.body.dataset.rendered="true"</script>';
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'counter.html', mimeType: 'text/html', buffer: Buffer.from(source) });
   const object = page.locator('.board-object[data-content-kind="html"]');
   await expect(object.locator('.html-snapshot')).toBeVisible(); await expect(object.locator('iframe')).toHaveCount(0);
   const original = await object.locator('.html-snapshot').getAttribute('src'); expect(original).toMatch(/^data:image\/png;base64,/);
-  await object.getByRole('button', { name: 'Interact with counter.html', exact: true }).click();
+  await page.mouse.move(5, 5); await object.locator('.html-content').hover();
   await expect(object.locator('iframe')).toHaveAttribute('sandbox', 'allow-scripts');
   const frame = object.frameLocator('iframe'); await frame.getByRole('button', { name: '0', exact: true }).click(); await frame.getByLabel('Label').fill('Draft state');
   await expect(frame.getByRole('button', { name: '1', exact: true })).toBeVisible();
@@ -102,7 +109,7 @@ test('HTML captures rendered content, activates on request and saves the latest 
   const pixel = await object.locator('.html-snapshot').evaluate(async image => { const img = image as HTMLImageElement; await img.decode(); const canvas = document.createElement('canvas'); canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; const context = canvas.getContext('2d')!; context.drawImage(img, 0, 0); return [...context.getImageData(50, 100, 1, 1).data]; });
   expect(pixel).toEqual([240, 40, 80, 255]);
   await page.waitForTimeout(250); await expect(object.locator('iframe')).toHaveCount(0);
-  await object.getByRole('button', { name: 'Interact with counter.html', exact: true }).click();
+  await page.mouse.move(5, 5); await object.locator('.html-content').hover();
   await expect(frame.getByRole('button', { name: '0', exact: true })).toBeVisible(); await expect(frame.getByLabel('Label')).toHaveValue('');
   expect((await app.state()).assets).toHaveLength(1); await page.screenshot({ path: info.outputPath('html-live-counter.png') });
 });
@@ -132,15 +139,21 @@ test('twelve HTML snapshots drain to zero frames, retain cached views and share 
   await page.screenshot({ path: info.outputPath('html-twelve-frozen-previews.png') });
   const metrics = await page.evaluate(() => (window as any).htmlMetrics); expect(metrics.peak).toBeLessThanOrEqual(4); expect(metrics.requests).toBe(12);
   await writeFile(info.outputPath('snapshot-warmup.json'), JSON.stringify({ blocks: 12, elapsedMs: Date.now() - started, ...metrics }));
-  const activate = async (index: number) => { const object = objects.nth(index); await object.getByRole('button', { name: `Interact with preview-${index}.html`, exact: true }).click(); await expect(object.locator('.html-content')).toHaveAttribute('data-preview-state', 'live'); await expect(object.frameLocator('iframe').getByRole('button', { name: `Rendered ${index}`, exact: true })).toBeVisible(); };
+  const activate = async (index: number) => { const object = objects.nth(index); await page.mouse.move(5, 5); await object.locator('.html-content').hover(); await expect(object.locator('.html-content')).toHaveAttribute('data-preview-state', 'live'); await expect(object.frameLocator('iframe').getByRole('button')).toBeVisible(); };
   for (let index = 0; index < 4; index++) await activate(index);
-  const originalUrl = await objects.nth(0).locator('iframe').getAttribute('src'), originalImage = await objects.nth(0).locator('.html-snapshot').getAttribute('src');
-  await objects.nth(0).frameLocator('iframe').getByRole('button').click();
-  await activate(4); await expect(page.locator('iframe')).toHaveCount(4); await expect(objects.nth(0).locator('iframe')).toHaveCount(0);
-  expect(await objects.nth(0).locator('.html-snapshot').getAttribute('src')).not.toBe(originalImage);
+  const originalUrl = await objects.nth(1).locator('iframe').getAttribute('src'), originalImage = await objects.nth(1).locator('.html-snapshot').getAttribute('src');
+  await objects.nth(1).frameLocator('iframe').getByRole('button').click();
+  await activate(2); await activate(3); await page.locator('#instruction').focus(); await activate(0);
+  await activate(4); await expect(page.locator('iframe')).toHaveCount(4); await expect(objects.nth(1).locator('iframe')).toHaveCount(0);
+  await expect(objects.nth(0).locator('iframe')).toHaveCount(1);
+  expect(await objects.nth(1).locator('.html-snapshot').getAttribute('src')).not.toBe(originalImage);
   await expect.poll(async () => (await page.request.get(originalUrl!, { headers: { 'Sec-Fetch-Dest': 'iframe' } })).status()).toBe(404);
+  await page.mouse.move(5, 5); await objects.nth(5).locator('.html-content').focus();
+  await expect(objects.nth(5).locator('.html-content')).toHaveAttribute('data-preview-state', 'live');
+  await expect(objects.nth(2).locator('iframe')).toHaveCount(0); await expect(page.locator('iframe')).toHaveCount(4);
   await objects.nth(4).getByRole('button', { name: 'Stop HTML preview', exact: true }).click(); await expect(page.locator('iframe')).toHaveCount(3);
   const world = page.locator('.canvas-world'), camera = await world.getAttribute('style');
+  await page.mouse.move(5, 5);
   await world.evaluate(element => { (element as HTMLElement).style.transform = 'translate(-6000px, 0px) scale(1)'; });
   await expect(page.locator('iframe')).toHaveCount(0); const requests = await page.evaluate(() => (window as any).htmlMetrics.requests);
   await world.evaluate((element, style) => element.setAttribute('style', style!), camera); await page.waitForTimeout(250);
@@ -165,9 +178,9 @@ test('twelve HTML snapshots drain to zero frames, retain cached views and share 
   const draft = await app.call(`/api/sessions/${current.session.id}/draft`, 'PUT', { ...current.draft, text: 'Inspect this HTML source.', attachments: [source.assetId], references: { ...current.draft.references, objectIds: [source.id] } });
   await app.call(`/api/sessions/${current.session.id}/tasks`, 'POST', { draftId: draft.id, expectedRevision: draft.revision });
   await app.call('/api/board/operations', 'POST', { sessionId: current.session.id, operations: [{ type: 'delete', objectId: source.id, expectedVersion: source.version }] });
-  await expect(objects).toHaveCount(12); await page.locator('.queue-task').first().click(); await page.getByRole('button', { name: 'View preview-12.html', exact: true }).click();
+  await expect(objects).toHaveCount(12); await page.locator('.queue-task').first().click(); await page.mouse.move(5, 5); await page.getByRole('button', { name: 'View preview-12.html', exact: true }).focus(); await page.keyboard.press('Enter');
   const detail = page.locator('.task-media-preview'); await expect(detail.locator('.html-content')).toHaveAttribute('data-preview-state', 'waiting'); await expect(page.locator('iframe')).toHaveCount(4);
-  await detail.getByRole('button', { name: 'Interact with preview-12.html', exact: true }).click();
+  await page.mouse.move(5, 5); await detail.locator('.html-content').hover();
   await expect(detail.locator('iframe')).toHaveCount(1); await expect(objects.locator('iframe')).toHaveCount(3); await expect(page.locator('iframe')).toHaveCount(4);
   const detailUrl = await detail.locator('iframe').getAttribute('src'); await page.getByRole('button', { name: 'Collapse request details', exact: true }).click();
   await expect(detail.locator('iframe')).toHaveCount(0); await expect(objects.locator('iframe')).toHaveCount(3);
@@ -182,6 +195,7 @@ test('HTML cancels stale captures and delayed grants, and failed captures requir
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'delayed.html', mimeType: 'text/html', buffer: Buffer.from('<button>Ready</button>') });
   await expect.poll(() => grantUrl).not.toBe('');
   const world = page.locator('.canvas-world'), camera = await world.getAttribute('style');
+  await page.mouse.move(5, 5);
   await world.evaluate(element => { (element as HTMLElement).style.transform = 'translate(-6000px, 0px) scale(1)'; });
   await expect(page.locator('.html-content')).toHaveAttribute('data-preview-state', 'hidden'); release();
   await expect.poll(async () => (await page.request.get(grantUrl, { headers: { 'Sec-Fetch-Dest': 'iframe' } })).status()).toBe(404);
@@ -200,7 +214,7 @@ test('HTML cancels stale captures and delayed grants, and failed captures requir
   await page.evaluate(() => window.removeEventListener('message', (window as any).blockSnapshots, true));
   await page.getByRole('button', { name: 'Refresh HTML snapshot', exact: true }).click(); await expect(page.locator('.html-snapshot')).toHaveCount(1); await expect(page.locator('iframe')).toHaveCount(0);
   await page.route('**/api/assets/*/html-preview', async route => { const response = await route.fetch(), grant = await response.json(); await route.fulfill({ response, json: { ...grant, expiresAt: new Date(Date.now() + 1000).toISOString() } }); });
-  await page.getByRole('button', { name: 'Interact with delayed.html', exact: true }).click(); await expect(page.locator('iframe')).toHaveCount(1); await expect(page.locator('iframe')).toHaveCount(0);
+  await page.mouse.move(5, 5); await page.locator('.html-content').hover(); await expect(page.locator('iframe')).toHaveCount(1); await expect(page.locator('iframe')).toHaveCount(0);
   await expect(page.locator('.html-snapshot')).toHaveCount(1); await page.waitForTimeout(250); await expect(page.locator('iframe')).toHaveCount(0);
   expect((await app.state()).assets).toHaveLength(1);
 });
@@ -229,7 +243,7 @@ test('HTML preview permits recover after stalled creation, authentication and re
   // obtain a permit after the bounded revoke deadline.
   await objects.locator('button[aria-label="Refresh HTML snapshot"]').evaluateAll(buttons => buttons.slice(0, 4).forEach(button => (button as HTMLButtonElement).click()));
   await expect(page.locator('.html-snapshot')).toHaveCount(5); await expect(page.locator('iframe')).toHaveCount(0); await expect.poll(() => deletes).toBe(4);
-  await objects.nth(4).getByRole('button', { name: 'Interact with timeout-4.html', exact: true }).click();
+  await page.mouse.move(5, 5); await objects.nth(4).locator('.html-content').hover();
   await expect(objects.nth(4).frameLocator('iframe').getByRole('button', { name: 'Ready 4', exact: true })).toBeVisible();
   releaseDeletes(); await page.unroute('**/api/html-previews/*');
   expect((await app.state()).objects).toHaveLength(5);
@@ -271,11 +285,11 @@ test('HTML origin changes request an explicit board reload and preserve the draf
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'restart.html', mimeType: 'text/html', buffer: Buffer.from('<!doctype html><button>Ready</button>') });
   const origin = await page.locator('meta[name="acanvas-html-preview-origin"]').getAttribute('content'); expect(origin).toBeTruthy();
   await page.locator('#instruction').fill('Keep this unsent request.'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
-  await expect(page.locator('.html-snapshot')).toHaveCount(1); await app.restart(); await page.getByRole('button', { name: 'Interact with restart.html', exact: true }).click();
+  await expect(page.locator('.html-snapshot')).toHaveCount(1); await app.restart(); await page.mouse.move(5, 5); await page.locator('.html-content').hover();
   await expect(page.getByText('Reload the board to run HTML preview.', { exact: true })).toBeVisible(); await expect(page.locator('iframe')).toHaveCount(0); await expect(page.locator('#instruction')).toHaveValue('Keep this unsent request.');
   await page.getByRole('button', { name: 'Reload board', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Keep this unsent request.');
   expect(await page.locator('meta[name="acanvas-html-preview-origin"]').getAttribute('content')).not.toBe(origin);
-  await expect(page.locator('.html-snapshot')).toHaveCount(1); await page.getByRole('button', { name: 'Interact with restart.html', exact: true }).click(); await expect(page.frameLocator('iframe').getByRole('button', { name: 'Ready', exact: true })).toBeVisible();
+  await expect(page.locator('.html-snapshot')).toHaveCount(1); await page.mouse.move(5, 5); await page.locator('.html-content').hover(); await expect(page.frameLocator('iframe').getByRole('button', { name: 'Ready', exact: true })).toBeVisible();
 });
 
 test('removed task sources use the shared document audio and HTML detail renderers', async ({ page, app }) => {
@@ -292,9 +306,9 @@ test('removed task sources use the shared document audio and HTML detail rendere
   await expect(page.locator('.board-object')).toHaveCount(0); await page.locator('.queue-task').first().click();
   await page.getByRole('button', { name: 'View detail.md', exact: true }).click(); const preview = page.locator('.task-media-preview'); await expect(preview.locator('h1')).toHaveText('Source notes'); await preview.getByRole('button', { name: 'Close media preview', exact: true }).click(); await expect(preview).toHaveCount(0);
   await page.getByRole('button', { name: 'View detail.wav', exact: true }).click(); await expect(preview.locator('audio')).toHaveCount(1); await expect(preview.getByRole('button', { name: 'Expand audio player' })).toHaveCount(0); await preview.getByRole('button', { name: 'Close media preview', exact: true }).click();
-  await page.getByRole('button', { name: 'View detail.html', exact: true }).click(); await expect(preview.locator('.html-snapshot')).toHaveCount(1);
+  await page.mouse.move(5, 5); await page.getByRole('button', { name: 'View detail.html', exact: true }).focus(); await page.keyboard.press('Enter'); await expect(preview.locator('.html-snapshot')).toHaveCount(1);
   await expect(preview.locator('.html-snapshot')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
-  await preview.getByRole('button', { name: 'Interact with detail.html', exact: true }).click(); await expect(preview.frameLocator('iframe').getByRole('button', { name: 'Original HTML', exact: true })).toBeVisible(); await preview.getByRole('button', { name: 'Close media preview', exact: true }).click(); await expect(page.locator('iframe')).toHaveCount(0);
+  await page.mouse.move(5, 5); await preview.locator('.html-content').hover(); await expect(preview.frameLocator('iframe').getByRole('button', { name: 'Original HTML', exact: true })).toBeVisible(); await preview.getByRole('button', { name: 'Close media preview', exact: true }).click(); await expect(page.locator('iframe')).toHaveCount(0);
   const saved = await app.state(); expect(saved.tasks[0].snapshot.referenceContent.assets.map(asset => asset.id)).toEqual(initial.assets.map(asset => asset.id)); expect(saved.tasks[0].snapshot.referenceContent.objects).toHaveLength(3);
 });
 
@@ -356,7 +370,7 @@ test('Markdown and HTML interact directly and all four resize corners adjust ind
   expect(await page.evaluate(() => getSelection()?.toString())).toContain('Observation'); expect((await app.state()).objects[0]).toEqual(before.objects[0]);
   const document = md.locator('.markdown-content'); await document.hover(); await page.mouse.wheel(0, 250); await expect.poll(() => document.evaluate(element => element.scrollTop)).toBeGreaterThan(0); expect(await page.locator('.canvas-world').getAttribute('style')).toBe(camera);
   const scrollHit = await document.evaluate(element => { const rect = element.getBoundingClientRect(); return !!window.document.elementFromPoint(rect.right - 3, rect.top + 30)?.closest('.object-drag-edge'); }); expect(scrollHit).toBe(false);
-  await expect(html.locator('.html-snapshot')).toHaveCount(1); await html.getByRole('button', { name: 'Interact with palette.html', exact: true }).click(); await html.frameLocator('iframe').getByRole('button', { name: 'Choose', exact: true }).click(); await expect(html.frameLocator('iframe').getByRole('button', { name: 'Selected', exact: true })).toBeVisible(); await html.frameLocator('iframe').getByLabel('Palette name').fill('Haze'); expect(await page.locator('.canvas-world').getAttribute('style')).toBe(camera);
+  await expect(html.locator('.html-snapshot')).toHaveCount(1); await page.mouse.move(5, 5); await html.locator('.html-content').hover(); await html.frameLocator('iframe').getByRole('button', { name: 'Choose', exact: true }).click(); await expect(html.frameLocator('iframe').getByRole('button', { name: 'Selected', exact: true })).toBeVisible(); await html.frameLocator('iframe').getByLabel('Palette name').fill('Haze'); expect(await page.locator('.canvas-world').getAttribute('style')).toBe(camera);
   for (const node of [md, html]) {
     await node.locator('.object-caption').click();
     for (const corner of ['nw', 'ne', 'sw', 'se']) for (const axis of ['x', 'y']) {
@@ -456,4 +470,139 @@ test('undecodable canvas audio keeps its download visible within the minimum row
   await writeFile(info.outputPath('audio-error-download-geometry.json'), JSON.stringify({ node: bounds, download }, null, 2));
   expect(download.y).toBeGreaterThanOrEqual(bounds.y); expect(download.y + download.height).toBeLessThanOrEqual(bounds.y + bounds.height);
   const result = page.waitForEvent('download'); await link.click(); const file = await result; const path = info.outputPath('original-broken-audio.wav'); await file.saveAs(path); expect((await readFile(path)).equals(original)).toBeTruthy(); expect((await app.state()).assets).toHaveLength(1);
+});
+
+test('HTML hover keeps real iframe wheel and pinch on the canvas at both scales', async ({ page, app }) => {
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'wheel.html', mimeType: 'text/html', buffer: Buffer.from('<style>body{margin:0}button{margin:24px}main{height:2500px;background:linear-gradient(white,lightblue)}</style><button onclick="this.textContent=Number(this.textContent)+1">0</button><main>Scroll area</main>') });
+  const object = page.locator('.board-object[data-content-kind="html"]'), content = object.locator('.html-content');
+  await expect(object.locator('.html-snapshot')).toBeVisible(); await expect(page.getByRole('button', { name: /^Interact/ })).toHaveCount(0);
+  for (const zoom of [1, .5]) {
+    const initial = await app.state(), item = initial.objects[0];
+    await app.call(`/api/sessions/${initial.session.id}/view`, 'PUT', { x: 320 - item.x * zoom, y: 220 - item.y * zoom, zoom, selectedObjectIds: [] });
+    await page.mouse.move(5, 5); await page.reload(); await expect(object.locator('.html-snapshot')).toBeVisible();
+    await content.hover(); await expect(object.locator('.html-live-frame')).toBeVisible();
+    await expect(object.frameLocator('iframe').getByRole('button', { name: '0', exact: true })).toBeVisible();
+    const frame = page.frames().find(value => value.url().includes('/preview/'))!;
+    const buttonPoint = await frame.evaluate(() => { const rect = document.querySelector('button')!.getBoundingClientRect(); return { x: (rect.x + rect.width / 2) / innerWidth, y: (rect.y + rect.height / 2) / innerHeight }; });
+    let bounds = (await object.locator('iframe').boundingBox())!;
+    await page.mouse.click(bounds.x + buttonPoint.x * bounds.width, bounds.y + buttonPoint.y * bounds.height);
+    await expect(object.frameLocator('iframe').getByRole('button', { name: '1', exact: true })).toBeVisible();
+    await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+    const before = (await app.state()).session.view;
+    await page.mouse.wheel(22, 32);
+    await expect.poll(async () => (await app.state()).session.view.y).toBe(before.y - 32);
+    expect((await app.state()).session.view.x).toBe(before.x - 22);
+    expect(await frame.evaluate(() => scrollY)).toBe(0);
+    bounds = (await object.locator('iframe').boundingBox())!;
+    const anchor = { x: bounds.x + bounds.width * .3, y: bounds.y + bounds.height * .4 };
+    await page.mouse.move(anchor.x, anchor.y);
+    const canvas = (await page.locator('#whiteboard').boundingBox())!, pan = (await app.state()).session.view;
+    await page.keyboard.down('Control'); await page.mouse.wheel(0, -40); await page.keyboard.up('Control');
+    await expect.poll(async () => (await app.state()).session.view.zoom).toBeGreaterThan(zoom);
+    const after = (await app.state()).session.view;
+    expect(after.zoom).toBeCloseTo(zoom * Math.exp(.2), 5);
+    expect((anchor.x - canvas.x - after.x) / after.zoom).toBeCloseTo((anchor.x - canvas.x - pan.x) / pan.zoom, 3);
+    expect((anchor.y - canvas.y - after.y) / after.zoom).toBeCloseTo((anchor.y - canvas.y - pan.y) / pan.zoom, 3);
+    const saved = await app.state();
+    await page.mouse.move(5, 5);
+    await frame.evaluate(() => {
+      const instanceId = location.pathname.split('/')[2];
+      for (const data of [{ instanceId, deltaX: 23, deltaY: 27, x: .5, y: .5 }, { instanceId: 'stale', deltaX: 3, deltaY: 7, x: .5, y: .5 }, { instanceId, deltaX: NaN, deltaY: 7, x: .5, y: .5 }, { instanceId, deltaX: 3, deltaY: 7, x: 9, y: .5 }]) parent.postMessage({ type: 'acanvas:preview-wheel', deltaMode: 0, ctrlKey: false, metaKey: false, ...data }, '*');
+      parent.postMessage({ type: 'acanvas:preview-engaged', instanceId, x: .5, y: .5 }, '*');
+      const replacement = new MessageChannel();
+      parent.postMessage({ type: 'acanvas:preview-input', instanceId }, '*', [replacement.port2]);
+      replacement.port1.postMessage({ type: 'acanvas:preview-wheel', instanceId, x: .5, y: .5, deltaX: 23, deltaY: 27, deltaMode: 0, ctrlKey: false, metaKey: false });
+      replacement.port1.close();
+      window.dispatchEvent(new WheelEvent('wheel', { deltaY: 45, clientX: 10, clientY: 10 }));
+    });
+    await page.waitForTimeout(120); expect((await app.state()).session.view).toEqual(saved.session.view);
+    await page.mouse.move(5, 5); await content.focus(); await expect(content).toHaveAttribute('data-preview-state', 'live');
+    await object.getByRole('button', { name: 'Stop HTML preview', exact: true }).click();
+    await expect(object.locator('iframe')).toHaveCount(0); await page.waitForTimeout(200); await expect(object.locator('iframe')).toHaveCount(0);
+    await page.locator('#instruction').focus(); await content.focus();
+    await expect(content).toHaveAttribute('data-preview-state', 'live');
+  }
+});
+
+
+test.describe('HTML touch activation', () => {
+  test.use({ hasTouch: true });
+  test('a touch activates the preview and HTML controls receive the next tap', async ({ page, app }) => {
+    await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'touch.html', mimeType: 'text/html', buffer: Buffer.from(`<button style="margin:40px" onclick="this.textContent='Tapped'">Tap me</button>`) });
+    const content = page.locator('.html-content');
+    await expect(content.locator('.html-snapshot')).toBeVisible();
+    const box = (await content.boundingBox())!;
+    await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(content).toHaveAttribute('data-preview-state', 'live');
+    await content.frameLocator('iframe').getByRole('button', { name: 'Tap me', exact: true }).tap();
+    await expect(content.frameLocator('iframe').getByRole('button', { name: 'Tapped', exact: true })).toBeVisible();
+  });
+});
+
+test('audio timeline inherits canvas wheel gestures while click and scrub retain playback control', async ({ page, app }) => {
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'wheel-audio.wav', mimeType: 'audio/wav', buffer: toneWav(24) });
+  const audio = page.locator('audio'), range = page.getByRole('slider', { name: 'Audio timeline', exact: true });
+  await expect(page.locator('.audio-player-waveform canvas')).toHaveAttribute('data-ready', 'true');
+  let bounds = (await range.boundingBox())!;
+  await page.mouse.click(bounds.x + bounds.width * .25, bounds.y + bounds.height / 2);
+  await expect.poll(() => audio.evaluate((media: HTMLAudioElement) => media.currentTime)).toBeCloseTo(6, 1);
+  const fixedTime = await audio.evaluate((media: HTMLAudioElement) => media.currentTime);
+  const beforePan = (await app.state()).session.view;
+  await range.hover(); await page.mouse.wheel(15, 24);
+  await expect.poll(async () => (await app.state()).session.view.y).toBe(beforePan.y - 24);
+  expect((await app.state()).session.view.x).toBe(beforePan.x - 15);
+  for (const modifier of ['Control', 'Meta'] as const) {
+    const before = (await app.state()).session.view;
+    await range.hover(); await page.keyboard.down(modifier); await page.mouse.wheel(0, -25); await page.keyboard.up(modifier);
+    await expect.poll(async () => (await app.state()).session.view.zoom).toBeGreaterThan(before.zoom);
+    expect(await audio.evaluate((media: HTMLAudioElement) => ({ time: media.currentTime, paused: media.paused }))).toEqual({ time: fixedTime, paused: true });
+  }
+  await page.getByRole('button', { name: 'Play audio', exact: true }).click();
+  await expect.poll(() => audio.evaluate((media: HTMLAudioElement) => media.paused)).toBe(false);
+  await range.hover(); const playingTime = await audio.evaluate((media: HTMLAudioElement) => media.currentTime);
+  const playingView = (await app.state()).session.view;
+  await page.mouse.wheel(12, 18);
+  await expect.poll(async () => (await app.state()).session.view.y).toBe(playingView.y - 18);
+  const playing = await audio.evaluate((media: HTMLAudioElement) => ({ time: media.currentTime, paused: media.paused }));
+  expect(playing.paused).toBe(false); expect(playing.time).toBeGreaterThanOrEqual(playingTime); expect(playing.time - playingTime).toBeLessThan(1.5);
+  await page.getByRole('button', { name: 'Pause audio', exact: true }).click();
+  bounds = (await range.boundingBox())!;
+  await page.mouse.click(bounds.x + bounds.width * .6, bounds.y + bounds.height / 2);
+  await expect.poll(() => audio.evaluate((media: HTMLAudioElement) => media.currentTime)).toBeCloseTo(14.4, 1);
+  await page.mouse.move(bounds.x + bounds.width * .2, bounds.y + bounds.height / 2); await page.mouse.down();
+  await page.mouse.move(bounds.x + bounds.width * .4, bounds.y + bounds.height / 2, { steps: 4 }); await page.mouse.up();
+  await expect.poll(() => audio.evaluate((media: HTMLAudioElement) => media.currentTime)).toBeCloseTo(9.6, 1);
+  expect(await audio.evaluate((media: HTMLAudioElement) => media.paused)).toBe(true);
+});
+
+test('wheel policy defaults unknown controls to canvas and permits explicit nested reading regions', async ({ page, app }) => {
+  await page.evaluate(() => {
+    const root = document.createElement('div'); root.id = 'wheel-policy-fixture';
+    root.style.cssText = 'position:absolute;left:220px;top:180px;z-index:1000;width:600px;height:300px;display:flex;gap:20px';
+    root.innerHTML = '<button id="unknown-wheel-control" data-canvas-control style="width:180px;height:240px">New control</button><div id="reading-wheel-region" data-canvas-control data-canvas-wheel="content" style="width:280px;height:240px;overflow:auto;background:white"><button id="nested-canvas-wheel" data-canvas-wheel="canvas" style="width:240px;height:60px">Canvas gesture</button><div style="height:1800px">Reading content</div></div>';
+    root.addEventListener('wheel', event => { (window as any).fixtureWheelCount = ((window as any).fixtureWheelCount || 0) + 1; event.stopPropagation(); });
+    document.querySelector('#whiteboard')!.append(root);
+  });
+  const view = async () => (await app.state()).session.view;
+  const unknown = page.locator('#unknown-wheel-control'), region = page.locator('#reading-wheel-region'), nested = page.locator('#nested-canvas-wheel');
+  let before = await view(); await unknown.hover(); await page.mouse.wheel(11, 30);
+  await expect.poll(async () => (await view()).y).toBe(before.y - 30); expect((await view()).x).toBe(before.x - 11);
+  expect(await page.evaluate(() => (window as any).fixtureWheelCount || 0)).toBe(0);
+  before = await view(); await region.hover({ position: { x: 150, y: 180 } }); await page.mouse.wheel(0, 90);
+  await expect.poll(() => region.evaluate(element => element.scrollTop)).toBeGreaterThan(0); expect(await view()).toEqual(before);
+  expect(await page.evaluate(() => (window as any).fixtureWheelCount)).toBeGreaterThan(0);
+  const scroll = await region.evaluate(element => element.scrollTop), bubbleCount = await page.evaluate(() => (window as any).fixtureWheelCount);
+  for (const modifier of ['Control', 'Meta'] as const) {
+    before = await view(); await region.hover({ position: { x: 150, y: 180 } });
+    await page.keyboard.down(modifier); await page.mouse.wheel(0, -20); await page.keyboard.up(modifier);
+    await expect.poll(async () => (await view()).zoom).toBeGreaterThan(before.zoom);
+    expect(await region.evaluate(element => element.scrollTop)).toBe(scroll);
+  }
+  expect(await page.evaluate(() => (window as any).fixtureWheelCount)).toBe(bubbleCount);
+  await region.evaluate(element => { element.scrollTop = 0; }); before = await view();
+  await nested.hover(); await page.mouse.wheel(6, 22);
+  await expect.poll(async () => (await view()).y).toBe(before.y - 22); expect((await view()).x).toBe(before.x - 6);
+  expect(await region.evaluate(element => element.scrollTop)).toBe(0);
+  before = await view(); await page.locator('#instruction').hover(); await page.mouse.wheel(0, 80); await page.waitForTimeout(120);
+  expect(await view()).toEqual(before);
 });

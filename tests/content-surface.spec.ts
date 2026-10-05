@@ -34,7 +34,7 @@ test('text and HTML controls stay interactive while blank content drags; documen
       await expect.poll(async () => (await state()).objects[0].version).toBe(original.version + 1);
       const changed = (await state()).objects[0]; expect(changed.width).toBe(original.width + (['e','w'].includes(handle) ? 22 : 0)); expect(changed.height).toBe(original.height + (['n','s'].includes(handle) ? 18 : 0));
     }
-    await expect(html.locator('.html-snapshot')).toHaveCount(1); await html.getByRole('button', { name: 'Interact with Buttons.html', exact: true }).click();
+    await expect(html.locator('.html-snapshot')).toHaveCount(1); await page.mouse.move(5, 5); await html.locator('.html-content').hover();
     await html.frameLocator('iframe').getByRole('button', { name: 'Choose', exact: true }).click(); await expect(html.frameLocator('iframe').getByRole('button', { name: 'Clicked', exact: true })).toBeVisible();
     const htmlWords = (await html.frameLocator('iframe').getByRole('heading').boundingBox())!;
     await page.mouse.move(htmlWords.x + 3, htmlWords.y + 12); await page.mouse.down(); await page.mouse.move(htmlWords.x + 230, htmlWords.y + 12, { steps: 6 }); await page.mouse.up();

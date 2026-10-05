@@ -7,6 +7,7 @@ import { useAudioArtwork } from './audioArtwork';
 import { MarkdownCanvasContent } from './MarkdownCanvasContent';
 import { AudioCanvasPlayer } from './AudioCanvasPlayer';
 import { HtmlCanvasContent } from './HtmlCanvasContent';
+import type { CanvasWheelInput } from './canvas-wheel';
 import type { BoardApi } from './api';
 import { isContentInteraction } from '../shared/content-hit';
 import './content.css';
@@ -38,16 +39,17 @@ export interface ContentRendererProps {
   onMediaElement?: (element: HTMLMediaElement | null) => void;
   onReloadBoard?: () => Promise<void>;
   onBlankPointerDown?: (event: PointerEvent<HTMLElement>) => void;
+  onFrameWheel?: (event: CanvasWheelInput) => void;
   onFrameDrag?: (frame: HTMLIFrameElement, start: { x: number; y: number }, event: PointerEvent<HTMLElement>) => void;
 }
 
-export function ContentRenderer({ asset, src, api, surface = 'canvas', disabled, error, onError, onSize, onMediaElement, onReloadBoard, onBlankPointerDown, onFrameDrag }: ContentRendererProps) {
+export function ContentRenderer({ asset, src, api, surface = 'canvas', disabled, error, onError, onSize, onMediaElement, onReloadBoard, onBlankPointerDown, onFrameDrag, onFrameWheel }: ContentRendererProps) {
   const kind = resolveContentKind(asset), title = asset?.name || 'File';
   if (error || kind === 'file') return <div className="file-card"><File size={32} strokeWidth={1.25}/><strong>{title}</strong><span>{error ? 'Preview unavailable in this browser' : `${asset?.mime || 'Attachment'} · ${bytes(asset?.size || 0)}`}</span><a data-canvas-control href={src} download={title} onPointerDown={event => event.stopPropagation()}><ArrowDownToLine size={13}/>Download file</a></div>;
   if (kind === 'image' || kind === 'gif') return <img src={src} alt={title} draggable={false} onLoad={event => onSize?.({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} onError={() => onError?.()}/>;
   if (kind === 'video') return <video playsInline preload="metadata" controls={surface === 'detail'} tabIndex={surface === 'detail' ? 0 : -1} src={src} ref={element => onMediaElement?.(element)} onLoadedMetadata={event => onSize?.({ width: event.currentTarget.videoWidth, height: event.currentTarget.videoHeight })} onError={() => onError?.()}/>;
   if (kind === 'audio') return <AudioCanvasPlayer key={asset?.id || src} src={src} title={title} assetId={asset?.id} disabled={disabled} onElement={element => onMediaElement?.(element)} onError={onError}/>;
   return <div className="content-shell" data-content-kind={kind} data-canvas-control onPointerDown={event => { if (surface === 'canvas' && !isContentInteraction(event.currentTarget, event.clientX, event.clientY, event.target as Element)) onBlankPointerDown?.(event); event.stopPropagation(); }}>
-    {kind === 'markdown' ? <><MarkdownCanvasContent src={src} title={title}/><a className="markdown-download" data-canvas-control href={src} download={title} aria-label={`Download ${title}`} title="Download original Markdown" onPointerDown={event => event.stopPropagation()}><ArrowDownToLine size={13}/></a></> : asset && <HtmlCanvasContent key={asset.id} asset={asset} api={api} onReloadBoard={onReloadBoard} onFrameDrag={onFrameDrag}/>}
+    {kind === 'markdown' ? <><MarkdownCanvasContent src={src} title={title}/><a className="markdown-download" data-canvas-control href={src} download={title} aria-label={`Download ${title}`} title="Download original Markdown" onPointerDown={event => event.stopPropagation()}><ArrowDownToLine size={13}/></a></> : asset && <HtmlCanvasContent key={asset.id} asset={asset} api={api} onReloadBoard={onReloadBoard} onFrameDrag={onFrameDrag} onFrameWheel={surface === 'canvas' ? onFrameWheel : undefined}/>}
   </div>;
 }

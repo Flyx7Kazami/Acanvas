@@ -69,11 +69,13 @@ Images, video, GIF, Markdown, audio, and HTML share import, selection, layout, a
 | Format | Canvas interaction |
 | --- | --- |
 | Images, GIF, video | Images and GIFs render directly; video includes playback controls. Resizing preserves the media aspect ratio. |
-| Markdown | Rendered text, lists, code, and links support selection and scrolling. Drag blank content areas or the filename to move the block. Four corner handles and four edge midpoints resize width and height independently. |
+| Markdown | Rendered text, lists, code, and links support selection and scrolling. Ordinary wheel gestures scroll the text; Ctrl/Meta-wheel zooms the canvas. Drag blank content areas or the filename to move the block. Four corner handles and four edge midpoints resize width and height independently. |
 | Audio | A compact, unified player contains embedded artwork, the track name, playback controls, and a complete amplitude waveform. Click or drag the waveform to seek across the whole track. Audio references can include specific times or intervals. |
-| HTML | Visible blocks automatically render a static snapshot. Choose **Interact** to use its controls, or **Refresh snapshot** to update the image; up to four HTML instances can run per page, including snapshot generation. Inactive blocks retain an image of their content. Reload and stop controls remain outside the live preview. Drag the filename to move the block, and use eight resize handles to adjust width and height independently. |
+| HTML | Hover over a block to use its controls. Keyboard focus and touch also activate it. Up to four HTML instances run per page, including snapshot generation; the least recently used preview is released when another needs its slot. Inactive blocks retain a snapshot. Wheel and trackpad gestures over canvas HTML pan or zoom the canvas just as they do over images. Reload and stop controls remain outside the live preview. Drag the filename to move the block, and use eight resize handles to adjust width and height independently. |
 
 A mixed selection can share one group annotation, with a common number and comment while preserving each material's source. Image and video region annotations retain explicit region bounds.
+
+Canvas controls, including audio timelines, inherit canvas pan and zoom gestures. Components that need ordinary content scrolling declare a content wheel region; click, drag, and keyboard controls retain their own behavior. See [canvas input responsibilities](docs/CANVAS_INPUT.md) when adding a component.
 
 HTML previews support self-contained files and explicitly imported local resource bundles in an isolated origin. Snapshot generation shares the same four-instance limit as live interaction and waits for an available slot. Offscreen and stopped previews release their running slots; a retained snapshot can be displayed without rerunning the file. Snapshots preserve an image, not restorable script or form state. Live preview grants expire after ten minutes and can be restarted. Remote resources and host-specific APIs require further integration. Markdown displays raw HTML as text and uses source placeholders for embedded images.
 
