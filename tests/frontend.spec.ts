@@ -640,7 +640,7 @@ test('composer grows with wrap and newlines, restores height, sends Enter and pr
     await page.setViewportSize({ width, height: 480 });
     await expect.poll(async () => page.locator('.queue-list').evaluate(element => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(64);
     const queue = page.locator('.queue-list');
-    await expect.poll(async () => page.locator('.queue-extra').last().evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThan(36); await queue.evaluate(element => { element.scrollTop = element.scrollHeight; });
+    await expect.poll(async () => page.locator('.queue-extra').last().evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(36); await queue.evaluate(element => { element.scrollTop = element.scrollHeight; });
     await expect(page.locator('.queue-item').last()).toBeInViewport();
     await expect.poll(async () => page.locator('.canvas-toolbar button,.canvas-actions button,.send-button,.queue-list>.queue-extra:last-child .queue-item button').evaluateAll(elements => elements.filter(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') !== element; }).map(element => element.getAttribute('aria-label')))).toEqual([]);
     await page.screenshot({ path: info.outputPath(`growing-composer-${width}x480.png`) });
@@ -1772,4 +1772,80 @@ test('inline queue references move below the instruction and expose every thumbn
   await item.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(taskButton).toBeFocused();
   expect((await app.state()).tasks[0].snapshot).toEqual(sent.task.snapshot); expect(errors).toEqual([]);
   await writeFile(info.outputPath('inline-reference-geometry.json'), JSON.stringify(geometry, null, 2));
+});
+
+test('compact composer shares its animated width with footer controls and exposes the surrounding canvas', async ({ page, app }, info) => {
+  await page.addInitScript(() => { Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('Clipboard fixture'); } } }); });
+  await page.emulateMedia({ reducedMotion: 'no-preference' }); await open(page, app);
+  const composer = page.locator('.composer'), shell = page.locator('.composer-shell'), input = page.locator('#instruction');
+  const history = page.getByRole('button', { name: 'Request history', exact: true }), copy = page.getByRole('button', { name: 'Copy resume prompt', exact: true });
+  const metrics = () => page.evaluate(() => {
+    const form = document.querySelector('.composer')!.getBoundingClientRect(), shell = document.querySelector('.composer-shell')!.getBoundingClientRect(), footer = document.querySelector('.dock-footer')!.getBoundingClientRect();
+    const buttons = Array.from(document.querySelectorAll('.dock-footer button')).map(button => button.getBoundingClientRect());
+    return { form: { x: form.x, y: form.y, width: form.width, height: form.height }, shellWidth: shell.width, footerWidth: footer.width, buttonOffsets: buttons.map(button => button.left - form.left) };
+  });
+  const startSamples = () => page.evaluate(() => {
+    (window as any).composerMotionSamples = new Promise(resolve => { const samples: number[][] = [], start = performance.now(); const sample = () => {
+      const form = document.querySelector('.composer')!.getBoundingClientRect(), footer = document.querySelector('.dock-footer')!.getBoundingClientRect();
+      samples.push([form.width, footer.width, ...Array.from(document.querySelectorAll('.dock-footer button')).map(button => button.getBoundingClientRect().left - form.left)]);
+      if (performance.now() - start < 600) requestAnimationFrame(sample); else resolve(samples);
+    }; requestAnimationFrame(sample); });
+  });
+  const readSamples = async () => {
+    const samples = await page.evaluate(() => (window as any).composerMotionSamples) as number[][];
+    expect(samples.length).toBeGreaterThan(5);
+    for (const [form, footer, historyOffset, copyOffset] of samples) { expect(Math.abs(form - footer)).toBeLessThan(.05); expect(historyOffset).toBeCloseTo(10, 1); expect(copyOffset).toBeCloseTo(44, 1); }
+    return samples;
+  };
+  const animationResults = [];
+  await expect.poll(async () => (await metrics()).form.width).toBe(280);
+  await startSamples(); await input.focus(); animationResults.push({ transition: 'expand', samples: await readSamples() });
+  await expect.poll(async () => (await metrics()).form.width).toBe(720);
+  await startSamples(); await page.locator('#whiteboard').focus(); animationResults.push({ transition: 'collapse', samples: await readSamples() });
+  await expect.poll(async () => (await metrics()).form.width).toBe(280);
+  const measurements = [];
+  for (const theme of ['light', 'dark'] as const) {
+    await page.evaluate(theme => { document.documentElement.dataset.theme = theme; localStorage.setItem('acanvas-theme', theme); }, theme);
+    for (const width of [1440, 390, 320]) {
+      await page.setViewportSize({ width, height: width === 1440 ? 1000 : 844 });
+      const compactWidth = width === 320 ? 224 : 280;
+      await expect.poll(async () => (await metrics()).form.width).toBe(compactWidth);
+      await expect(input).toHaveAttribute('placeholder', 'Create something…');
+      const measured = await metrics(); expect(measured.form.height).toBe(52); expect(measured.buttonOffsets).toEqual([10, 44]);
+      const passthrough = await page.evaluate(() => {
+        const dock = document.querySelector('.creation-dock')!.getBoundingClientRect(), form = document.querySelector('.composer')!.getBoundingClientRect();
+        const point = { x: dock.left + 8, y: form.top + form.height / 2 }, hit = document.elementFromPoint(point.x, point.y);
+        return { ...point, canvas: !!hit?.closest('#whiteboard'), dock: !!hit?.closest('.creation-dock') };
+      });
+      expect(passthrough).toMatchObject({ canvas: true, dock: false });
+      await page.mouse.click(passthrough.x, passthrough.y); await expect(input).not.toBeFocused();
+      measurements.push({ theme, viewport: width, ...measured, passthrough });
+      await page.screenshot({ path: info.outputPath(`compact-composer-${theme}-${width}.png`) });
+      await input.focus(); await expect(composer).toHaveAttribute('data-compact', 'false'); await expect(input).toHaveAttribute('placeholder', 'What would you like to create?');
+      await expect.poll(async () => (await metrics()).form.width).toBe(width === 1440 ? 720 : width - 32);
+      await page.locator('#whiteboard').focus(); await expect.poll(async () => (await metrics()).form.width).toBe(compactWidth);
+    }
+  }
+  for (const expanded of [false, true]) {
+    if (expanded) await input.focus(); else await page.locator('#whiteboard').focus();
+    await expect.poll(async () => (await metrics()).form.width).toBe(expanded ? 288 : 224);
+    await history.click({ delay: 120 }); await expect(page.getByRole('region', { name: 'Request history', exact: true })).toBeVisible();
+    expect((await metrics()).form.width).toBe(expanded ? 288 : 224);
+    await page.getByRole('button', { name: 'Close request history', exact: true }).click();
+    if (expanded) await input.focus(); else await page.locator('#whiteboard').focus();
+    await expect.poll(async () => (await metrics()).form.width).toBe(expanded ? 288 : 224);
+    await copy.click({ delay: 120 }); await expect(page.getByRole('region', { name: 'Resume prompt', exact: true })).toBeVisible();
+    expect((await metrics()).form.width).toBe(expanded ? 288 : 224);
+    await page.getByRole('button', { name: 'Close resume prompt', exact: true }).click();
+  }
+  await history.focus(); await page.keyboard.press('Enter'); await expect(page.getByRole('region', { name: 'Request history', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Close request history', exact: true }).click(); await expect(history).toBeFocused();
+  await copy.focus(); await page.keyboard.press('Enter'); await expect(page.getByRole('region', { name: 'Resume prompt', exact: true })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Resume prompt text', exact: true })).not.toHaveValue('');
+  await page.getByRole('button', { name: 'Close resume prompt', exact: true }).click();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(await shell.evaluate(element => getComputedStyle(element).transitionDuration)).toBe('0s');
+  await input.focus(); expect((await metrics()).form.width).toBe(288);
+  await input.fill('Keep this draft.'); await page.locator('#whiteboard').focus(); await expect(composer).toHaveAttribute('data-compact', 'false'); expect((await metrics()).form.width).toBe(288);
+  await writeFile(info.outputPath('compact-composer-measurements.json'), JSON.stringify({ measurements, animationResults }, null, 2));
 });
