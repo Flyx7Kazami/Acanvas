@@ -19,14 +19,19 @@
 .task-media-preview .content-shell { height: 260px; }
 .task-media-preview .markdown-content { padding: 16px; }.task-media-preview .markdown-body { font-size: 12px; }
 .html-content { position: relative; width: 100%; height: 100%; background: var(--surface); }
-.html-content iframe { width: 100%; height: 100%; display: block; border: 0; background: white; }
+.html-content iframe { position: absolute; inset: 0; width: 100%; height: 100%; display: block; border: 0; background: white; }
+.html-content img.html-snapshot { width: 100%; height: 100%; max-height: none; display: block; object-fit: fill; border-radius: 0; background: white; }
+.html-capture-frame { pointer-events: none; }
+.html-snapshot~.html-capture-frame { opacity: 0; }
+.html-interact { position: absolute; left: 10px; bottom: 10px; z-index: 3; display: flex; align-items: center; gap: 5px; padding: 7px 10px; border-radius: 6px; background: var(--surface); box-shadow: 0 1px 5px #0002; font-size: 12px; }
+.html-interact:hover { background: var(--hover); }
 .html-poster { height: 100%; padding: 24px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 9px; text-align: center; font-size: 12px; }
 .html-poster>svg,.html-poster>span { color: var(--muted); }.html-poster strong { overflow-wrap: anywhere; font-weight: 500; }
 .html-poster button { padding: 8px 12px; display: inline-flex; gap: 6px; align-items: center; border-radius: 6px; background: var(--soft); }
 .html-preview-tools { position: absolute; top: 5px; right: 5px; z-index: 3; display: flex; gap: 4px; }
 .html-preview-tools button,.html-preview-tools a { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: var(--surface); box-shadow: 0 1px 5px #0002; border-radius: 5px; }
 .html-preview-tools button:hover,.html-preview-tools a:hover,.html-poster button:hover { background: var(--hover); }
-.html-preview-error { position: absolute; left: 10px; right: 10px; bottom: 10px; font-size: 11px; padding: 8px; color: var(--ink); background: var(--surface); }
+.html-preview-error { position: absolute; left: 10px; right: 10px; bottom: 48px; z-index: 4; font-size: 11px; padding: 8px; color: var(--ink); background: var(--surface); }
 .html-preview-error button { margin-top: 6px; padding: 6px 8px; background: var(--soft); border-radius: 4px; }
 .comment-video-meta select { background: var(--surface); color: var(--ink); border: 1px solid var(--edge); border-radius: 4px; padding: 3px; max-width: 125px; }
 .task-media-preview>.audio-canvas-player { height: 88px; }

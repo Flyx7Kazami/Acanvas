@@ -3,68 +3,115 @@ import { ArrowDownToLine, Code2, Play, RotateCw, Square } from 'lucide-react';
 import type { Asset } from '../shared/types';
 import type { BoardApi, HtmlPreviewGrant } from './api';
 import { HTML_PREVIEW_LIMIT, useHtmlPreviewSlot } from './HtmlPreviewPool';
+import { rasterizeHtmlSnapshot } from './html-preview-snapshot';
 
 export function HtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag }: { asset: Asset; api: BoardApi; onReloadBoard?: () => Promise<void>; onFrameDrag?: (frame: HTMLIFrameElement, start: { x: number; y: number }, event: PointerEvent<HTMLElement>) => void }) {
   const container = useRef<HTMLDivElement>(null), preview = useHtmlPreviewSlot(container);
-  const [attempt, setAttempt] = useState(0);
-  const [pendingDrag, setPendingDrag] = useState<{ pointerId: number; x: number; y: number }>();
-  useEffect(() => { if (!pendingDrag) return; const timeout = setTimeout(() => setPendingDrag(undefined), 1500); return () => clearTimeout(timeout); }, [pendingDrag]);
+  const [attempt, setAttempt] = useState(0), [pendingDrag, setPendingDrag] = useState<{ pointerId: number; x: number; y: number }>();
   const [grant, setGrant] = useState<HtmlPreviewGrant>();
-  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [ready, setReady] = useState(false);
+  const [error, setError] = useState(''), [ready, setReady] = useState(false), [reloadRequired, setReloadRequired] = useState(false);
   const frame = useRef<HTMLIFrameElement>(null), active = useRef<HtmlPreviewGrant | undefined>(undefined), requestSequence = useRef(0);
   const documentOrigin = useRef(document.querySelector<HTMLMetaElement>('meta[name="acanvas-html-preview-origin"]')?.content);
-  const [reloadRequired, setReloadRequired] = useState(false);
+  const allocated = ['capturing', 'live', 'freezing'].includes(preview.slot), live = preview.slot === 'live';
+  const currentGeneration = useRef(preview.generation); currentGeneration.current = preview.generation;
+  useEffect(() => { if (!pendingDrag) return; const timeout = setTimeout(() => setPendingDrag(undefined), 1500); return () => clearTimeout(timeout); }, [pendingDrag]);
   useEffect(() => {
-    if (preview.slot !== 'running') return;
-    const sequence = ++requestSequence.current;
-    setBusy(true); setError(''); setReady(false); setReloadRequired(false);
-    void api.createHtmlPreview(asset.id).then(async value => {
-      if (sequence !== requestSequence.current) { await api.revokeHtmlPreview(value.id).catch(() => {}); return; }
+    if (!allocated) return;
+    const sequence = ++requestSequence.current, controller = new AbortController();
+    let release: (() => void) | undefined, accepted = false;
+    const revoke = (id: string) => api.revokeHtmlPreview(id, AbortSignal.timeout(2000)).catch(() => {});
+    setError(''); setReady(false); setReloadRequired(false);
+    const timeout = window.setTimeout(() => {
+      if (sequence === requestSequence.current) { setError('Preview timed out. Try again.'); preview.fail(currentGeneration.current); }
+    }, 10_000);
+    void (async () => {
+      release = await preview.acquire(controller.signal);
+      if (controller.signal.aborted) return;
+      const value = await api.createHtmlPreview(asset.id, AbortSignal.timeout(10_000));
+      if (sequence !== requestSequence.current) { await revoke(value.id); return; }
       let url: URL;
       try { url = new URL(value.url); }
-      catch { await api.revokeHtmlPreview(value.id).catch(() => {}); throw new Error('The preview address is unavailable.'); }
-      if (url.protocol !== 'http:' || !['127.0.0.2', '127.0.0.1', 'localhost'].includes(url.hostname) || url.hostname === window.location.hostname || url.origin !== value.origin || url.username || url.password || !Number.isFinite(Date.parse(value.expiresAt))) { await api.revokeHtmlPreview(value.id).catch(() => {}); throw new Error('The preview address is unavailable.'); }
+      catch { await revoke(value.id); throw new Error('The preview address is unavailable.'); }
+      if (url.protocol !== 'http:' || !['127.0.0.2', '127.0.0.1', 'localhost'].includes(url.hostname) || url.hostname === window.location.hostname || url.origin !== value.origin || url.username || url.password || !Number.isFinite(Date.parse(value.expiresAt))) { await revoke(value.id); throw new Error('The preview address is unavailable.'); }
       if (documentOrigin.current && value.origin !== documentOrigin.current) {
-        await api.revokeHtmlPreview(value.id).catch(() => {});
+        await revoke(value.id);
         if (sequence === requestSequence.current) setReloadRequired(true);
         throw new Error('Reload the board to run HTML preview.');
       }
-      if (sequence !== requestSequence.current) { await api.revokeHtmlPreview(value.id).catch(() => {}); return; }
-      active.current = value; setGrant(value); setBusy(false);
-    }).catch(cause => {
-      if (sequence === requestSequence.current) { setError(cause instanceof Error ? cause.message : 'The preview is unavailable.'); preview.stop(); }
-    });
+      if (sequence !== requestSequence.current) { await revoke(value.id); return; }
+      clearTimeout(timeout); accepted = true; active.current = value; setGrant(value);
+    })().catch(cause => {
+      if (sequence === requestSequence.current) { setError(cause instanceof Error ? cause.message : 'The preview is unavailable.'); preview.fail(currentGeneration.current); }
+    }).finally(() => { if (!accepted) release?.(); });
     return () => {
-      requestSequence.current++; const current = active.current; active.current = undefined;
-      setGrant(undefined); setReady(false); setBusy(false); setPendingDrag(undefined);
-      if (current) void api.revokeHtmlPreview(current.id).catch(() => {});
+      clearTimeout(timeout); controller.abort(); requestSequence.current++; const current = active.current; active.current = undefined;
+      setGrant(undefined); setReady(false); setPendingDrag(undefined);
+      if (current) void revoke(current.id).finally(() => release?.());
     };
-  }, [api, asset.id, preview.slot, preview.stop, attempt]);
+  }, [api, asset.id, allocated, preview.fail, preview.acquire, attempt]);
   useEffect(() => {
     if (!grant) return;
     const bridge = (event: MessageEvent) => {
       if (event.source !== frame.current?.contentWindow || event.origin !== 'null' || !event.data || event.data.instanceId !== grant.id) return;
       if (event.data.type === 'acanvas:preview-ready') setReady(true);
-      if (event.data.type === 'acanvas:preview-drag' && frame.current) {
+      if (event.data.type === 'acanvas:preview-drag' && live && frame.current) {
         const { pointerId, x, y } = event.data;
         if (onFrameDrag && document.activeElement === frame.current && Number.isSafeInteger(pointerId) && pointerId >= 0 && Number.isFinite(x) && Number.isFinite(y) && x >= 0 && x <= 1 && y >= 0 && y <= 1) setPendingDrag({ pointerId, x, y });
       }
     };
     window.addEventListener('message', bridge);
-    const timer = window.setTimeout(() => { setError('Preview expired. Run it again.'); preview.stop(); }, Math.max(0, Date.parse(grant.expiresAt) - Date.now()));
-    return () => { window.removeEventListener('message', bridge); clearTimeout(timer); };
-  }, [grant, onFrameDrag, preview.stop]);
+    return () => window.removeEventListener('message', bridge);
+  }, [grant, onFrameDrag, live]);
+  useEffect(() => {
+    if (!grant) return;
+    const timer = window.setTimeout(() => { setError('Preview expired. Interact to run it again.'); preview.stop(); }, Math.max(0, Date.parse(grant.expiresAt) - Date.now()));
+    return () => clearTimeout(timer);
+  }, [grant, preview.stop]);
+  useEffect(() => {
+    if (preview.slot !== 'capturing' && preview.slot !== 'freezing') return;
+    // This includes grant acquisition and content that never reaches readiness.
+    const timer = window.setTimeout(() => {
+      setError('Snapshot unavailable. You can still interact or retry.'); preview.complete(preview.generation);
+    }, preview.slot === 'freezing' ? 2000 : 8000);
+    return () => clearTimeout(timer);
+  }, [preview.slot, preview.generation, preview.complete]);
+  useEffect(() => {
+    if (!grant || !ready || preview.slot !== 'capturing' && preview.slot !== 'freezing') return;
+    const controller = new AbortController(), requestId = crypto.randomUUID();
+    let received = false, firstFrame = 0, secondFrame = 0;
+    const message = (event: MessageEvent) => {
+      if (received || event.source !== frame.current?.contentWindow || event.origin !== 'null' || !event.data || event.data.instanceId !== grant.id || event.data.requestId !== requestId) return;
+      if (!['acanvas:preview-snapshot', 'acanvas:preview-snapshot-error'].includes(event.data.type)) return;
+      received = true;
+      if (event.data.type === 'acanvas:preview-snapshot-error') { setError('Snapshot unavailable. You can still interact or retry.'); preview.complete(preview.generation); return; }
+      const { svg, width, height } = event.data;
+      if (width !== preview.width || height !== preview.height) { setError('Snapshot size changed. Retry after resizing.'); preview.complete(preview.generation); return; }
+      void rasterizeHtmlSnapshot({ svg, width, height }, controller.signal).then(image => {
+        if (!controller.signal.aborted) { setError(''); preview.complete(preview.generation, image); }
+      }).catch(() => {
+        if (!controller.signal.aborted) { setError('Snapshot unavailable. You can still interact or retry.'); preview.complete(preview.generation); }
+      });
+    };
+    window.addEventListener('message', message);
+    firstFrame = requestAnimationFrame(() => { secondFrame = requestAnimationFrame(() => frame.current?.contentWindow?.postMessage({ type: 'acanvas:preview-snapshot', instanceId: grant.id, requestId }, '*')); });
+    return () => { controller.abort(); cancelAnimationFrame(firstFrame); cancelAnimationFrame(secondFrame); window.removeEventListener('message', message); };
+  }, [grant, ready, preview.slot, preview.generation, preview.width, preview.height, preview.complete]);
 
-  function run() { setAttempt(value => value + 1); preview.request(); }
-  const running = preview.slot === 'running', limited = preview.slot === 'waiting';
-  return <div ref={container} className="html-content" data-preview-state={preview.slot} data-preview-ready={running && ready || undefined}>
-    {running && grant ? <iframe ref={frame} src={grant.url} title={`HTML preview: ${asset.name}`} sandbox="allow-scripts" referrerPolicy="no-referrer" allow=""/> : <div className="html-poster"><Code2 size={32} strokeWidth={1.25}/><strong>{asset.name}</strong><span>{limited ? `Preview limit: ${HTML_PREVIEW_LIMIT} at a time` : preview.slot === 'stopped' ? 'Preview stopped' : 'Interactive HTML'}</span><button type="button" data-canvas-control disabled={running || reloadRequired} onPointerDown={event => event.stopPropagation()} onClick={run}><Play size={13}/>{running ? 'Starting preview…' : limited ? 'Show preview' : 'Run preview'}</button></div>}
-    {pendingDrag && <div className="html-drag-capture" aria-hidden="true" onPointerDown={() => setPendingDrag(undefined)} onPointerMove={event => {
+  function interact() { setError(''); preview.request(); }
+  function reload() { setAttempt(value => value + 1); setError(''); }
+  const preparing = preview.slot === 'capturing' || preview.slot === 'freezing' || preview.slot === 'waiting';
+  return <div ref={container} className="html-content" data-preview-state={preview.slot} data-preview-ready={allocated && ready || undefined}>
+    {preview.image && <img className="html-snapshot" src={preview.image.url} alt={`Static preview of ${asset.name}`} draggable={false} data-snapshot-width={preview.image.width} data-snapshot-height={preview.image.height}/>}
+    {allocated && grant && <iframe ref={frame} className={live ? 'html-live-frame' : 'html-capture-frame'} style={{ visibility: preview.image && !ready ? 'hidden' : undefined }} src={grant.url} title={`HTML preview: ${asset.name}`} sandbox="allow-scripts" referrerPolicy="no-referrer" allow="" tabIndex={live ? 0 : -1} aria-hidden={!live} onLoad={() => setReady(true)}/>}
+    {!preview.image && !(allocated && grant) && <div className="html-poster"><Code2 size={32} strokeWidth={1.25}/><strong>{asset.name}</strong><span>{preparing ? preview.slot === 'waiting' ? `Waiting for a preview slot · ${HTML_PREVIEW_LIMIT} at a time` : 'Preparing preview…' : 'Preview unavailable'}</span></div>}
+    {!live && <button type="button" className="html-interact" data-canvas-control disabled={reloadRequired || preview.slot === 'freezing'} onPointerDown={event => event.stopPropagation()} onClick={interact} aria-label={`Interact with ${asset.name}`}><Play size={13}/>{preview.slot === 'freezing' ? 'Saving preview…' : 'Interact'}</button>}
+    {pendingDrag && live && <div className="html-drag-capture" aria-hidden="true" onPointerDown={() => setPendingDrag(undefined)} onPointerMove={event => {
       if (!event.isTrusted || !(event.buttons & 1)) { setPendingDrag(undefined); return; }
       if (event.pointerId === pendingDrag.pointerId && frame.current) { event.stopPropagation(); onFrameDrag?.(frame.current, pendingDrag, event); setPendingDrag(undefined); }
     }} onPointerUp={() => setPendingDrag(undefined)} onPointerCancel={() => setPendingDrag(undefined)}/>}
     <div className="html-preview-tools" data-canvas-control onPointerDown={event => event.stopPropagation()}>
-      {running && grant && <><button type="button" aria-label="Reload HTML preview" title="Reload preview" disabled={busy} onClick={run}><RotateCw size={13}/></button><button type="button" aria-label="Stop HTML preview" title="Stop preview" onClick={() => { setError(''); preview.stop(); }}><Square size={13}/></button></>}
+      {live && <><button type="button" aria-label="Reload HTML preview" title="Reload preview" disabled={!grant} onClick={reload}><RotateCw size={13}/></button><button type="button" aria-label="Stop HTML preview" title="Stop preview" onClick={() => { setError(''); preview.stop(); }}><Square size={13}/></button></>}
+      {!live && !preparing && <button type="button" aria-label="Refresh HTML snapshot" title="Refresh snapshot" disabled={reloadRequired} onClick={() => { setError(''); preview.retry(); }}><RotateCw size={13}/></button>}
       <a href={api.content(asset.id)} download={asset.name} aria-label={`Download ${asset.name}`} title="Download original HTML"><ArrowDownToLine size={13}/></a>
     </div>
     {error && <div className="html-preview-error" role="status"><p>{error}</p>{reloadRequired && <button type="button" data-canvas-control onPointerDown={event => event.stopPropagation()} onClick={() => { if (onReloadBoard) void onReloadBoard(); else window.location.reload(); }}>Reload board</button>}</div>}

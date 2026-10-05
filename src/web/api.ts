@@ -54,7 +54,7 @@ export class BoardApi {
     }
     if (response.status === 401 && refreshAuthentication && path !== '/api/bootstrap') {
       // The service authenticates before entering a mutation handler.
-      await this.bootstrap();
+      await this.bootstrap(options.signal || undefined);
       return this.request<T>(path, options, false);
     }
     if (!response.ok) {
@@ -65,8 +65,8 @@ export class BoardApi {
     return response.json() as Promise<T>;
   }
 
-  async bootstrap(): Promise<Bootstrap> {
-    const result = await this.request<Bootstrap>('/api/bootstrap');
+  async bootstrap(signal?: AbortSignal): Promise<Bootstrap> {
+    const result = await this.request<Bootstrap>('/api/bootstrap', { signal });
     if (this.project && (result.project.id !== this.project.id || result.project.root !== this.project.root)) {
       this.projectChanged = true;
       this.token = '';
@@ -87,6 +87,6 @@ export class BoardApi {
   operations(sessionId: string, operations: BoardOperation[]) { return this.request<{ objects: BoardState['objects'] }>('/api/board/operations', { method: 'POST', body: JSON.stringify({ sessionId, operations }) }); }
   upload(file: Blob, name: string, signal?: AbortSignal) { return this.request<Asset>(`/api/assets?name=${encodeURIComponent(name)}&mime=${encodeURIComponent(resolveContentMime(name, file.type))}`, { method: 'POST', body: file, signal }); }
   content(assetId: string) { return `/api/assets/${encodeURIComponent(assetId)}/content`; }
-  createHtmlPreview(assetId: string) { return this.request<HtmlPreviewGrant>(`/api/assets/${encodeURIComponent(assetId)}/html-preview`, { method: 'POST', body: '{}' }); }
-  revokeHtmlPreview(id: string) { return this.request<{ revoked: boolean }>(`/api/html-previews/${encodeURIComponent(id)}`, { method: 'DELETE' }); }
+  createHtmlPreview(assetId: string, signal?: AbortSignal) { return this.request<HtmlPreviewGrant>(`/api/assets/${encodeURIComponent(assetId)}/html-preview`, { method: 'POST', body: '{}', signal }); }
+  revokeHtmlPreview(id: string, signal?: AbortSignal) { return this.request<{ revoked: boolean }>(`/api/html-previews/${encodeURIComponent(id)}`, { method: 'DELETE', signal }); }
 }

@@ -86,101 +86,99 @@ test('audio plays real media in one row and saves explicit time range without fr
   await page.screenshot({ path: info.outputPath('audio-range-reference.png') });
 });
 
-test('HTML starts automatically with direct controls and explicit stop and restart', async ({ page, app }, info) => {
-  const source = '<!doctype html><html><body><h1>Counter</h1><button id="count" onclick="this.textContent=Number(this.textContent)+1">0</button><input aria-label="Label"><script>window.parent.postMessage({type:"arbitrary-command"},"*")</script></body></html>';
+test('HTML captures rendered content, activates on request and saves the latest stopped view', async ({ page, app }, info) => {
+  const source = '<!doctype html><style>body{margin:0;background:rgb(20,120,200)}</style><button onclick="this.textContent=Number(this.textContent)+1;document.body.style.backgroundColor=\'rgb(240,40,80)\'">0</button><input aria-label="Label"><script>document.body.dataset.rendered="true"</script>';
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'counter.html', mimeType: 'text/html', buffer: Buffer.from(source) });
-  const object = page.locator('.board-object[data-content-kind="html"]'); await expect(object.locator('iframe')).toHaveCount(1); await expect(object.locator('iframe')).toHaveAttribute('sandbox', 'allow-scripts');
-  await object.locator('.object-caption').click(); const world = await page.locator('.canvas-world').getAttribute('style');
-  const frame = object.frameLocator('iframe'); await frame.getByRole('button', { name: '0', exact: true }).click(); await expect(frame.getByRole('button', { name: '1', exact: true })).toBeVisible(); await frame.getByLabel('Label').fill('Draft state'); expect(await page.locator('.canvas-world').getAttribute('style')).toBe(world);
-  await frame.getByLabel('Label').press('Escape'); await expect(page.getByRole('button', { name: 'Exit content', exact: true })).toHaveCount(0);
-  await object.getByRole('button', { name: 'Stop HTML preview', exact: true }).click(); await expect(object.locator('iframe')).toHaveCount(0); await object.getByRole('button', { name: 'Run preview', exact: true }).click(); await expect(frame.getByRole('button', { name: '0', exact: true })).toBeVisible(); await expect(frame.getByLabel('Label')).toHaveValue('');
-  expect((await app.state()).assets).toHaveLength(1); await page.screenshot({ path: info.outputPath('html-isolated-counter.png') });
+  const object = page.locator('.board-object[data-content-kind="html"]');
+  await expect(object.locator('.html-snapshot')).toBeVisible(); await expect(object.locator('iframe')).toHaveCount(0);
+  const original = await object.locator('.html-snapshot').getAttribute('src'); expect(original).toMatch(/^data:image\/png;base64,/);
+  await object.getByRole('button', { name: 'Interact with counter.html', exact: true }).click();
+  await expect(object.locator('iframe')).toHaveAttribute('sandbox', 'allow-scripts');
+  const frame = object.frameLocator('iframe'); await frame.getByRole('button', { name: '0', exact: true }).click(); await frame.getByLabel('Label').fill('Draft state');
+  await expect(frame.getByRole('button', { name: '1', exact: true })).toBeVisible();
+  await object.getByRole('button', { name: 'Stop HTML preview', exact: true }).click();
+  await expect(object.locator('iframe')).toHaveCount(0); await expect(object.locator('.html-content')).toHaveAttribute('data-preview-state', 'frozen');
+  expect(await object.locator('.html-snapshot').getAttribute('src')).not.toBe(original);
+  const pixel = await object.locator('.html-snapshot').evaluate(async image => { const img = image as HTMLImageElement; await img.decode(); const canvas = document.createElement('canvas'); canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; const context = canvas.getContext('2d')!; context.drawImage(img, 0, 0); return [...context.getImageData(50, 100, 1, 1).data]; });
+  expect(pixel).toEqual([240, 40, 80, 255]);
+  await page.waitForTimeout(250); await expect(object.locator('iframe')).toHaveCount(0);
+  await object.getByRole('button', { name: 'Interact with counter.html', exact: true }).click();
+  await expect(frame.getByRole('button', { name: '0', exact: true })).toBeVisible(); await expect(frame.getByLabel('Label')).toHaveValue('');
+  expect((await app.state()).assets).toHaveLength(1); await page.screenshot({ path: info.outputPath('html-live-counter.png') });
 });
 
-test('HTML shares four stable preview slots and releases offscreen, stopped and hidden content', async ({ page, app }, info) => {
-  const initial = await app.state();
-  const { token } = await (await page.request.get(`${app.url}/api/bootstrap`)).json();
-  for (let index = 0; index < 6; index++) {
-    const response = await page.request.post(`${app.url}/api/assets?name=preview-${index}.html&mime=text/html`, { headers: { Authorization: `Bearer ${token}` }, data: `<button onclick="this.textContent='Changed'">Preview ${index}</button>` });
+test('twelve HTML snapshots drain to zero frames, retain cached views and share four interaction slots', async ({ page, app }, info) => {
+  const initial = await app.state(), { token } = await (await page.request.get(`${app.url}/api/bootstrap`)).json();
+  for (let index = 0; index < 13; index++) {
+    const response = await page.request.post(`${app.url}/api/assets?name=preview-${index}.html&mime=text/html`, { headers: { Authorization: `Bearer ${token}` }, data: `<style>body{margin:0;font:16px sans-serif}button{margin:20px}</style><button onclick="this.textContent='Changed';document.body.style.background='rgb(240,40,80)'">Initial</button><script>document.querySelector('button').textContent='Rendered ${index}';document.body.style.background='rgb(20,120,200)'</script>` });
     expect(response.ok()).toBeTruthy(); const asset = await response.json();
-    await app.call('/api/board/operations', 'POST', { sessionId: initial.session.id, operations: [{ type: 'create', object: { assetId: asset.id, x: index === 5 ? 3000 : 80 + index % 3 * 430, y: 120 + Math.floor(index / 3) * 330, width: 330, height: 240 } }] });
+    await app.call('/api/board/operations', 'POST', { sessionId: initial.session.id, operations: [{ type: 'create', object: { assetId: asset.id, x: index === 12 ? 3000 : 65 + index % 4 * 340, y: 110 + Math.floor(index / 4) * 240, width: 280, height: 180 } }] });
   }
-  await page.reload();
-  const objects = page.locator('.board-object[data-content-kind="html"]');
-  await expect(objects).toHaveCount(6); await expect(page.locator('iframe')).toHaveCount(4);
-  await expect(objects.nth(5).locator('iframe')).toHaveCount(0);
-  await page.screenshot({ path: info.outputPath('html-four-live-previews.png') });
-  await page.evaluate(() => {
-    (window as any).maximumHtmlFrames = document.querySelectorAll('.html-content iframe').length;
-    new MutationObserver(() => { (window as any).maximumHtmlFrames = Math.max((window as any).maximumHtmlFrames, document.querySelectorAll('.html-content iframe').length); }).observe(document.body, { childList: true, subtree: true });
+  await page.addInitScript(() => {
+    const metrics = (window as any).htmlMetrics = { requests: 0, pending: 0, peak: 0 };
+    const sample = () => { metrics.peak = Math.max(metrics.peak, metrics.pending + document.querySelectorAll('.html-content iframe').length); };
+    const fetchOriginal = window.fetch.bind(window);
+    window.fetch = async (...args) => {
+      const tracked = /\/api\/assets\/[^/]+\/html-preview$/.test(String(args[0]));
+      if (tracked) { metrics.requests++; metrics.pending++; sample(); }
+      try { return await fetchOriginal(...args); } finally { if (tracked) metrics.pending--; sample(); }
+    };
+    new MutationObserver(sample).observe(document, { childList: true, subtree: true });
   });
-  const incumbent = objects.filter({ has: page.locator('iframe') }).first();
-  const incumbentId = await incumbent.getAttribute('data-object-id'), originalUrl = await incumbent.locator('iframe').getAttribute('src');
-  await incumbent.frameLocator('iframe').getByRole('button').click();
-  await page.locator('#instruction').fill('Rerender without restarting previews');
-  await expect(incumbent.frameLocator('iframe').getByRole('button', { name: 'Changed', exact: true })).toBeVisible();
-  expect(await incumbent.locator('iframe').getAttribute('src')).toBe(originalUrl);
-  const waiting = objects.filter({ has: page.getByRole('button', { name: 'Show preview', exact: true }) }).first();
-  const waitingId = await waiting.getAttribute('data-object-id');
-  await waiting.getByRole('button', { name: 'Show preview', exact: true }).click();
-  const replacement = page.locator(`[data-object-id="${waitingId}"]`);
-  await expect(replacement.locator('iframe')).toHaveCount(1); await expect(page.locator('iframe')).toHaveCount(4);
-  const displaced = page.locator(`[data-object-id="${incumbentId}"]`);
-  await expect(displaced.locator('iframe')).toHaveCount(0);
+  const started = Date.now(); await page.reload();
+  const objects = page.locator('.board-object[data-content-kind="html"]');
+  await expect(objects).toHaveCount(13); await expect(page.locator('.html-snapshot')).toHaveCount(12, { timeout: 20_000 }); await expect(page.locator('iframe')).toHaveCount(0);
+  await expect(objects.nth(12).locator('.html-snapshot')).toHaveCount(0);
+  await page.screenshot({ path: info.outputPath('html-twelve-frozen-previews.png') });
+  const metrics = await page.evaluate(() => (window as any).htmlMetrics); expect(metrics.peak).toBeLessThanOrEqual(4); expect(metrics.requests).toBe(12);
+  await writeFile(info.outputPath('snapshot-warmup.json'), JSON.stringify({ blocks: 12, elapsedMs: Date.now() - started, ...metrics }));
+  const activate = async (index: number) => { const object = objects.nth(index); await object.getByRole('button', { name: `Interact with preview-${index}.html`, exact: true }).click(); await expect(object.locator('.html-content')).toHaveAttribute('data-preview-state', 'live'); await expect(object.frameLocator('iframe').getByRole('button', { name: `Rendered ${index}`, exact: true })).toBeVisible(); };
+  for (let index = 0; index < 4; index++) await activate(index);
+  const originalUrl = await objects.nth(0).locator('iframe').getAttribute('src'), originalImage = await objects.nth(0).locator('.html-snapshot').getAttribute('src');
+  await objects.nth(0).frameLocator('iframe').getByRole('button').click();
+  await activate(4); await expect(page.locator('iframe')).toHaveCount(4); await expect(objects.nth(0).locator('iframe')).toHaveCount(0);
+  expect(await objects.nth(0).locator('.html-snapshot').getAttribute('src')).not.toBe(originalImage);
   await expect.poll(async () => (await page.request.get(originalUrl!, { headers: { 'Sec-Fetch-Dest': 'iframe' } })).status()).toBe(404);
-
-  // A real pan out of the viewport releases all slots, then restores only four.
+  await objects.nth(4).getByRole('button', { name: 'Stop HTML preview', exact: true }).click(); await expect(page.locator('iframe')).toHaveCount(3);
   const world = page.locator('.canvas-world'), camera = await world.getAttribute('style');
   await world.evaluate(element => { (element as HTMLElement).style.transform = 'translate(-6000px, 0px) scale(1)'; });
-  await expect(page.locator('iframe')).toHaveCount(0);
+  await expect(page.locator('iframe')).toHaveCount(0); const requests = await page.evaluate(() => (window as any).htmlMetrics.requests);
+  await world.evaluate((element, style) => element.setAttribute('style', style!), camera); await page.waitForTimeout(250);
+  await expect(page.locator('.html-snapshot')).toHaveCount(12); await expect(page.locator('iframe')).toHaveCount(0); expect(await page.evaluate(() => (window as any).htmlMetrics.requests)).toBe(requests);
+  // A boundary-touch notification must not strand the still-cold thirteenth block.
+  await objects.nth(12).evaluate(element => { (element as HTMLElement).style.left = `${innerWidth}px`; }); await page.waitForTimeout(100);
+  await expect(objects.nth(12).locator('.html-content')).toHaveAttribute('data-preview-state', 'hidden');
+  await objects.nth(12).evaluate(element => { (element as HTMLElement).style.left = `${innerWidth - 100}px`; });
+  await expect(objects.nth(12).locator('.html-snapshot')).toHaveCount(1); await expect(page.locator('iframe')).toHaveCount(0);
+  // Layout resizing refreshes after settling; canvas zoom does not execute HTML.
+  const beforeReversal = await page.evaluate(() => (window as any).htmlMetrics.requests);
+  await objects.nth(0).evaluate(async element => { const style = (element as HTMLElement).style; style.width = '320px'; await new Promise(resolve => setTimeout(resolve, 30)); style.width = '280px'; });
+  await page.waitForTimeout(300); expect(await page.evaluate(() => (window as any).htmlMetrics.requests)).toBe(beforeReversal);
+  await objects.nth(0).evaluate(element => { (element as HTMLElement).style.width = '310.5px'; });
+  await expect(objects.nth(0).locator('.html-snapshot')).toHaveAttribute('data-snapshot-width', '311'); await expect(page.locator('iframe')).toHaveCount(0);
+  const beforeZoom = await page.evaluate(() => (window as any).htmlMetrics.requests);
+  await world.evaluate(element => { (element as HTMLElement).style.transform = 'scale(.9)'; }); await page.waitForTimeout(300);
+  expect(await page.evaluate(() => (window as any).htmlMetrics.requests)).toBe(beforeZoom);
   await world.evaluate((element, style) => element.setAttribute('style', style!), camera);
-  await expect(page.locator('iframe')).toHaveCount(4);
-  const stopped = objects.filter({ has: page.locator('iframe') }).first(), stoppedId = await stopped.getAttribute('data-object-id');
-  await stopped.getByRole('button', { name: 'Stop HTML preview', exact: true }).click();
-  await expect(page.locator('iframe')).toHaveCount(4);
-  const stoppedObject = page.locator(`[data-object-id="${stoppedId}"]`);
-  await expect(stoppedObject.getByRole('button', { name: 'Run preview', exact: true })).toBeVisible();
-  await world.evaluate(element => element.setAttribute('inert', ''));
-  await expect(page.locator('iframe')).toHaveCount(0);
-  await world.evaluate(element => element.removeAttribute('inert'));
-  await expect(page.locator('iframe')).toHaveCount(4); await expect(stoppedObject.locator('iframe')).toHaveCount(0);
-  await stoppedObject.getByRole('button', { name: 'Run preview', exact: true }).click();
-  await expect(stoppedObject.locator('iframe')).toHaveCount(1); await expect(page.locator('iframe')).toHaveCount(4);
-  // Touching the viewport edge has zero visible area. Crossing it must produce
-  // another observer notification instead of stranding the preview as hidden.
-  await world.evaluate(element => { (element as HTMLElement).style.transform = 'none'; });
-  await objects.nth(5).evaluate(element => { (element as HTMLElement).style.left = `${innerWidth}px`; });
-  await page.waitForTimeout(100);
-  await expect(objects.nth(5).locator('.html-content')).toHaveAttribute('data-preview-state', 'hidden');
-  await objects.nth(5).evaluate(element => { (element as HTMLElement).style.left = `${innerWidth - 100}px`; });
-  await expect(objects.nth(5).locator('.html-content')).toHaveAttribute('data-preview-state', 'waiting');
-
-  // Removed sources can open in task details; they share the canvas budget.
-  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
-  const current = await app.state(), source = current.objects[5];
+  for (let index = 0; index < 4; index++) await activate(index);
+  const current = await app.state(), source = current.objects[12];
   const draft = await app.call(`/api/sessions/${current.session.id}/draft`, 'PUT', { ...current.draft, text: 'Inspect this HTML source.', attachments: [source.assetId], references: { ...current.draft.references, objectIds: [source.id] } });
   await app.call(`/api/sessions/${current.session.id}/tasks`, 'POST', { draftId: draft.id, expectedRevision: draft.revision });
   await app.call('/api/board/operations', 'POST', { sessionId: current.session.id, operations: [{ type: 'delete', objectId: source.id, expectedVersion: source.version }] });
-  await expect(objects).toHaveCount(5); await page.locator('.queue-task').first().click();
-  await page.getByRole('button', { name: 'View preview-5.html', exact: true }).click();
-  const detail = page.locator('.task-media-preview');
-  await expect(detail.getByRole('button', { name: 'Show preview', exact: true })).toBeVisible();
-  await detail.getByRole('button', { name: 'Show preview', exact: true }).click();
+  await expect(objects).toHaveCount(12); await page.locator('.queue-task').first().click(); await page.getByRole('button', { name: 'View preview-12.html', exact: true }).click();
+  const detail = page.locator('.task-media-preview'); await expect(detail.locator('.html-content')).toHaveAttribute('data-preview-state', 'waiting'); await expect(page.locator('iframe')).toHaveCount(4);
+  await detail.getByRole('button', { name: 'Interact with preview-12.html', exact: true }).click();
   await expect(detail.locator('iframe')).toHaveCount(1); await expect(objects.locator('iframe')).toHaveCount(3); await expect(page.locator('iframe')).toHaveCount(4);
-  const detailUrl = await detail.locator('iframe').getAttribute('src');
-  await page.getByRole('button', { name: 'Collapse request details', exact: true }).click();
-  await expect(detail.locator('iframe')).toHaveCount(0); await expect(objects.locator('iframe')).toHaveCount(4);
+  const detailUrl = await detail.locator('iframe').getAttribute('src'); await page.getByRole('button', { name: 'Collapse request details', exact: true }).click();
+  await expect(detail.locator('iframe')).toHaveCount(0); await expect(objects.locator('iframe')).toHaveCount(3);
   await expect.poll(async () => (await page.request.get(detailUrl!, { headers: { 'Sec-Fetch-Dest': 'iframe' } })).status()).toBe(404);
-  expect(await page.evaluate(() => (window as any).maximumHtmlFrames)).toBe(4);
+  expect(await page.evaluate(() => (window as any).htmlMetrics.peak)).toBeLessThanOrEqual(4);
 });
 
-test('HTML revokes delayed grants after leaving view and does not retry failed or expired previews', async ({ page, app }) => {
+test('HTML cancels stale captures and delayed grants, and failed captures require explicit retry', async ({ page, app }) => {
   let release!: () => void, grantUrl = '', starts = 0;
   const gate = new Promise<void>(resolve => { release = resolve; });
-  await page.route('**/api/assets/*/html-preview', async route => {
-    starts++; const response = await route.fetch(); const grant = await response.json(); grantUrl = grant.url;
-    await gate; await route.fulfill({ response });
-  });
+  await page.route('**/api/assets/*/html-preview', async route => { starts++; const response = await route.fetch(), grant = await response.json(); grantUrl = grant.url; await gate; await route.fulfill({ response }); });
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'delayed.html', mimeType: 'text/html', buffer: Buffer.from('<button>Ready</button>') });
   await expect.poll(() => grantUrl).not.toBe('');
   const world = page.locator('.canvas-world'), camera = await world.getAttribute('style');
@@ -191,20 +189,63 @@ test('HTML revokes delayed grants after leaving view and does not retry failed o
   await page.unroute('**/api/assets/*/html-preview');
   await page.route('**/api/assets/*/html-preview', async route => { starts++; await route.fulfill({ status: 503, json: { error: { code: 'preview_unavailable' } } }); });
   await world.evaluate((element, style) => element.setAttribute('style', style!), camera);
-  await expect(page.getByText('The HTML preview is unavailable. Download the original file.', { exact: true })).toBeVisible();
-  await expect(page.locator('.html-content')).toHaveAttribute('data-preview-state', 'stopped');
-  await page.locator('#instruction').fill('Do not restart a failed preview');
-  await page.waitForTimeout(300); expect(starts).toBe(2);
+  await expect(page.getByText('The HTML preview is unavailable. Download the original file.', { exact: true })).toBeVisible(); await expect(page.locator('.html-content')).toHaveAttribute('data-preview-state', 'stopped');
+  await page.waitForTimeout(250); expect(starts).toBe(2);
   await page.unroute('**/api/assets/*/html-preview');
-  await page.route('**/api/assets/*/html-preview', async route => {
-    starts++; const response = await route.fetch(), grant = await response.json();
-    await route.fulfill({ response, json: { ...grant, expiresAt: new Date(Date.now() + 1000).toISOString() } });
-  });
-  await page.getByRole('button', { name: 'Run preview', exact: true }).click();
-  await expect(page.locator('iframe')).toHaveCount(1);
-  await expect(page.getByText('Preview expired. Run it again.', { exact: true })).toBeVisible();
-  await expect(page.locator('iframe')).toHaveCount(0); await page.waitForTimeout(300); expect(starts).toBe(3);
+  // Swallow snapshot replies to exercise the real bounded capture watchdog.
+  await page.evaluate(() => { (window as any).blockSnapshots = (event: MessageEvent) => { if (event.data?.type === 'acanvas:preview-snapshot') event.stopImmediatePropagation(); }; window.addEventListener('message', (window as any).blockSnapshots, true); });
+  await page.getByRole('button', { name: 'Refresh HTML snapshot', exact: true }).click();
+  await expect(page.locator('iframe')).toHaveCount(1); await expect(page.getByText('Snapshot unavailable. You can still interact or retry.', { exact: true })).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('iframe')).toHaveCount(0); await expect(page.locator('.html-snapshot')).toHaveCount(0);
+  await page.evaluate(() => window.removeEventListener('message', (window as any).blockSnapshots, true));
+  await page.getByRole('button', { name: 'Refresh HTML snapshot', exact: true }).click(); await expect(page.locator('.html-snapshot')).toHaveCount(1); await expect(page.locator('iframe')).toHaveCount(0);
+  await page.route('**/api/assets/*/html-preview', async route => { const response = await route.fetch(), grant = await response.json(); await route.fulfill({ response, json: { ...grant, expiresAt: new Date(Date.now() + 1000).toISOString() } }); });
+  await page.getByRole('button', { name: 'Interact with delayed.html', exact: true }).click(); await expect(page.locator('iframe')).toHaveCount(1); await expect(page.locator('iframe')).toHaveCount(0);
+  await expect(page.locator('.html-snapshot')).toHaveCount(1); await page.waitForTimeout(250); await expect(page.locator('iframe')).toHaveCount(0);
   expect((await app.state()).assets).toHaveLength(1);
+});
+
+test('HTML preview permits recover after stalled creation, authentication and revocation', async ({ page, app }) => {
+  let creates = 0, bootstraps = 0, release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/api/bootstrap', async route => { bootstraps++; await gate; await route.continue().catch(() => {}); });
+  await page.route('**/api/assets/*/html-preview', async route => {
+    creates++;
+    if (creates <= 2) { await gate; await route.continue().catch(() => {}); }
+    else if (creates <= 4) await route.fulfill({ status: 401, json: { error: { code: 'authentication_required' } } });
+    else await route.continue();
+  });
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(Array.from({ length: 5 }, (_, index) => ({ name: `timeout-${index}.html`, mimeType: 'text/html', buffer: Buffer.from(`<button>Ready ${index}</button>`) })));
+  await expect(page.locator('.board-object')).toHaveCount(5);
+  await expect.poll(() => creates).toBe(4); await expect.poll(() => bootstraps).toBe(2);
+  await expect(page.locator('.html-snapshot')).toHaveCount(1, { timeout: 16_000 });
+  await expect(page.locator('iframe')).toHaveCount(0); expect(creates).toBe(5);
+  release(); await page.unroute('**/api/bootstrap'); await page.unroute('**/api/assets/*/html-preview');
+  let releaseDeletes!: () => void, deletes = 0;
+  const deleteGate = new Promise<void>(resolve => { releaseDeletes = resolve; });
+  await page.route('**/api/html-previews/*', async route => { deletes++; await deleteGate; await route.continue().catch(() => {}); });
+  const objects = page.locator('.board-object[data-content-kind="html"]');
+  // Captures finish but their DELETE calls stall; the next activation must still
+  // obtain a permit after the bounded revoke deadline.
+  await objects.locator('button[aria-label="Refresh HTML snapshot"]').evaluateAll(buttons => buttons.slice(0, 4).forEach(button => (button as HTMLButtonElement).click()));
+  await expect(page.locator('.html-snapshot')).toHaveCount(5); await expect(page.locator('iframe')).toHaveCount(0); await expect.poll(() => deletes).toBe(4);
+  await objects.nth(4).getByRole('button', { name: 'Interact with timeout-4.html', exact: true }).click();
+  await expect(objects.nth(4).frameLocator('iframe').getByRole('button', { name: 'Ready 4', exact: true })).toBeVisible();
+  releaseDeletes(); await page.unroute('**/api/html-previews/*');
+  expect((await app.state()).objects).toHaveLength(5);
+});
+
+test('HTML snapshot cache evicts without starting another automatic capture loop', async ({ page, app }) => {
+  const state = await app.state(), { token } = await (await page.request.get(`${app.url}/api/bootstrap`)).json();
+  const upload = await page.request.post(`${app.url}/api/assets?name=cache.html&mime=text/html`, { headers: { Authorization: `Bearer ${token}` }, data: '<style>body{margin:0;background:#123456}</style><strong>Cached</strong>' });
+  expect(upload.ok()).toBeTruthy(); const asset = await upload.json(); let requests = 0;
+  page.on('request', request => { if (/\/api\/assets\/[^/]+\/html-preview$/.test(request.url())) requests++; });
+  await app.call('/api/board/operations', 'POST', { sessionId: state.session.id, operations: Array.from({ length: 65 }, (_, index) => ({ type: 'create', object: { assetId: asset.id, x: 45 + index % 13 * 103, y: 100 + Math.floor(index / 13) * 140, width: 88, height: 110 } })) });
+  await expect(page.locator('.board-object')).toHaveCount(65); await expect(page.locator('.html-snapshot')).toHaveCount(64, { timeout: 25_000 }); await expect(page.locator('iframe')).toHaveCount(0);
+  expect(requests).toBe(65); await page.waitForTimeout(300); expect(requests).toBe(65);
+  const evicted = page.locator('.html-content[data-preview-state="stopped"]'); await expect(evicted).toHaveCount(1);
+  await evicted.getByRole('button', { name: 'Refresh HTML snapshot', exact: true }).click();
+  await expect.poll(() => requests).toBe(66); await expect(page.locator('iframe')).toHaveCount(0); await expect(page.locator('.html-snapshot')).toHaveCount(64);
 });
 
 test('file input, paste, drop and CLI share multimodal fallback without changing bytes', async ({ page, app }) => {
@@ -230,14 +271,15 @@ test('HTML origin changes request an explicit board reload and preserve the draf
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'restart.html', mimeType: 'text/html', buffer: Buffer.from('<!doctype html><button>Ready</button>') });
   const origin = await page.locator('meta[name="acanvas-html-preview-origin"]').getAttribute('content'); expect(origin).toBeTruthy();
   await page.locator('#instruction').fill('Keep this unsent request.'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
-  await expect(page.locator('iframe')).toHaveCount(1); await app.restart(); await page.locator('.board-object').getByRole('button', { name: 'Reload HTML preview', exact: true }).click();
+  await expect(page.locator('.html-snapshot')).toHaveCount(1); await app.restart(); await page.getByRole('button', { name: 'Interact with restart.html', exact: true }).click();
   await expect(page.getByText('Reload the board to run HTML preview.', { exact: true })).toBeVisible(); await expect(page.locator('iframe')).toHaveCount(0); await expect(page.locator('#instruction')).toHaveValue('Keep this unsent request.');
   await page.getByRole('button', { name: 'Reload board', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Keep this unsent request.');
   expect(await page.locator('meta[name="acanvas-html-preview-origin"]').getAttribute('content')).not.toBe(origin);
-  await expect(page.locator('iframe')).toHaveCount(1); await expect(page.frameLocator('iframe').getByRole('button', { name: 'Ready', exact: true })).toBeVisible();
+  await expect(page.locator('.html-snapshot')).toHaveCount(1); await page.getByRole('button', { name: 'Interact with restart.html', exact: true }).click(); await expect(page.frameLocator('iframe').getByRole('button', { name: 'Ready', exact: true })).toBeVisible();
 });
 
 test('removed task sources use the shared document audio and HTML detail renderers', async ({ page, app }) => {
+  await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles([
     { name: 'detail.md', mimeType: 'text/markdown', buffer: Buffer.from('# Source notes\n\nRead the original.') },
     { name: 'detail.wav', mimeType: 'audio/wav', buffer: toneWav(3) },
@@ -250,7 +292,9 @@ test('removed task sources use the shared document audio and HTML detail rendere
   await expect(page.locator('.board-object')).toHaveCount(0); await page.locator('.queue-task').first().click();
   await page.getByRole('button', { name: 'View detail.md', exact: true }).click(); const preview = page.locator('.task-media-preview'); await expect(preview.locator('h1')).toHaveText('Source notes'); await preview.getByRole('button', { name: 'Close media preview', exact: true }).click(); await expect(preview).toHaveCount(0);
   await page.getByRole('button', { name: 'View detail.wav', exact: true }).click(); await expect(preview.locator('audio')).toHaveCount(1); await expect(preview.getByRole('button', { name: 'Expand audio player' })).toHaveCount(0); await preview.getByRole('button', { name: 'Close media preview', exact: true }).click();
-  await page.getByRole('button', { name: 'View detail.html', exact: true }).click(); await expect(preview.locator('iframe')).toHaveCount(1); await expect(preview.frameLocator('iframe').getByRole('button', { name: 'Original HTML', exact: true })).toBeVisible(); await preview.getByRole('button', { name: 'Close media preview', exact: true }).click(); await expect(page.locator('iframe')).toHaveCount(0);
+  await page.getByRole('button', { name: 'View detail.html', exact: true }).click(); await expect(preview.locator('.html-snapshot')).toHaveCount(1);
+  await expect(preview.locator('.html-snapshot')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await preview.getByRole('button', { name: 'Interact with detail.html', exact: true }).click(); await expect(preview.frameLocator('iframe').getByRole('button', { name: 'Original HTML', exact: true })).toBeVisible(); await preview.getByRole('button', { name: 'Close media preview', exact: true }).click(); await expect(page.locator('iframe')).toHaveCount(0);
   const saved = await app.state(); expect(saved.tasks[0].snapshot.referenceContent.assets.map(asset => asset.id)).toEqual(initial.assets.map(asset => asset.id)); expect(saved.tasks[0].snapshot.referenceContent.objects).toHaveLength(3);
 });
 
@@ -312,7 +356,7 @@ test('Markdown and HTML interact directly and all four resize corners adjust ind
   expect(await page.evaluate(() => getSelection()?.toString())).toContain('Observation'); expect((await app.state()).objects[0]).toEqual(before.objects[0]);
   const document = md.locator('.markdown-content'); await document.hover(); await page.mouse.wheel(0, 250); await expect.poll(() => document.evaluate(element => element.scrollTop)).toBeGreaterThan(0); expect(await page.locator('.canvas-world').getAttribute('style')).toBe(camera);
   const scrollHit = await document.evaluate(element => { const rect = element.getBoundingClientRect(); return !!window.document.elementFromPoint(rect.right - 3, rect.top + 30)?.closest('.object-drag-edge'); }); expect(scrollHit).toBe(false);
-  await expect(html.locator('iframe')).toHaveCount(1); await html.frameLocator('iframe').getByRole('button', { name: 'Choose', exact: true }).click(); await expect(html.frameLocator('iframe').getByRole('button', { name: 'Selected', exact: true })).toBeVisible(); await html.frameLocator('iframe').getByLabel('Palette name').fill('Haze'); expect(await page.locator('.canvas-world').getAttribute('style')).toBe(camera);
+  await expect(html.locator('.html-snapshot')).toHaveCount(1); await html.getByRole('button', { name: 'Interact with palette.html', exact: true }).click(); await html.frameLocator('iframe').getByRole('button', { name: 'Choose', exact: true }).click(); await expect(html.frameLocator('iframe').getByRole('button', { name: 'Selected', exact: true })).toBeVisible(); await html.frameLocator('iframe').getByLabel('Palette name').fill('Haze'); expect(await page.locator('.canvas-world').getAttribute('style')).toBe(camera);
   for (const node of [md, html]) {
     await node.locator('.object-caption').click();
     for (const corner of ['nw', 'ne', 'sw', 'se']) for (const axis of ['x', 'y']) {

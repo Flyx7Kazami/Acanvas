@@ -23,7 +23,7 @@ test('text and HTML controls stay interactive while blank content drags; documen
     const text = (await md.locator('h1').boundingBox())!, initial = await state();
     await page.mouse.move(text.x + 3, text.y + 12); await page.mouse.down(); await page.mouse.move(text.x + 150, text.y + 12, { steps: 6 }); await page.mouse.up();
     expect(await page.evaluate(() => getSelection()?.toString())).toContain('Editable'); expect((await state()).objects).toEqual(initial.objects);
-    const drag = async (x: number, y: number, dx: number, dy: number) => { await page.keyboard.down('Alt'); await page.mouse.move(x, y); await page.mouse.down(); await page.mouse.move(x + dx, y + dy, { steps: 10 }); await page.mouse.up(); await page.keyboard.up('Alt'); };
+    const drag = async (x: number, y: number, dx: number, dy: number, fromFrame = false) => { await page.keyboard.down('Alt'); await page.mouse.move(x, y); await page.mouse.down(); if (fromFrame) await expect(html.locator('.html-drag-capture')).toBeVisible(); await page.mouse.move(x + dx, y + dy, { steps: 10 }); await page.mouse.up(); await page.keyboard.up('Alt'); };
     let original = (await state()).objects[0]; const box = (await md.boundingBox())!;
     await drag(box.x + 10, box.y + 180, 45, 25);
     await expect.poll(async () => (await state()).objects[0].x).toBe(original.x + 45);
@@ -34,7 +34,7 @@ test('text and HTML controls stay interactive while blank content drags; documen
       await expect.poll(async () => (await state()).objects[0].version).toBe(original.version + 1);
       const changed = (await state()).objects[0]; expect(changed.width).toBe(original.width + (['e','w'].includes(handle) ? 22 : 0)); expect(changed.height).toBe(original.height + (['n','s'].includes(handle) ? 18 : 0));
     }
-    await expect(html.locator('iframe')).toHaveCount(1);
+    await expect(html.locator('.html-snapshot')).toHaveCount(1); await html.getByRole('button', { name: 'Interact with Buttons.html', exact: true }).click();
     await html.frameLocator('iframe').getByRole('button', { name: 'Choose', exact: true }).click(); await expect(html.frameLocator('iframe').getByRole('button', { name: 'Clicked', exact: true })).toBeVisible();
     const htmlWords = (await html.frameLocator('iframe').getByRole('heading').boundingBox())!;
     await page.mouse.move(htmlWords.x + 3, htmlWords.y + 12); await page.mouse.down(); await page.mouse.move(htmlWords.x + 230, htmlWords.y + 12, { steps: 6 }); await page.mouse.up();
@@ -42,7 +42,7 @@ test('text and HTML controls stay interactive while blank content drags; documen
     expect(await contentFrame.evaluate(() => getSelection()?.toString())).toContain('Editable');
     expect((await state()).objects[1]).toEqual(initial.objects[1]);
     original = (await state()).objects[1]; const iframe = (await html.locator('iframe').boundingBox())!;
-    await drag(iframe.x + 320, iframe.y + 260, 42, 26);
+    await drag(iframe.x + 320, iframe.y + 260, 42, 26, true);
     await expect.poll(async () => (await state()).objects[1].x).toBe(original.x + 42);
     expect((await state()).objects[1].y).toBe(original.y + 26);
     await expect(page.locator('.board-object[data-content-kind="html"] .resize-handle')).toHaveCount(8);
