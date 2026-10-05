@@ -1,0 +1,37 @@
+{
+  "build": {
+    "command": "npm run build",
+    "result": "PASS"
+  },
+  "audioTests": {
+    "command": ".runtime/node_modules/node/bin/node node_modules/@playwright/test/cli.js test --config tests/audio-player.config.ts",
+    "passed": 7,
+    "failed": 0,
+    "durationSeconds": 14.6
+  },
+  "realAudio": {
+    "checks": 22,
+    "result": "PASS",
+    "scope": "Two original files, two themes, five sizes; contain and actual image dimensions equal largest proportional fit in art slot; cover byte equality; playback, pointer scrub resume and keyboard seek"
+  },
+  "typography": {
+    "formula": "max(.86,min(2,w/260,sqrt(w*h/(520*88)),compact?h/88:2))",
+    "basePixels": [
+      14,
+      10,
+      12
+    ],
+    "subtitleMinimumPixels": 9,
+    "dimensions": "clientWidth and clientHeight, independent of canvas transform"
+  },
+  "pointerFocus": {
+    "mouse": "PASS",
+    "touch": "PASS",
+    "keyboardRingAndHome": "PASS",
+    "scope": "Actual production styles, Tab then click/drag and Home; touch tap without ring or tap highlight"
+  },
+  "productionChanges": [
+    "src/web/AudioCanvasPlayer.tsx",
+    "src/web/audio-canvas.css"
+  ]
+}

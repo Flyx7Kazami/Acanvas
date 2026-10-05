@@ -560,3 +560,16 @@ Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直�
 - 所有自动化使用独立临时夹具，当前真实画板仅刷新前端资源；不改变用户对象、任务或布局。原型HTML继续用于设计回看，真实试听使用已接入A的音频组件。
 
 证据：[执行记录](evidence/audio-player-selected-a/verification.json)、[真实两曲记录](evidence/audio-player-selected-a/real-audio-results.json)、[浅色紧凑](evidence/audio-player-selected-a/light-compact.png)、[深色竖形](evidence/audio-player-selected-a/dark-tall.png)、[浅色宽幅](evidence/audio-player-selected-a/light-wide.png)。
+
+## 2026-10-06 · 封面、浅色、字号与时间轴焦点
+
+四项修订通过执行及独立验收，真实画板已刷新到最终前端资源。
+
+- 构建通过，音频定向7/7、真实两曲22项通过；独立MP3 23项、M4A及全局样式24项通过。
+- 18组尺寸/主题以及2:1非方形图片保持封面自然比例和完整内容，图片受可用槽位约束，12px圆角保持。
+- 浅色surface为#e7e7e7；主文字、辅助文字、未播放波形对比度约13.18:1、6.52:1、4.51:1，实际截图清楚。
+- 520×88字号为14/10/12px，1040×176为28/20/24px；0.5×/1.5×画布transform保持计算字号，视觉缩放一次。
+- 鼠标/触控点击、拖动时间轴的outline、shadow、background保持正常状态；Tab焦点可见，Home、End、Arrow定位正确。真实播放、拖动定位及resize/theme切换保持同一audio实例和持续播放。
+- 所有测试使用隔离临时夹具；独立审查无未关闭P0–P3。
+
+证据：[执行记录](evidence/audio-player-refinements/verification.json)、[真实两曲](evidence/audio-player-refinements/real-audio-results.json)。

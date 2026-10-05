@@ -16,7 +16,7 @@ const test = base.extend<{ playerUrl: string }>({
     const server = await createServer({ configFile: false, root, resolve: { alias: { react: resolve('node_modules/react'), 'react-dom': resolve('node_modules/react-dom') } }, server: { host: '127.0.0.1', port: 0, fs: { allow: [root, workspace] } } });
     await writeFile(join(root, 'tone.wav'), wav()); await writeFile(join(root, 'invalid.wav'), 'An invalid audio file.');
     await writeFile(join(root, 'index.html'), '<!doctype html><html lang="en"><head><meta charset="UTF-8"/><title>Audio fixture</title></head><body><div id="root"></div><script type="module" src="/fixture.tsx"></script></body></html>');
-    await writeFile(join(root, 'fixture.tsx'), `import React, {StrictMode,useState} from 'react';import {createRoot} from 'react-dom/client';import {AudioCanvasPlayer} from '/@fs/${workspace}/src/web/AudioCanvasPlayer.tsx';
+    await writeFile(join(root, 'fixture.tsx'), `import React, {StrictMode,useState} from 'react';import {createRoot} from 'react-dom/client';import '/@fs/${workspace}/src/web/styles.css';import {AudioCanvasPlayer} from '/@fs/${workspace}/src/web/AudioCanvasPlayer.tsx';
       const stats=window as any;stats.layoutWrites=0;stats.parentPointers=0;
       function Fixture(){const [mounted,setMounted]=useState(true),[width,setWidth]=useState(420),[src,setSrc]=useState('/tone.wav');return <><style>{'body{margin:0;padding:30px;background:#e8e8e5;font-family:Arial}button{font:inherit} .frame{width:420px;position:relative}body[data-theme=dark]{background:#151515;--surface:#222;--soft:#333;--ink:#eee;--muted:#aaa;--edge:#444}'}</style><div className="frame" style={{width,height:88}} onPointerDown={()=>stats.parentPointers++}>{mounted&&<AudioCanvasPlayer src={src} title="Amplitude study.wav" onElement={element=>stats.audio=element} onError={error=>stats.lastError=String(error)}/>}</div><button onClick={()=>setMounted(false)}>Unmount fixture</button><button onClick={()=>setWidth(280)}>Use minimum width</button><button onClick={()=>{document.documentElement.dataset.theme='dark'}}>Dark theme</button><button onClick={()=>setSrc('/invalid.wav')}>Load invalid audio</button></>};createRoot(document.getElementById('root')!).render(<StrictMode><Fixture/></StrictMode>);`);
     try { await server.listen(); await use(server.resolvedUrls!.local[0]); } finally { await server.close(); await rm(root, { recursive: true, force: true }); }
@@ -67,7 +67,7 @@ test('selected layout A fills compact wide square and tall sizes in both themes'
     for (const [name, width, height, layout] of [['compact', 520, 88, 'compact'], ['wide', 620, 260, 'beside'], ['square', 420, 420, 'stack'], ['tall', 320, 480, 'stack']] as const) {
       await page.locator('.frame').evaluate((element, size) => { element.style.width = size[0] + 'px'; element.style.height = size[1] + 'px'; }, [width, height]);
       await expect(player).toHaveAttribute('data-layout', layout);
-      await expect(player).toHaveCSS('background-color', theme === 'dark' ? 'rgb(41, 41, 41)' : 'rgb(245, 245, 245)');
+      await expect(player).toHaveCSS('background-color', theme === 'dark' ? 'rgb(41, 41, 41)' : 'rgb(231, 231, 231)');
       const measured = await player.evaluate(element => {
         const bounds = element.getBoundingClientRect(), style = getComputedStyle(element);
         const within = Array.from(element.querySelectorAll('.audio-player-cover,.audio-player-heading,.audio-player-play,.audio-player-waveform,.audio-player-clock')).every(child => { const b = child.getBoundingClientRect(); return b.left >= bounds.left && b.right <= bounds.right && b.top >= bounds.top && b.bottom <= bounds.bottom; });
@@ -100,7 +100,45 @@ test('paused and playing theme changes repaint existing waveform without decodin
   await player.getByRole('button', { name: 'Play audio', exact: true }).click();
   await expect(player.getByRole('button', { name: 'Pause audio', exact: true })).toBeVisible();
   await page.evaluate(() => { document.documentElement.dataset.theme = 'light'; });
-  await expect.poll(pixels).toContain(153);
+  await expect.poll(pixels).toContain(104);
   await expect.poll(() => page.locator('audio').evaluate((audio: HTMLAudioElement) => audio.currentTime)).toBeGreaterThan(before.time);
   expect(await page.evaluate(() => ({ same: document.querySelector('audio') === (window as any).originalAudio, decodes: (window as any).decodeCount }))).toEqual({ same: true, decodes: before.decodes });
+});
+
+
+test('player typography grows with its layout dimensions and follows canvas zoom once', async ({ page, playerUrl }) => {
+  await page.goto(playerUrl);
+  const frame = page.locator('.frame'), player = page.locator('.audio-canvas-player'), title = player.locator('.audio-player-heading strong');
+  await frame.evaluate(element => { element.style.width = '520px'; element.style.height = '88px'; });
+  await expect(title).toHaveCSS('font-size', '14px');
+  await frame.evaluate(element => { element.style.width = '420px'; element.style.height = '420px'; });
+  await expect(player).toHaveAttribute('data-layout', 'stack');
+  const before = await title.evaluate(element => ({ font: parseFloat(getComputedStyle(element).fontSize), height: element.getBoundingClientRect().height }));
+  expect(before.font).toBeGreaterThan(20);
+  await frame.evaluate(element => { element.style.transformOrigin = 'top left'; element.style.transform = 'scale(.5)'; });
+  const after = await title.evaluate(element => ({ font: parseFloat(getComputedStyle(element).fontSize), height: element.getBoundingClientRect().height }));
+  expect(after.font).toBe(before.font); expect(after.height).toBeCloseTo(before.height / 2, 2);
+});
+
+test('mouse and touch scrubbing stay visually neutral while keyboard focus remains visible', async ({ page, browser, playerUrl }) => {
+  await page.goto(playerUrl);
+  const range = page.getByRole('slider', { name: 'Audio timeline' });
+  await expect(page.locator('.audio-player-waveform canvas')).toHaveAttribute('data-ready', 'true');
+  await page.getByRole('button', { name: 'Play audio', exact: true }).focus();
+  await page.keyboard.press('Tab'); await expect(range).toBeFocused(); await expect(range).toHaveCSS('outline-style', 'solid');
+  const box = (await range.boundingBox())!;
+  await page.mouse.click(box.x + box.width * .3, box.y + box.height / 2);
+  await expect(range).toHaveCSS('outline-style', 'none'); await expect(range).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await page.mouse.move(box.x + box.width * .3, box.y + box.height / 2); await page.mouse.down(); await page.mouse.move(box.x + box.width * .6, box.y + box.height / 2); await page.mouse.up();
+  await expect(range).toHaveCSS('outline-style', 'none');
+  expect(await page.evaluate(() => window.getSelection()?.toString())).toBe('');
+  await range.press('Home'); await expect(range).toHaveCSS('outline-style', 'solid'); await expect(range).toHaveAttribute('aria-valuenow', '0');
+  const touchContext = await browser.newContext({ hasTouch: true, viewport: { width: 800, height: 600 } });
+  try {
+    const touchPage = await touchContext.newPage(); await touchPage.goto(playerUrl); await expect(touchPage.locator('.audio-player-waveform canvas')).toHaveAttribute('data-ready', 'true');
+    const slider = touchPage.getByRole('slider', { name: 'Audio timeline' }), r = (await slider.boundingBox())!;
+    await touchPage.touchscreen.tap(r.x + r.width * .5, r.y + r.height / 2);
+    await expect(slider).toHaveCSS('outline-style', 'none'); await expect(slider).toHaveCSS('-webkit-tap-highlight-color', 'rgba(0, 0, 0, 0)');
+    expect(await touchPage.locator('audio').evaluate((audio: HTMLAudioElement) => audio.currentTime)).toBeCloseTo(12, 0);
+  } finally { await touchContext.close(); }
 });
