@@ -1,0 +1,106 @@
+{
+  "samples": [
+    {
+      "width": 1440,
+      "theme": "light",
+      "bounds": {
+        "x": 1104,
+        "y": 829.3125,
+        "width": 320,
+        "height": 54.6875,
+        "top": 829.3125,
+        "right": 1424,
+        "bottom": 884,
+        "left": 1104
+      },
+      "clear": true,
+      "overflow": 0,
+      "animation": "none"
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "bounds": {
+        "x": 1104,
+        "y": 829.3125,
+        "width": 320,
+        "height": 54.6875,
+        "top": 829.3125,
+        "right": 1424,
+        "bottom": 884,
+        "left": 1104
+      },
+      "clear": true,
+      "overflow": 0,
+      "animation": "none"
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "bounds": {
+        "x": 64,
+        "y": 253.3125,
+        "width": 310,
+        "height": 54.6875,
+        "top": 253.3125,
+        "right": 374,
+        "bottom": 308,
+        "left": 64
+      },
+      "clear": true,
+      "overflow": 0,
+      "animation": "none"
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "bounds": {
+        "x": 64,
+        "y": 253.3125,
+        "width": 310,
+        "height": 54.6875,
+        "top": 253.3125,
+        "right": 374,
+        "bottom": 308,
+        "left": 64
+      },
+      "clear": true,
+      "overflow": 0,
+      "animation": "none"
+    },
+    {
+      "width": 320,
+      "theme": "light",
+      "bounds": {
+        "x": 64,
+        "y": 253.3125,
+        "width": 240,
+        "height": 54.6875,
+        "top": 253.3125,
+        "right": 304,
+        "bottom": 308,
+        "left": 64
+      },
+      "clear": true,
+      "overflow": 0,
+      "animation": "none"
+    },
+    {
+      "width": 320,
+      "theme": "dark",
+      "bounds": {
+        "x": 64,
+        "y": 253.3125,
+        "width": 240,
+        "height": 54.6875,
+        "top": 253.3125,
+        "right": 304,
+        "bottom": 308,
+        "left": 64
+      },
+      "clear": true,
+      "overflow": 0,
+      "animation": "none"
+    }
+  ]
+}

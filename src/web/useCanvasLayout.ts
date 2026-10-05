@@ -9,12 +9,15 @@ export function useNotificationLayout(dock: ElementRef, notifications: ElementRe
     const stack = notifications.current;
     if (!stack) return;
     const observed = new Set<Element>();
-    let pointerInside = false;
+    let pointerInside = false, visible = false;
     const observer = new ResizeObserver(() => layout());
     const layout = (resizing = false) => {
       const controls = dock.current ? [dock.current, ...dock.current.querySelectorAll<HTMLElement>('.queue-stack,.queue-expand')] : [];
       controls.forEach(control => { if (!observed.has(control)) { observer.observe(control); observed.add(control); } });
-      if (!resizing && (pointerInside || stack.contains(document.activeElement))) return;
+      const showing = stack.getClientRects().length > 0, appeared = showing && !visible;
+      visible = showing;
+      if (!showing) { pointerInside = false; return; }
+      if (!resizing && !appeared && (pointerInside || stack.contains(document.activeElement))) return;
       const notificationBounds = stack.getBoundingClientRect();
       const adjacent = controls.map(control => control.getBoundingClientRect()).filter(bounds => notificationBounds.left < bounds.right + 12 && notificationBounds.right > bounds.left - 12);
       const bottom = adjacent.length ? innerHeight - Math.min(...adjacent.map(bounds => bounds.top)) + 12 : 16;

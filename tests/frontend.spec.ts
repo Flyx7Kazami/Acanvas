@@ -53,7 +53,7 @@ const test = base.extend<{ app: AppFixture }>({
 
 async function open(page: Page, app: AppFixture) {
   await page.goto(app.server.url);
-  await expect(page.getByRole('heading', { name: 'Drop files to start' })).toBeVisible();
+  await expect(page.locator('#whiteboard')).toBeVisible();
   await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await expect(page.locator('.connection-feedback')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.lang)).toBe('en');
   expect(await page.locator('body').innerText()).not.toMatch(/[\p{Script=Han}]/u);
@@ -1616,45 +1616,56 @@ test('fit all files animates exact bounds, interrupts on input and persists one 
   await writeFile(info.outputPath('fit-motion.json'), JSON.stringify({ frames, interruptions, reduced }, null, 2));
 });
 
-test('global notices stack at bottom right and remain reachable beside or above the dock', async ({ page, app }, info) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => undefined } });
-    const Native = window.EventSource;
-    (window as any).noticeEventSources = [];
-    window.EventSource = class extends Native { constructor(url: string | URL, configuration?: EventSourceInit) { super(url, configuration); (window as any).noticeEventSources.push(this); } };
-  });
-  await open(page, app);
-  const initial = await app.state();
-  for (const text of ['Queued for notice checks', 'Second notice check', 'Third notice check']) { const current = await app.state(); const saved = await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...current.draft, text }); await app.call(`/api/sessions/${initial.session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision }); }
-  await expect(page.locator('.queue-item')).toHaveCount(3);
-  await page.route('**/api/sessions/*/tasks/*/edit', route => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: { code: 'notice-test', message: 'Please retry this request.' } }) }));
-  let releaseUpload!: () => void; const uploadHeld = new Promise<void>(resolve => { releaseUpload = resolve; });
-  await page.route('**/api/assets?*', async route => { await uploadHeld; await route.abort('aborted'); });
-  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'Notice upload.txt', mimeType: 'text/plain', buffer: Buffer.from('isolated notice test') });
-  await expect(page.locator('.upload-list')).toBeVisible();
-  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.getByRole('alert')).toBeVisible();
-  await page.route('**/api/bootstrap', route => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
-  await page.evaluate(() => { (window as any).noticeEventSources.at(-1).dispatchEvent(new Event('error')); });
-  await expect(page.locator('.connection-feedback')).toBeVisible();
-  const stack = page.getByRole('complementary', { name: 'Notifications', exact: true }), measurements: unknown[] = [];
-  for (const width of [1440, 390, 320]) {
-    await page.setViewportSize({ width, height: width === 1440 ? 1000 : 480 }); await page.emulateMedia({ reducedMotion: width === 320 ? 'reduce' : 'no-preference' });
-    if (width === 320) await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
-    for (const expanded of [false, true]) {
-      if (expanded) await page.locator('.queue-stack').hover(); else { await page.locator('#whiteboard').focus(); await page.mouse.move(width - 10, 80); await expect(page.locator('.queue-stack')).not.toHaveClass(/expanded/); }
-      await page.getByRole('button', { name: 'Copy resume prompt', exact: true }).click(); await expect(stack.locator('.toast')).toBeVisible();
-      await expect(stack.locator('.error-banner,.connection-feedback,.upload-list,.toast')).toHaveCount(4);
-      const geometry = () => stack.evaluate(element => { const bounds = element.getBoundingClientRect(), controls = Array.from(document.querySelectorAll('.creation-dock,.queue-stack,.queue-expand')).map(control => control.getBoundingClientRect()); return { right: innerWidth - bounds.right, clear: controls.every(control => bounds.left >= control.right + 12 || bounds.right <= control.left - 12 || bounds.bottom <= control.top - 11.9), inViewport: bounds.top >= 15.9 && bounds.bottom <= innerHeight - 15.9 }; });
-      await expect.poll(geometry).toEqual({ right: 16, clear: true, inViewport: true }); measurements.push({ width, expanded, ...await geometry() });
-      if (width === 1440) expect(await stack.evaluate(element => innerHeight - element.getBoundingClientRect().bottom)).toBe(16);
-      await page.screenshot({ path: info.outputPath(`notifications-${width}-${expanded ? 'expanded' : 'collapsed'}.png`) });
-    }
+test('short feedback stays quiet and only overlaps during rapid actions', async ({ page, app }) => {
+  await page.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => undefined } }));
+  await open(page, app); await page.clock.install();
+  await expect(page.locator('.canvas-world')).toBeEmpty(); await expect(page.locator('.canvas-empty')).toHaveCount(0);
+  await page.screenshot({ path: '/tmp/acanvas-blank-canvas.png' });
+  const copy = page.getByRole('button', { name: 'Copy resume prompt', exact: true });
+  const stack = page.locator('.notification-stack'), transient = page.locator('.notification-transients');
+  await copy.click(); await expect(transient).toHaveAttribute('data-count', '1'); await page.clock.runFor(1000);
+  await copy.click(); await expect(transient).toHaveAttribute('data-count', '2'); await expect(page.locator('.notification-peeks>span')).toHaveCount(1);
+  await expect(copy).toBeFocused(); await expect(stack.locator('button')).toHaveCount(0); expect(await stack.getAttribute('tabindex')).toBeNull();
+  await page.clock.runFor(1800); await expect(transient).toHaveAttribute('data-count', '1'); await expect(page.locator('.notification-peeks')).toHaveCount(0);
+  await page.clock.runFor(1000); await expect(stack).toBeHidden();
+  for (let index = 0; index < 2; index++) { await copy.click(); await expect(transient).toHaveAttribute('data-count', '1'); await page.clock.runFor(2800); await expect(stack).toBeHidden(); }
+  for (const width of [1440, 390, 320]) for (const theme of ['light', 'dark']) {
+    await page.setViewportSize({ width, height: width === 1440 ? 1000 : 480 });
+    if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
+    await page.emulateMedia({ reducedMotion: width === 320 ? 'reduce' : 'no-preference' });
+    for (let index = 0; index < 7; index++) await copy.click();
+    await expect(transient).toHaveAttribute('data-count', '5'); await expect(page.locator('.notification-peeks>span')).toHaveCount(2); await expect(page.locator('.toast')).toHaveCount(1);
+    const geometry = () => stack.evaluate(element => { const bounds = element.getBoundingClientRect(), controls = Array.from(document.querySelectorAll('.creation-dock,.queue-stack,.queue-expand')).map(control => control.getBoundingClientRect()); return { right: innerWidth - bounds.right, clear: controls.every(control => bounds.left >= control.right + 12 || bounds.right <= control.left - 12 || bounds.bottom <= control.top - 11.9), inViewport: bounds.top >= 15.9 && bounds.bottom <= innerHeight - 15.9 }; });
+    await page.clock.runFor(200); await expect.poll(geometry).toEqual({ right: 16, clear: true, inViewport: true });
+    await stack.hover(); await expect(stack).not.toHaveClass(/expanded/); await expect(page.locator('.toast')).toHaveCount(1);
+    await page.screenshot({ path: `/tmp/acanvas-notifications-burst-${width}-${theme}.png` });
+    await page.clock.runFor(2600); await expect(stack).toBeHidden();
   }
-  await writeFile(info.outputPath('notification-geometry.json'), JSON.stringify(measurements, null, 2));
-  const dismiss = page.getByRole('button', { name: 'Dismiss error', exact: true }); await dismiss.scrollIntoViewIfNeeded(); const dismissBounds = (await dismiss.boundingBox())!; await page.mouse.move(dismissBounds.x + dismissBounds.width / 2, dismissBounds.y + dismissBounds.height / 2); await page.waitForTimeout(250); expect(await dismiss.boundingBox()).toEqual(dismissBounds); await dismiss.click(); await expect(page.getByRole('alert')).toHaveCount(0);
-  const cancel = page.getByRole('button', { name: 'Cancel import Notice upload.txt', exact: true }); await cancel.scrollIntoViewIfNeeded(); await cancel.click(); await expect(page.locator('.upload-list')).toHaveCount(0); releaseUpload();
-  await page.unroute('**/api/bootstrap'); await expect(page.locator('.connection-feedback')).toHaveCount(0, { timeout: 15_000 });
-  expect((await app.state()).tasks[0].status).toBe('queued'); expect((await app.state()).assets).toHaveLength(0);
+});
+
+test('ordinary errors expire and repeated identical failures show again while active uploads remain separate', async ({ page, app }) => {
+  await page.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => undefined } }));
+  await open(page, app); await page.clock.install();
+  await page.route('**/api/assets?*', route => route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: { code: 'server_error', message: 'Upload failed.' } }) }));
+  for (let index = 0; index < 2; index++) {
+    await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: `failure-${index}.txt`, mimeType: 'text/plain', buffer: Buffer.from('isolated failure') });
+    await expect(page.getByRole('alert')).toContainText('The local service could not complete this action.'); await expect(page.locator('.notification-transients')).toHaveAttribute('data-count', '1');
+    await page.clock.runFor(2800); await expect(page.locator('.notification-stack')).toBeHidden();
+    await page.getByRole('button', { name: `Switch to ${index === 0 ? 'dark' : 'light'} theme`, exact: true }).click(); await expect(page.locator('.notification-stack')).toBeHidden();
+  }
+  await page.unroute('**/api/assets?*');
+  let releaseUpload!: () => void; const held = new Promise<void>(resolve => { releaseUpload = resolve; });
+  await page.route('**/api/assets?*', async route => { await held; await route.abort('aborted'); });
+  try {
+    await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'Active upload.txt', mimeType: 'text/plain', buffer: Buffer.from('isolated active upload') });
+    const cancel = page.getByRole('button', { name: 'Cancel import Active upload.txt', exact: true }); await expect(cancel).toBeVisible(); await cancel.focus();
+    await page.getByRole('button', { name: 'Copy resume prompt', exact: true }).evaluate(button => (button as HTMLButtonElement).click());
+    await expect(page.locator('.notification-transients')).toHaveAttribute('data-count', '1'); await expect(page.locator('.notification-peeks')).toHaveCount(0); await expect(cancel).toBeFocused();
+    await page.clock.runFor(2800); await expect(page.locator('.notification-transients')).toHaveCount(0); await expect(cancel).toBeVisible(); await expect(cancel).toBeFocused();
+    await page.screenshot({ path: '/tmp/acanvas-active-upload-separate.png' });
+    await cancel.click(); await expect(page.locator('.upload-list')).toHaveCount(0); await expect(page.locator('.notification-stack')).toBeHidden();
+  } finally { releaseUpload(); }
+  expect((await app.state()).assets).toHaveLength(0);
 });
 
 test('four square file corners preserve opposite anchors and commit snapped resize previews', async ({ page, app }, info) => {

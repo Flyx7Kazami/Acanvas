@@ -52,7 +52,7 @@ const test = base.extend<{ app: App }>({
 
 async function open(page: Page, app: App) {
   await page.goto(app.url);
-  await expect(page.getByRole('heading', { name: 'Drop files to start', exact: true })).toBeVisible();
+  await expect(page.locator('#whiteboard')).toBeVisible();
   await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
 }
 

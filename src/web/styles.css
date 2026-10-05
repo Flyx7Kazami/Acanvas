@@ -77,12 +77,6 @@ h1,h2,h3,p { margin: 0; }
 .selection-actions .selection-primary-tools .icon-button { width: 32px; height: 32px; flex-basis: 32px; }
 .alignment-control { gap: 6px; padding: 5px; border-radius: 12px; }
 .task-annotation-frame { width: 100%; max-height: 160px; object-fit: contain; border-radius: 7px; }
-.canvas-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 40px 24px 250px; pointer-events: none; }
-.canvas-empty .empty-mark { width: 66px; height: 66px; border: 1px solid var(--edge); border-radius: 19px; display: grid; place-items: center; background: var(--surface); color: var(--muted); box-shadow: var(--shadow); transform: rotate(-6deg); margin-bottom: 27px; }
-.canvas-empty h1 { font-size: 27px; line-height: 1.4; letter-spacing: -.5px; font-weight: 500; }
-.canvas-empty p { color: var(--muted); font-size: 11px; text-align: center; line-height: 1.95; margin: 14px 0 23px; }
-.canvas-empty button { pointer-events: auto; }
-.canvas-empty>span { font-size: 9px; color: var(--muted); margin-top: 16px; }
 .canvas-toolbar { position: absolute; z-index: 8; display: flex; align-items: center; gap: 2px; padding: 3px; background: var(--surface); border-radius: 10px; box-shadow: var(--float-shadow); border: 1px solid color-mix(in srgb,var(--edge) 55%,transparent); }
 .canvas-toolbar { top: 50%; width: var(--canvas-tool-width); left: var(--canvas-tool-left); transform: translateY(-50%); flex-direction: column; }
 .canvas-toolbar .icon-button { width: 32px; height: 32px; flex-basis: 32px; padding: 8px; }
@@ -180,9 +174,14 @@ details[open] summary svg { rotate: 180deg; }
 .annotation-content { display: flex; align-items: center; gap: 6px; padding: 0; flex: 1; min-width: 0; background: transparent; text-align: left; font-size: 11px; }
 .annotation-content>span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .annotation-content small { color: var(--muted); font-size: 9px; }
-.notification-stack { z-index: 120; position: fixed; right: 16px; bottom: 16px; width: min(320px,calc(100vw - 80px)); max-height: min(240px,calc(100dvh - 32px)); display: flex; flex-direction: column; align-items: stretch; gap: 7px; overflow-y: auto; scrollbar-width: thin; overscroll-behavior: contain; border-radius: 11px; }
-.notification-stack:empty { display: none; }
+.notification-stack { z-index: 120; position: fixed; right: 16px; bottom: 16px; width: min(320px,calc(100vw - 80px)); max-height: min(240px,calc(100dvh - 32px)); display: flex; flex-direction: column; gap: 7px; overflow-y: auto; scrollbar-width: thin; overscroll-behavior: contain; border-radius: 11px; }
+.notification-stack[hidden] { display: none; }
 .notification-stack>* { flex-shrink: 0; }
+.notification-transients { position: relative; isolation: isolate; }
+.notification-transients.has-stack { padding-top: 12px; }
+.notification-transients>.toast,.notification-transients>.transient-error { position: relative; }
+.notification-peeks { position: absolute; inset: 12px 0 0; pointer-events: none; z-index: -1; }
+.notification-peeks>span { position: absolute; inset: calc(var(--peek) * -6px) calc(var(--peek) * 8px) 0; z-index: calc(3 - var(--peek)); background: color-mix(in srgb,var(--queue-surface) calc(105% - var(--peek) * 35%),var(--canvas)); border-radius: 11px; }
 .error-banner { display: flex; align-items: center; gap: 8px; padding: 9px 10px 9px 13px; background: var(--ink); color: var(--surface); border-radius: 9px; box-shadow: var(--float-shadow); font-size: 11px; line-height: 1.7; }
 .error-banner>span { overflow-wrap: anywhere; }
 .error-banner button { color: inherit; background: transparent; flex-shrink: 0; font-size: 10px; }
@@ -201,8 +200,8 @@ details[open] summary svg { rotate: 180deg; }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes context-reveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-@media (max-width: 760px) { .canvas-empty h1 { font-size: 25px; } .canvas-empty p { font-size: 11px; } .creation-dock { bottom: 14px; } }
-@media (max-width: 540px) { .project-identity { top: 14px; left: 14px; gap: 8px; padding-inline: 9px; max-width: calc(100% - 122px); } .project-name { padding-left: 8px; } .canvas-actions { top: 14px; right: 14px; } .canvas-empty { padding: 40px 64px 210px; } .canvas-empty h1 { font-size: 23px; } .creation-dock { --dock-width: min(720px,calc(100vw - 32px)); bottom: 12px; } .composer { padding-left: 16px; } .composer-input-row>textarea,.inline-resume textarea { font-size: 16px; } .queue-list { padding-inline: 5px; } .queue-item { gap: 3px; } .queue-task { gap: 7px; padding-inline: 6px; } .queue-title { font-size: 11px; } .queue-item .status-badge { font-size: 8px; padding-inline: 4px; } .selection-actions { padding-inline: 4px; gap: 1px; max-width: calc(100% - 24px); } .selection-actions>button:not(.icon-button) { padding-inline: 4px; gap: 4px; font-size: 9px; } }
+@media (max-width: 760px) { .creation-dock { bottom: 14px; } }
+@media (max-width: 540px) { .project-identity { top: 14px; left: 14px; gap: 8px; padding-inline: 9px; max-width: calc(100% - 122px); } .project-name { padding-left: 8px; } .canvas-actions { top: 14px; right: 14px; } .creation-dock { --dock-width: min(720px,calc(100vw - 32px)); bottom: 12px; } .composer { padding-left: 16px; } .composer-input-row>textarea,.inline-resume textarea { font-size: 16px; } .queue-list { padding-inline: 5px; } .queue-item { gap: 3px; } .queue-task { gap: 7px; padding-inline: 6px; } .queue-title { font-size: 11px; } .queue-item .status-badge { font-size: 8px; padding-inline: 4px; } .selection-actions { padding-inline: 4px; gap: 1px; max-width: calc(100% - 24px); } .selection-actions>button:not(.icon-button) { padding-inline: 4px; gap: 4px; font-size: 9px; } }
 @media (pointer: coarse) { .icon-button { min-width: 40px; min-height: 40px; } .canvas-toolbar .icon-button { min-width: 32px; min-height: 32px; } .resize-handle { width: 16px; height: 16px; } .draft-asset,.draft-annotation { height: 36px; } .draft-asset .icon-button,.draft-annotation .icon-button { min-width: 28px; min-height: 28px; width: 28px; height: 28px; flex-basis: 28px; } }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none!important; transition: none!important; scroll-behavior: auto!important; } button:active:not(:disabled) { scale: 1; } }
 

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react';
-import { AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignStartHorizontal, AlignStartVertical, ArrowDownToLine, ArrowLeft, ArrowUp, Check, ChevronDown, Circle, Copy, Hand, History, ImagePlus, LoaderCircle, Maximize, Minus, Moon, MousePointer2, Pause, Pencil, Play, Plus, Sun, Trash2, Upload, X } from 'lucide-react';
+import { AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignStartHorizontal, AlignStartVertical, ArrowDownToLine, ArrowLeft, ArrowUp, Check, ChevronDown, Circle, Copy, Hand, History, LoaderCircle, Maximize, Minus, Moon, MousePointer2, Pause, Pencil, Play, Plus, Sun, Trash2, Upload, X } from 'lucide-react';
 import type { AnnotationInput, Asset, BoardObject, BoardOperation, Draft, SessionView, Task, TaskStatus } from '../shared/types';
 import { alignedPositions, fitView, intersects, mediaContentRect, normalizedRegion, objectRegion, rectangle, screenToWorld, resizeBounds, resizeViewportBounds, snapViewportResize, snapResize, snapTranslation, unionBounds, zoomAt, type Alignment, type Point, type Rect, type SnapGuide, type ResizeCorner, type ResizeHandle } from './geometry';
 import { useBoard } from './useBoard';
@@ -11,6 +11,7 @@ import type { BoardApi } from './api';
 import { AssetThumb, ContentRenderer } from './ContentRenderer';
 import { contentCapabilities, resolveContentKind, resolveContentMime } from '../shared/content-types';
 import { CanvasAnnotationNote } from './CanvasAnnotationNote';
+import { NotificationStack, useNotices, type Notification } from './NotificationStack';
 
 const statusLabels: Record<TaskStatus, string> = { queued: 'Queued', editing: 'Editing', running: 'Running', blocked: 'Needs input', interrupted: 'Interrupted', completed: 'Completed', cancelled: 'Cancelled' };
 const timeLabel = (value: number) => `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}`;
@@ -232,7 +233,8 @@ export default function App() {
   const [mediaSizes, setMediaSizes] = useState<Record<string, { width: number; height: number }>>({});
   const [mediaErrors, setMediaErrors] = useState<Record<string, boolean>>({});
   const [dragOver, setDragOver] = useState(false);
-  const [notice, setNotice] = useState('');
+  const persistentError = !state || board.projectChanged || board.saveState === 'failed';
+  const { notices, notify: setNotice } = useNotices({ text: persistentError ? '' : board.error, revision: board.errorRevision });
   const [copyCommand, setCopyCommand] = useState('');
   const [spacePan, setSpacePan] = useState(false);
   const [resolvingConflict, setResolvingConflict] = useState(false);
@@ -346,7 +348,6 @@ export default function App() {
     const singlePlayback = (event: Event) => { const active = event.target; if (!(active instanceof HTMLMediaElement)) return; document.querySelectorAll<HTMLMediaElement>('audio,video').forEach(element => { if (element !== active && !element.paused) element.pause(); }); };
     document.addEventListener('play', singlePlayback, true); return () => document.removeEventListener('play', singlePlayback, true);
   }, []);
-  useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(''), 2800); return () => clearTimeout(timer); }, [notice]);
 
   const viewUpdate = (next: Partial<SessionView>) => { if (!disabled && state) { fitMotion.interrupt(); board.updateView({ ...view, ...next }, state.session.id); } };
   const selectObjects = (ids: string[]) => { if ([...ids].sort().join(',') !== [...selectedIds].sort().join(',')) { clearInspection(); exitAnnotation(); } viewUpdate({ selectedObjectIds: unique(ids) }); };
@@ -779,12 +780,11 @@ export default function App() {
     <div className="dock-footer"><IconButton className="history-toggle" label="Request history" aria-expanded={historyOpen} aria-controls="request-history" onClick={() => { clearInspection(); exitAnnotation(); setHistoryOpen(current => !current); setTaskDetailId(''); }}><History size={15}/></IconButton><IconButton label="Copy resume prompt" onClick={() => void copyResume()}><Copy size={15}/></IconButton></div>
   </section>;
 
-  const notificationList = <aside ref={notifications} className="notification-stack" aria-label="Notifications">
-    {(board.error || board.projectChanged) && <div className="error-banner" role="alert"><span>{board.error || 'This address now serves another project. Your draft is preserved. Reopen the board to continue.'}</span>{!state ? <button onClick={() => window.location.reload()}>Reconnect</button> : board.projectChanged ? <button onClick={() => window.location.assign(window.location.pathname)}>Reopen board</button> : board.saveState === 'failed' && <button onClick={() => void board.flushDraft().catch(() => undefined)}>Retry saving</button>}<IconButton label="Dismiss error" disabled={board.projectChanged} onClick={() => board.setError('')}><X size={15}/></IconButton></div>}
-    {!!state && board.connection !== 'connected' && !board.projectChanged && <div className="connection-feedback" role="status"><LoaderCircle size={14} className="spin"/>{board.connection === 'reconnecting' ? 'Reconnecting…' : 'Connecting…'}</div>}
-    {!!uploads.length && <div className="upload-list" aria-live="polite">{uploads.map(upload => <div key={upload.id}><LoaderCircle size={15} className="spin"/><span>Importing {upload.name}</span><IconButton label={`Cancel import ${upload.name}`} onClick={() => upload.controller.abort()}><X size={15}/></IconButton></div>)}</div>}
-    {notice && <div className="toast" role="status"><Check size={14}/><span>{notice}</span></div>}
-  </aside>;
+  const notificationItems: Notification[] = [];
+  if (persistentError && (board.error || board.projectChanged)) notificationItems.push({ id: 'error', content: <div className="error-banner" role="alert"><span>{board.error || 'This address now serves another project. Your draft is preserved. Reopen the board to continue.'}</span>{!state ? <button onClick={() => window.location.reload()}>Reconnect</button> : board.projectChanged ? <button onClick={() => window.location.assign(window.location.pathname)}>Reopen board</button> : board.saveState === 'failed' && <button onClick={() => void board.flushDraft().catch(() => undefined)}>Retry saving</button>}<IconButton label="Dismiss error" disabled={board.projectChanged} onClick={() => board.setError('')}><X size={15}/></IconButton></div> });
+  if (state && board.connection !== 'connected' && !board.projectChanged) notificationItems.push({ id: 'connection', content: <div className="connection-feedback" role="status"><LoaderCircle size={14} className="spin"/>{board.connection === 'reconnecting' ? 'Reconnecting…' : 'Connecting…'}</div> });
+  for (const upload of uploads) notificationItems.push({ id: `upload-${upload.id}`, content: <div className="upload-list" aria-live="polite"><div><LoaderCircle size={15} className="spin"/><span>Importing {upload.name}</span><IconButton label={`Cancel import ${upload.name}`} onClick={() => upload.controller.abort()}><X size={15}/></IconButton></div></div> });
+  const notificationList = <NotificationStack items={notificationItems} notices={notices} elementRef={notifications}/>;
 
   if (!state || !draft) return <><main className="startup"><span className="brand">acanvas<span>●</span></span>{board.error ? <h1>Unable to open the board</h1> : <><LoaderCircle size={24} className="spin"/><p>Opening your board…</p></>}</main>{notificationList}</>;
 
@@ -809,7 +809,6 @@ export default function App() {
           {resolveContentKind(assetFor(annotation.assetId || '')) === 'audio' && <div className="comment-video-meta">{editable && annotationEdit ? <label>Audio target<select aria-label="Audio annotation target" disabled={disabled} value={annotation.timeStart === undefined ? 'whole' : 'time'} onChange={event => setAudioAnnotationTarget(annotationEdit, event.target.value === 'time')}><option value="whole">Whole audio</option><option value="time">Current time</option></select></label> : <span>{annotation.timeStart === undefined ? 'Whole audio' : 'Audio time'}</span>}</div>}{annotation.timeStart !== undefined && <div className="comment-video-meta"><span>{timeLabel(annotation.timeStart)}{annotation.timeEnd !== undefined && ` – ${timeLabel(annotation.timeEnd)}`}</span>{editable && annotationEdit ? <label>End time<input type="number" min={annotation.timeStart} step="0.1" placeholder="Optional" value={annotationEdit.end} disabled={disabled} onChange={event => changeAnnotationEnd(annotationEdit, event.target.value)}/></label> : annotation.objectId && (videoRefs.current.has(annotation.objectId) || audioRefs.current.has(annotation.objectId)) && <button type="button" className="annotation-media-action" onClick={() => { const media = videoRefs.current.get(annotation.objectId!) || audioRefs.current.get(annotation.objectId!); if (media) { media.pause(); media.currentTime = annotation.timeStart!; } }}>{audioRefs.current.has(annotation.objectId!) ? 'Jump to time' : 'Jump to frame'}</button>}{annotationEdit?.frameNote && <span title={annotationEdit.frameNote}>Timestamp only</span>}</div>}
         </> }}/>
       })}
-      {!objects.length && <div className="canvas-empty"><div className="empty-mark"><ImagePlus size={31} strokeWidth={1.25}/></div><h1>Drop files to start</h1><p>Images, videos and files. Or paste from your clipboard.</p></div>}
       {dragOver && <div className="drop-indicator"><Upload size={28}/><span>Drop files onto the canvas</span></div>}
       {!annotationRead && !annotating && !!selected.length && <div ref={selectionActions} className={`selection-actions context-control ${aligning ? 'alignment-control' : 'selection-tool-control'}`} data-canvas-control onKeyDown={event => { event.stopPropagation(); if (event.key === 'Escape' && aligning) { event.preventDefault(); exitAlignment(); } }}>
         {aligning ? <><IconButton label="Back to selection tools" onClick={exitAlignment}><ArrowLeft size={15}/></IconButton><div className="alignment-actions" role="toolbar" aria-label="Align selected files"><IconButton label="Align left" disabled={disabled} onClick={() => alignSelection('left')}><AlignStartVertical size={15}/></IconButton><IconButton label="Align horizontal centers" disabled={disabled} onClick={() => alignSelection('horizontal-center')}><AlignCenterVertical size={15}/></IconButton><IconButton label="Align right" disabled={disabled} onClick={() => alignSelection('right')}><AlignEndVertical size={15}/></IconButton><IconButton label="Align top" disabled={disabled} onClick={() => alignSelection('top')}><AlignStartHorizontal size={15}/></IconButton><IconButton label="Align vertical centers" disabled={disabled} onClick={() => alignSelection('vertical-center')}><AlignCenterHorizontal size={15}/></IconButton><IconButton label="Align bottom" disabled={disabled} onClick={() => alignSelection('bottom')}><AlignEndHorizontal size={15}/></IconButton></div></> : <div className="selection-primary-tools" role="toolbar" aria-label="Selected file actions"><IconButton label="Attach to request" disabled={disabled} onClick={addSelection}><Plus size={22} strokeWidth={1.75}/></IconButton><IconButton label="Annotate" disabled={disabled} onClick={enterAnnotation}><AnnotationBubble size={18} tone="neutral"/></IconButton><IconButton label="Remove selected files from canvas" disabled={disabled} onClick={() => void removeSelection()}><Trash2 size={18}/></IconButton>{selected.length > 1 && <IconButton label="Align" aria-haspopup="false" disabled={disabled} onClick={enterAlignment}><AlignStartVertical size={18}/></IconButton>}</div>}
