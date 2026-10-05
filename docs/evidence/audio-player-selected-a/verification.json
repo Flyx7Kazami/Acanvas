@@ -1,0 +1,25 @@
+{
+  "build": {
+    "command": "npm run build",
+    "result": "PASS"
+  },
+  "audioTests": {
+    "command": ".runtime/node_modules/node/bin/node node_modules/@playwright/test/cli.js test --config tests/audio-player.config.ts",
+    "passed": 5,
+    "failed": 0,
+    "durationSeconds": 9.9
+  },
+  "realAudio": {
+    "source": "two exported original files in /private/tmp/acanvas-audio-redesign-20261005",
+    "checks": 22,
+    "result": "PASS",
+    "scope": "20 theme/size combinations including Wide 740x220 and boundary 524x150, each image bounds inside its art slot; both original cover byte matches, real playback/pointer scrub resume/keyboard seek; actual AudioReview follows saved theme and storage event"
+  },
+  "productionChanges": [
+    "src/web/AudioCanvasPlayer.tsx",
+    "src/web/audio-canvas.css",
+    "src/web/useAudioWaveform.ts",
+    "src/web/AudioReview.tsx",
+    "src/web/audio-review.css"
+  ]
+}

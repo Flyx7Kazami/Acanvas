@@ -8,6 +8,11 @@ import './audio-review.css';
 function Preview() {
   const [assets, setAssets] = useState<Asset[]>([]), [selected, setSelected] = useState(''), [error, setError] = useState('');
   const src = selected ? `/api/assets/${encodeURIComponent(selected)}/content` : undefined;
+  useEffect(() => {
+    const applyTheme = () => { document.documentElement.dataset.theme = localStorage.getItem('acanvas-theme') === 'dark' ? 'dark' : 'light'; };
+    applyTheme(); window.addEventListener('storage', applyTheme);
+    return () => window.removeEventListener('storage', applyTheme);
+  }, []);
   useEffect(() => { void (async () => {
     try {
       const session = new URLSearchParams(location.search).get('session');

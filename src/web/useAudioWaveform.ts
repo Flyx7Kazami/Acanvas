@@ -21,6 +21,7 @@ export function useAudioWaveform(audio: RefObject<HTMLAudioElement | null>, disp
       if (canvas!.width !== Math.round(width * ratio) || canvas!.height !== Math.round(height * ratio)) { canvas!.width = Math.round(width * ratio); canvas!.height = Math.round(height * ratio); }
       const context = canvas!.getContext('2d');
       if (context && width && height) {
+        const style = getComputedStyle(canvas!), played = style.getPropertyValue('--audio-wave-played').trim(), unplayed = style.getPropertyValue('--audio-wave').trim();
         context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, width, height);
         if (peaks) {
           const count = Math.max(1, Math.floor(width / 5)), step = width / count;
@@ -28,7 +29,7 @@ export function useAudioWaveform(audio: RefObject<HTMLAudioElement | null>, disp
             const start = Math.floor(bar * peaks.length / count), end = Math.max(start + 1, Math.floor((bar + 1) * peaks.length / count)); let square = 0;
             for (let i = start; i < end; i++) square += peaks[i] ** 2;
             const level = Math.sqrt(square / (end - start)) / maximum, h = Math.max(3, Math.pow(level, .72) * (height - 4));
-            context.fillStyle = duration && (bar + .5) / count <= time / duration ? '#f5f5f5' : '#999';
+            context.fillStyle = duration && (bar + .5) / count <= time / duration ? played : unplayed;
             context.beginPath(); context.roundRect(bar * step + (step - 3) / 2, (height - h) / 2, 3, h, 1.5); context.fill();
           }
         }
@@ -47,6 +48,7 @@ export function useAudioWaveform(audio: RefObject<HTMLAudioElement | null>, disp
     const events: [string, EventListener][] = [['loadedmetadata', sync], ['durationchange', sync], ['play', play], ['pause', pause], ['ended', pause], ['error', error], ['timeupdate', paint], ['seeked', paint], ['emptied', sync]];
     events.forEach(([name, fn]) => media.addEventListener(name, fn));
     const observer = new ResizeObserver(paint); observer.observe(canvas); sync();
+    const themeObserver = new MutationObserver(paint); themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     void (async () => {
       try {
         const response = await fetch(src, { credentials: 'same-origin', signal: controller.signal });
@@ -70,7 +72,7 @@ export function useAudioWaveform(audio: RefObject<HTMLAudioElement | null>, disp
         peaks = values; maximum = Math.max(...values) || 1; setWaveformStatus(''); paint();
       } catch (cause) { if (!cancelled) setWaveformStatus(cause instanceof Error ? cause.message : 'Waveform unavailable'); }
     })();
-    return () => { cancelled = true; active.current = false; intent.current++; controller.abort(); cancelAnimationFrame(frame.current); observer.disconnect(); events.forEach(([name, fn]) => media.removeEventListener(name, fn)); media.pause(); };
+    return () => { cancelled = true; active.current = false; intent.current++; controller.abort(); cancelAnimationFrame(frame.current); observer.disconnect(); themeObserver.disconnect(); events.forEach(([name, fn]) => media.removeEventListener(name, fn)); media.pause(); };
   }, [src, audio, display.wave, display.slider, display.current, display.total]);
   const toggle = useCallback(async () => {
     const media = audio.current; if (!media || !active.current) return;

@@ -549,3 +549,14 @@ Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直�
 - [音频紧凑播放](evidence/multimodal-components/audio-compact-playing.png)与[展开频谱](evidence/multimodal-components/audio-expanded-playing.png)
 - [Markdown](evidence/multimodal-components/markdown-creative-brief.png)、[HTML](evidence/multimodal-components/html-color-notes.png)、[GIF](evidence/multimodal-components/gif-drift-study.png)
 - [主审查范围与复验记录](evidence/multimodal-components/main-review.md)
+
+## 2026-10-06 · 用户选择的音频 A 布局
+
+用户通过当前画板选择 A · Cover above。真实播放器保留原版22px整体圆角、12px封面圆角和紧凑尺度，按实际尺寸应用紧凑横排、宽幅侧置及方/竖上置封面；浅深主题作用于表面、文字、控件和暂停中的波形。切换主题及尺寸保持音频元素、播放位置和解码结果。
+
+- 执行：`npm run build` 通过；音频定向5/5通过；使用原画板两曲导出副本的独立夹具22项通过，覆盖真实封面、主题、尺寸、播放和定位。
+- 独立验收：22组尺寸/主题（含149/150px和1.5/3.5比例边界）通过，真实播放/拖拽及键盘定位、播放中切换、暂停波形像素变化、`onElement(null)`清理通过；独立AudioReview两曲22项与最终定向5/5回归通过。
+- 审查发现的宽幅封面尺寸越界已通过明确网格轨道及图片尺寸约束修复；740×220和524×150下图片实际边界均在封面槽内，四个圆角完整。无未关闭P0–P3。
+- 所有自动化使用独立临时夹具，当前真实画板仅刷新前端资源；不改变用户对象、任务或布局。原型HTML继续用于设计回看，真实试听使用已接入A的音频组件。
+
+证据：[执行记录](evidence/audio-player-selected-a/verification.json)、[真实两曲记录](evidence/audio-player-selected-a/real-audio-results.json)、[浅色紧凑](evidence/audio-player-selected-a/light-compact.png)、[深色竖形](evidence/audio-player-selected-a/dark-tall.png)、[浅色宽幅](evidence/audio-player-selected-a/light-wide.png)。

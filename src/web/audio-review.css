@@ -1,7 +1,8 @@
 @font-face { font-family:'Google Sans'; font-style:normal; font-weight:400 700; src:url('./fonts/google-sans-latin.woff2') format('woff2'); }
-* { box-sizing:border-box; } body { margin:0; background:#171717; color:#f3f3f3; font-family:'Google Sans',-apple-system,sans-serif; }
+:root { --review-page:#fcfcfa; --review-ink:#292929; --review-muted:#747474; --review-surface:#f5f5f5; --review-edge:#dedede; color-scheme:light; }
+:root[data-theme='dark'] { --review-page:#171717; --review-ink:#f3f3f3; --review-muted:#aaa; --review-surface:#292929; --review-edge:#444; color-scheme:dark; }
+* { box-sizing:border-box; } body { margin:0; background:var(--review-page); color:var(--review-ink); font-family:'Google Sans',-apple-system,sans-serif; }
 .audio-review-page { min-height:100vh; display:grid; place-items:center; padding:40px 24px; }
 .audio-review-stage { width:min(640px,100%); }
-.audio-review-source { display:block; margin:36px auto 0; padding:8px 28px 8px 12px; max-width:100%; color:#999; background:#202020; border:1px solid #333; border-radius:8px; font:inherit; font-size:12px; }
-
+.audio-review-source { display:block; margin:36px auto 0; padding:8px 28px 8px 12px; max-width:100%; color:var(--review-muted); background:var(--review-surface); border:1px solid var(--review-edge); border-radius:8px; font:inherit; font-size:12px; }
 .audio-review-player { height:100px; }
