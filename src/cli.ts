@@ -1,11 +1,12 @@
-import { createReadStream } from 'node:fs';
-import { readFile, realpath, stat, writeFile } from 'node:fs/promises';
+import { constants, createReadStream } from 'node:fs';
+import { lstat, open, readFile, realpath, stat, writeFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import type { HostBinding } from './shared/types.js';
 import { resolveContentMime } from './shared/content-types.js';
 import { within } from './server/service.js';
+import { bundleChanged, collectHtmlBundle, sameBundleSource, verifyBundleDirectories } from './server/html-bundle-import.js';
 import { connectProject, waitForStop } from './server/client-runtime.js';
 
 const help = `acanvas: project-local whiteboard CLI (Node 24)
@@ -22,7 +23,8 @@ session create --name NAME | session list | session read --session ID
 session resume --session ID [--consumer ID] --expected-consumer ID|none --resolution TEXT
 draft save --session ID --input draft.json | draft send --session ID --draft ID --revision NUMBER
 view save --session ID --input view.json
-asset import --file FILE [--mime MIME] [--allow-directory DIR]
+asset import --file FILE [--mime MIME] [--allow-directory DIR] [--bundle-root DIR]
+  --bundle-root authorizes and imports a publishable HTML directory (128 files / 32 MiB; hidden files skipped).
   Outputs also require --session ID --task ID --run ID --consumer ID.
 asset read --asset ID --out FILE
 board operations --session ID --input operations.json
@@ -101,6 +103,32 @@ export async function cli(args: string[]): Promise<unknown> {
   if (group === 'board' && action === 'operations') { const value = await input(); return request('/api/board/operations', 'POST', { sessionId: required('session'), operations: value.operations }); }
   if (group === 'asset') {
     if (action === 'import') {
+      if (options.has('bundle-root')) {
+        if ((await lstat(required('file'))).isSymbolicLink()) throw new Error('Bundle symlinks are not supported.');
+        const entry = await realpath(required('file'));
+        const bundle = await collectHtmlBundle(required('bundle-root'), entry);
+        const files: Record<string, string> = Object.create(null);
+        for (const item of bundle.files) {
+          await verifyBundleDirectories(bundle.directories);
+          // Recheck the directory boundary immediately before opening each file.
+          if ((await lstat(item.file)).isSymbolicLink() || !within(bundle.root, await realpath(item.file))) throw new Error('Bundle files must remain inside --bundle-root.');
+          const handle = await open(item.file, constants.O_RDONLY | constants.O_NOFOLLOW);
+          try {
+            const info = await handle.stat({ bigint: true });
+            if (!info.isFile() || info.size !== BigInt(item.size) || !sameBundleSource(info, item)) throw bundleChanged();
+            await verifyBundleDirectories(bundle.directories);
+            const params = new URLSearchParams({ name: basename(item.file), mime: item.mime });
+            if (options.has('task')) { params.set('taskId', required('task')); params.set('sessionId', required('session')); params.set('runId', required('run')); params.set('consumerId', required('consumer')); }
+            const response = await fetch(new URL(`/api/assets?${params}`, base), { method: 'POST', headers: { Authorization: `Bearer ${bootstrap.token}`, 'Content-Type': 'application/octet-stream', 'Content-Length': String(info.size) }, body: handle.createReadStream({ autoClose: false }) as unknown as BodyInit, duplex: 'half' } as RequestInit & { duplex: string });
+            const result = await response.json(); if (!response.ok) throw new Error(JSON.stringify(result));
+            files[item.path] = result.id;
+            if (!sameBundleSource(await handle.stat({ bigint: true }), item)) throw bundleChanged();
+            await verifyBundleDirectories(bundle.directories);
+          } finally { await handle.close(); }
+        }
+        await verifyBundleDirectories(bundle.directories);
+        return request('/api/html-bundles', 'POST', { entryPath: bundle.entryPath, files, ...(options.has('task') ? { source: { sessionId: required('session'), taskId: required('task'), ...identity() } } : {}) });
+      }
       const file = await realpath(required('file'));
       const allowed = options.has('allow-directory') ? await realpath(required('allow-directory')) : projectRoot;
       if (!within(allowed, file)) throw new Error('The file must be within the project or the explicitly selected --allow-directory.');

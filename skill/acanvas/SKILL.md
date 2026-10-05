@@ -42,6 +42,14 @@ Opening a bare browser URL creates a tab-local task scope and records its ID in 
 5. Submit `task complete` with a JSON file containing `summary`, `assetIds`, `validation` and `operations`. New generated objects normally use `{"type":"create","object":{"assetId":"ID","x":0,"y":0,"width":320,"height":240}}`. Existing-object changes include the object's current `expectedVersion`. The service publishes all operations, the receipt and completed status in one transaction. Read the task after a lost response to check the persisted receipt before attempting another change.
 6. Claim the next task with the same consumer after each completion. Stop when the next request is editing, blocked or interrupted. An editing request keeps its queue position while the user saves or cancels its composer edit. Save tool failures and partial progress instead of declaring delivery.
 
+## Publish HTML with local resources
+
+For an HTML output with separate CSS, JavaScript or images, place the publishable files in a dedicated directory and import the entry with `asset import --file <DIR/index.html> --bundle-root <DIR>`, including the project and current task/run/consumer arguments described above. `--bundle-root` authorizes the selected source directory, including outside the project. Single-file HTML can use ordinary `asset import`; that mode still requires `--allow-directory` for files outside the project.
+
+The service saves the original files and relative-path mapping under the target project's `.acanvas/`; previews read these copies and do not depend on the source directory. Finish generating the source directory before importing it; changes during import cause the operation to stop. Keep HTML/CSS references relative to files inside the bundle. Remote resources and host-specific APIs are unavailable. Do not include unrelated project files or credentials in the selected directory.
+
+Publish the returned entry asset ID through the normal `task complete` operation and receipt, or `board operations` for an authorized canvas edit outside the queue. Import alone does not create a canvas item. The existing change stream displays a new item without reloading the browser, and visible HTML generates a static snapshot before the user chooses Interact.
+
 ## Resume saved work
 
 Read the interrupted or blocked task first, including its runs, progress, external job IDs, output asset IDs, replies and late results. Query a known external job through its provider when that tool is available. Decide whether the saved output can be reused and whether an external operation has ended. When a result remains ambiguous, retain the interrupted task and request the information needed to resolve it.

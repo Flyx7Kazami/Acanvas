@@ -75,7 +75,17 @@ Images, video, GIF, Markdown, audio, and HTML share import, selection, layout, a
 
 A mixed selection can share one group annotation, with a common number and comment while preserving each material's source. Image and video region annotations retain explicit region bounds.
 
-HTML previews support self-contained inline styles, scripts, and data images in an isolated origin. Snapshot generation shares the same four-instance limit as live interaction and waits for an available slot. Offscreen and stopped previews release their running slots; a retained snapshot can be displayed without rerunning the file. Snapshots preserve an image, not restorable script or form state. Live preview grants expire after ten minutes and can be restarted. External resources, host-specific APIs, and resource bundles require further integration. Markdown displays raw HTML as text and uses source placeholders for embedded images.
+HTML previews support self-contained files and explicitly imported local resource bundles in an isolated origin. Snapshot generation shares the same four-instance limit as live interaction and waits for an available slot. Offscreen and stopped previews release their running slots; a retained snapshot can be displayed without rerunning the file. Snapshots preserve an image, not restorable script or form state. Live preview grants expire after ten minutes and can be restarted. Remote resources and host-specific APIs require further integration. Markdown displays raw HTML as text and uses source placeholders for embedded images.
+
+To import HTML with separate local CSS, JavaScript and images, select the entry file and its resource directory:
+
+```sh
+npm run cli -- asset import --project "$PWD" --file "$PWD/site/index.html" --bundle-root "$PWD/site"
+```
+
+Use a dedicated directory containing the files intended for the preview. `--bundle-root` explicitly authorizes that source directory, including when it is outside the project. The service stores the original files and their relative-path mapping inside the target project's `.acanvas/`; moving or deleting the source directory does not affect the saved preview. Imports without `--bundle-root` retain single-file behavior. Importing registers an asset; use the returned entry asset ID in `board operations` or `task complete` to create its canvas item. An open canvas receives the normal change notification and generates a snapshot automatically when the item is visible.
+
+Bundles accept HTML, CSS, JavaScript, images and fonts, up to 128 files and 128 directories (including the entry and root), 10 MiB per file and 32 MiB total. Hidden files/directories are skipped; symlinks and unsupported file types are rejected. Finish generating the directory before importing it; changes during import cause the operation to stop. Use relative resource URLs, including inside CSS; absolute site-root paths such as `/assets/style.css` are not mapped. Custom fonts can load during live interaction but are not embedded in static snapshots, which may use fallback fonts.
 
 Audio waveforms are calculated from the complete file before playback; playback uses the native audio element. Waveform decoding currently supports files up to 32 MB. If waveform decoding is unavailable, native playback and time-based seeking remain available when supported by the browser. Audio playback and HTML runtime state are local viewing state; tasks preserve original files and explicitly submitted annotations.
 

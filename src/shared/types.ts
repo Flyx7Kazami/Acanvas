@@ -1,7 +1,8 @@
 export type AssetKind = 'image' | 'video' | 'file';
 export type TaskStatus = 'queued' | 'editing' | 'running' | 'blocked' | 'interrupted' | 'completed' | 'cancelled';
 export interface Project { id: string; name: string; root: string }
-export interface Asset { id: string; name: string; mime: string; size: number; kind: AssetKind; createdAt: string; sourceTaskId?: string; sourceRunId?: string }
+export interface HtmlBundle { entryPath: string; files: Record<string, string> }
+export interface Asset { id: string; name: string; mime: string; size: number; kind: AssetKind; createdAt: string; sourceTaskId?: string; sourceRunId?: string; htmlBundle?: HtmlBundle }
 export interface Bounds { x: number; y: number; width: number; height: number }
 export interface BoardObject extends Bounds { id: string; assetId: string; type: AssetKind; version: number; createdAt: string; updatedAt: string; sourceTaskId?: string; sourceRunId?: string }
 export interface AnnotationInput { id: string; scope: 'object' | 'group' | 'region'; objectId?: string; objectIds: string[]; assetId?: string; bounds: Bounds; coordinateSpace: 'normalized' | 'world'; text: string; timeStart?: number; timeEnd?: number; snapshotAssetId?: string }

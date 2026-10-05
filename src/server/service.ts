@@ -2,7 +2,8 @@ import Database from 'better-sqlite3';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, realpathSync, statSync } from 'node:fs';
 import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
-import type { Annotation, AnnotationInput, Asset, BoardObject, BoardOperation, BoardState, Claim, CompleteInput, Draft, HostBinding, Project, Run, RunIdentity, ServiceIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
+import type { Annotation, AnnotationInput, Asset, BoardObject, BoardOperation, BoardState, Claim, CompleteInput, Draft, HostBinding, HtmlBundle, Project, Run, RunIdentity, ServiceIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
+import { bundleLimits, bundleMime, validBundlePath } from '../shared/html-bundle.js';
 import { contentCapabilities, resolveContentKind } from '../shared/content-types.js';
 
 type Row = Record<string, any>;
@@ -52,6 +53,7 @@ export class CanvasService {
       CREATE TABLE IF NOT EXISTS consumers(session_id TEXT NOT NULL REFERENCES sessions(id), id TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, retired_at TEXT, PRIMARY KEY(session_id,id));
       CREATE TABLE IF NOT EXISTS drafts(id TEXT PRIMARY KEY, session_id TEXT NOT NULL UNIQUE REFERENCES sessions(id), revision INTEGER NOT NULL DEFAULT 1, text TEXT NOT NULL, attachments_json TEXT NOT NULL, annotations_json TEXT NOT NULL, references_json TEXT NOT NULL, updated_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS assets(id TEXT PRIMARY KEY, name TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, kind TEXT NOT NULL, path TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL, source_task_id TEXT, source_run_id TEXT);
+      CREATE TABLE IF NOT EXISTS html_bundles(asset_id TEXT PRIMARY KEY REFERENCES assets(id), manifest_json TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS objects(id TEXT PRIMARY KEY, asset_id TEXT NOT NULL REFERENCES assets(id), x REAL NOT NULL, y REAL NOT NULL, width REAL NOT NULL, height REAL NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, source_task_id TEXT, source_run_id TEXT);
       CREATE TABLE IF NOT EXISTS annotations(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), task_id TEXT NOT NULL, data_json TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), draft_id TEXT NOT NULL UNIQUE, sequence INTEGER NOT NULL, status TEXT NOT NULL, snapshot_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, current_run_id TEXT, reason TEXT, receipt_json TEXT, replies_json TEXT NOT NULL DEFAULT '[]', UNIQUE(session_id, sequence));
@@ -123,9 +125,36 @@ export class CanvasService {
     const row = this.db.prepare('SELECT * FROM drafts WHERE session_id=?').get(sessionId) as Row;
     return { ...(row.editing_task_id ? { editingTaskId: row.editing_task_id } : {}), id: row.id, sessionId, revision: row.revision, text: row.text, attachments: parse(row.attachments_json), annotations: parse(row.annotations_json), references: parse(row.references_json), updatedAt: row.updated_at };
   }
-  private assetFrom(row: Row): Asset { return { id: row.id, name: row.name, mime: row.mime, size: row.size, kind: row.kind, createdAt: row.created_at, ...(row.source_task_id ? { sourceTaskId: row.source_task_id, sourceRunId: row.source_run_id } : {}) }; }
+  private assetFrom(row: Row): Asset { const bundle = this.db.prepare('SELECT manifest_json FROM html_bundles WHERE asset_id=?').get(row.id) as Row | undefined; return { ...(bundle ? { htmlBundle: parse<HtmlBundle>(bundle.manifest_json) } : {}), id: row.id, name: row.name, mime: row.mime, size: row.size, kind: row.kind, createdAt: row.created_at, ...(row.source_task_id ? { sourceTaskId: row.source_task_id, sourceRunId: row.source_run_id } : {}) }; }
   asset(id: string): Asset { nonempty(id, 'Asset ID', 200); const row = this.db.prepare('SELECT * FROM assets WHERE id=?').get(id) as Row; return row ? this.assetFrom(row) : fail(404, 'asset_missing', 'The referenced asset is unavailable.'); }
   assets(): Asset[] { return (this.db.prepare('SELECT * FROM assets ORDER BY created_at,id').all() as Row[]).map((row) => this.assetFrom(row)); }
+  registerHtmlBundle(input: HtmlBundle & { source?: { sessionId: string; taskId: string } & RunIdentity }): Asset {
+    return this.transaction(() => {
+      if (!input || !validBundlePath(input.entryPath) || !/\.html?$/i.test(input.entryPath) || !input.files || typeof input.files !== 'object' || Array.isArray(input.files)) fail(400, 'bundle_invalid', 'Choose an HTML entry and a relative resource mapping.');
+      const files = Object.entries(input.files);
+      if (!files.length || files.length > bundleLimits.files) fail(400, 'bundle_limit', 'HTML bundles support up to 128 files.');
+      const entryId = Object.hasOwn(input.files, input.entryPath) ? input.files[input.entryPath] : '';
+      const entry = this.asset(entryId);
+      if (entry.sourceTaskId) {
+        if (!input.source || input.source.taskId !== entry.sourceTaskId || input.source.runId !== entry.sourceRunId) fail(409, 'bundle_source', 'Output bundles require their task and execution identity.');
+        this.requireCurrent(input.source!.sessionId, input.source!.taskId, input.source!);
+      } else if (input.source) fail(409, 'bundle_source', 'The bundle entry does not belong to this task.');
+      if (resolveContentKind(entry) !== 'html') fail(400, 'bundle_entry', 'The bundle entry must be HTML.');
+      if (entry.htmlBundle || this.db.prepare('SELECT id FROM objects WHERE asset_id=?').get(entryId) || (this.db.prepare('SELECT snapshot_json FROM tasks').all() as Row[]).some(row => parse<TaskSnapshot>(row.snapshot_json).referenceContent.assets.some(asset => asset.id === entryId))) fail(409, 'bundle_immutable', 'Create a new HTML import before publishing its bundle.');
+      let total = 0;
+      for (const [path, id] of files) {
+        if (!validBundlePath(path) || !bundleMime(path)) fail(400, 'bundle_path', 'Bundle files must use supported non-hidden relative paths.');
+        const asset = this.asset(id); this.assetPath(id);
+        if (asset.htmlBundle || asset.sourceTaskId !== entry.sourceTaskId || asset.sourceRunId !== entry.sourceRunId) fail(400, 'bundle_source', 'Bundle resources must belong to the same import source.');
+        if (asset.size > bundleLimits.fileBytes || (total += asset.size) > bundleLimits.totalBytes) fail(413, 'bundle_limit', 'HTML bundles support 10 MiB per file and 32 MiB total.');
+      }
+      this.db.prepare('INSERT INTO html_bundles VALUES(?,?)').run(entryId, json({ entryPath: input.entryPath, files: input.files }));
+      return this.asset(entryId);
+    });
+  }
+  private expandAssetIds(input: string[]): string[] {
+    return [...new Set(input.flatMap(id => { const asset = this.asset(id); return [id, ...Object.values(asset.htmlBundle?.files ?? {})]; }))];
+  }
   assetPath(id: string): string {
     const row = this.db.prepare('SELECT path,size FROM assets WHERE id=?').get(id) as Row || fail(404, 'asset_missing', 'The asset is unavailable.');
     const path = resolve(this.dataDir, row.path);
@@ -280,7 +309,7 @@ export class CanvasService {
       if (source && !edit) fail(409, 'task_edit_conflict', 'The request edit is unavailable. Read the current draft.');
       const objectIds = [...new Set([...draft.references.objectIds, ...draft.annotations.flatMap((annotation) => [...annotation.objectIds, ...(annotation.objectId ? [annotation.objectId] : [])])])];
       const objects = objectIds.map((id) => source?.snapshot.referenceContent.objects.find(object => object.id === id) || this.object(id));
-      const assetIds = [...new Set([...draft.attachments, ...objects.map((object) => object.assetId), ...draft.annotations.flatMap((annotation) => [annotation.assetId, annotation.snapshotAssetId].filter((id): id is string => !!id))])];
+      const assetIds = this.expandAssetIds([...new Set([...draft.attachments, ...objects.map((object) => object.assetId), ...draft.annotations.flatMap((annotation) => [annotation.assetId, annotation.snapshotAssetId].filter((id): id is string => !!id))])]);
       const snapshot: TaskSnapshot = { userRequest: { source: 'user_instruction', text: draft.text }, requestReferences: { attachmentIds: [...draft.attachments], objectIds: [...draft.references.objectIds] }, annotations: structuredClone(draft.annotations), referenceContent: { source: 'reference_content', assets: assetIds.map((id) => { this.assetPath(id); return source?.snapshot.referenceContent.assets.find(asset => asset.id === id) || this.asset(id); }), objects, taskIds: draft.references.taskIds } };
       const id = source?.id || randomUUID(), time = now();
       if (source) {
@@ -476,7 +505,7 @@ export class CanvasService {
     this.requireCurrent(sessionId, taskId, input, { action: 'complete', input });
     return this.transaction(() => {
       const summary = nonempty(input.summary, 'Completion summary');
-      const assetIds = ids(input.assetIds, 'Result assets');
+      const assetIds = this.expandAssetIds(ids(input.assetIds, 'Result assets'));
       for (const assetId of assetIds) { const asset = this.asset(assetId); if (asset.sourceTaskId !== taskId) fail(409, 'output_ownership', 'Result assets must belong to this task.'); this.assetPath(assetId); }
       if (!Array.isArray(input.operations)) fail(400, 'invalid_operations', 'Board operations must be a list.');
       for (const operation of input.operations) if (operation?.type === 'create') {

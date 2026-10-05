@@ -96,6 +96,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
         }
         const previewMatch = path.match(/^\/api\/html-previews\/([A-Za-z0-9_-]{43})$/);
         if (previewMatch && method === 'DELETE') { preview.revoke(previewMatch[1]); send(response, 200, { revoked: true }); return; }
+        if (path === '/api/html-bundles' && method === 'POST') { send(response, 201, service.registerHtmlBundle(await payload(request))); return; }
         if (path === '/api/assets' && method === 'POST') {
           const declaredLength = Number(request.headers['content-length']);
           if (Number.isFinite(declaredLength) && declaredLength > maxUploadBytes) { request.resume(); throw new ApiFailure(413, 'upload_too_large', `Files may contain up to ${maxUploadBytes} bytes.`); }
