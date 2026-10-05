@@ -1,0 +1,32 @@
+{
+  "pauses": [],
+  "time": 1.192925,
+  "paused": true,
+  "ended": false,
+  "ready": 4,
+  "duration": 24,
+  "networkState": 1,
+  "bufferedEnd": 24,
+  "contextState": "suspended",
+  "visibility": "visible",
+  "hiddenMediaStyle": "none",
+  "sameElement": true,
+  "diagnostics": {
+    "suspends": [
+      "Error\n    at window.AudioContext.suspend (<anonymous>:20:30)\n    at HTMLAudioElement.k (http://127.0.0.1:55460/assets/index-CDItUILi.js:24:48302)"
+    ],
+    "closes": [],
+    "states": [
+      {
+        "time": 1004.2000000476837,
+        "state": "running"
+      },
+      {
+        "time": 3058.3000000715256,
+        "state": "suspended"
+      }
+    ],
+    "mediaPauses": []
+  },
+  "error": null
+}

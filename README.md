@@ -1,20 +1,22 @@
 # acanvas
 
-项目级本地创作白板，通过通用 Agent Skill 与 agent 协作。
+A local, project-based creative whiteboard for collaborating with agents through a shared Agent Skill.
 
-用户导入图片、视频和文件，选择素材并添加批注，将附件与指令发送到当前宿主对话绑定的需求队列。Agent 通过 CLI 逐项处理任务，调用已有创作工具，将产物发布回共享白板。
+Import images, video, audio, and documents, select materials, and add annotations. Send references and instructions to a request queue bound to your current host conversation. Agents process requests through the CLI, use their existing creative tools, and publish results back to the shared canvas.
 
-## 当前状态
+## Status
 
-P0 可运行原型已完成紧凑交互修订：全屏画布与独立悬浮控件、自适应高度输入框、上方可展开队列、左侧合并工具条、素材导入与批注、宿主对话绑定及持续运行服务。实现范围、验证及待完成项见[验证记录](docs/VALIDATION.md)。
+The runnable P0 prototype includes a full-screen canvas, floating controls, an adaptive composer, an expandable request queue, material imports and annotations, host conversation binding, and a persistent local service. The latest multimodal interactions support direct document interaction, eight-point resizing, embedded audio artwork, and a compact player with a complete audio waveform.
 
-- [项目计划](docs/PLAN.md)：需求、技术方案、实施阶段和验收标准。
-- [前端设计](docs/FRONTEND.md)：Giga 参考、灰黑白主题与交互规则。
-- [Agent Skill](skill/acanvas/SKILL.md)：任务消费与恢复流程。
+- [Project plan](docs/PLAN.md): requirements, architecture, implementation stages, and acceptance criteria.
+- [Frontend design](docs/FRONTEND.md): visual references, grayscale themes, and interaction rules.
+- [Multimodal canvas design](docs/MULTIMODAL_CANVAS_DESIGN.md): content types, references, and preview boundaries.
+- [Validation record](docs/VALIDATION.md): verified behavior and remaining limitations.
+- [Agent Skill](skill/acanvas/SKILL.md): task processing and recovery.
 
-## 安装与启动
+## Install and run
 
-项目使用 Node.js 24。当前开发机采用项目私有运行时，项目脚本自动选择它；全局 Node 配置保持原样。以下安装流程使用命令级配置和项目内缓存：
+The project requires Node.js 24. Project scripts automatically select the project-local runtime when installed. The following setup keeps the runtime and package cache inside the project and preserves your global Node configuration:
 
 ```sh
 npm install --prefix .runtime --no-save --package-lock=false --cache .npm-cache --registry=https://registry.npmjs.org node@24
@@ -23,59 +25,63 @@ npm run build
 npm run cli -- project open --project "$PWD" --port 4317
 ```
 
-`project open` 启动或复用本项目的独立后台服务，并返回已核对的访问地址。启动命令或 agent 回合结束后，服务继续运行。`--project` 指定数据所属项目，项目与服务实例通过检查后才连接或停止。开发时仍可用 `npm start` 以前台方式运行，Ctrl+C 正常关闭。
+`project open` starts or reuses the project's background service and returns its verified URL. The service continues running after the launcher or agent turn ends. `--project` identifies the project that owns the data; connection and shutdown commands verify the project and service instance.
 
 ```sh
 npm run cli -- project status --project "$PWD"
 npm run cli -- project stop --project "$PWD"
 ```
 
-普通使用时打开 `project open` 返回的绑定 URL，延续宿主对话关联。
+Use the bound URL returned by `project open` to keep requests associated with the current host conversation. For a foreground service, use `npm start`; Ctrl+C shuts it down normally.
 
-开发界面可使用两个终端。先用 `npm run cli -- project stop --project "$PWD"` 正常停止本项目已有后台实例，再启动前台服务和 Vite。已有生产服务会拒绝重复实例与开发 Origin：
+For UI development, first stop the project's existing background service with `npm run cli -- project stop --project "$PWD"`. Then run these commands in separate terminals:
 
 ```sh
 npm start -- --project "$PWD" --port 4317 --dev-origin http://127.0.0.1:5173
 npm run dev
 ```
 
-## 使用链路
+A production service rejects duplicate instances and unapproved development origins.
 
-1. 从 agent 提供的绑定链接打开项目白板。素材和布局由项目共享，需求归当前宿主对话；界面提供任务输入与队列。
-2. 素材通过导入、拖拽或粘贴先加入画布；选中后选择 Annotate 进行区域或整素材批注，也可将素材引用到需求。
-   拖动可吸附到其它素材；Shift 多选后选择 Align，再选择对齐方向，Alt 临时跳过吸附。
-   输入框随内容增高，Enter 发送需求，Shift+Enter 换行。
-3. 添加指令并发送。需求持久入队，界面显示真实状态及处理回执。
-4. Agent 读取本仓库 Skill，通过明确项目及任务范围处理队列。界面可复制含当前白板链接的接续口令。
-5. Agent 登记产物、发布白板变更并完成任务，继续处理下一项；队列为空或需要用户补充时停止。
+## Workflow
 
-CLI 和 Skill 入口：
+1. Open the project whiteboard using the bound link from your agent. Materials and layout belong to the project; requests belong to the current host conversation.
+2. Import, drop, or paste materials onto the canvas. Select materials and choose **Annotate** to add a comment, or attach them to a request. Dragging snaps to other materials. Use Shift for multiple selection, **Align** for alignment, and Alt to temporarily bypass snapping. The composer grows with its content; Enter sends and Shift+Enter adds a line.
+3. Add instructions and send. Requests are saved in the queue with their status and completion receipts.
+4. The agent reads the repository Skill and processes requests within the explicit project and task scope. The UI can copy a resume prompt containing the current whiteboard link.
+5. The agent registers outputs, publishes canvas changes, completes the task, and proceeds to the next request. Processing stops when the queue is empty or user input is needed.
+
+CLI and Skill entry points:
 
 ```sh
 npm run cli -- project open --project "$PWD" --port 4317
 node skill/acanvas/scripts/acanvas.mjs --help
 ```
 
-Codex 直接调用时可使用可信的 `CODEX_THREAD_ID` 关联宿主对话；委派给子 agent 时优先传入父对话的 host/thread 或当前绑定链接。独立浏览器无绑定链接时保持每标签页独立的内部任务范围，刷新延续当前链接。旧链接和已有任务保留。
+When called directly from Codex, the CLI can use the trusted `CODEX_THREAD_ID` to bind the host conversation. When delegating, pass the parent conversation's host/thread identity or its bound whiteboard link. A browser opened without a bound link receives a tab-local task scope, retained in the URL across refreshes. Existing links and tasks remain available.
 
-每轮消费使用新的 consumer ID，循环内保持稳定；结束或交接后的执行身份保留历史。具体领取、接续和回填参数以 CLI help 与 Skill 为准。
+Each queue activation uses a new consumer ID, kept stable throughout that processing loop. Completed or transferred execution identities remain in task history. See CLI help and the Skill for claim, resume, and output publication parameters.
 
-## 素材格式与操作
+## Content types and interactions
 
-图片、视频、GIF、Markdown、音频和 HTML 共用导入、选择、布局、批注和任务引用；原始文件持续保留，其他格式提供文件卡片与下载入口。
+Images, video, GIF, Markdown, audio, and HTML share import, selection, layout, annotation, and task references. Original files are retained. Other formats appear as downloadable file cards.
 
-| 格式 | 画布内操作 |
+| Format | Canvas interaction |
 | --- | --- |
-| 图片／GIF／视频 | 图片与 GIF 原样显示，视频提供播放控制；素材按比例调整尺寸 |
-| Markdown | 渲染正文、列表、代码和链接；进入内容交互后选字、滚动，退出后恢复画布拖动；宽高可独立调整 |
-| 音频 | 紧凑／展开播放器、真实频谱、播放暂停与时间定位；可引用整段、指定时点或区间；尺寸手柄调整宽度 |
-| HTML | 点击 Run 启动自包含文件的交互预览，外部控件提供进入交互、退出、重载与停止；宽高可独立调整 |
+| Images, GIF, video | Images and GIFs render directly; video includes playback controls. Resizing preserves the media aspect ratio. |
+| Markdown | Rendered text, lists, code, and links support selection and scrolling. Drag blank content areas or the filename to move the block. Four corner handles and four edge midpoints resize width and height independently. |
+| Audio | A compact, unified player contains embedded artwork, the track name, playback controls, and a complete amplitude waveform. Click or drag the waveform to seek across the whole track. Audio references can include specific times or intervals. |
+| HTML | Choose **Run preview** to run a self-contained interactive file. Internal controls work directly; reload and stop controls remain outside the preview. Drag blank areas or the filename to move the block, and use eight resize handles to adjust width and height independently. |
 
-HTML 首轮支持内嵌样式、脚本和数据图片的自包含文件，预览隔离于主应用；运行授权十分钟后结束，可再次点击 Run。外部资源、宿主专有 API 和资源包另行适配。Markdown 的原始 HTML 作为文本显示，内嵌图片提供来源占位。音频和 HTML 的当前运行状态属于查看状态；任务保存原文件与明确提交的批注。
+A mixed selection can share one group annotation, with a common number and comment while preserving each material's source. Image and video region annotations retain explicit region bounds.
 
-详细交互、引用语义和预览边界见[多模态画布设计](docs/MULTIMODAL_CANVAS_DESIGN.md)，实际格式与浏览器验证见[验证记录](docs/VALIDATION.md)。
+HTML previews support self-contained inline styles, scripts, and data images in an isolated origin. Preview grants expire after ten minutes and can be restarted. External resources, host-specific APIs, and resource bundles require further integration. Markdown displays raw HTML as text and uses source placeholders for embedded images.
 
-## 验证命令
+Audio waveforms are calculated from the complete file before playback; playback uses the native audio element. Waveform decoding currently supports files up to 32 MB. If waveform decoding is unavailable, native playback and time-based seeking remain available when supported by the browser. Audio playback and HTML runtime state are local viewing state; tasks preserve original files and explicitly submitted annotations.
+
+See the [multimodal design](docs/MULTIMODAL_CANVAS_DESIGN.md) for interaction and reference semantics, and the [validation record](docs/VALIDATION.md) for tested formats and browsers.
+
+## Validation
 
 ```sh
 npm run typecheck
@@ -85,19 +91,27 @@ npm run demo
 npm run test:browser
 ```
 
-测试使用独立临时项目。受限工具环境中的 localhost 服务与 Chrome 可能需要相应执行权限；验证记录区分环境限制和产品行为。
+Additional focused browser suites:
 
-## 数据与变更追溯
+```sh
+npm run test:browser -- --config tests/audio-player.config.ts
+npm run test:browser -- --config tests/content-surface.config.ts
+npm run test:browser -- --config tests/html-preview-security.config.ts
+```
 
-Git 跟踪源码、计划、测试、依赖锁文件和必要验收材料。运行数据保存在目标项目的 `.acanvas/`，包括数据库、原始素材和产物；该目录保持在 Git 跟踪范围之外。任务、执行尝试与回执支持操作追溯。
+Tests use isolated temporary projects. Localhost services and Chrome may require execution permissions in restricted environments. Validation records distinguish environment restrictions from product failures.
 
-自动备份/恢复命令属于后续阶段。当前需要手动留档时，正常停止服务后整体复制 `.acanvas/`，保留数据库和全部关联素材。
+## Data and change history
 
-实现前检查 Git 状态，按计划阶段及需求编号组织改动。执行者记录验证结果，独立审查者验收，主智能体在当前范围验收通过后提交。阶段状态维护在项目计划中，实际版本通过 `git log` 和 `git show` 查询。
+Git tracks source, plans, tests, dependency locks, and necessary validation artifacts. Runtime data lives in the target project's `.acanvas/` directory, including its database, original materials, and generated outputs. This directory is excluded from Git. Tasks, execution attempts, and receipts retain operation history.
 
-## 当前支持边界
+Automated backup and recovery commands are planned. To make a manual archive, stop the service normally and copy the complete `.acanvas/` directory, including the database and all associated materials.
 
-- 用户已在实际 Codex 内置浏览器确认 Finder 文件粘贴成功；完整 OS/文件类型、Safari 与更多宿主矩阵继续验证。自动化与手工确认的范围分别记录。
-- 视频预览取决于编码；素材文件持续保留。完整视频理解由所用 agent 或解析工具提供。
-- 图片生成和 Pinterest 自动导入通过后续适配扩展；当前服务提供素材与任务接口，agent 使用其已有工具完成创作。
-- 当前按单机、同一用户设计；云端与跨设备访问、全量备份恢复和独立分发安装留待后续阶段。
+Check Git status before implementation and organize changes by planned stages and requirements. Record verification results and complete the applicable acceptance process before committing. The project plan records implementation status; `git log` and `git show` provide version history.
+
+## Support boundaries
+
+- Finder file paste has been confirmed manually in the Codex in-app browser. Broader operating system, file type, Safari, and host coverage remains under validation. Automated coverage and manual confirmation are recorded separately.
+- Video and audio playback depend on browser codec support. Original files remain available. Full video understanding is provided by the chosen agent or parsing tools.
+- Image generation and Pinterest imports require further integrations. The service currently provides material and task interfaces; agents use their existing tools for creative work.
+- The current design targets one user on one machine. Cloud and cross-device access, comprehensive backup/recovery, and standalone distribution are planned work.

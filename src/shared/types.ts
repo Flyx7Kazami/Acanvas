@@ -4,7 +4,7 @@ export interface Project { id: string; name: string; root: string }
 export interface Asset { id: string; name: string; mime: string; size: number; kind: AssetKind; createdAt: string; sourceTaskId?: string; sourceRunId?: string }
 export interface Bounds { x: number; y: number; width: number; height: number }
 export interface BoardObject extends Bounds { id: string; assetId: string; type: AssetKind; version: number; createdAt: string; updatedAt: string; sourceTaskId?: string; sourceRunId?: string }
-export interface AnnotationInput { id: string; scope: 'object' | 'region'; objectId?: string; objectIds: string[]; assetId?: string; bounds: Bounds; coordinateSpace: 'normalized' | 'world'; text: string; timeStart?: number; timeEnd?: number; snapshotAssetId?: string }
+export interface AnnotationInput { id: string; scope: 'object' | 'group' | 'region'; objectId?: string; objectIds: string[]; assetId?: string; bounds: Bounds; coordinateSpace: 'normalized' | 'world'; text: string; timeStart?: number; timeEnd?: number; snapshotAssetId?: string }
 export interface Annotation extends AnnotationInput { source: 'user_annotation'; createdAt: string; sourceTaskId: string; sessionId: string }
 export interface SessionView { x: number; y: number; zoom: number; selectedObjectIds: string[] }
 export interface Session { id: string; name: string; createdAt: string; view: SessionView; consumerId: string | null }

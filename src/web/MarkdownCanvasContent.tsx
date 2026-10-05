@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { renderMarkdown } from './markdown';
 
 const maximumTextBytes = 2 * 1024 * 1024;
-export function MarkdownCanvasContent({ src, title, interactive }: { src: string; title: string; interactive: boolean }) {
+export function MarkdownCanvasContent({ src, title }: { src: string; title: string }) {
   const [content, setContent] = useState<{ src: string; html?: string; error?: string }>();
   useEffect(() => {
     const controller = new AbortController();
@@ -29,7 +29,7 @@ export function MarkdownCanvasContent({ src, title, interactive }: { src: string
     void load(); return () => controller.abort();
   }, [src]);
   const current = content?.src === src ? content : undefined;
-  return <div className="markdown-content" role="document" aria-label={title} tabIndex={interactive ? 0 : -1} inert={!interactive}>
+  return <div className="markdown-content" role="document" aria-label={title} tabIndex={0}>
     {current?.error ? <p className="content-message">{current.error}</p> : current?.html !== undefined ? <div className="markdown-body" dangerouslySetInnerHTML={{ __html: current.html }}/> : <p className="content-message">Loading document…</p>}
   </div>;
 }

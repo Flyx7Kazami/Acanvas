@@ -71,7 +71,7 @@ h1,h2,h3,p { margin: 0; }
 .annotation-bubble[data-tone='neutral'] path { fill: none; stroke: currentColor; stroke-width: 2; }
 .annotation-bubble text { fill: var(--annotation-ink); font-size: 10px; font-weight: 500; }
 .annotation-pin { position: absolute; bottom: calc(100% + 3px); left: -1px; width: 28px; height: 28px; padding: 0; background: transparent; pointer-events: auto; filter: drop-shadow(0 2px 2px #00000012); }
-.whiteboard.mode-annotate .board-object .object-media { cursor: crosshair; }
+.whiteboard.mode-annotate .object-image .object-media,.whiteboard.mode-annotate .object-video .object-media { cursor: crosshair; }
 .selection-tool-control { flex-direction: column; padding: 5px; border-radius: 12px; }
 .selection-primary-tools { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .selection-actions .selection-primary-tools .icon-button { width: 32px; height: 32px; flex-basis: 32px; }
@@ -332,3 +332,11 @@ details[open] summary svg { rotate: 180deg; }
 
 @media(max-width:540px) { .queue-row { gap: 2px; } .queue-task { gap: 5px; padding-inline: 4px; } .queue-title { margin-left: var(--queue-preview-space-narrow,0px); } .queue-item[data-detail-open='false'] .inline-task-detail { top: 7px; left: 23px; } .queue-item[data-detail-open='false'] .task-reference-groups { gap: 2px; } .queue-item .task-reference-source .asset-thumb { width: 22px; height: 22px; flex-basis: 22px; } .queue-item[data-detail-open='true'] .inline-task-detail .task-detail-content { margin-inline: 23px 4px; } .task-detail-content { margin-inline: 8px; } .task-reference-group { grid-template-columns: 24px minmax(0,max-content) minmax(56px,1fr); gap: 5px; } .task-reference-row { gap: 4px; } }
 @media(max-width:360px) { .queue-task { gap: 3px; } .queue-title { margin-left: var(--queue-preview-space-small,0px); } .queue-item[data-detail-open='false'] .inline-task-detail { left: 21px; } .queue-item[data-detail-open='true'] .inline-task-detail .task-detail-content { margin-left: 21px; } }
+
+.resize-handle[data-resize-corner='n'] { left:50%; top:0; cursor:ns-resize; }
+.resize-handle[data-resize-corner='s'] { left:50%; top:100%; cursor:ns-resize; }
+.resize-handle[data-resize-corner='e'] { left:100%; top:50%; cursor:ew-resize; }
+.resize-handle[data-resize-corner='w'] { left:0; top:50%; cursor:ew-resize; }
+
+.board-object[data-content-kind='audio'] { border-radius:22px; outline:0; }
+.board-object[data-content-kind='audio'].selected { outline:2px solid var(--ink); }

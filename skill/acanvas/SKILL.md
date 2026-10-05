@@ -11,6 +11,8 @@ Use acanvas as a shared visual workspace for communication between the user and 
 
 - Organize relevant references and candidate results on the canvas when they help the current request. Use the host tools available for finding, creating, or editing assets, and bring their outputs back to the whiteboard.
 - Read the selected objects, annotated regions, video timestamps, and referenced media to understand the user’s intended style or change. Carry the relevant object and task IDs into execution so feedback stays attached to the right material.
+- An annotation with scope `group` references every listed object as a whole, including mixed Markdown, HTML, audio, image, and video materials. Its world bounds locate the displayed note; treat explicit `region` bounds as the image-region selection. Preserve each source object and asset when interpreting a group instruction.
+- Audio annotations may identify a whole file, a time, or an interval. Read the original audio and the saved start/end values. Embedded artwork and the full-file amplitude waveform are presentation resources of that audio; they do not add image attachments or replace the source recording.
 - Return results to the canvas near the relevant references for comparison and further annotation. Use the queue and receipts to preserve actionable requests and progress within this visual feedback loop.
 
 Match the user’s requested stage of collaboration: discussing references, exploring alternatives, or executing and continuing queued work.

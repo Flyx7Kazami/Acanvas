@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { AddressInfo } from 'node:net';
+import { isContentInteraction } from '../shared/content-hit.js';
 import { resolveContentKind } from '../shared/content-types.js';
 import { ApiFailure, type CanvasService } from './service.js';
 
@@ -48,7 +49,7 @@ export async function startHtmlPreview(service: CanvasService, options: { lifeti
       if (asset.size > maxBytes) { deny(response, 413, 'preview_too_large'); return; }
       const source = await readFile(service.assetPath(asset.id), 'utf8');
       if (closing || !grants.has(match![1]) || grant.expires <= Date.now()) { deny(response, 404, 'preview_missing'); return; }
-      const bridge = `(()=>{const send=parent.postMessage.bind(parent),instanceId=${JSON.stringify(match![1])},target=${JSON.stringify(grant.parentOrigin)};document.addEventListener('DOMContentLoaded',()=>send({type:'acanvas:preview-ready',instanceId},target),{once:true});window.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();send({type:'acanvas:preview-exit',instanceId},target);}},{capture:true});})();`;
+      const bridge = `(()=>{const hit=${isContentInteraction.toString()};const send=parent.postMessage.bind(parent),instanceId=${JSON.stringify(match![1])},target=${JSON.stringify(grant.parentOrigin)};document.addEventListener('DOMContentLoaded',()=>send({type:'acanvas:preview-ready',instanceId},target),{once:true});let blankDown=false;document.addEventListener('dragstart',event=>{if(blankDown)event.preventDefault();},{capture:true});document.addEventListener('pointerdown',event=>{blankDown=false;if(event.isTrusted&&event.button===0&&!hit(document.documentElement,event.clientX,event.clientY,event.target)){blankDown=true;send({type:'acanvas:preview-drag',instanceId,pointerId:event.pointerId,x:event.clientX/innerWidth,y:event.clientY/innerHeight},target);}},{capture:true});})();`;
       const document = `<!doctype html><script>${bridge}</script>${source}`;
       response.setHeader('Content-Security-Policy', `sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; media-src 'none'; font-src 'none'; worker-src 'none'; child-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors ${grant.parentOrigin}`);
       response.setHeader('Content-Type', 'text/html; charset=utf-8');

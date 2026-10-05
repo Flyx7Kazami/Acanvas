@@ -69,7 +69,7 @@ test('HTML grants bind one file and a different cookie host; main authentication
   assert.match(csp, /script-src 'self';/); assert.match(csp, /connect-src 'self';/); assert.ok(csp.includes(`frame-src ${grant.origin};`)); await main.text();
   const response = await navigation(grant.url); assert.equal(response.status, 200);
   assert.equal(response.headers.get('set-cookie'), null); assert.ok(response.headers.get('content-security-policy')!.includes(`frame-ancestors ${f.running.url}`)); assert.match(response.headers.get('content-security-policy')!, /sandbox allow-scripts;/); assert.doesNotMatch(response.headers.get('content-security-policy')!, /allow-same-origin/);
-  const document = await response.text(); assert.match(document, /acanvas:preview-ready/); assert.match(document, /acanvas:preview-exit/); assert.ok(!document.includes(f.token)); assert.ok(!document.includes(f.root));
+  const document = await response.text(); assert.match(document, /acanvas:preview-ready/); assert.doesNotMatch(document, /acanvas:preview-exit/); assert.ok(!document.includes(f.token)); assert.ok(!document.includes(f.root));
   for (const url of [grant.url, `${grant.origin}/api/bootstrap`, `${grant.origin}/api/assets/${other.id}/content`, `${grant.origin}/preview/../../assets/${other.id}`]) {
     const response = await fetch(url); assert.ok([403, 404].includes(response.status)); await response.text();
   }

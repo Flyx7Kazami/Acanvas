@@ -32,7 +32,9 @@
     "better-sqlite3": "13.0.3",
     "lucide-react": "0.468.0",
     "markdown-it": "14.3.2",
+    "music-metadata": "12.0.0",
     "react": "19.1.1",
-    "react-dom": "19.1.1"
+    "react-dom": "19.1.1",
+    "strtok3": "10.3.5"
   }
 }

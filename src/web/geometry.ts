@@ -31,6 +31,7 @@ export type IdentifiedRect = Rect & { id: string };
 export type SnapGuide = { axis: 'x' | 'y'; position: number; start: number; end: number };
 export type Alignment = 'left' | 'horizontal-center' | 'right' | 'top' | 'vertical-center' | 'bottom';
 export type ResizeCorner = 'nw' | 'ne' | 'sw' | 'se';
+export type ResizeHandle = ResizeCorner | 'n' | 'e' | 's' | 'w';
 
 function resizeFrame(original: Rect, corner: ResizeCorner): { anchor: Point; direction: Point } {
   const west = corner.endsWith('w'), north = corner.startsWith('n');
@@ -53,17 +54,18 @@ export function resizeBounds(original: Rect, corner: ResizeCorner, delta: Point,
   return boundsAtResizeScale(original, corner, scale);
 }
 
-export function resizeViewportBounds(original: Rect, corner: ResizeCorner, delta: Point, minimum: { width: number; height: number }): Rect {
+export function resizeViewportBounds(original: Rect, corner: ResizeHandle, delta: Point, minimum: { width: number; height: number }): Rect {
   const west = corner.endsWith('w'), north = corner.startsWith('n');
-  const width = Math.max(minimum.width, original.width + (west ? -delta.x : delta.x));
-  const height = Math.max(minimum.height, original.height + (north ? -delta.y : delta.y));
+  const width = /[we]/.test(corner) ? Math.max(minimum.width, original.width + (west ? -delta.x : delta.x)) : original.width;
+  const height = /[ns]/.test(corner) ? Math.max(minimum.height, original.height + (north ? -delta.y : delta.y)) : original.height;
   return { x: west ? original.x + original.width - width : original.x, y: north ? original.y + original.height - height : original.y, width, height };
 }
 
-export function snapViewportResize(original: IdentifiedRect, corner: ResizeCorner, delta: Point, objects: IdentifiedRect[], view: View, viewport: { width: number; height: number }, minimum: { width: number; height: number }, bypass = false, thresholdPixels = 6, axes: ('x' | 'y')[] = ['x', 'y']): { bounds: Rect; guides: SnapGuide[] } {
+export function snapViewportResize(original: IdentifiedRect, corner: ResizeHandle, delta: Point, objects: IdentifiedRect[], view: View, viewport: { width: number; height: number }, minimum: { width: number; height: number }, bypass = false, thresholdPixels = 6, axes: ('x' | 'y')[] = ['x', 'y']): { bounds: Rect; guides: SnapGuide[] } {
   const bounds = resizeViewportBounds(original, corner, delta, minimum), guides: SnapGuide[] = [];
   if (bypass) return { bounds, guides };
   for (const axis of axes) {
+    if (axis === 'x' ? !/[we]/.test(corner) : !/[ns]/.test(corner)) continue;
     const size = axis === 'x' ? 'width' : 'height', reverse = axis === 'x' ? corner.endsWith('w') : corner.startsWith('n');
     const anchor = original[axis] + (reverse ? original[size] : 0), moving = bounds[axis] + (reverse ? 0 : bounds[size]);
     let nearest: { position: number; target: Rect; distance: number } | undefined;

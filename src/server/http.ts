@@ -7,6 +7,7 @@ import type { AddressInfo } from 'node:net';
 import type { Asset, Bootstrap, CompleteInput, Draft, ServiceRuntime, SessionView } from '../shared/types.js';
 import { resolveContentKind, resolveContentMime, storageAssetKind } from '../shared/content-types.js';
 import { ApiFailure, CanvasService, within } from './service.js';
+import { AudioArtworkReader } from './audio-artwork.js';
 import { clearRuntime, publishRuntime } from './runtime.js';
 import { startHtmlPreview } from './html-preview.js';
 
@@ -24,6 +25,7 @@ const payload = async (request: IncomingMessage): Promise<any> => {
 
 export async function startServer(options: ServerOptions): Promise<RunningServer> {
   const service = new CanvasService(options.root);
+  const artwork = new AudioArtworkReader(id => service.assetPath(id));
   const preview = await startHtmlPreview(service).catch(error => { service.close(); throw error; });
   const token = randomBytes(32).toString('base64url');
   const maxUploadBytes = options.maxUploadBytes ?? 512 * 1024 * 1024;
@@ -132,6 +134,15 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
             if (!retained) await rm(destination, { force: true });
           }
           return;
+        }
+        const artworkMatch = path.match(/^\/api\/assets\/([^/]+)\/artwork$/);
+        if (artworkMatch && (method === 'GET' || method === 'HEAD')) {
+          const cover = await artwork.get(service.asset(decodeURIComponent(artworkMatch[1])));
+          response.setHeader('Cache-Control', 'private, no-store');
+          if (!cover) { response.writeHead(204); response.end(); return; }
+          response.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
+          response.writeHead(200, { 'Content-Type': cover.mime, 'Content-Length': cover.bytes.length });
+          response.end(method === 'HEAD' ? undefined : cover.bytes); return;
         }
         const assetMatch = path.match(/^\/api\/assets\/([^/]+)\/content$/);
         if (assetMatch && (method === 'GET' || method === 'HEAD')) {

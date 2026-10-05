@@ -1,0 +1,17 @@
+{
+  "low": 0.05191781483176223,
+  "high": 0.42156407702522974,
+  "silence": 0,
+  "measurements": {
+    "contexts": 1,
+    "sources": 1,
+    "reads": 106,
+    "sourceConnections": 1,
+    "analyserConnections": 1,
+    "disconnects": 2,
+    "closes": 1,
+    "rms": 0.05177943750837289,
+    "sampleTime": 0.214785,
+    "pendingFrames": 0
+  }
+}

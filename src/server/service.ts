@@ -162,7 +162,7 @@ export class CanvasService {
   objects(): BoardObject[] { return (this.db.prepare('SELECT * FROM objects ORDER BY created_at,id').all() as Row[]).map((row) => this.objectFrom(row)); }
   annotations(): Annotation[] { return (this.db.prepare('SELECT data_json FROM annotations ORDER BY rowid').all() as Row[]).map((row) => parse(row.data_json)); }
   private validateAnnotation(value: AnnotationInput, source?: TaskSnapshot): AnnotationInput {
-    if (!value || !['object', 'region'].includes(value.scope) || !['normalized', 'world'].includes(value.coordinateSpace)) fail(400, 'invalid_annotation', 'Annotation scope and coordinate space are required.');
+    if (!value || !['object', 'group', 'region'].includes(value.scope) || !['normalized', 'world'].includes(value.coordinateSpace)) fail(400, 'invalid_annotation', 'Annotation scope and coordinate space are required.');
     nonempty(value.id, 'Annotation ID', 200);
     nonempty(value.text, 'Annotation text');
     const objectIds = ids(value.objectIds, 'Annotation object IDs');
@@ -176,6 +176,7 @@ export class CanvasService {
     if (value.coordinateSpace === 'normalized' && (value.bounds.x < 0 || value.bounds.y < 0 || value.bounds.x + value.bounds.width > 1.000001 || value.bounds.y + value.bounds.height > 1.000001)) fail(400, 'invalid_annotation', 'Object annotations must fit within normalized object coordinates.');
     if (value.scope === 'object' && (!value.objectId || value.coordinateSpace !== 'normalized')) fail(400, 'invalid_annotation', 'Object annotations require an object and normalized coordinates.');
     if (value.scope === 'region' && value.coordinateSpace !== 'world') fail(400, 'invalid_annotation', 'Canvas regions require world coordinates.');
+    if (value.scope === 'group' && (value.coordinateSpace !== 'world' || objectIds.length < 2 || value.objectId || value.assetId || value.timeStart !== undefined || value.timeEnd !== undefined || value.snapshotAssetId)) fail(400, 'invalid_annotation', 'A group annotation references two or more whole objects and a world display anchor.');
     if (value.timeStart !== undefined && finite(value.timeStart, 'Media time') < 0) fail(400, 'invalid_annotation', 'Media time must be positive.');
     if (value.timeEnd !== undefined && finite(value.timeEnd, 'Media end time') < (value.timeStart ?? 0)) fail(400, 'invalid_annotation', 'The media interval must follow its start time.');
     const contentTarget = (annotation: AnnotationInput) => json({ scope: annotation.scope, coordinateSpace: annotation.coordinateSpace, objectId: annotation.objectId, objectIds: [...new Set(annotation.objectIds)].sort(), assetId: annotation.assetId, bounds: { x: annotation.bounds.x, y: annotation.bounds.y, width: annotation.bounds.width, height: annotation.bounds.height }, timeStart: annotation.timeStart, timeEnd: annotation.timeEnd, snapshotAssetId: annotation.snapshotAssetId });

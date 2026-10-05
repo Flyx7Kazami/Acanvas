@@ -49,7 +49,7 @@ export const contentCapabilities: Record<ContentKind, ContentCapabilities> = {
   image: { label: 'Image', region: true, time: false, interaction: false, freeResize: false, minimum: { width: 40, height: 40 }, initial: { width: 280, height: 210 } },
   gif: { label: 'GIF', region: true, time: false, interaction: false, freeResize: false, minimum: { width: 40, height: 40 }, initial: { width: 280, height: 210 } },
   video: { label: 'Video', region: true, time: true, interaction: false, freeResize: false, minimum: { width: 40, height: 40 }, initial: { width: 280, height: 210 } },
-  audio: { label: 'Audio', region: false, time: true, interaction: false, freeResize: true, minimum: { width: 280, height: 130 }, initial: { width: 420, height: 130 } },
+  audio: { label: 'Audio', region: false, time: true, interaction: false, freeResize: true, minimum: { width: 280, height: 88 }, initial: { width: 480, height: 100 } },
   markdown: { label: 'Markdown', region: false, time: false, interaction: true, freeResize: true, minimum: { width: 180, height: 120 }, initial: { width: 420, height: 320 } },
   html: { label: 'HTML', region: false, time: false, interaction: true, freeResize: true, minimum: { width: 180, height: 120 }, initial: { width: 420, height: 320 } },
   file: { label: 'File', region: false, time: false, interaction: false, freeResize: false, minimum: { width: 40, height: 40 }, initial: { width: 280, height: 150 } },

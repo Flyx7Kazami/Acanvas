@@ -1,0 +1,304 @@
+[
+  {
+    "name": "Media.playerPropertiesChanged",
+    "value": {
+      "playerId": "7F6DF264EC6C36CEA7E2DCE6EF92DE2A",
+      "properties": []
+    }
+  },
+  {
+    "name": "Media.playerMessagesLogged",
+    "value": {
+      "playerId": "7F6DF264EC6C36CEA7E2DCE6EF92DE2A",
+      "messages": []
+    }
+  },
+  {
+    "name": "Media.playerEventsAdded",
+    "value": {
+      "playerId": "7F6DF264EC6C36CEA7E2DCE6EF92DE2A",
+      "events": []
+    }
+  },
+  {
+    "name": "Media.playerPropertiesChanged",
+    "value": {
+      "playerId": "BEA982CEB00AAAEC9B65D20246DB1E4A",
+      "properties": []
+    }
+  },
+  {
+    "name": "Media.playerMessagesLogged",
+    "value": {
+      "playerId": "BEA982CEB00AAAEC9B65D20246DB1E4A",
+      "messages": []
+    }
+  },
+  {
+    "name": "Media.playerEventsAdded",
+    "value": {
+      "playerId": "BEA982CEB00AAAEC9B65D20246DB1E4A",
+      "events": []
+    }
+  },
+  {
+    "name": "Media.playerEventsAdded",
+    "value": {
+      "playerId": "BEA982CEB00AAAEC9B65D20246DB1E4A",
+      "events": [
+        {
+          "timestamp": 901518.798484,
+          "value": "{\"created\":\"2026-10-04 17:36:14.127045 UTC\",\"event\":\"kMediaLogCreated\"}"
+        },
+        {
+          "timestamp": 901518.80062,
+          "value": "{\"event\":\"kWebMediaPlayerCreated\",\"origin_url\":\"http://127.0.0.1:55460/\"}"
+        },
+        {
+          "timestamp": 901518.80208,
+          "value": "{\"event\":\"kLoad\",\"url\":\"http://127.0.0.1:55460/api/assets/2421a908-7c7c-496d-983b-187b90fde915/content\"}"
+        },
+        {
+          "timestamp": 901518.815382,
+          "value": "{\"event\":\"kPipelineStateChange\",\"pipeline_state\":\"kStarting\"}"
+        },
+        {
+          "timestamp": 901518.819506,
+          "value": "{\"event\":\"kPipelineStateChange\",\"pipeline_state\":\"kSuspended\"}"
+        },
+        {
+          "timestamp": 901518.820252,
+          "value": "{\"event\":\"kSuspended\"}"
+        },
+        {
+          "timestamp": 901518.819427,
+          "value": "{\"duration\":24.0,\"event\":\"kDurationChanged\"}"
+        },
+        {
+          "timestamp": 901518.820869,
+          "value": "{\"event\":\"kBufferingStateChanged\",\"pipeline_buffering_state\":{\"for_suspended_start\":true,\"state\":\"BUFFERING_HAVE_ENOUGH\"}}"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Media.playerPropertiesChanged",
+    "value": {
+      "playerId": "BEA982CEB00AAAEC9B65D20246DB1E4A",
+      "properties": [
+        {
+          "name": "kBitrate",
+          "value": "705614"
+        },
+        {
+          "name": "kIsStreaming",
+          "value": "false"
+        },
+        {
+          "name": "kFrameUrl",
+          "value": "http://127.0.0.1:55460/?session=4152588a-c6e9-47f5-840c-66d82a7858ff"
+        },
+        {
+          "name": "kAudioTracks",
+          "value": "[{\"bytes per channel\":2,\"bytes per frame\":2,\"channel layout\":\"MONO\",\"channels\":1,\"codec\":\"pcm\",\"codec delay\":0,\"discard decoder delay\":true,\"encryption scheme\":\"Unencrypted\",\"has extra data\":false,\"profile\":\"unknown\",\"sample format\":\"Signed 16-bit\",\"samples per second\":44100,\"seek preroll\":\"0us\"}]"
+        },
+        {
+          "name": "kIsRangeHeaderSupported",
+          "value": "true"
+        },
+        {
+          "name": "kStartTime",
+          "value": "0.0"
+        },
+        {
+          "name": "kTotalBytes",
+          "value": "0x204cec"
+        },
+        {
+          "name": "kMaxDuration",
+          "value": "24.0"
+        },
+        {
+          "name": "kIsSingleOrigin",
+          "value": "true"
+        },
+        {
+          "name": "kFrameTitle",
+          "value": "acanvas"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Media.playerMessagesLogged",
+    "value": {
+      "playerId": "BEA982CEB00AAAEC9B65D20246DB1E4A",
+      "messages": [
+        {
+          "level": "info",
+          "message": "FFmpegDemuxer: created audio stream, config codec: pcm, profile: unknown, bytes_per_channel: 2, channel_layout: MONO, channels: 1, samples_per_second: 44100, sample_format: Signed 16-bit, bytes_per_frame: 2, seek_preroll: 0us, codec_delay: 0, has extra data: false, encryption scheme: Unencrypted, discard decoder delay: true, target_output_channel_layout: NONE, target_output_sample_format: Unknown sample format"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Media.playerEventsAdded",
+    "value": {
+      "playerId": "7F6DF264EC6C36CEA7E2DCE6EF92DE2A",
+      "events": [
+        {
+          "timestamp": 901518.828499,
+          "value": "{\"created\":\"2026-10-04 17:36:14.157060 UTC\",\"event\":\"kMediaLogCreated\"}"
+        },
+        {
+          "timestamp": 901518.828562,
+          "value": "{\"event\":\"kWebMediaPlayerCreated\",\"origin_url\":\"http://127.0.0.1:55460/\"}"
+        },
+        {
+          "timestamp": 901518.82861,
+          "value": "{\"event\":\"kLoad\",\"url\":\"http://127.0.0.1:55460/api/assets/64c9a094-e784-4b5e-83b5-d86deadc8537/content\"}"
+        },
+        {
+          "timestamp": 901518.83201,
+          "value": "{\"event\":\"kPipelineStateChange\",\"pipeline_state\":\"kStarting\"}"
+        },
+        {
+          "timestamp": 901518.839857,
+          "value": "{\"event\":\"kPipelineStateChange\",\"pipeline_state\":\"kSuspended\"}"
+        },
+        {
+          "timestamp": 901518.839962,
+          "value": "{\"event\":\"kSuspended\"}"
+        },
+        {
+          "timestamp": 901519.406167,
+          "value": "{\"event\":\"kPipelineStateChange\",\"pipeline_state\":\"kResuming\"}"
+        },
+        {
+          "timestamp": 901519.414449,
+          "value": "{\"event\":\"kPipelineStateChange\",\"pipeline_state\":\"kPlaying\"}"
+        },
+        {
+          "timestamp": 901518.839822,
+          "value": "{\"duration\":24.0,\"event\":\"kDurationChanged\"}"
+        },
+        {
+          "timestamp": 901519.415986,
+          "value": "{\"audio_buffering_state\":{\"state\":\"BUFFERING_HAVE_ENOUGH\"},\"event\":\"kBufferingStateChanged\"}"
+        },
+        {
+          "timestamp": 901519.51111,
+          "value": "{\"event\":\"kBufferingStateChanged\",\"pipeline_buffering_state\":{\"for_suspended_start\":false,\"state\":\"BUFFERING_HAVE_ENOUGH\"}}"
+        },
+        {
+          "timestamp": 901519.404132,
+          "value": "{\"event\":\"kPlay\"}"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Media.playerPropertiesChanged",
+    "value": {
+      "playerId": "7F6DF264EC6C36CEA7E2DCE6EF92DE2A",
+      "properties": [
+        {
+          "name": "kBitrate",
+          "value": "96421"
+        },
+        {
+          "name": "kIsPlatformAudioDecoder",
+          "value": "false"
+        },
+        {
+          "name": "kAudioDecoderName",
+          "value": "SymphoniaAudioDecoder"
+        },
+        {
+          "name": "kIsStreaming",
+          "value": "false"
+        },
+        {
+          "name": "kFrameUrl",
+          "value": "http://127.0.0.1:55460/?session=4152588a-c6e9-47f5-840c-66d82a7858ff"
+        },
+        {
+          "name": "kAudioTracks",
+          "value": "[{\"bytes per channel\":2,\"bytes per frame\":2,\"channel layout\":\"MONO\",\"channels\":1,\"codec\":\"mp3\",\"codec delay\":0,\"discard decoder delay\":true,\"encryption scheme\":\"Unencrypted\",\"has extra data\":false,\"profile\":\"unknown\",\"sample format\":\"Signed 16-bit planar\",\"samples per second\":44100,\"seek preroll\":\"0us\"}]"
+        },
+        {
+          "name": "kIsRangeHeaderSupported",
+          "value": "true"
+        },
+        {
+          "name": "kStartTime",
+          "value": "0.0"
+        },
+        {
+          "name": "kRendererName",
+          "value": "RendererImpl"
+        },
+        {
+          "name": "kTotalBytes",
+          "value": "0x469f1"
+        },
+        {
+          "name": "kMaxDuration",
+          "value": "24.0"
+        },
+        {
+          "name": "kIsSingleOrigin",
+          "value": "true"
+        },
+        {
+          "name": "kFrameTitle",
+          "value": "acanvas"
+        },
+        {
+          "name": "kIsAudioDecryptingDemuxerStream",
+          "value": "false"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Media.playerMessagesLogged",
+    "value": {
+      "playerId": "7F6DF264EC6C36CEA7E2DCE6EF92DE2A",
+      "messages": [
+        {
+          "level": "info",
+          "message": "FFmpegDemuxer: created audio stream, config codec: mp3, profile: unknown, bytes_per_channel: 2, channel_layout: MONO, channels: 1, samples_per_second: 44100, sample_format: Signed 16-bit planar, bytes_per_frame: 2, seek_preroll: 0us, codec_delay: 0, has extra data: false, encryption scheme: Unencrypted, discard decoder delay: true, target_output_channel_layout: NONE, target_output_sample_format: Unknown sample format"
+        },
+        {
+          "level": "debug",
+          "message": "Warning, FFmpegDemuxer failed to create a valid/supported video decoder configuration from muxed stream, config:codec: unknown, profile: unknown, level: not available, alpha_mode: is_opaque, coded size: [0,0], visible rect: [0,0,0,0], natural size: [0,0], has extra data: false, encryption scheme: Unencrypted, rotation: 0°, flipped: 0, color space: {primaries:SMPTE170M, transfer:SMPTE170M, matrix:SMPTE170M, range:LIMITED}, spatial format: [projection_type: none, stereo_mode: mono]"
+        },
+        {
+          "level": "info",
+          "message": "FFmpegDemuxer: skipping invalid or unsupported video track"
+        },
+        {
+          "level": "info",
+          "message": "Effective playback rate changed from 0 to 1"
+        },
+        {
+          "level": "info",
+          "message": "Selected SymphoniaAudioDecoder for audio decoding, config: codec: mp3, profile: unknown, bytes_per_channel: 2, channel_layout: MONO, channels: 1, samples_per_second: 44100, sample_format: Signed 16-bit planar, bytes_per_frame: 2, seek_preroll: 0us, codec_delay: 0, has extra data: false, encryption scheme: Unencrypted, discard decoder delay: true, target_output_channel_layout: STEREO, target_output_sample_format: Unknown sample format"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Media.playerEventsAdded",
+    "value": {
+      "playerId": "7F6DF264EC6C36CEA7E2DCE6EF92DE2A",
+      "events": [
+        {
+          "timestamp": 901521.458651,
+          "value": "{\"event\":\"kPause\"}"
+        }
+      ]
+    }
+  }
+]
