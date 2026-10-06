@@ -12,21 +12,31 @@ export function useNotificationLayout(dock: ElementRef, notifications: ElementRe
     let pointerInside = false, visible = false;
     const observer = new ResizeObserver(() => layout());
     const layout = (resizing = false) => {
-      const controls = dock.current ? [dock.current, ...dock.current.querySelectorAll<HTMLElement>('.queue-stack,.queue-expand,.composer-menu')] : [];
-      controls.forEach(control => { if (!observed.has(control)) { observer.observe(control); observed.add(control); } });
+      const surfaces = dock.current ? Array.from(dock.current.querySelectorAll<HTMLElement>('.composer,.queue-list,.queue-expand,.composer-menu,.draft-conflict,.inline-resume,.unavailable-comments')) : [];
+      for (const element of observed) if (!surfaces.includes(element as HTMLElement)) { observer.unobserve(element); observed.delete(element); }
+      surfaces.forEach(surface => { if (!observed.has(surface)) { observer.observe(surface); observed.add(surface); } });
       const showing = stack.getClientRects().length > 0, appeared = showing && !visible;
       visible = showing;
       if (!showing) { pointerInside = false; return; }
       if (!resizing && !appeared && (pointerInside || stack.contains(document.activeElement))) return;
-      const notificationBounds = stack.getBoundingClientRect();
-      const adjacent = controls.map(control => control.getBoundingClientRect()).filter(bounds => notificationBounds.left < bounds.right + 12 && notificationBounds.right > bounds.left - 12);
-      const bottom = adjacent.length ? innerHeight - Math.min(...adjacent.map(bounds => bounds.top)) + 12 : 16;
-      stack.style.bottom = `${bottom}px`;
-      stack.style.maxHeight = `${Math.max(40, Math.min(240, innerHeight - bottom - 16))}px`;
+      const obstacles = surfaces.filter(surface => !surface.closest('[hidden],[inert],[aria-hidden="true"]') && surface.checkVisibility({ checkVisibilityCSS: true, checkOpacity: true })).map(surface => surface.getBoundingClientRect()).filter(bounds => bounds.width > 0 && bounds.height > 0);
+      const gap = 12, edge = 16, right = innerWidth - edge, maximumWidth = Math.min(320, innerWidth - edge * 2);
+      stack.style.bottom = `${edge}px`;
+      stack.style.maxHeight = `${Math.min(240, innerHeight - edge * 2)}px`;
+      stack.style.maxWidth = `${maximumWidth}px`;
+      stack.dataset.narrow = 'false';
+      const bounds = stack.getBoundingClientRect();
+      const minimumWidth = Math.min(bounds.width, stack.querySelector('button,input,textarea,select') ? 200 : 44);
+      const adjacent = obstacles.filter(obstacle => bounds.left < obstacle.right + gap && bounds.right > obstacle.left - gap && bounds.top < obstacle.bottom + gap && bounds.bottom > obstacle.top - gap);
+      const availableWidth = Math.min(bounds.width, ...adjacent.map(obstacle => right - obstacle.right - gap));
+      const width = Math.max(minimumWidth, availableWidth);
+      stack.style.maxWidth = `${width}px`;
+      stack.dataset.narrow = String(width < 120);
     };
     observer.observe(stack);
     const changes = new MutationObserver(() => layout());
-    if (dock.current) changes.observe(dock.current, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+    if (dock.current) changes.observe(dock.current, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'inert', 'aria-hidden'] });
+    changes.observe(stack, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
     const enter = () => { pointerInside = true; };
     const leave = () => { pointerInside = false; layout(); };
     const focusOut = () => requestAnimationFrame(() => layout());

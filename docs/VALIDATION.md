@@ -611,3 +611,16 @@ HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统�
 - 当前IAB已加载最终构建，More中呈现真实两项操作；footer数量0，打开菜单后composer仍为compact、宽280px。后台未变更，无需重启。
 
 截图：[紧凑输入框与更多菜单](evidence/composer-more-menu/compact-menu-light.png)。
+
+## 2026-10-06 · 历史圆角与固定角落提示
+
+按用户最终要求，历史面板四角统一20px；提示固定right/bottom16px，空间不足时单行省略文字。透明dock不影响内容宽度计算，通知位置保持固定。
+
+- 构建、typecheck、定向4/4和独立验收通过，无未关闭P0–P3。
+- 两主题的历史空状态、已有内容和滚动状态均验证20px下角及实际裁切。当前IAB实际下角计算值为20px/20px。
+- 712/830/1440紧凑状态下，复制提示内容宽175.48px，右/下均16px；320/390及展开、多行、历史、菜单状态也保持右/下16px。
+- 普通提示最窄44px，保持单行ellipsis与完整DOM文案；指针穿透下方Send和输入。含恢复操作的条目最窄200px，Retry/Dismiss完整可点，重试成功。
+- 独立实测可见寿命2806ms，临时叠层逐条到期正常。无尺寸震荡、ResizeObserver错误及已卸载菜单引用残留。收起动画完成后提示恢复自然宽度。
+- 测试使用临时隔离项目及clipboard stub，用户白板和剪贴板保持。当前页面已加载最终构建并打开历史面板查看。
+
+证据：[历史下角](evidence/history-toast-corners/history-empty-light.png)、[正常宽度固定角落](evidence/history-toast-corners/copy-corner-712-light.png)、[窄屏省略](evidence/history-toast-corners/copy-ellipsis-320-light.png)、[布局测量](evidence/history-toast-corners/placement.json)。

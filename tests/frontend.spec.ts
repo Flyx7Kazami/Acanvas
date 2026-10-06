@@ -1642,9 +1642,9 @@ test('short feedback stays quiet and only overlaps during rapid actions', async 
     await page.emulateMedia({ reducedMotion: width === 320 ? 'reduce' : 'no-preference' });
     for (let index = 0; index < 7; index++) await copy();
     await expect(transient).toHaveAttribute('data-count', '5'); await expect(page.locator('.notification-peeks>span')).toHaveCount(2); await expect(page.locator('.toast')).toHaveCount(1);
-    const geometry = () => stack.evaluate(element => { const bounds = element.getBoundingClientRect(), controls = Array.from(document.querySelectorAll('.creation-dock,.queue-stack,.queue-expand')).map(control => control.getBoundingClientRect()); return { right: innerWidth - bounds.right, clear: controls.every(control => bounds.left >= control.right + 12 || bounds.right <= control.left - 12 || bounds.bottom <= control.top - 11.9), inViewport: bounds.top >= 15.9 && bounds.bottom <= innerHeight - 15.9 }; });
-    await page.clock.runFor(200); await expect.poll(geometry).toEqual({ right: 16, clear: true, inViewport: true });
-    await stack.hover(); await expect(stack).not.toHaveClass(/expanded/); await expect(page.locator('.toast')).toHaveCount(1);
+    const geometry = () => stack.evaluate(element => { const bounds = element.getBoundingClientRect(); return { right: innerWidth - bounds.right, bottom: innerHeight - bounds.bottom, inViewport: bounds.top >= 15.9 && bounds.bottom <= innerHeight - 15.9 }; });
+    await page.clock.runFor(200); await expect.poll(geometry).toEqual({ right: 16, bottom: 16, inViewport: true });
+    const noticeBox = (await stack.boundingBox())!; await page.mouse.move(noticeBox.x + noticeBox.width / 2, noticeBox.y + noticeBox.height / 2); await expect(stack).not.toHaveClass(/expanded/); await expect(page.locator('.toast')).toHaveCount(1);
     await page.screenshot({ path: `/tmp/acanvas-notifications-burst-${width}-${theme}.png` });
     await page.clock.runFor(2600); await expect(stack).toBeHidden();
   }
@@ -1839,7 +1839,7 @@ test('composer More menu preserves compact layout, real click targets, keyboard 
   await page.getByRole('button', { name: 'Close resume prompt', exact: true }).click();
   await page.evaluate(() => { Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: async () => undefined }); });
   await composerAction(page, 'Copy resume prompt'); await expect(page.locator('.notification-stack')).toBeVisible(); await more.click();
-  await expect.poll(async () => page.locator('.notification-stack').evaluate(element => { const notice = element.getBoundingClientRect(), menu = document.querySelector('.composer-menu')!.getBoundingClientRect(); return notice.right <= menu.left || notice.left >= menu.right || notice.bottom <= menu.top || notice.top >= menu.bottom; })).toBe(true);
+  await expect.poll(async () => page.locator('.notification-stack').evaluate(element => { const notice = element.getBoundingClientRect(); return { right: innerWidth - notice.right, bottom: innerHeight - notice.bottom }; })).toEqual({ right: 16, bottom: 16 });
   await writeFile(info.outputPath('composer-menu-measurements.json'), JSON.stringify(measures, null, 2));
 });
 
@@ -1856,4 +1856,65 @@ test.describe('composer menu touch', () => {
     await expect(page.getByRole('region', { name: 'Resume prompt', exact: true })).toBeVisible();
     await expect(page.locator('.composer')).toHaveAttribute('data-compact', 'true'); expect((await app.state()).tasks).toHaveLength(0);
   });
+});
+
+test('copy feedback stays fixed in the corner and truncates its text when room is limited', async ({ page, app }, info) => {
+  await page.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => undefined } }));
+  await open(page, app); await page.clock.install();
+  const stack = page.locator('.notification-stack'), input = page.locator('#instruction');
+  const geometry = () => stack.evaluate(element => { const bounds = element.getBoundingClientRect(); return { right: innerWidth - bounds.right, bottom: innerHeight - bounds.bottom, width: bounds.width, height: bounds.height }; });
+  const measured = [];
+  for (const theme of ['light', 'dark'] as const) {
+    if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
+    for (const width of [712, 830, 1440]) {
+      await page.setViewportSize({ width, height: 720 }); await page.locator('#whiteboard').focus(); await page.clock.runFor(600);
+      await composerAction(page, 'Copy resume prompt'); await page.clock.runFor(30);
+      await expect.poll(geometry).toMatchObject({ right: 16, bottom: 16 }); expect((await geometry()).width).toBeLessThan(320);
+      measured.push({ theme, viewport: width, ...await geometry() }); await page.screenshot({ path: info.outputPath(`feedback-corner-${theme}-${width}.png`) });
+      await page.clock.runFor(2800); await expect(stack).toBeHidden();
+    }
+  }
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 480 }); await composerAction(page, 'Copy resume prompt'); await page.clock.runFor(30);
+    await expect.poll(geometry).toMatchObject({ right: 16, bottom: 16, width: 44 });
+    await expect(stack.locator('.toast>span')).toHaveText('Resume prompt copied.');
+    await expect(stack.locator('.toast>span')).toHaveCSS('white-space', 'nowrap'); await expect(stack.locator('.toast>span')).toHaveCSS('text-overflow', 'ellipsis');
+    expect(await stack.locator('.toast>span').evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true);
+    const singleLineHeight = (await geometry()).height; measured.push({ viewport: width, mode: 'compact', ...await geometry() }); await page.clock.runFor(2800);
+    await input.fill('One line\nSecond line\nThird line'); await page.clock.runFor(650); await composerAction(page, 'Copy resume prompt'); await page.clock.runFor(30);
+    await expect.poll(geometry).toMatchObject({ right: 16, bottom: 16, width: 44, height: singleLineHeight });
+    expect(await page.locator('.send-button').evaluate(element => { const bounds = element.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('.send-button') === element; })).toBe(true);
+    await page.getByRole('button', { name: 'More request actions', exact: true }).click(); await page.clock.runFor(30); await expect.poll(geometry).toMatchObject({ right: 16, bottom: 16 });
+    await page.keyboard.press('Escape'); await composerAction(page, 'Request history'); await page.clock.runFor(30); await expect.poll(geometry).toMatchObject({ right: 16, bottom: 16 });
+    await page.getByRole('button', { name: 'Close request history', exact: true }).click(); await input.fill(''); await page.locator('#whiteboard').focus(); await page.clock.runFor(3000);
+  }
+  await page.setViewportSize({ width: 712, height: 720 }); await input.focus(); await page.clock.runFor(500); await composerAction(page, 'Copy resume prompt'); await page.clock.runFor(30);
+  await expect.poll(geometry).toMatchObject({ right: 16, bottom: 16, width: 44 });
+  await page.locator('#whiteboard').focus(); await page.clock.runFor(600); await expect.poll(geometry).toMatchObject({ right: 16, bottom: 16 }); await expect.poll(async () => (await geometry()).width).toBeGreaterThan(100);
+  await page.clock.runFor(2800); await expect(stack).toBeHidden(); await composerAction(page, 'Copy resume prompt'); await page.clock.runFor(30);
+  await expect.poll(geometry).toMatchObject({ right: 16, bottom: 16 }); await expect.poll(async () => (await geometry()).width).toBeGreaterThan(100);
+  await writeFile(info.outputPath('notification-placement.json'), JSON.stringify(measured, null, 2));
+});
+
+test('history rounds every corner for empty and scrolling content in both themes', async ({ page, app }, info) => {
+  await open(page, app); await page.setViewportSize({ width: 712, height: 620 });
+  const panel = page.locator('.history-list');
+  for (const theme of ['light', 'dark'] as const) {
+    if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
+    await composerAction(page, 'Request history'); await expect(panel).toHaveCSS('border-radius', '20px'); await expect(panel).toHaveCSS('overflow', 'auto');
+    await page.screenshot({ path: info.outputPath(`history-empty-rounded-${theme}.png`) }); await page.getByRole('button', { name: 'Close request history', exact: true }).click();
+  }
+  for (let index = 0; index < 8; index++) {
+    const state = await app.state(); const draft = await app.call(`/api/sessions/${state.session.id}/draft`, 'PUT', { ...state.draft, text: `Request ${index + 1}: Preserve the visual layout and interaction details.` });
+    await app.call(`/api/sessions/${state.session.id}/tasks`, 'POST', { draftId: draft.id, expectedRevision: draft.revision });
+  }
+  for (const theme of ['light', 'dark'] as const) {
+    if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
+    await composerAction(page, 'Request history'); await expect(panel).toHaveCSS('border-radius', '20px');
+    await expect.poll(() => panel.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
+    await panel.evaluate(element => { element.scrollTop = element.scrollHeight; });
+    await expect(panel.getByText('Request 1: Preserve the visual layout and interaction details.', { exact: true })).toBeInViewport();
+    await page.screenshot({ path: info.outputPath(`history-scroll-rounded-${theme}.png`) });
+    await panel.evaluate(element => { element.scrollTop = 0; }); await page.getByRole('button', { name: 'Close request history', exact: true }).click();
+  }
 });

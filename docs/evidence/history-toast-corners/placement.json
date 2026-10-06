@@ -1,0 +1,19 @@
+{
+  "wide": {
+    "viewport": 712,
+    "width": 175.484375,
+    "height": 42.6875,
+    "right": 16,
+    "bottom": 16
+  },
+  "narrow": {
+    "viewport": 320,
+    "width": 44,
+    "height": 42.6875,
+    "right": 16,
+    "bottom": 16,
+    "text": "Resume prompt copied.",
+    "textOverflow": "ellipsis",
+    "whiteSpace": "nowrap"
+  }
+}

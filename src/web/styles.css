@@ -174,25 +174,29 @@ details[open] summary svg { rotate: 180deg; }
 .annotation-content { display: flex; align-items: center; gap: 6px; padding: 0; flex: 1; min-width: 0; background: transparent; text-align: left; font-size: 11px; }
 .annotation-content>span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .annotation-content small { color: var(--muted); font-size: 9px; }
-.notification-stack { z-index: 120; position: fixed; right: 16px; bottom: 16px; width: min(320px,calc(100vw - 80px)); max-height: min(240px,calc(100dvh - 32px)); display: flex; flex-direction: column; gap: 7px; overflow-y: auto; scrollbar-width: thin; overscroll-behavior: contain; border-radius: 11px; }
+.notification-stack { z-index: 120; position: fixed; right: 16px; bottom: 16px; width: max-content; max-width: min(320px,calc(100vw - 32px)); max-height: min(240px,calc(100dvh - 32px)); display: flex; flex-direction: column; gap: 7px; overflow-y: auto; scrollbar-width: thin; overscroll-behavior: contain; border-radius: 11px; pointer-events: none; }
 .notification-stack[hidden] { display: none; }
 .notification-stack>* { flex-shrink: 0; }
+.notification-status { pointer-events: auto; }
 .notification-transients { position: relative; isolation: isolate; }
 .notification-transients.has-stack { padding-top: 12px; }
 .notification-transients>.toast,.notification-transients>.transient-error { position: relative; }
 .notification-peeks { position: absolute; inset: 12px 0 0; pointer-events: none; z-index: -1; }
 .notification-peeks>span { position: absolute; inset: calc(var(--peek) * -6px) calc(var(--peek) * 8px) 0; z-index: calc(3 - var(--peek)); background: color-mix(in srgb,var(--queue-surface) calc(105% - var(--peek) * 35%),var(--canvas)); border-radius: 11px; }
 .error-banner { display: flex; align-items: center; gap: 8px; padding: 9px 10px 9px 13px; background: var(--ink); color: var(--surface); border-radius: 9px; box-shadow: var(--float-shadow); font-size: 11px; line-height: 1.7; }
-.error-banner>span { overflow-wrap: anywhere; }
+.error-banner>span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .error-banner button { color: inherit; background: transparent; flex-shrink: 0; font-size: 10px; }
 .error-banner>.icon-button { flex-basis: 28px; width: 28px; height: 28px; padding: 6px; }
 .upload-list { display: grid; gap: 7px; }
 .upload-list>div { display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 15px; color: var(--ink); background: var(--surface); border: 1px solid var(--edge); border-radius: 11px; box-shadow: var(--float-shadow); }
-.upload-list>div>span { font-size: 11px; min-width: 0; overflow-wrap: anywhere; }
+.upload-list>div>span { font-size: 11px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .upload-list small { display: block; color: var(--muted); font-size: 9px; margin-top: 4px; }
 .upload-list .icon-button { margin-left: auto; }
 .toast { padding: 12px 17px; background: var(--ink); color: var(--surface); box-shadow: var(--float-shadow); border-radius: 9px; display: flex; align-items: center; gap: 9px; font-size: 11px; line-height: 1.7; pointer-events: none; }
-.toast>span { overflow-wrap: anywhere; }
+.toast>span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toast>svg { flex-shrink: 0; }
+.notification-stack[data-narrow='true'] .toast,.notification-stack[data-narrow='true'] .transient-error { padding-inline: 8px; gap: 4px; }
+.notification-stack[data-narrow='true'] .toast>svg { width: 12px; height: 12px; }
 .startup { min-height: 100dvh; padding: 50px; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 25px; }
 .startup .brand { margin-bottom: 25px; font-size: 32px; }
 .startup h1 { font-size: 22px; font-weight: 500; }
@@ -228,7 +232,7 @@ details[open] summary svg { rotate: 180deg; }
 .inline-task-detail { position: relative; }
 .inline-task-detail>.icon-button { position: absolute; right: 3px; top: 3px; z-index: 1; }
 .inline-task-detail .task-card { padding: 0; border: 0; }
-.history-list { padding: 8px 12px 20px; }
+.history-list { padding: 8px 12px 20px; border-radius: 20px; }
 .task-attachments { flex-wrap: wrap; }
 .task-attachments>button,.receipt-assets>button { padding: 0; background: transparent; color: inherit; border-radius: 6px; }
 .task-media-preview { position: relative; margin-top: 10px; }
