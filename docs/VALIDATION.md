@@ -574,6 +574,14 @@ Fit all files 使用 380ms 三次缓入缓出连续更新平移和缩放。直�
 
 证据：[执行记录](evidence/audio-player-refinements/verification.json)、[真实两曲](evidence/audio-player-refinements/real-audio-results.json)。
 
+## 2026-10-06 · 音频进度游标与浅色区分
+
+- 只读 CLI 从现有项目服务读取任务范围 `fff4c7bb-8ae3-4c66-a717-235fe73e0171` 的画板对象。A 方案对象 `2820bb56-85e8-4949-8f32-363e91b4fa8a` 引用 HTML 资产 `9a38b340-4899-4d5b-b743-153f8d58eccb`；导出的 175405 字节与仓库 `docs/evidence/audio-redesign-options/option-a.html` 逐字节一致。原型在波形内绘制 `y1=0, y2=100` 的 1px 竖线，`updatePosition()` 按 `progress * 1000` 更新横坐标，已播放波形覆盖在底层完整波形之上。
+- 真实播放器现在按实际播放比例裁切已播放颜色，并在准确位置绘制全高 1px 游标及背景色两侧分隔。浅色未播放波形从 `#686868` 调整为 `#808080`：与 `#e7e7e7` 背景约 3.19:1，与 `#202020` 已播放波形约 4.13:1。游标使用当前主题的已播放色。
+- `npm run typecheck`、`npm run build` 通过；`npm run test:browser -- --config tests/audio-player.config.ts` 在可启动 Chrome 的环境中 **8/8 通过**。新增浏览器测试在真实 24 秒 WAV 的中途播放、暂停、主题切换和 75% 点击定位后读取 canvas 像素，确认竖线位置与播放比例误差小于 2 设备像素，并确认两侧波形颜色分别正确；既有布局、封面、故障处理、主题重绘、键盘及触屏操作回归通过。
+- 截图：[浅色中途播放位置](evidence/audio-progress-20261006/light-mid-progress.png)、[深色定位后位置](evidence/audio-progress-20261006/dark-seek-progress.png)。测试使用临时夹具；CLI 仅执行状态、画板读取和素材读取，用户画板对象、队列及布局未写入。本次按用户要求由主智能体直接最终核对。
+- 对现有 4317 服务的只读 HTTP GET 显示主页引用最终构建的 `main-BfyjrFpg.js`，四个 JS/CSS 文件与 `dist/web` 逐字节一致。临时 IAB 标签打开原 session 后有 12 个原画板对象、2 个音频播放器，两个波形均已解码，浅色波形变量为 `#808080`；验证后关闭该临时标签。
+
 ## 2026-10-06 · HTML悬停交互与统一画布滚轮
 
 HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统一滚轮策略覆盖HTML、音频时间轴、其他控件及声明为正文滚动的区域。测试使用独立临时项目，真实用户白板只进行服务版本更新和页面刷新。

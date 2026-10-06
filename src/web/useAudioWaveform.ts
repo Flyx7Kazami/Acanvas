@@ -21,16 +21,24 @@ export function useAudioWaveform(audio: RefObject<HTMLAudioElement | null>, disp
       if (canvas!.width !== Math.round(width * ratio) || canvas!.height !== Math.round(height * ratio)) { canvas!.width = Math.round(width * ratio); canvas!.height = Math.round(height * ratio); }
       const context = canvas!.getContext('2d');
       if (context && width && height) {
-        const style = getComputedStyle(canvas!), played = style.getPropertyValue('--audio-wave-played').trim(), unplayed = style.getPropertyValue('--audio-wave').trim();
+        const style = getComputedStyle(canvas!), played = style.getPropertyValue('--audio-wave-played').trim(), unplayed = style.getPropertyValue('--audio-wave').trim(), surface = style.getPropertyValue('--audio-surface').trim();
         context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, width, height);
         if (peaks) {
           const count = Math.max(1, Math.floor(width / 5)), step = width / count;
+          const position = duration ? clamp(time / duration, 0, 1) * width : 0;
+          const bars = new Path2D();
           for (let bar = 0; bar < count; bar++) {
             const start = Math.floor(bar * peaks.length / count), end = Math.max(start + 1, Math.floor((bar + 1) * peaks.length / count)); let square = 0;
             for (let i = start; i < end; i++) square += peaks[i] ** 2;
             const level = Math.sqrt(square / (end - start)) / maximum, h = Math.max(3, Math.pow(level, .72) * (height - 4));
-            context.fillStyle = duration && (bar + .5) / count <= time / duration ? played : unplayed;
-            context.beginPath(); context.roundRect(bar * step + (step - 3) / 2, (height - h) / 2, 3, h, 1.5); context.fill();
+            bars.roundRect(bar * step + (step - 3) / 2, (height - h) / 2, 3, h, 1.5);
+          }
+          context.fillStyle = unplayed; context.fill(bars);
+          if (duration) {
+            context.save(); context.beginPath(); context.rect(0, 0, position, height); context.clip(); context.fillStyle = played; context.fill(bars); context.restore();
+            const cursor = clamp(Math.floor(position), 0, width - 1);
+            context.fillStyle = surface; context.fillRect(cursor - 1, 0, 3, height);
+            context.fillStyle = played; context.fillRect(cursor, 0, 1, height);
           }
         }
       }

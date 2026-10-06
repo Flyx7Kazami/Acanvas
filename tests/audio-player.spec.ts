@@ -100,9 +100,57 @@ test('paused and playing theme changes repaint existing waveform without decodin
   await player.getByRole('button', { name: 'Play audio', exact: true }).click();
   await expect(player.getByRole('button', { name: 'Pause audio', exact: true })).toBeVisible();
   await page.evaluate(() => { document.documentElement.dataset.theme = 'light'; });
-  await expect.poll(pixels).toContain(104);
+  await expect.poll(pixels).toContain(128);
   await expect.poll(() => page.locator('audio').evaluate((audio: HTMLAudioElement) => audio.currentTime)).toBeGreaterThan(before.time);
   expect(await page.evaluate(() => ({ same: document.querySelector('audio') === (window as any).originalAudio, decodes: (window as any).decodeCount }))).toEqual({ same: true, decodes: before.decodes });
+});
+
+test('playhead stays visible at the exact progress position through playback, pause, theme and seeking', async ({ page, playerUrl }, info) => {
+  await page.goto(playerUrl);
+  const player = page.locator('.audio-canvas-player'), wave = player.locator('.audio-player-waveform canvas'), range = player.getByRole('slider');
+  await expect(wave).toHaveAttribute('data-ready', 'true');
+  const inspect = () => wave.evaluate((canvas: HTMLCanvasElement) => {
+    const { width, height } = canvas, pixels = canvas.getContext('2d')!.getImageData(0, 0, width, height).data;
+    const top = Array.from({ length: width }, (_, x) => pixels[x * 4 + 3] > 0 ? x : -1).filter(x => x >= 0);
+    const progress = Number(canvas.dataset.progress), cursor = top.reduce((sum, x) => sum + x, 0) / top.length;
+    const colors = (start: number, end: number) => {
+      const found = new Set<number>();
+      for (let x = start; x < end; x++) { const index = (Math.floor(height / 2) * width + x) * 4; if (pixels[index + 3] === 255) found.add(pixels[index]); }
+      return [...found];
+    };
+    return { progress, cursor, expected: progress * width, colorsBefore: colors(0, Math.floor(width * .45)), colorsAfter: colors(Math.ceil(width * .55), width), topColors: top.map(x => pixels[x * 4]), width };
+  });
+  await page.locator('audio').evaluate((audio: HTMLAudioElement) => { audio.currentTime = 8; });
+  await expect.poll(async () => (await inspect()).progress).toBeGreaterThan(.33);
+  const light = await inspect();
+  expect(Math.abs(light.cursor - light.expected)).toBeLessThan(2);
+  expect(light.topColors).toContain(32);
+  expect(light.colorsBefore).toContain(32);
+  expect(light.colorsAfter).toContain(128);
+  await player.screenshot({ path: info.outputPath('light-mid-progress.png') });
+
+  await player.getByRole('button', { name: 'Play audio', exact: true }).click();
+  await expect.poll(async () => (await inspect()).progress).toBeGreaterThan(light.progress + .02);
+  const playing = await inspect();
+  expect(Math.abs(playing.cursor - playing.expected)).toBeLessThan(2);
+  await player.getByRole('button', { name: 'Pause audio', exact: true }).click();
+  await expect(player.getByRole('button', { name: 'Play audio', exact: true })).toBeVisible();
+  await page.waitForTimeout(120);
+  const paused = await inspect();
+  await page.waitForTimeout(120);
+  expect(Math.abs((await inspect()).progress - paused.progress)).toBeLessThan(.001);
+
+  await page.evaluate(() => { document.documentElement.dataset.theme = 'dark'; });
+  await expect.poll(async () => (await inspect()).topColors).toContain(245);
+  const dark = await inspect();
+  expect(Math.abs(dark.cursor - dark.expected)).toBeLessThan(2);
+  expect(dark.colorsBefore).toContain(245);
+  expect(dark.colorsAfter).toContain(170);
+  const box = (await range.boundingBox())!;
+  await page.mouse.click(box.x + box.width * .75, box.y + box.height / 2);
+  await expect.poll(async () => (await inspect()).progress).toBeGreaterThan(.74);
+  expect(Math.abs((await inspect()).cursor - (await inspect()).expected)).toBeLessThan(2);
+  await player.screenshot({ path: info.outputPath('dark-seek-progress.png') });
 });
 
 
