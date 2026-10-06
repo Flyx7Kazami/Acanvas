@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { acquireAudioWaveform } from './audioWaveformData';
 
 const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -13,8 +14,9 @@ export function useAudioWaveform(audio: RefObject<HTMLAudioElement | null>, disp
   useEffect(() => {
     const media = audio.current, canvas = display.wave.current, slider = display.slider.current;
     if (!media || !canvas || !slider) return;
-    const controller = new AbortController(); let cancelled = false, peaks: Float32Array | undefined, maximum = 1;
-    active.current = true; setPlaybackError(''); setWaveformStatus('Loading waveform…');
+    const waveform = acquireAudioWaveform(src);
+    let cancelled = false, peaks: Float32Array | undefined = waveform.cached?.values, maximum = waveform.cached?.maximum ?? 1;
+    active.current = true; setPlaybackError(''); setWaveformStatus(peaks ? '' : 'Loading waveform…');
     function paint() {
       const duration = Number.isFinite(media!.duration) ? media!.duration : 0, time = media!.currentTime || 0;
       const width = canvas!.clientWidth, height = canvas!.clientHeight, ratio = devicePixelRatio || 1;
@@ -57,30 +59,11 @@ export function useAudioWaveform(audio: RefObject<HTMLAudioElement | null>, disp
     events.forEach(([name, fn]) => media.addEventListener(name, fn));
     const observer = new ResizeObserver(paint); observer.observe(canvas); sync();
     const themeObserver = new MutationObserver(paint); themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    void (async () => {
-      try {
-        const response = await fetch(src, { credentials: 'same-origin', signal: controller.signal });
-        if (!response.ok || !response.body) throw new Error('Waveform unavailable');
-        const limit = 32 * 1024 * 1024;
-        if (Number(response.headers.get('content-length')) > limit) { await response.body.cancel(); throw new Error('Waveform supports files up to 32 MB'); }
-        const reader = response.body.getReader(), chunks: Uint8Array[] = []; let size = 0;
-        for (;;) { const { done, value } = await reader.read(); if (done) break; size += value.byteLength; if (size > limit) { await reader.cancel(); throw new Error('Waveform supports files up to 32 MB'); } chunks.push(value); }
-        const bytes = new Uint8Array(size); let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
-        const decoded = await new OfflineAudioContext(1, 1, 44100).decodeAudioData(bytes.buffer);
-        if (cancelled) return;
-        const bins = Math.min(1600, decoded.length), values = new Float32Array(bins);
-        for (let channel = 0; channel < decoded.numberOfChannels; channel++) {
-          const samples = decoded.getChannelData(channel);
-          for (let bin = 0; bin < bins; bin++) {
-            const start = Math.floor(bin * samples.length / bins), end = Math.floor((bin + 1) * samples.length / bins); let square = 0;
-            for (let i = start; i < end; i++) square += samples[i] ** 2;
-            values[bin] = Math.max(values[bin], Math.sqrt(square / Math.max(1, end - start)));
-          }
-        }
-        peaks = values; maximum = Math.max(...values) || 1; setWaveformStatus(''); paint();
-      } catch (cause) { if (!cancelled) setWaveformStatus(cause instanceof Error ? cause.message : 'Waveform unavailable'); }
-    })();
-    return () => { cancelled = true; active.current = false; intent.current++; controller.abort(); cancelAnimationFrame(frame.current); observer.disconnect(); themeObserver.disconnect(); events.forEach(([name, fn]) => media.removeEventListener(name, fn)); media.pause(); };
+    void waveform.promise.then(data => {
+      if (cancelled) return;
+      peaks = data.values; maximum = data.maximum; setWaveformStatus(''); paint();
+    }).catch(cause => { if (!cancelled) setWaveformStatus(cause instanceof Error ? cause.message : 'Waveform unavailable'); });
+    return () => { cancelled = true; active.current = false; intent.current++; waveform.release(); cancelAnimationFrame(frame.current); observer.disconnect(); themeObserver.disconnect(); events.forEach(([name, fn]) => media.removeEventListener(name, fn)); media.pause(); };
   }, [src, audio, display.wave, display.slider, display.current, display.total]);
   const toggle = useCallback(async () => {
     const media = audio.current; if (!media || !active.current) return;

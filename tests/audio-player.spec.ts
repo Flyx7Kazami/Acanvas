@@ -18,7 +18,7 @@ const test = base.extend<{ playerUrl: string }>({
     await writeFile(join(root, 'index.html'), '<!doctype html><html lang="en"><head><meta charset="UTF-8"/><title>Audio fixture</title></head><body><div id="root"></div><script type="module" src="/fixture.tsx"></script></body></html>');
     await writeFile(join(root, 'fixture.tsx'), `import React, {StrictMode,useState} from 'react';import {createRoot} from 'react-dom/client';import '/@fs/${workspace}/src/web/styles.css';import {AudioCanvasPlayer} from '/@fs/${workspace}/src/web/AudioCanvasPlayer.tsx';
       const stats=window as any;stats.layoutWrites=0;stats.parentPointers=0;
-      function Fixture(){const [mounted,setMounted]=useState(true),[width,setWidth]=useState(420),[src,setSrc]=useState('/tone.wav');return <><style>{'body{margin:0;padding:30px;background:#e8e8e5;font-family:Arial}button{font:inherit} .frame{width:420px;position:relative}body[data-theme=dark]{background:#151515;--surface:#222;--soft:#333;--ink:#eee;--muted:#aaa;--edge:#444}'}</style><div className="frame" style={{width,height:88}} onPointerDown={()=>stats.parentPointers++}>{mounted&&<AudioCanvasPlayer src={src} title="Amplitude study.wav" onElement={element=>stats.audio=element} onError={error=>stats.lastError=String(error)}/>}</div><button onClick={()=>setMounted(false)}>Unmount fixture</button><button onClick={()=>setWidth(280)}>Use minimum width</button><button onClick={()=>{document.documentElement.dataset.theme='dark'}}>Dark theme</button><button onClick={()=>setSrc('/invalid.wav')}>Load invalid audio</button></>};createRoot(document.getElementById('root')!).render(<StrictMode><Fixture/></StrictMode>);`);
+      function Fixture(){const [mounted,setMounted]=useState(true),[width,setWidth]=useState(420),[src,setSrc]=useState(new URLSearchParams(location.search).has('cached')?'/api/assets/00000000-0000-4000-8000-000000000001/content':'/tone.wav');return <><style>{'body{margin:0;padding:30px;background:#e8e8e5;font-family:Arial}button{font:inherit} .frame{width:420px;position:relative}body[data-theme=dark]{background:#151515;--surface:#222;--soft:#333;--ink:#eee;--muted:#aaa;--edge:#444}'}</style><div className="frame" style={{width,height:88}} onPointerDown={()=>stats.parentPointers++}>{mounted&&<AudioCanvasPlayer src={src} title="Amplitude study.wav" onElement={element=>stats.audio=element} onError={error=>stats.lastError=String(error)}/>}</div>{mounted&&new URLSearchParams(location.search).has('duplicate')&&<div className="frame" style={{width,height:88}}><AudioCanvasPlayer src={src} title="Amplitude study.wav"/></div>}<button onClick={()=>setMounted(false)}>Unmount fixture</button><button onClick={()=>{setMounted(false);setTimeout(()=>setMounted(true),0)}}>Remount fixture</button><button onClick={()=>setWidth(280)}>Use minimum width</button><button onClick={()=>{document.documentElement.dataset.theme='dark'}}>Dark theme</button><button onClick={()=>setSrc('/invalid.wav')}>Load invalid audio</button></>};createRoot(document.getElementById('root')!).render(<StrictMode><Fixture/></StrictMode>);`);
     try { await server.listen(); await use(server.resolvedUrls!.local[0]); } finally { await server.close(); await rm(root, { recursive: true, force: true }); }
   },
 });
@@ -55,6 +55,21 @@ test('layout A keeps name cover and controls within minimum bounds', async ({pag
 
 test('source errors retain download and disable playback', async ({page,playerUrl})=>{
  await page.goto(playerUrl);await page.getByRole('button',{name:'Load invalid audio'}).click();await expect(page.getByRole('link',{name:'Download',exact:true})).toHaveAttribute('href','/invalid.wav');await expect(page.getByRole('button',{name:'Play audio',exact:true})).toBeDisabled();
+ await expect(page.locator('.audio-wave-status')).not.toHaveText('Loading waveform…');
+});
+
+test('oversize waveform reports its limit while native playback remains available', async ({ page, playerUrl }) => {
+  await page.addInitScript(() => {
+    const original = window.fetch;
+    window.fetch = (...args) => String(args[0]).endsWith('/tone.wav')
+      ? Promise.resolve(new Response(new Uint8Array(), { status: 200, headers: { 'content-length': String(32 * 1024 * 1024 + 1) } }))
+      : original(...args);
+  });
+  await page.goto(playerUrl);
+  await expect(page.locator('.audio-wave-status')).toHaveText('Waveform supports files up to 32 MB');
+  await expect(page.getByRole('button', { name: 'Play audio', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Play audio', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Pause audio', exact: true })).toBeVisible();
 });
 
 
@@ -103,6 +118,69 @@ test('paused and playing theme changes repaint existing waveform without decodin
   await expect.poll(pixels).toContain(128);
   await expect.poll(() => page.locator('audio').evaluate((audio: HTMLAudioElement) => audio.currentTime)).toBeGreaterThan(before.time);
   expect(await page.evaluate(() => ({ same: document.querySelector('audio') === (window as any).originalAudio, decodes: (window as any).decodeCount }))).toEqual({ same: true, decodes: before.decodes });
+});
+
+test('remount reuses the complete waveform without fetching or decoding again', async ({ page, playerUrl }) => {
+  await page.addInitScript(() => {
+    (window as any).waveRequests = 0; (window as any).waveDecodes = 0;
+    const fetchOriginal = window.fetch;
+    window.fetch = (...args) => { if (String(args[0]).includes('/tone.wav')) (window as any).waveRequests++; return fetchOriginal(...args); };
+    const decodeOriginal = OfflineAudioContext.prototype.decodeAudioData;
+    OfflineAudioContext.prototype.decodeAudioData = function (...args: Parameters<typeof decodeOriginal>) { (window as any).waveDecodes++; return decodeOriginal.apply(this, args); };
+  });
+  await page.goto(playerUrl);
+  await expect(page.locator('.audio-player-waveform canvas')).toHaveAttribute('data-ready', 'true');
+  const before = await page.evaluate(() => ({ requests: (window as any).waveRequests, decodes: (window as any).waveDecodes }));
+  expect(before).toEqual({ requests: 1, decodes: 1 });
+  await page.getByRole('button', { name: 'Remount fixture' }).click();
+  await expect(page.locator('.audio-player-waveform canvas')).toHaveAttribute('data-ready', 'true');
+  expect(await page.evaluate(() => ({ requests: (window as any).waveRequests, decodes: (window as any).waveDecodes }))).toEqual(before);
+  await page.getByRole('slider', { name: 'Audio timeline' }).press('End');
+  expect(Number(await page.getByRole('slider', { name: 'Audio timeline' }).getAttribute('aria-valuenow'))).toBeGreaterThan(23);
+});
+
+test('two players of one source share one complete-file read and decode', async ({ page, playerUrl }) => {
+  await page.addInitScript(() => {
+    (window as any).waveRequests = 0; (window as any).waveDecodes = 0;
+    const fetchOriginal = window.fetch;
+    window.fetch = (...args) => { if (String(args[0]).includes('/tone.wav')) (window as any).waveRequests++; return fetchOriginal(...args); };
+    const decodeOriginal = OfflineAudioContext.prototype.decodeAudioData;
+    OfflineAudioContext.prototype.decodeAudioData = function (...args: Parameters<typeof decodeOriginal>) { (window as any).waveDecodes++; return decodeOriginal.apply(this, args); };
+  });
+  await page.goto(playerUrl + '?duplicate=1');
+  await expect(page.locator('.audio-player-waveform canvas')).toHaveCount(2);
+  await expect.poll(() => page.locator('.audio-player-waveform canvas[data-ready="true"]').count()).toBe(2);
+  expect(await page.evaluate(() => ({ requests: (window as any).waveRequests, decodes: (window as any).waveDecodes }))).toEqual({ requests: 1, decodes: 1 });
+});
+
+test('refresh restores an immutable asset envelope without fetching or decoding the complete file', async ({ page, playerUrl }) => {
+  await page.addInitScript(() => {
+    (window as any).waveRequests = 0; (window as any).waveDecodes = 0;
+    const fetchOriginal = window.fetch;
+    window.fetch = (...args) => { if (String(args[0]).includes('/00000000-0000-4000-8000-000000000001/content')) (window as any).waveRequests++; return fetchOriginal(...args); };
+    const decodeOriginal = OfflineAudioContext.prototype.decodeAudioData;
+    OfflineAudioContext.prototype.decodeAudioData = function (...args: Parameters<typeof decodeOriginal>) { (window as any).waveDecodes++; return decodeOriginal.apply(this, args); };
+  });
+  const file = wav();
+  await page.route('**/api/assets/00000000-0000-4000-8000-000000000001/content', route => {
+    const range = route.request().headers().range?.match(/^bytes=(\d+)-(\d*)$/);
+    const start = range ? Number(range[1]) : 0, end = range && range[2] ? Number(range[2]) : file.length - 1;
+    return route.fulfill({ status: range ? 206 : 200, contentType: 'audio/wav', headers: { 'accept-ranges': 'bytes', ...(range ? { 'content-range': `bytes ${start}-${end}/${file.length}` } : {}) }, body: file.subarray(start, end + 1) });
+  });
+  await page.goto(playerUrl + '?cached=1');
+  await expect(page.locator('.audio-player-waveform canvas')).toHaveAttribute('data-ready', 'true');
+  expect(await page.evaluate(() => ({ requests: (window as any).waveRequests, decodes: (window as any).waveDecodes }))).toEqual({ requests: 1, decodes: 1 });
+  await page.reload();
+  await expect(page.locator('.audio-player-waveform canvas')).toHaveAttribute('data-ready', 'true');
+  expect(await page.evaluate(() => ({ requests: (window as any).waveRequests, decodes: (window as any).waveDecodes }))).toEqual({ requests: 0, decodes: 0 });
+  const player = page.locator('.audio-canvas-player');
+  await expect(player.getByRole('button', { name: 'Play audio', exact: true })).toBeEnabled();
+  await player.getByRole('slider', { name: 'Audio timeline' }).press('End');
+  await expect.poll(async () => Number(await player.getByRole('slider', { name: 'Audio timeline' }).getAttribute('aria-valuenow'))).toBeGreaterThan(23);
+  await page.evaluate(() => sessionStorage.setItem('acanvas-waveform-v1:' + new URL('/api/assets/00000000-0000-4000-8000-000000000001/content', location.href).href, 'invalid'));
+  await page.reload();
+  await expect(page.locator('.audio-player-waveform canvas')).toHaveAttribute('data-ready', 'true');
+  expect(await page.evaluate(() => ({ requests: (window as any).waveRequests, decodes: (window as any).waveDecodes }))).toEqual({ requests: 1, decodes: 1 });
 });
 
 test('playhead stays visible at the exact progress position through playback, pause, theme and seeking', async ({ page, playerUrl }, info) => {
