@@ -60,6 +60,11 @@ async function open(page: Page, app: AppFixture) {
   expect(await page.locator('dialog:not([open])').evaluateAll(elements => elements.every(element => getComputedStyle(element).display === 'none'))).toBeTruthy();
 }
 
+async function composerAction(page: Page, label: 'Request history' | 'Copy resume prompt') {
+  await page.getByRole('button', { name: 'More request actions', exact: true }).click();
+  await page.getByRole('menuitem', { name: label, exact: true }).click();
+}
+
 async function png(page: Page) {
   const encoded = await page.evaluate(() => {
     const canvas = document.createElement('canvas'); canvas.width = 600; canvas.height = 300;
@@ -210,9 +215,9 @@ test('annotation levels retain clipped regions and sent task markings follow exp
   await row.click(); await page.getByRole('button', { name: 'Cancel request 1', exact: true }).click(); await expect(page.locator('.queue-item')).toHaveCount(0); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(0);
   expect(JSON.stringify((await app.state()).tasks[0].snapshot)).toBe(snapshot); expect((await app.state()).annotations).toHaveLength(1);
   await page.getByRole('button', { name: 'Remove annotation 1', exact: true }).click(); await expect(page.locator('.annotation-outline')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Request history', exact: true }).click(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(0);
+  await composerAction(page, 'Request history'); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(0);
   await page.locator('.task-annotation-text').first().click(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(1); await page.getByRole('button', { name: 'Close request history', exact: true }).click(); await expect(page.locator('.annotation-outline')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Remove selected files from canvas', exact: true }).click(); await expect(object).toHaveCount(0); await page.getByRole('button', { name: 'Request history', exact: true }).click(); await page.locator('.task-annotation-text').first().click(); await expect(page.locator('.annotation-outline[data-source-removed=true]')).toHaveCount(1); await expect(page.locator('.task-annotation-text')).toContainText('Refine the lower-right detail.'); await expect(page.locator('.task-annotation-text')).toBeVisible();
+  await page.getByRole('button', { name: 'Remove selected files from canvas', exact: true }).click(); await expect(object).toHaveCount(0); await composerAction(page, 'Request history'); await page.locator('.task-annotation-text').first().click(); await expect(page.locator('.annotation-outline[data-source-removed=true]')).toHaveCount(1); await expect(page.locator('.task-annotation-text')).toContainText('Refine the lower-right detail.'); await expect(page.locator('.task-annotation-text')).toBeVisible();
   expect(JSON.stringify((await app.state()).tasks[0].snapshot)).toBe(snapshot);
 });
 
@@ -301,7 +306,7 @@ test('shared annotation bubbles and static queue previews preserve snapshot refe
   for (const width of [390, 320]) { await page.setViewportSize({ width, height: 480 }); await expect.poll(async () => row.locator('.queue-title').evaluate(element => element.getBoundingClientRect().width)).toBeGreaterThan(20); expect(await row.locator('.queue-row').evaluate(element => element.getBoundingClientRect().height)).toBe(36); await row.locator('.queue-task').click(); await expect(row.locator('.queue-task')).toHaveAttribute('aria-expanded', 'true'); await row.locator('.queue-task').click(); await expect(row.locator('.queue-task')).toHaveAttribute('aria-expanded', 'false'); }
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.reload(); await expect(page.locator('.queue-item')).toHaveCount(3); expect(JSON.stringify((await app.state()).tasks[1].snapshot)).toBe(immutable); await expect(page.locator('.queue-item').nth(1).locator('.queue-preview-overflow')).toHaveText('+3');
-  await page.locator('.queue-task').first().click(); await expect(page.getByRole('region', { name: 'Request 1', exact: true }).locator('.asset-thumb[data-kind=video] img')).toHaveAttribute('src', firstFrame); await page.getByRole('button', { name: 'Cancel request 1', exact: true }).click(); await page.getByRole('button', { name: 'Request history', exact: true }).click(); await expect(page.locator('.history-list .asset-thumb[data-kind=video] img').first()).toHaveAttribute('src', firstFrame);
+  await page.locator('.queue-task').first().click(); await expect(page.getByRole('region', { name: 'Request 1', exact: true }).locator('.asset-thumb[data-kind=video] img')).toHaveAttribute('src', firstFrame); await page.getByRole('button', { name: 'Cancel request 1', exact: true }).click(); await composerAction(page, 'Request history'); await expect(page.locator('.history-list .asset-thumb[data-kind=video] img').first()).toHaveAttribute('src', firstFrame);
 });
 
 test('six inline alignment commands batch positions without changing sizes or unselected files', async ({ page, app }, info) => {
@@ -357,7 +362,7 @@ test('each confirmed local send animates once including SSE-first and recovered 
   await page.locator('#whiteboard').click({ position: { x: 1200, y: 100 } }); await page.locator('.queue-stack').hover();
   await expect.poll(async () => page.locator('.queue-entering').count()).toBe(0); expect((await motions()).starts).toHaveLength(4);
   const state = await app.state(); await app.call(`/api/sessions/${sessionId}/tasks/${state.tasks[0].id}/cancel`, 'POST', { reason: 'Updated direction' }); await expect(page.locator('.queue-item')).toHaveCount(3);
-  await page.getByRole('button', { name: 'Request history', exact: true }).click(); await page.getByRole('button', { name: 'Close request history', exact: true }).click(); expect((await motions()).starts).toHaveLength(4);
+  await composerAction(page, 'Request history'); await page.getByRole('button', { name: 'Close request history', exact: true }).click(); expect((await motions()).starts).toHaveLength(4);
   await page.route(`**/api/sessions/${sessionId}/tasks`, route => route.fulfill({ status: 500, contentType: 'application/json', body: '{}' }));
   await input.fill('Failed direction'); await input.press('Enter'); await expect(input).toBeEnabled(); await expect(page.getByRole('alert')).toContainText('(500)'); expect((await motions()).starts).toHaveLength(4); expect((await app.state()).tasks).toHaveLength(4);
   await page.unroute(`**/api/sessions/${sessionId}/tasks`);
@@ -505,15 +510,15 @@ test('inline details history media and resume fallback keep short-screen canvas 
   await page.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(row).toBeFocused();
   await page.setViewportSize({ width: 390, height: 480 }); await page.getByRole('button', { name: 'Fit all files', exact: true }).click();
   await page.getByRole('button', { name: 'Remove selected files from canvas', exact: true }).click(); await expect(page.locator('.board-object')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Request history', exact: true }).click();
+  await composerAction(page, 'Request history');
   const history = page.getByRole('region', { name: 'Request history', exact: true });
   await history.getByRole('button', { name: 'View reference.png', exact: true }).click();
   await expect(history.getByRole('region', { name: 'Preview reference.png', exact: true }).locator('img')).toBeVisible();
   await expect(page.locator('a[target=_blank],dialog,[aria-modal=true]')).toHaveCount(0);
   await page.screenshot({ path: info.outputPath('inline-history-media-390.png') });
-  await page.getByRole('button', { name: 'Request history', exact: true }).click(); await expect(history).not.toBeVisible();
+  await page.getByRole('button', { name: 'Close request history', exact: true }).click(); await expect(history).not.toBeVisible();
   await page.evaluate(() => { Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: () => Promise.reject(new DOMException('Clipboard unavailable', 'NotAllowedError')) }); });
-  await page.getByRole('button', { name: 'Copy resume prompt', exact: true }).click();
+  await composerAction(page, 'Copy resume prompt');
   const resume = page.getByRole('region', { name: 'Resume prompt', exact: true }); await expect(resume).toBeVisible();
   expect(await resume.getByRole('textbox').inputValue()).toContain(`Project: ${(await app.state()).project.root}`);
   await page.getByRole('button', { name: 'Pan canvas', exact: true }).click();
@@ -611,6 +616,8 @@ test('composer grows with wrap and newlines, restores height, sends Enter and pr
   await expect.poll(async () => (await composer.boundingBox())!.height).toBeGreaterThan(52);
   expect((await input.boundingBox())!.height).toBeGreaterThan(24);
   await expect(composer).toHaveAttribute('data-save-state', 'saved');
+  await expect.poll(async () => (await composer.boundingBox())!.width).toBe(358);
+  await composer.evaluate(async element => { await Promise.all(element.getAnimations().map(animation => animation.finished.catch(() => {}))); });
   const grown = (await composer.boundingBox())!.height;
   await page.reload(); await expect(input).toHaveValue(wrapped);
   await expect.poll(async () => (await composer.boundingBox())!.height).toBe(grown);
@@ -766,7 +773,7 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   await writeFile(completionFile, JSON.stringify({ summary: '参考图已回填到共享白板。', assetIds: [output.id], validation: ['读取了原图与发送时批注', '产物文件已保存'], operations: [{ type: 'create', object: { assetId: output.id, x: 800, y: 250, width: 300, height: 150 } }] }));
   await cli(['task', 'complete', ...args, '--task', claimed.task!.id, '--run', claimed.run!.id, '--consumer', 'browser-agent', '--input', completionFile]);
   await expect(page.locator('.board-object')).toHaveCount(2);
-  await page.getByRole('button', { name: /Request history/ }).click();
+  await composerAction(page, 'Request history');
   await expect(page.locator('.task-card[data-status="completed"]')).toHaveCount(1);
   await expect(page.getByText('参考图已回填到共享白板。', { exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath('inline-history.png') });
@@ -791,7 +798,7 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
   await page.screenshot({ path: info.outputPath('dark-board.png') });
   await page.reload(); await expect(page.locator('.board-object')).toHaveCount(2);
-  await page.getByRole('button', { name: /Request history/ }).click();
+  await composerAction(page, 'Request history');
   await expect(page.locator('.task-card[data-status="completed"]')).toHaveCount(1);
   await page.getByRole('button', { name: 'Close request history', exact: true }).click();
   expect(errors).toEqual([]);
@@ -1171,10 +1178,10 @@ test('dark narrow composer keeps text styling stable, restores inline focus and 
   expect(await composer.evaluate(element => ({ border: getComputedStyle(element).borderColor, surface: getComputedStyle(element).backgroundColor }))).toEqual(before);
   const box = (await composer.boundingBox())!; expect(box.x).toBeGreaterThanOrEqual(16); expect(box.x + box.width).toBeLessThanOrEqual(374);
   await page.screenshot({ path: info.outputPath('dark-narrow-composer.png') });
-  await page.getByRole('button', { name: 'Request history', exact: true }).click();
+  await composerAction(page, 'Request history');
   const dialog = page.getByRole('region', { name: 'Request history', exact: true }); await expect(dialog).toBeVisible();
   await page.getByRole('button', { name: 'Close request history', exact: true }).click(); await expect(dialog).not.toBeVisible();
-  await expect(page.getByRole('button', { name: 'Request history', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'More request actions', exact: true })).toBeFocused();
   await page.screenshot({ path: info.outputPath('dark-narrow-board.png') });
 });
 
@@ -1280,7 +1287,7 @@ test('isolated production processes repeatedly restart, claim and publish withou
     await expect(page.locator('.board-object')).toHaveCount(index + 1);
     await app.restart(); await page.goto(`${app.server.url}/?session=${sessionId}`);
     await expect(page.locator('.board-object')).toHaveCount(index + 1);
-    await page.getByRole('button', { name: /Request history/ }).click();
+    await composerAction(page, 'Request history');
     await expect(page.locator('.task-card[data-status="completed"]')).toHaveCount(index + 1);
     await page.getByRole('button', { name: 'Close request history', exact: true }).click();
   }
@@ -1385,7 +1392,7 @@ test('queue accessible statuses and symmetric insets stay usable across viewport
   }
   const state = await app.state(), session = state.session.id, claim = await app.call(`/api/sessions/${session}/claim`, 'POST', { consumerId: 'queue-status-fixture' }) as Claim;
   await expect(first).toHaveAttribute('data-status', 'running'); await expect(first.locator('.queue-task')).toHaveAttribute('aria-label', /Running$/); await expect(first.locator('.queue-task-mark')).toHaveCount(0); await expect(first.locator('.queue-task svg.lucide-loader-circle')).toHaveCount(0); await expect(first.getByRole('button', { name: 'Edit request 1', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Request history', exact: true }).click(); await expect(page.locator('.history-list .status-running')).toHaveText('Running'); await page.getByRole('button', { name: 'Close request history', exact: true }).click();
+  await composerAction(page, 'Request history'); await expect(page.locator('.history-list .status-running')).toHaveText('Running'); await page.getByRole('button', { name: 'Close request history', exact: true }).click();
   await app.call(`/api/sessions/${session}/tasks/${claim.task!.id}/complete`, 'POST', { runId: claim.run!.id, consumerId: claim.consumerId, summary: 'Cover direction prepared.', assetIds: [], validation: [], operations: [] });
   const textClaim = await app.call(`/api/sessions/${session}/claim`, 'POST', { consumerId: claim.consumerId }) as Claim;
   await app.call(`/api/sessions/${session}/tasks/${textClaim.task!.id}/block`, 'POST', { runId: textClaim.run!.id, consumerId: textClaim.consumerId, reason: 'Choose the final title.' }); await expect(page.locator('.queue-row>.status-blocked')).toHaveText('Needs input');
@@ -1442,7 +1449,7 @@ test('spring queue and composer keep compact references, editable FIFO slots and
   await page.route(`**/api/sessions/${initial.session.id}/tasks`, async route => { await route.fetch(); await route.abort('failed'); });
   await page.getByRole('button', { name: 'Save edit', exact: true }).click(); await expect(input).toHaveValue('Next unsent idea'); await expect(page.getByRole('alert')).toHaveCount(0); await page.unroute(`**/api/sessions/${initial.session.id}/tasks`);
   const result = await app.state(); expect(result.tasks.map(task => task.id)).toEqual(ids); expect(result.tasks[0].snapshot.userRequest.text).toBe('Revised request'); expect(result.tasks[0].snapshot.annotations[0].text).toBe('Revised first comment'); expect(result.tasks[0].sequence).toBe(1);
-  for (const width of [390, 320]) { await page.setViewportSize({ width, height: 480 }); await expect.poll(async () => page.locator('.dock-footer').evaluate(element => { const box = element.getBoundingClientRect(), button = element.querySelector('button')!.getBoundingClientRect(); return button.left - box.left; })).toBeLessThan(16); await page.locator('.queue-stack').hover(); await expect(page.getByRole('button', { name: 'Edit request 1', exact: true })).toBeInViewport(); await page.screenshot({ path: info.outputPath(`spring-queue-${width}.png`) }); }
+  for (const width of [390, 320]) { await page.setViewportSize({ width, height: 480 }); await expect(page.getByRole('button', { name: 'More request actions', exact: true })).toBeInViewport(); await page.locator('.queue-stack').hover(); await expect(page.getByRole('button', { name: 'Edit request 1', exact: true })).toBeInViewport(); await page.screenshot({ path: info.outputPath(`spring-queue-${width}.png`) }); }
   await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(input).toHaveValue('Revised request'); await input.fill('Discarded edit'); await page.getByRole('button', { name: 'Cancel edit', exact: true }).click(); await expect(input).toHaveValue('Next unsent idea'); expect((await app.state()).tasks[0].snapshot.userRequest.text).toBe('Revised request');
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' }); await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click(); await first.locator('.queue-task').click(); await expect(first.locator('.motion-disclosure')).toHaveAttribute('data-motion', 'open'); expect(await first.locator('.motion-disclosure').evaluate(element => getComputedStyle(element).transitionDuration)).toBe('0s'); await first.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(first.locator('.motion-disclosure')).toHaveCount(0); await page.screenshot({ path: info.outputPath('spring-queue-dark-reduced.png') });
 });
@@ -1489,7 +1496,7 @@ test('request details group each annotation once with all snapshot targets in on
   await groups.first().getByRole('button', { name: `View ${initial.assets.find(asset => asset.id === objects[0].assetId)!.name}`, exact: true }).click(); await expect(details.getByRole('region', { name: /^Preview Reference/ })).toBeVisible();
   expect((await app.state()).tasks[0].snapshot).toEqual(task.task.snapshot);
   const badge = groups.nth(1).getByRole('button', { name: 'View annotation 2: g', exact: true }); await badge.focus(); await badge.press('Enter'); await expect(badge).toBeFocused(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(1);
-  await page.getByRole('button', { name: 'Request history', exact: true }).click();
+  await composerAction(page, 'Request history');
   const historyGroups = page.getByRole('region', { name: 'Request history', exact: true }).locator('.task-reference-group[data-annotation-id]');
   await expect(historyGroups).toHaveCount(3);
   for (const group of await historyGroups.all()) {
@@ -1621,19 +1628,19 @@ test('short feedback stays quiet and only overlaps during rapid actions', async 
   await open(page, app); await page.clock.install();
   await expect(page.locator('.canvas-world')).toBeEmpty(); await expect(page.locator('.canvas-empty')).toHaveCount(0);
   await page.screenshot({ path: '/tmp/acanvas-blank-canvas.png' });
-  const copy = page.getByRole('button', { name: 'Copy resume prompt', exact: true });
+  const copy = () => composerAction(page, 'Copy resume prompt');
   const stack = page.locator('.notification-stack'), transient = page.locator('.notification-transients');
-  await copy.click(); await expect(transient).toHaveAttribute('data-count', '1'); await page.clock.runFor(1000);
-  await copy.click(); await expect(transient).toHaveAttribute('data-count', '2'); await expect(page.locator('.notification-peeks>span')).toHaveCount(1);
-  await expect(copy).toBeFocused(); await expect(stack.locator('button')).toHaveCount(0); expect(await stack.getAttribute('tabindex')).toBeNull();
+  await copy(); await expect(transient).toHaveAttribute('data-count', '1'); await page.clock.runFor(1000);
+  await copy(); await expect(transient).toHaveAttribute('data-count', '2'); await expect(page.locator('.notification-peeks>span')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'More request actions', exact: true })).toBeFocused(); await expect(stack.locator('button')).toHaveCount(0); expect(await stack.getAttribute('tabindex')).toBeNull();
   await page.clock.runFor(1800); await expect(transient).toHaveAttribute('data-count', '1'); await expect(page.locator('.notification-peeks')).toHaveCount(0);
   await page.clock.runFor(1000); await expect(stack).toBeHidden();
-  for (let index = 0; index < 2; index++) { await copy.click(); await expect(transient).toHaveAttribute('data-count', '1'); await page.clock.runFor(2800); await expect(stack).toBeHidden(); }
+  for (let index = 0; index < 2; index++) { await copy(); await expect(transient).toHaveAttribute('data-count', '1'); await page.clock.runFor(2800); await expect(stack).toBeHidden(); }
   for (const width of [1440, 390, 320]) for (const theme of ['light', 'dark']) {
     await page.setViewportSize({ width, height: width === 1440 ? 1000 : 480 });
     if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
     await page.emulateMedia({ reducedMotion: width === 320 ? 'reduce' : 'no-preference' });
-    for (let index = 0; index < 7; index++) await copy.click();
+    for (let index = 0; index < 7; index++) await copy();
     await expect(transient).toHaveAttribute('data-count', '5'); await expect(page.locator('.notification-peeks>span')).toHaveCount(2); await expect(page.locator('.toast')).toHaveCount(1);
     const geometry = () => stack.evaluate(element => { const bounds = element.getBoundingClientRect(), controls = Array.from(document.querySelectorAll('.creation-dock,.queue-stack,.queue-expand')).map(control => control.getBoundingClientRect()); return { right: innerWidth - bounds.right, clear: controls.every(control => bounds.left >= control.right + 12 || bounds.right <= control.left - 12 || bounds.bottom <= control.top - 11.9), inViewport: bounds.top >= 15.9 && bounds.bottom <= innerHeight - 15.9 }; });
     await page.clock.runFor(200); await expect.poll(geometry).toEqual({ right: 16, clear: true, inViewport: true });
@@ -1659,7 +1666,7 @@ test('ordinary errors expire and repeated identical failures show again while ac
   try {
     await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'Active upload.txt', mimeType: 'text/plain', buffer: Buffer.from('isolated active upload') });
     const cancel = page.getByRole('button', { name: 'Cancel import Active upload.txt', exact: true }); await expect(cancel).toBeVisible(); await cancel.focus();
-    await page.getByRole('button', { name: 'Copy resume prompt', exact: true }).evaluate(button => (button as HTMLButtonElement).click());
+    await composerAction(page, 'Copy resume prompt'); await cancel.focus();
     await expect(page.locator('.notification-transients')).toHaveAttribute('data-count', '1'); await expect(page.locator('.notification-peeks')).toHaveCount(0); await expect(cancel).toBeFocused();
     await page.clock.runFor(2800); await expect(page.locator('.notification-transients')).toHaveCount(0); await expect(cancel).toBeVisible(); await expect(cancel).toBeFocused();
     await page.screenshot({ path: '/tmp/acanvas-active-upload-separate.png' });
@@ -1774,78 +1781,79 @@ test('inline queue references move below the instruction and expose every thumbn
   await writeFile(info.outputPath('inline-reference-geometry.json'), JSON.stringify(geometry, null, 2));
 });
 
-test('compact composer shares its animated width with footer controls and exposes the surrounding canvas', async ({ page, app }, info) => {
-  await page.addInitScript(() => { Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('Clipboard fixture'); } } }); });
-  await page.emulateMedia({ reducedMotion: 'no-preference' }); await open(page, app);
-  const composer = page.locator('.composer'), shell = page.locator('.composer-shell'), input = page.locator('#instruction');
-  const history = page.getByRole('button', { name: 'Request history', exact: true }), copy = page.getByRole('button', { name: 'Copy resume prompt', exact: true });
-  const metrics = () => page.evaluate(() => {
-    const form = document.querySelector('.composer')!.getBoundingClientRect(), shell = document.querySelector('.composer-shell')!.getBoundingClientRect(), footer = document.querySelector('.dock-footer')!.getBoundingClientRect();
-    const buttons = Array.from(document.querySelectorAll('.dock-footer button')).map(button => button.getBoundingClientRect());
-    return { form: { x: form.x, y: form.y, width: form.width, height: form.height }, shellWidth: shell.width, footerWidth: footer.width, buttonOffsets: buttons.map(button => button.left - form.left) };
+
+test('composer More menu preserves compact layout, real click targets, keyboard focus and canvas access', async ({ page, app }, info) => {
+  await page.addInitScript(() => {
+    (window as any).clipboardCalls = 0;
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { (window as any).clipboardCalls++; throw new Error('Clipboard fixture'); } } });
   });
-  const startSamples = () => page.evaluate(() => {
-    (window as any).composerMotionSamples = new Promise(resolve => { const samples: number[][] = [], start = performance.now(); const sample = () => {
-      const form = document.querySelector('.composer')!.getBoundingClientRect(), footer = document.querySelector('.dock-footer')!.getBoundingClientRect();
-      samples.push([form.width, footer.width, ...Array.from(document.querySelectorAll('.dock-footer button')).map(button => button.getBoundingClientRect().left - form.left)]);
-      if (performance.now() - start < 600) requestAnimationFrame(sample); else resolve(samples);
-    }; requestAnimationFrame(sample); });
-  });
-  const readSamples = async () => {
-    const samples = await page.evaluate(() => (window as any).composerMotionSamples) as number[][];
-    expect(samples.length).toBeGreaterThan(5);
-    for (const [form, footer, historyOffset, copyOffset] of samples) { expect(Math.abs(form - footer)).toBeLessThan(.05); expect(historyOffset).toBeCloseTo(10, 1); expect(copyOffset).toBeCloseTo(44, 1); }
-    return samples;
-  };
-  const animationResults = [];
-  await expect.poll(async () => (await metrics()).form.width).toBe(280);
-  await startSamples(); await input.focus(); animationResults.push({ transition: 'expand', samples: await readSamples() });
-  await expect.poll(async () => (await metrics()).form.width).toBe(720);
-  await startSamples(); await page.locator('#whiteboard').focus(); animationResults.push({ transition: 'collapse', samples: await readSamples() });
-  await expect.poll(async () => (await metrics()).form.width).toBe(280);
-  const measurements = [];
+  await open(page, app);
+  const form = page.locator('.composer'), input = page.locator('#instruction'), more = page.getByRole('button', { name: 'More request actions', exact: true }), menu = page.getByRole('menu', { name: 'Request actions' });
+  await expect(page.locator('.dock-footer')).toHaveCount(0);
+  const measures = [];
   for (const theme of ['light', 'dark'] as const) {
-    await page.evaluate(theme => { document.documentElement.dataset.theme = theme; localStorage.setItem('acanvas-theme', theme); }, theme);
+    if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
     for (const width of [1440, 390, 320]) {
-      await page.setViewportSize({ width, height: width === 1440 ? 1000 : 844 });
-      const compactWidth = width === 320 ? 224 : 280;
-      await expect.poll(async () => (await metrics()).form.width).toBe(compactWidth);
-      await expect(input).toHaveAttribute('placeholder', 'Create something…');
-      const measured = await metrics(); expect(measured.form.height).toBe(52); expect(measured.buttonOffsets).toEqual([10, 44]);
-      const passthrough = await page.evaluate(() => {
-        const dock = document.querySelector('.creation-dock')!.getBoundingClientRect(), form = document.querySelector('.composer')!.getBoundingClientRect();
-        const point = { x: dock.left + 8, y: form.top + form.height / 2 }, hit = document.elementFromPoint(point.x, point.y);
-        return { ...point, canvas: !!hit?.closest('#whiteboard'), dock: !!hit?.closest('.creation-dock') };
-      });
-      expect(passthrough).toMatchObject({ canvas: true, dock: false });
-      await page.mouse.click(passthrough.x, passthrough.y); await expect(input).not.toBeFocused();
-      measurements.push({ theme, viewport: width, ...measured, passthrough });
-      await page.screenshot({ path: info.outputPath(`compact-composer-${theme}-${width}.png`) });
-      await input.focus(); await expect(composer).toHaveAttribute('data-compact', 'false'); await expect(input).toHaveAttribute('placeholder', 'What would you like to create?');
-      await expect.poll(async () => (await metrics()).form.width).toBe(width === 1440 ? 720 : width - 32);
-      await page.locator('#whiteboard').focus(); await expect.poll(async () => (await metrics()).form.width).toBe(compactWidth);
+      await page.setViewportSize({ width, height: width === 1440 ? 1000 : 480 });
+      const compactWidth = width === 320 ? 224 : 280, expandedWidth = width === 1440 ? 720 : width - 32;
+      await page.locator('#whiteboard').focus(); await expect.poll(async () => (await form.boundingBox())!.width).toBe(compactWidth);
+      await expect(input).toHaveAttribute('placeholder', 'Create…'); expect((await form.boundingBox())!.height).toBe(52);
+      for (const expanded of [false, true]) {
+        if (expanded) await input.focus();
+        await expect.poll(async () => (await form.boundingBox())!.width).toBe(expanded ? expandedWidth : compactWidth);
+        await more.click({ delay: 120 }); await expect(menu).toBeVisible();
+        expect((await form.boundingBox())!.width).toBe(expanded ? expandedWidth : compactWidth);
+        const bounds = (await menu.boundingBox())!, tools = (await page.locator('.canvas-toolbar').boundingBox())!;
+        expect(bounds.x).toBeGreaterThanOrEqual(16); expect(bounds.x + bounds.width).toBeLessThanOrEqual(width - 16); expect(bounds.y).toBeGreaterThanOrEqual(0);
+        expect(bounds.x >= tools.x + tools.width || bounds.y + bounds.height <= tools.y || bounds.y >= tools.y + tools.height).toBe(true);
+        await page.getByRole('menuitem', { name: 'Request history', exact: true }).click({ delay: 120 });
+        await expect(page.getByRole('region', { name: 'Request history', exact: true })).toBeVisible(); await expect(menu).toHaveCount(0); await expect(more).toBeFocused();
+        await page.getByRole('button', { name: 'Close request history', exact: true }).click(); await expect(more).toBeFocused();
+        if (expanded) await input.focus(); else await page.locator('#whiteboard').focus();
+        await expect.poll(async () => (await form.boundingBox())!.width).toBe(expanded ? expandedWidth : compactWidth);
+        const beforeCopies = await page.evaluate(() => (window as any).clipboardCalls);
+        await more.click({ delay: 120 }); await page.getByRole('menuitem', { name: 'Copy resume prompt', exact: true }).click({ delay: 120 });
+        await expect(page.getByRole('region', { name: 'Resume prompt', exact: true })).toBeVisible(); await expect(more).toBeFocused();
+        expect(await page.evaluate(() => (window as any).clipboardCalls)).toBe(beforeCopies + 1);
+        await page.getByRole('button', { name: 'Close resume prompt', exact: true }).click(); await expect(more).toBeFocused();
+      }
+      await page.locator('#whiteboard').focus(); await expect.poll(async () => (await form.boundingBox())!.width).toBe(compactWidth);
+      await more.click(); await page.screenshot({ path: info.outputPath(`composer-menu-${theme}-${width}.png`) });
+      measures.push({ theme, width, compactWidth, menu: await menu.boundingBox() });
+      await page.keyboard.press('Escape'); await expect(menu).toHaveCount(0); await expect(more).toBeFocused();
+      const point = await page.locator('.creation-dock').evaluate(element => { const dock = element.getBoundingClientRect(), form = element.querySelector('.composer')!.getBoundingClientRect(); return { x: dock.left + 8, y: form.top + form.height / 2 }; });
+      expect(await page.evaluate(point => !!document.elementFromPoint(point.x, point.y)?.closest('#whiteboard'), point)).toBe(true);
     }
   }
-  for (const expanded of [false, true]) {
-    if (expanded) await input.focus(); else await page.locator('#whiteboard').focus();
-    await expect.poll(async () => (await metrics()).form.width).toBe(expanded ? 288 : 224);
-    await history.click({ delay: 120 }); await expect(page.getByRole('region', { name: 'Request history', exact: true })).toBeVisible();
-    expect((await metrics()).form.width).toBe(expanded ? 288 : 224);
-    await page.getByRole('button', { name: 'Close request history', exact: true }).click();
-    if (expanded) await input.focus(); else await page.locator('#whiteboard').focus();
-    await expect.poll(async () => (await metrics()).form.width).toBe(expanded ? 288 : 224);
-    await copy.click({ delay: 120 }); await expect(page.getByRole('region', { name: 'Resume prompt', exact: true })).toBeVisible();
-    expect((await metrics()).form.width).toBe(expanded ? 288 : 224);
-    await page.getByRole('button', { name: 'Close resume prompt', exact: true }).click();
-  }
-  await history.focus(); await page.keyboard.press('Enter'); await expect(page.getByRole('region', { name: 'Request history', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Close request history', exact: true }).click(); await expect(history).toBeFocused();
-  await copy.focus(); await page.keyboard.press('Enter'); await expect(page.getByRole('region', { name: 'Resume prompt', exact: true })).toBeVisible();
-  await expect(page.getByRole('textbox', { name: 'Resume prompt text', exact: true })).not.toHaveValue('');
+  await more.focus(); await more.press('ArrowUp'); await expect(page.getByRole('menuitem', { name: 'Copy resume prompt' })).toBeFocused();
+  await page.keyboard.press('Home'); await expect(page.getByRole('menuitem', { name: 'Request history' })).toBeFocused();
+  await page.keyboard.press('ArrowUp'); await expect(page.getByRole('menuitem', { name: 'Copy resume prompt' })).toBeFocused();
+  await page.keyboard.press('ArrowDown'); await expect(page.getByRole('menuitem', { name: 'Request history' })).toBeFocused();
+  await page.keyboard.press('End'); await expect(page.getByRole('menuitem', { name: 'Copy resume prompt' })).toBeFocused();
+  await page.keyboard.press('Escape'); await expect(menu).toHaveCount(0); await expect(more).toBeFocused(); await expect(form).toHaveAttribute('data-compact', 'true');
+  await more.press(' '); await expect(menu).toBeVisible(); await input.click(); await expect(menu).toHaveCount(0); await expect(input).toBeFocused();
+  await input.fill('Keep this draft.'); await expect(form).toHaveAttribute('data-save-state', 'saved');
+  await more.click(); await page.getByRole('button', { name: 'Switch to light theme', exact: true }).click(); await expect(menu).toHaveCount(0); await expect(page.getByRole('button', { name: 'Switch to dark theme', exact: true })).toBeFocused();
+  await more.focus(); await more.press('Enter'); await page.keyboard.press('End'); await page.keyboard.press('Enter');
+  await expect(page.getByRole('region', { name: 'Resume prompt', exact: true })).toBeVisible(); await expect(input).toHaveValue('Keep this draft.'); expect((await app.state()).tasks).toHaveLength(0);
   await page.getByRole('button', { name: 'Close resume prompt', exact: true }).click();
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  expect(await shell.evaluate(element => getComputedStyle(element).transitionDuration)).toBe('0s');
-  await input.focus(); expect((await metrics()).form.width).toBe(288);
-  await input.fill('Keep this draft.'); await page.locator('#whiteboard').focus(); await expect(composer).toHaveAttribute('data-compact', 'false'); expect((await metrics()).form.width).toBe(288);
-  await writeFile(info.outputPath('compact-composer-measurements.json'), JSON.stringify({ measurements, animationResults }, null, 2));
+  await page.evaluate(() => { Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: async () => undefined }); });
+  await composerAction(page, 'Copy resume prompt'); await expect(page.locator('.notification-stack')).toBeVisible(); await more.click();
+  await expect.poll(async () => page.locator('.notification-stack').evaluate(element => { const notice = element.getBoundingClientRect(), menu = document.querySelector('.composer-menu')!.getBoundingClientRect(); return notice.right <= menu.left || notice.left >= menu.right || notice.bottom <= menu.top || notice.top >= menu.bottom; })).toBe(true);
+  await writeFile(info.outputPath('composer-menu-measurements.json'), JSON.stringify(measures, null, 2));
+});
+
+test.describe('composer menu touch', () => {
+  test.use({ hasTouch: true });
+  test('compact menu actions work by touch without submitting a request', async ({ page, app }) => {
+    await page.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('Clipboard fixture'); } } }));
+    await page.setViewportSize({ width: 320, height: 480 }); await open(page, app);
+    const more = page.getByRole('button', { name: 'More request actions', exact: true });
+    await more.tap(); await page.getByRole('menuitem', { name: 'Request history', exact: true }).tap();
+    await expect(page.getByRole('region', { name: 'Request history', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Close request history', exact: true }).tap();
+    await more.tap(); await page.getByRole('menuitem', { name: 'Copy resume prompt', exact: true }).tap();
+    await expect(page.getByRole('region', { name: 'Resume prompt', exact: true })).toBeVisible();
+    await expect(page.locator('.composer')).toHaveAttribute('data-compact', 'true'); expect((await app.state()).tasks).toHaveLength(0);
+  });
 });

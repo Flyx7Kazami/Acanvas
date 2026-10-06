@@ -336,7 +336,7 @@ test('running and history annotations render real text without writes and seek v
   await video.evaluate(element => { (element as HTMLVideoElement).currentTime = 1.5; }); await expect(video).toHaveJSProperty('currentTime', 1.5);
   await app.call(`/api/sessions/${initial.session.id}/tasks/${claim.task!.id}/complete`, 'POST', { runId: claim.run!.id, consumerId: claim.consumerId, summary: 'Frame direction retained.', assetIds: [], validation: [], operations: [] });
   await expect(page.locator('.queue-item')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Request history', exact: true }).click();
+  await page.getByRole('button', { name: 'More request actions', exact: true }).click(); await page.getByRole('menuitem', { name: 'Request history', exact: true }).click();
   await page.getByRole('region', { name: 'Request history', exact: true }).locator('.task-annotation-text').first().click();
   await expect(full(page)).toHaveAttribute('data-comment-mode', 'view'); await expect(full(page).locator('textarea')).toHaveCount(0);
   await expect(full(page).locator('.annotation-fulltext')).toHaveText(note.text); await expect(page.getByRole('button', { name: 'Done', exact: true })).toHaveCount(0);

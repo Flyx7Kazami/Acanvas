@@ -124,11 +124,8 @@ h1,h2,h3,p { margin: 0; }
 .queue-stack.expanded .queue-expand svg { rotate: 180deg; }
 .queue-expand svg { transition: rotate 180ms var(--ease); }
 .creation-dock > * { pointer-events: auto; }
-.composer-shell { width: 100%; margin-inline: auto; transition: width 420ms cubic-bezier(.2,.8,.25,1.16); }
+.composer-shell { position: relative; z-index: 2; width: 100%; margin-inline: auto; transition: width 420ms cubic-bezier(.2,.8,.25,1.16); }
 .composer-shell[data-compact='true'] { width: min(280px,calc(100% - 64px)); }
-.dock-footer { display: flex; align-items: center; justify-content: flex-start; gap: 6px; padding: 7px 10px 0; }
-.dock-footer .icon-button { width: 28px; height: 28px; flex-basis: 28px; padding: 6px; background: var(--surface); border: 1px solid color-mix(in srgb,var(--edge) 55%,transparent); box-shadow: var(--shadow); }
-.dock-footer .icon-button:hover { background: var(--hover); color: var(--ink); }
 .task-card { border-bottom: 1px solid color-mix(in srgb,var(--edge) 60%,transparent); padding: 17px 5px 20px; }
 .task-card:first-child { padding-top: 14px; }
 .task-card.queue-card { margin: 8px 0 12px; padding: 15px 13px; border: 0; background: var(--canvas); border-radius: 14px; }
@@ -164,7 +161,7 @@ details[open] summary svg { rotate: 180deg; }
 .task-detail-content>time { display: block; margin-top: 12px; color: var(--muted); font-size: 8px; }
 .composer { display: flex; flex-direction: column; height: 52px; min-height: 52px; overflow: hidden; background: var(--surface); border: 1px solid color-mix(in srgb,var(--edge) 85%,transparent); border-radius: 26px; padding: 9px 9px 9px 16px; position: relative; box-shadow: var(--float-shadow); width: 100%; transition: height 180ms var(--ease); }
 .composer:has(.draft-attachments) { padding-top: 10px; }
-.composer-input-row { display: flex; flex: 0 0 auto; align-items: flex-end; gap: 12px; min-width: 0; }
+.composer-input-row { display: flex; flex: 0 0 auto; align-items: flex-end; gap: 8px; min-width: 0; }
 .composer-input-row>textarea,.composer-input-row>textarea:focus,.composer-input-row>textarea:focus-visible { flex: 1; min-width: 0; width: 100%; resize: none; height: 24px; min-height: 24px; overflow: hidden; scrollbar-width: thin; font-size: 15px; line-height: 24px; padding: 0; margin: 4px 0; background: transparent; border: 0; border-radius: 0; outline: 0; box-shadow: none; caret-color: var(--ink); display: block; }
 .composer-input-row>textarea::placeholder { color: var(--muted); }
 .send-button { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--on-accent); }
@@ -341,3 +338,11 @@ details[open] summary svg { rotate: 180deg; }
 
 .board-object[data-content-kind='audio'] { border-radius:22px; outline:0; }
 .board-object[data-content-kind='audio'].selected { outline:2px solid var(--ink); }
+
+.composer-more { display: flex; align-items: center; justify-content: center; flex: 0 0 28px; width: 28px; height: 32px; padding: 6px; color: var(--muted); background: transparent; border-radius: 8px; }
+.composer-more:hover,.composer-more[aria-expanded='true'] { color: var(--ink); background: var(--hover); }
+.composer-menu { position: absolute; z-index: 5; bottom: calc(100% + 8px); left: max(8px,calc(var(--tool-clearance) - (var(--dock-width) - 100%) / 2)); width: 210px; padding: 5px; background: var(--surface); border: 1px solid var(--edge); border-radius: 12px; box-shadow: var(--float-shadow); }
+.composer-menu>[role='menuitem'] { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 36px; padding: 8px 10px; border-radius: 7px; font-size: 12px; text-align: left; background: transparent; }
+.composer-menu>[role='menuitem']:hover { background: var(--hover); }
+.composer-menu svg { flex-shrink: 0; color: var(--muted); }
+@media(pointer:coarse) { .composer-more { flex-basis: 40px; width: 40px; margin-block: -6px; height: 44px; } .composer-menu>[role='menuitem'] { min-height: 44px; } }

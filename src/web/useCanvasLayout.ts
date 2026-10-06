@@ -12,7 +12,7 @@ export function useNotificationLayout(dock: ElementRef, notifications: ElementRe
     let pointerInside = false, visible = false;
     const observer = new ResizeObserver(() => layout());
     const layout = (resizing = false) => {
-      const controls = dock.current ? [dock.current, ...dock.current.querySelectorAll<HTMLElement>('.queue-stack,.queue-expand')] : [];
+      const controls = dock.current ? [dock.current, ...dock.current.querySelectorAll<HTMLElement>('.queue-stack,.queue-expand,.composer-menu')] : [];
       controls.forEach(control => { if (!observed.has(control)) { observer.observe(control); observed.add(control); } });
       const showing = stack.getClientRects().length > 0, appeared = showing && !visible;
       visible = showing;
@@ -88,7 +88,7 @@ export function useContextualControls(canvas: ElementRef, actions: ElementRef, p
     const board = canvas.current, actionBar = actions.current, videoBar = playback.current;
     const dock = document.querySelector<HTMLElement>('.creation-dock');
     if (!board || (!actionBar && !videoBar) || !selected.length) { dock?.style.removeProperty('--queue-context-limit'); return; }
-    const persistent = [...document.querySelectorAll<HTMLElement>('.project-identity,.canvas-actions,.canvas-toolbar,.composer,.dock-footer,.draft-attachments,.draft-conflict,.inline-resume,.unavailable-comments,.queue-stack,.annotation-pin,.canvas-annotation-note')];
+    const persistent = [...document.querySelectorAll<HTMLElement>('.project-identity,.canvas-actions,.canvas-toolbar,.composer,.composer-menu,.draft-attachments,.draft-conflict,.inline-resume,.unavailable-comments,.queue-stack,.annotation-pin,.canvas-annotation-note')];
     const layout = () => {
       const bounds = board.getBoundingClientRect();
       const viewport = { x: 0, y: 0, width: bounds.width, height: bounds.height };
