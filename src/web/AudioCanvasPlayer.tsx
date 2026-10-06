@@ -54,7 +54,7 @@ export function AudioCanvasPlayer({ src, title, assetId, disabled = false, onEle
       if (disabled || !playback.ready) return; const time = audio.current?.currentTime || 0;
       const target = { Home: 0, End: playback.duration, ArrowLeft: time - .1, ArrowRight: time + .1, ArrowDown: time - 1, ArrowUp: time + 1, PageDown: time - 12, PageUp: time + 12 }[event.key];
       if (target !== undefined) { event.preventDefault(); event.stopPropagation(); playback.seek(target); }
-    }}><canvas ref={wave} aria-hidden="true"/>{playback.waveformStatus && <span className="audio-wave-status">{playback.waveformStatus}</span>}</div>
+    }}><canvas ref={wave} aria-hidden="true"/>{playback.waveformStatus && <span className={playback.waveformStatus === 'Loading waveform…' ? 'sr-only' : 'audio-wave-status'} role="status">{playback.waveformStatus}</span>}</div>
     <div className="audio-player-clock"><span ref={current}>0:00</span><span className="audio-player-total" aria-hidden="true"> / <span ref={total}>0:00</span></span></div>
     </div></div>
     {playback.failed && <div className="audio-player-error" data-canvas-control role="status"><span>Audio could not be played.</span><a href={src} download={title}><Download size={12}/>Download</a></div>}

@@ -25,9 +25,9 @@ export function useAudioWaveform(audio: RefObject<HTMLAudioElement | null>, disp
       if (context && width && height) {
         const style = getComputedStyle(canvas!), played = style.getPropertyValue('--audio-wave-played').trim(), unplayed = style.getPropertyValue('--audio-wave').trim(), surface = style.getPropertyValue('--audio-surface').trim();
         context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, width, height);
+        const position = duration ? clamp(time / duration, 0, 1) * width : 0;
         if (peaks) {
           const count = Math.max(1, Math.floor(width / 5)), step = width / count;
-          const position = duration ? clamp(time / duration, 0, 1) * width : 0;
           const bars = new Path2D();
           for (let bar = 0; bar < count; bar++) {
             const start = Math.floor(bar * peaks.length / count), end = Math.max(start + 1, Math.floor((bar + 1) * peaks.length / count)); let square = 0;
@@ -38,10 +38,16 @@ export function useAudioWaveform(audio: RefObject<HTMLAudioElement | null>, disp
           context.fillStyle = unplayed; context.fill(bars);
           if (duration) {
             context.save(); context.beginPath(); context.rect(0, 0, position, height); context.clip(); context.fillStyle = played; context.fill(bars); context.restore();
-            const cursor = clamp(Math.floor(position), 0, width - 1);
-            context.fillStyle = surface; context.fillRect(cursor - 1, 0, 3, height);
-            context.fillStyle = played; context.fillRect(cursor, 0, 1, height);
           }
+        } else {
+          const lineY = Math.floor((height - 2) / 2);
+          context.fillStyle = unplayed; context.fillRect(0, lineY, width, 2);
+          if (duration) { context.fillStyle = played; context.fillRect(0, lineY, position, 2); }
+        }
+        if (duration) {
+          const cursor = clamp(Math.floor(position), 0, width - 1);
+          context.fillStyle = surface; context.fillRect(cursor - 1, 0, 3, height);
+          context.fillStyle = played; context.fillRect(cursor, 0, 1, height);
         }
       }
       canvas!.dataset.ready = String(!!peaks); canvas!.dataset.progress = String(duration ? time / duration : 0);
