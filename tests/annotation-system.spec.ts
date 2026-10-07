@@ -442,16 +442,18 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   await expect(start).toHaveAttribute('aria-valuenow', '0'); await expect(end).toHaveAttribute('aria-valuenow', String(duration));
   const fullBounds = await page.evaluate(() => {
     const rect = (selector: string) => (document.querySelector(selector) as HTMLElement).getBoundingClientRect();
-    const track = rect('.annotation-range-track'), timeline = rect('.annotation-range-timeline'), selection = rect('.annotation-range-selection');
+    const card = rect('.annotation-full'), track = rect('.annotation-range-track'), selection = rect('.annotation-range-selection');
     const start = rect('.annotation-range-handle.start'), end = rect('.annotation-range-handle.end');
-    return { trackLeft: track.left, trackRight: track.right, timelineLeft: timeline.left, timelineRight: timeline.right, selectionLeft: selection.left, selectionRight: selection.right, startLeft: start.left, startRight: start.right, endLeft: end.left, endRight: end.right };
+    const hit = (x: number, y: number) => document.elementFromPoint(x, y)?.closest('[data-range-handle]')?.getAttribute('data-range-handle');
+    return { cardLeft: card.left, cardRight: card.right, trackLeft: track.left, trackRight: track.right, selectionLeft: selection.left, selectionRight: selection.right, startLeft: start.left, startRight: start.right, endLeft: end.left, endRight: end.right, startHit: hit(start.left + 1, start.top + start.height / 2), endHit: hit(end.right - 1, end.top + end.height / 2) };
   });
-  expect(fullBounds.selectionLeft).toBeCloseTo(fullBounds.timelineLeft - 8, 1);
-  expect(fullBounds.selectionRight).toBeCloseTo(fullBounds.timelineRight + 8, 1);
-  expect(fullBounds.startLeft).toBeGreaterThanOrEqual(fullBounds.trackLeft);
-  expect(fullBounds.endRight).toBeLessThanOrEqual(fullBounds.trackRight);
-  expect(fullBounds.startRight).toBeLessThanOrEqual(fullBounds.timelineLeft);
-  expect(fullBounds.endLeft).toBeGreaterThanOrEqual(fullBounds.timelineRight);
+  expect(fullBounds.selectionLeft).toBeCloseTo(fullBounds.trackLeft - 8, 1);
+  expect(fullBounds.selectionRight).toBeCloseTo(fullBounds.trackRight + 8, 1);
+  expect(fullBounds.startLeft).toBeGreaterThanOrEqual(fullBounds.cardLeft);
+  expect(fullBounds.endRight).toBeLessThanOrEqual(fullBounds.cardRight);
+  expect(fullBounds.startRight).toBeCloseTo(fullBounds.trackLeft + 4, 1);
+  expect(fullBounds.endLeft).toBeCloseTo(fullBounds.trackRight - 4, 1);
+  expect(fullBounds.startHit).toBe('start'); expect(fullBounds.endHit).toBe('end');
 
   // Each grip is a dark slot set into a light side rail of the single selection rectangle.
   const surface = () => page.evaluate(() => {
@@ -460,11 +462,11 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
     const notch = document.querySelector('.annotation-range-handle span') as HTMLElement;
     const rect = notch.getBoundingClientRect();
     const shade = (value: string) => value.match(/\d+/g)!.slice(0, 3).reduce((sum, part) => sum + Number(part), 0) / 3;
-    const style = getComputedStyle(box);
-    const alpha = Number((style.backgroundColor.match(/[\d.]+\s*\)$/) || ['1)'])[0].replace(')', '')) || 1;
+    const style = getComputedStyle(box), shadeStyle = getComputedStyle(document.querySelector('.annotation-range-shade') as HTMLElement);
+    const alpha = Number((shadeStyle.backgroundColor.match(/[\d.]+\s*\)$/) || ['1)'])[0].replace(')', '')) || 1;
     const railStyle = getComputedStyle(rail), notchStyle = getComputedStyle(notch);
     const hit = notch.parentElement!.getBoundingClientRect();
-    return { fill: style.backgroundColor, borderWidth: style.borderTopWidth, shadow: style.boxShadow, fillAlpha: alpha, insideShade: shade(style.backgroundColor), rail: railStyle.backgroundColor, railWidth: rail.getBoundingClientRect().width, railShade: shade(railStyle.backgroundColor), notch: notchStyle.backgroundColor, width: rect.width, height: rect.height, hitWidth: hit.width, hitHeight: hit.height, notchShade: shade(notchStyle.backgroundColor) };
+    return { fill: shadeStyle.backgroundColor, borderWidth: style.borderTopWidth, shadow: shadeStyle.boxShadow, fillAlpha: alpha, insideShade: shade(shadeStyle.backgroundColor), rail: railStyle.backgroundColor, railWidth: rail.getBoundingClientRect().width, railShade: shade(railStyle.backgroundColor), notch: notchStyle.backgroundColor, width: rect.width, height: rect.height, hitWidth: hit.width, hitHeight: hit.height, notchShade: shade(notchStyle.backgroundColor) };
   });
   const light = await surface();
   // One rectangle: a light rail on each side of it, with a dark grip set into each rail.
@@ -506,7 +508,7 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
       track: box('.annotation-range-track'), selection: box('.annotation-range-selection'),
       grips: Array.from(document.querySelectorAll('.annotation-range-handle span')).map(element => { const rect = element.getBoundingClientRect(); return { left: Math.round(rect.left), right: Math.round(rect.right) }; }),
       rail: Math.round((document.querySelector('.annotation-range-rail') as HTMLElement).getBoundingClientRect().width),
-      shadow: getComputedStyle(document.querySelector('.annotation-range-selection') as HTMLElement).boxShadow,
+      shadow: getComputedStyle(document.querySelector('.annotation-range-shade') as HTMLElement).boxShadow,
     };
   });
   expect(await page.locator('.annotation-range-outside').count()).toBe(0);

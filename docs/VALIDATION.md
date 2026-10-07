@@ -645,6 +645,12 @@ HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统�
 
 证据：[历史下角](evidence/history-toast-corners/history-empty-light.png)、[正常宽度固定角落](evidence/history-toast-corners/copy-corner-712-light.png)、[窄屏省略](evidence/history-toast-corners/copy-ellipsis-320-light.png)、[布局测量](evidence/history-toast-corners/placement.json)。
 
+## 2026-10-07 · 满幅时间内容与内边距握柄
+
+- 可见音视频时间内容占满原轨道，0 秒与结束对应轨道左右边界。`.annotation-range-viewport` 裁切波形、视频帧及同几何遮罩；白框和两只握柄在独立上层，可伸进卡片现有内边距，遮罩不会盖到卡片其他区域。可见柄仍各在时间线外侧，单时点两柄相贴。极值处将透明 24px 命中框向内偏 4px，深色槽反向补偿并保持白轨居中；卡片和轨道宽度、水平内边距均未改变。
+- `npm run typecheck`、`npm run build` 通过；隔离 Chrome 视频、音频、320px 触屏/视口变化定向 3/3 通过。浏览器 DOM 几何验证全幅选区左右边在轨道外各 8px、完整 24px 端点命中框均位于卡片内；`elementFromPoint` 在两个命中框外缘分别返回正确的起点/终点按钮。覆盖普通、短、单时点、两端拖动、键盘、草稿恢复与节选试听。测试使用独立临时项目，用户画板未写入。本轮用户免独立审查。
+- 截图：[全幅视频浅色](evidence/media-annotation-range/selection-full-track-video-full-light.png)、[深色](evidence/media-annotation-range/selection-full-track-video-full-dark.png)、[全幅音频320浅色](evidence/media-annotation-range/selection-full-track-audio-full-320-light.png)、[深色](evidence/media-annotation-range/selection-full-track-audio-full-320-dark.png)、[局部音频浅色](evidence/media-annotation-range/selection-full-track-audio-range-light.png)、[深色](evidence/media-annotation-range/selection-full-track-audio-range-dark.png)、[单时点浅色](evidence/media-annotation-range/selection-full-track-audio-point-light.png)、[深色](evidence/media-annotation-range/selection-full-track-audio-point-dark.png)、[视频短区间浅色](evidence/media-annotation-range/selection-full-track-video-short-light.png)、[深色](evidence/media-annotation-range/selection-full-track-video-short-dark.png)。全幅截图中素材从轨道左端持续到右端，无额外灰色尾段。
+
 ## 2026-10-07 · 两端握柄持续可见与时间内容独立几何
 
 - 轨道内时间内容轴左右各预留 24px。白色端柄各占时间线外侧 8px，24px 透明命中区分别位于起点线左侧和终点线右侧；全幅选择的首尾命中区完整落在轨道内。选区外轮廓宽度恒等于时间内容像素宽加 16px，单时点两柄相贴且内容宽度为 0，短区间继续显示两柄与内部波形。去掉依选区像素宽隐藏握柄的分支，遮罩继续与白框共享圆角边界。点击和框选时间按内侧时间轴换算。
