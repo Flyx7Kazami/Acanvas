@@ -106,6 +106,13 @@ async function select(page: Page, object: BoardObject) {
   await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();
 }
 
+async function chooseVideoPoint(page: Page, seconds: number) {
+  await expect(page.locator('.annotation-time-range')).toHaveAttribute('data-ready', 'true');
+  const duration = await page.locator('.object-video video').evaluate(element => (element as HTMLVideoElement).duration);
+  const track = (await page.locator('.annotation-range-track').boundingBox())!;
+  await page.mouse.click(track.x + track.width * seconds / duration, track.y + track.height / 2);
+}
+
 async function appearance(locator: Locator) {
   return locator.evaluate(element => {
     const style = getComputedStyle(element);
@@ -183,9 +190,10 @@ test('main Send captures the latest active video comment after asynchronous fram
     };
   });
   await page.getByRole('button', { name: 'Annotate', exact: true }).click();
+  await chooseVideoPoint(page, .7);
   const input = page.getByRole('textbox', { name: 'Add a comment', exact: true });
-  await input.fill('Keep the first idea.'); await expect(page.locator('.comment-video-meta')).toContainText('0:00');
-  await page.getByLabel('End time', { exact: true }).fill('1.2');
+  await input.fill('Keep the first idea.'); await expect(page.locator('.annotation-range-times')).toContainText('0:00');
+  const endPoint = page.getByRole('slider', { name: 'End point' }); await endPoint.focus(); for (let index = 0; index < 5; index++) await endPoint.press('ArrowRight');
   await input.fill('Keep the final video moment.\nRetain the soft colors.');
   const send = page.getByRole('button', { name: 'Send request', exact: true }).click();
   await expect.poll(async () => page.evaluate(() => (window as any).annotationCapture.callbacks.length)).toBeGreaterThan(0);
@@ -199,6 +207,77 @@ test('main Send captures the latest active video comment after asynchronous fram
   expect(state.tasks[0].snapshot.referenceContent.assets.map(asset => asset.id)).toContain(saved[0].snapshotAssetId);
   await expect(page.locator('.annotation-full')).toHaveCount(0); await expect(page.locator('.annotation-content')).toHaveCount(0);
   expect(state.draft.annotations).toEqual([]); expect(state.tasks[0].snapshot.userRequest.text).toBe('');
+});
+
+test('video range selection keeps playback position and replaces its representative frame', async ({ page, app }, info) => {
+  await open(page, app);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4'));
+  const video = page.locator('.object-video video'); await expect(video).toHaveJSProperty('videoWidth', 320);
+  const object = (await app.state()).objects[0]; await select(page, object);
+  await video.evaluate(element => { (element as HTMLVideoElement).currentTime = .3; });
+  await expect.poll(() => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
+  await page.getByRole('button', { name: 'Annotate', exact: true }).click();
+  await expect(page.getByRole('slider', { name: 'Start point' })).toHaveAttribute('aria-valuenow', '0');
+  await expect(page.getByRole('slider', { name: 'End point' })).toHaveAttribute('aria-valuenow', String(await video.evaluate(element => (element as HTMLVideoElement).duration)));
+  await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Use this moving interval.');
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.timeStart).toBe(0);
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.timeEnd).toBeGreaterThan(1);
+  await expect(page.locator('.annotation-time-range')).toHaveAttribute('data-ready', 'true');
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.snapshotAssetId).toBeTruthy();
+  const originalFrame = (await app.state()).draft.annotations[0].snapshotAssetId;
+  await expect.poll(() => page.locator('.annotation-range-frame').evaluateAll(elements => elements.filter(element => (element as HTMLElement).style.backgroundImage.includes('blob:')).length)).toBeGreaterThanOrEqual(2);
+  const track = page.locator('.annotation-range-track'), box = (await track.boundingBox())!;
+  await page.mouse.move(box.x + box.width * .25, box.y + box.height / 2); await page.mouse.down();
+  await page.mouse.move(box.x + box.width * .75, box.y + box.height / 2, { steps: 6 }); await page.mouse.up();
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.timeStart).toBeGreaterThan(.3);
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.timeEnd).toBeGreaterThan(1);
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.snapshotAssetId).not.toBe(originalFrame);
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.snapshotAssetId).toBeTruthy();
+  expect(await video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeCloseTo(.3, 1);
+  await page.getByRole('button', { name: 'Play range preview' }).click();
+  await expect.poll(() => video.evaluate(element => !(element as HTMLVideoElement).paused)).toBeTruthy();
+  await expect.poll(() => video.evaluate(element => (element as HTMLVideoElement).paused), { timeout: 5000 }).toBeTruthy();
+  expect(await video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeCloseTo((await app.state()).draft.annotations[0].timeEnd!, 1);
+  const lightShot = info.outputPath('video-range-light.png'); await page.locator('.annotation-full').screenshot({ path: lightShot }); console.log(`MEDIA_RANGE_SHOT ${lightShot}`);
+  await page.getByRole('button', { name: 'Switch to dark theme' }).click(); const darkShot = info.outputPath('video-range-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
+  await page.getByRole('slider', { name: 'Start point' }).focus(); await page.getByRole('slider', { name: 'Start point' }).press('ArrowRight');
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.snapshotAssetId).toBeTruthy();
+  await page.getByRole('button', { name: 'Send request', exact: true }).click();
+  await expect.poll(async () => (await app.state()).tasks.length).toBe(1);
+  const saved = (await app.state()).tasks[0].snapshot.annotations[0];
+  expect(saved.timeStart).toBeGreaterThan(.4); expect(saved.timeEnd).toBeGreaterThan(saved.timeStart!); expect(saved.snapshotAssetId).toBeTruthy(); expect(saved.snapshotAssetId).not.toBe(originalFrame);
+  await select(page, object); await page.getByRole('button', { name: 'Annotate', exact: true }).click();
+  await expect(page.getByRole('slider', { name: 'Start point' })).toHaveAttribute('aria-valuenow', '0');
+  await expect(page.getByRole('slider', { name: 'End point' })).toHaveAttribute('aria-valuenow', String(await video.evaluate(element => (element as HTMLVideoElement).duration)));
+});
+
+test('a superseded video frame upload cannot attach to the next start point', async ({ page, app }) => {
+  await open(page, app);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4'));
+  const video = page.locator('.object-video video'); await expect(video).toHaveJSProperty('videoWidth', 320);
+  await select(page, (await app.state()).objects[0]); await video.evaluate(element => { (element as HTMLVideoElement).currentTime = .3; });
+  await expect.poll(() => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
+  await page.getByRole('button', { name: 'Annotate', exact: true }).click(); await page.getByRole('textbox', { name: 'Add a comment' }).fill('Use the later frame.');
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.snapshotAssetId).toBeTruthy();
+  let release!: () => void, entered!: () => void, staleId = '', uploads = 0;
+  const gate = new Promise<void>(resolve => { release = resolve; }), first = new Promise<void>(resolve => { entered = resolve; });
+  await page.route('**/api/assets?*', async route => {
+    const name = new URL(route.request().url()).searchParams.get('name');
+    if (route.request().method() !== 'POST' || !name?.startsWith('video-frame-') || ++uploads !== 1) { await route.continue(); return; }
+    const response = await route.fetch(); staleId = (await response.json()).id; entered(); await gate; await route.fulfill({ response });
+  });
+  try {
+    const track = (await page.locator('.annotation-range-track').boundingBox())!;
+    await page.mouse.move(track.x + track.width * .25, track.y + track.height / 2); await page.mouse.down(); await page.mouse.move(track.x + track.width * .7, track.y + track.height / 2, { steps: 4 }); await page.mouse.up();
+    await first;
+    const start = page.getByRole('slider', { name: 'Start point' }); await start.focus(); await start.press('ArrowRight');
+    await expect.poll(async () => (await app.state()).draft.annotations[0]?.snapshotAssetId).toBeUndefined();
+    release();
+    await expect.poll(async () => (await app.state()).draft.annotations[0]?.snapshotAssetId).toBeTruthy();
+    const current = (await app.state()).draft.annotations[0]; expect(current.snapshotAssetId).not.toBe(staleId); expect(uploads).toBeGreaterThanOrEqual(2);
+    await page.getByRole('button', { name: 'Send request', exact: true }).click(); await expect.poll(async () => (await app.state()).tasks.length).toBe(1);
+    const saved = (await app.state()).tasks[0].snapshot.annotations[0]; expect(saved.timeStart).toBeCloseTo(current.timeStart!, 2); expect(saved.snapshotAssetId).toBe(current.snapshotAssetId);
+  } finally { release(); await page.unroute('**/api/assets?*'); }
 });
 
 test('removing an active new video comment preserves selection and late frame completion stays with its original identity', async ({ page, app }) => {
@@ -249,6 +328,7 @@ test('removing an active new video comment preserves selection and late frame co
     await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
     await annotate.click();
     const currentId = (await full(page).getAttribute('data-annotation-id'))!; expect(currentId).not.toBe(oldId);
+    await chooseVideoPoint(page, 1.4);
     const currentText = 'Keep the current video moment and its soft light.';
     await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill(currentText);
     await page.getByRole('button', { name: 'Send request', exact: true }).click(); await expect(page.locator('.queue-item')).toHaveCount(1);
@@ -327,7 +407,7 @@ test('running and history annotations render real text without writes and seek v
   const camera = await page.locator('.canvas-world').getAttribute('style'), pin = group(page, note.id).locator('.annotation-pin');
   await pin.click(); await expect(full(page)).toHaveAttribute('data-comment-mode', 'view');
   await expect(full(page).locator('textarea')).toHaveCount(0); await expect(full(page).locator('.annotation-fulltext')).toHaveText(note.text);
-  await expect(full(page).locator('.comment-video-meta')).toContainText('0:00'); await expect(page.getByLabel('End time', { exact: true })).toHaveCount(0);
+  await expect(full(page).locator('.comment-video-meta')).toContainText('0:00'); await expect(page.getByRole('slider', { name: 'End point' })).toHaveCount(0);
   await expect(video).toHaveJSProperty('currentTime', 1.5); await expect(video).toHaveJSProperty('paused', true);
   expect(await page.locator('.canvas-world').getAttribute('style')).toBe(camera);
   await page.getByRole('button', { name: 'Jump to frame', exact: true }).click(); await expect(video).toHaveJSProperty('currentTime', .7);
@@ -342,6 +422,91 @@ test('running and history annotations render real text without writes and seek v
   await expect(full(page).locator('.annotation-fulltext')).toHaveText(note.text); await expect(page.getByRole('button', { name: 'Done', exact: true })).toHaveCount(0);
   await expect(video).toHaveJSProperty('currentTime', 1.5);
   expect((await app.state()).draft).toEqual(before.draft); expect((await app.state()).tasks[0].snapshot).toEqual(original.snapshot);
+});
+
+test('the annotation range shows bounded neutral grips, an outside mask, a compact height and a restored span', async ({ page, app }, info) => {
+  await open(page, app);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4'));
+  const video = page.locator('.object-video video'); await expect(video).toHaveJSProperty('videoWidth', 320);
+  const duration = await video.evaluate(element => (element as HTMLVideoElement).duration);
+  // Move the board playhead away from zero: a new annotation must not inherit it.
+  await video.evaluate(element => { (element as HTMLVideoElement).currentTime = (element as HTMLVideoElement).duration * .6; });
+  await expect.poll(() => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
+  await select(page, (await app.state()).objects[0]);
+  await page.getByRole('button', { name: 'Annotate', exact: true }).click();
+  await expect(page.locator('.annotation-time-range')).toHaveAttribute('data-ready', 'true');
+
+  // The removed dropdown and End time input stay gone, and a new comment spans the whole clip.
+  await expect(page.getByLabel('End time', { exact: true })).toHaveCount(0); await expect(page.getByLabel('Audio annotation target', { exact: true })).toHaveCount(0);
+  const start = page.getByRole('slider', { name: 'Start point' }), end = page.getByRole('slider', { name: 'End point' });
+  await expect(start).toHaveAttribute('aria-valuenow', '0'); await expect(end).toHaveAttribute('aria-valuenow', String(duration));
+
+  // Each grip is a dark slot set into a light side rail of the single selection rectangle.
+  const surface = () => page.evaluate(() => {
+    const rail = document.querySelector('.annotation-range-rail') as HTMLElement;
+    const notch = document.querySelector('.annotation-range-handle span') as HTMLElement;
+    const rect = notch.getBoundingClientRect();
+    const shade = (value: string) => value.match(/\d+/g)!.slice(0, 3).reduce((sum, part) => sum + Number(part), 0) / 3;
+    return { rail: getComputedStyle(rail).backgroundColor, notch: getComputedStyle(notch).backgroundColor, width: rect.width, height: rect.height, railShade: shade(getComputedStyle(rail).backgroundColor), notchShade: shade(getComputedStyle(notch).backgroundColor) };
+  });
+  const light = await surface();
+  // The rail stays bright and the slot stays dark against it, so the grips never disappear.
+  expect(light.railShade).toBeGreaterThan(220); expect(light.notchShade).toBeLessThan(120);
+  expect(light.width).toBeLessThanOrEqual(8); expect(light.height).toBeGreaterThanOrEqual(9); expect(light.height).toBeGreaterThan(light.width);
+  // The frame holds two grips and inset material inside one rectangle.
+  expect(await page.locator('.annotation-range-selection > .annotation-range-handle').count()).toBe(2);
+  const heights = await page.evaluate(() => ({ card: document.querySelector('.annotation-full')!.getBoundingClientRect().height, track: document.querySelector('.annotation-range-track')!.getBoundingClientRect().height, range: document.querySelector('.annotation-time-range')!.getBoundingClientRect().height }));
+  expect(heights.range).toBeLessThan(60); expect(heights.track).toBeLessThan(30); expect(heights.card).toBeLessThan(200);
+  // Hovering a grip must not resize it; only its colour may change.
+  await page.locator('.annotation-range-handle').first().hover();
+  const hovered = await surface();
+  expect(hovered.width).toBe(light.width); expect(hovered.height).toBe(light.height);
+  // The dark theme re-derives the same pieces instead of keeping light-mode colours.
+  const lightShot = info.outputPath('range-annotation-light.png'); await page.locator('.annotation-full').screenshot({ path: lightShot }); console.log(`MEDIA_RANGE_SHOT ${lightShot}`);
+  await page.getByRole('button', { name: 'Switch to dark theme' }).click();
+  const dark = await surface();
+  expect(dark.railShade).toBeGreaterThan(220); expect(dark.notchShade).toBeLessThan(120);
+  const darkShot = info.outputPath('range-annotation-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
+  await page.getByRole('button', { name: 'Switch to light theme' }).click();
+
+  // The mask covers only the two sides, so the selected span keeps the original material colours.
+  const track = (await page.locator('.annotation-range-track').boundingBox())!;
+  await page.mouse.move(track.x + track.width * .3, track.y + track.height / 2); await page.mouse.down();
+  await page.mouse.move(track.x + track.width * .8, track.y + track.height / 2, { steps: 5 }); await page.mouse.up();
+  const mask = await page.evaluate(() => {
+    const box = (selector: string) => { const rect = (document.querySelector(selector) as HTMLElement).getBoundingClientRect(); return { left: Math.round(rect.left), right: Math.round(rect.right), width: Math.round(rect.width) }; };
+    return {
+      track: box('.annotation-range-track'), selection: box('.annotation-range-selection'),
+      grips: Array.from(document.querySelectorAll('.annotation-range-handle span')).map(element => { const rect = element.getBoundingClientRect(); return { left: Math.round(rect.left), right: Math.round(rect.right) }; }),
+      widths: Array.from(document.querySelectorAll('.annotation-range-outside')).map(element => Math.round((element as HTMLElement).getBoundingClientRect().width)),
+      colour: getComputedStyle(document.querySelector('.annotation-range-outside') as HTMLElement).backgroundColor,
+    };
+  });
+  expect(mask.colour).toBe('rgba(255, 255, 255, 0.66)');
+  expect(mask.widths[0]).toBe(mask.selection.left - mask.track.left);
+  expect(mask.widths[1]).toBe(mask.track.width - (mask.selection.left - mask.track.left) - mask.selection.width);
+  // Each grip hangs inside its own side of the rectangle and never outside it.
+  expect(mask.grips[0].left).toBeGreaterThanOrEqual(mask.selection.left); expect(mask.grips[0].right).toBeLessThan(mask.selection.left + 18);
+  expect(mask.grips[1].right).toBeLessThanOrEqual(mask.selection.right); expect(mask.grips[1].left).toBeGreaterThan(mask.selection.right - 18);
+  const selected = { start: Number(await start.getAttribute('aria-valuenow')), end: Number(await end.getAttribute('aria-valuenow')) };
+  expect(selected.start).toBeGreaterThan(0); expect(selected.end).toBeLessThanOrEqual(duration); expect(selected.end).toBeGreaterThan(selected.start);
+  const shot = info.outputPath('range-card.png'); await page.locator('.annotation-full').screenshot({ path: shot }); console.log(`MEDIA_RANGE_SHOT ${shot}`);
+
+  // The excerpt plays from the start point and stops itself at the end point.
+  await page.getByRole('button', { name: 'Play range preview' }).click();
+  await expect.poll(() => video.evaluate(element => !(element as HTMLVideoElement).paused)).toBeTruthy();
+  const playbackStart = await video.evaluate(element => (element as HTMLVideoElement).currentTime);
+  expect(playbackStart).toBeGreaterThanOrEqual(selected.start - .02); expect(playbackStart).toBeLessThan(selected.end);
+  await expect.poll(() => video.evaluate(element => (element as HTMLVideoElement).paused), { timeout: 6000 }).toBeTruthy();
+  const playbackEnd = await video.evaluate(element => (element as HTMLVideoElement).currentTime);
+  expect(playbackEnd).toBeGreaterThan(selected.start); expect(playbackEnd).toBeLessThanOrEqual(selected.end + .02);
+
+  // The saved draft comment reopens with its committed span rather than the whole clip.
+  await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Use this moving interval.');
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.timeStart).toBeCloseTo(selected.start, 2);
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
+  await page.locator('.draft-annotation .annotation-content').first().click();
+  await expect(start).toHaveAttribute('aria-valuenow', String(selected.start)); await expect(end).toHaveAttribute('aria-valuenow', String(selected.end));
 });
 
 test('annotation text, bubble and full panel keep screen sizes while anchors follow zoom and focus stays stable', async ({ page, app }, info) => {

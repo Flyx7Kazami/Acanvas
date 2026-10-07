@@ -78,19 +78,68 @@ test('audio plays real media in one row and saves explicit time range without fr
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'reference-tone.wav', mimeType: 'application/octet-stream', buffer: toneWav() });
   const object = page.locator('.board-object[data-content-kind="audio"]'); await expect(object.locator('audio')).toHaveCount(1);
   await expect.poll(() => object.locator('audio').evaluate((audio: HTMLAudioElement) => audio.duration)).toBeGreaterThan(4);
-  const original = (await app.state()).objects[0]; expect(original.height).toBe(88);
+  const original = (await app.state()).objects[0]; expect(original.height).toBe(100);
   await object.getByRole('button', { name: /Play audio/ }).click(); await expect.poll(() => object.locator('audio').evaluate((audio: HTMLAudioElement) => audio.currentTime)).toBeGreaterThan(.1);
   expect((await app.state()).objects[0].version).toBe(original.version);
   await object.locator('.object-caption').click(); await page.getByRole('button', { name: 'Annotate', exact: true }).click();
-  await page.getByLabel('Audio annotation target', { exact: true }).selectOption('time'); const input = page.getByLabel('Add a comment', { exact: true }); await input.fill('Use this part of the sound.');
-  await page.getByLabel('End time', { exact: true }).fill('4'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await input.press('Escape'); await page.locator('#instruction').fill('Compose from this range'); await page.getByRole('button', { name: 'Send request', exact: true }).click();
+  const range = page.locator('.annotation-range-track'); await expect(page.locator('.annotation-time-range')).toHaveAttribute('data-ready', 'true');
+  const input = page.getByLabel('Add a comment', { exact: true }); await input.fill('Use this part of the sound.');
+  await expect.poll(async () => (await app.state()).draft.annotations.length).toBe(1);
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.timeStart).toBeUndefined();
+  expect((await app.state()).draft.annotations[0].timeEnd).toBeUndefined();
+  await expect(page.getByRole('slider', { name: 'Start point' })).toHaveAttribute('aria-valuenow', '0');
+  await expect(page.getByRole('slider', { name: 'End point' })).toHaveAttribute('aria-valuenow', String(await object.locator('audio').evaluate(element => (element as HTMLAudioElement).duration)));
+  const box = (await range.boundingBox())!;
+  await page.mouse.move(box.x + box.width * .2, box.y + box.height / 2); await page.mouse.down(); await page.mouse.move(box.x + box.width * .75, box.y + box.height / 2, { steps: 5 }); await page.mouse.up();
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.timeEnd).toBeGreaterThan(3.5);
+  // Between the two grips the track is empty, so a click there sets a single time point.
+  await page.mouse.click(box.x + box.width * .5, box.y + box.height / 2);
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.timeEnd).toBeUndefined();
+  await page.getByRole('button', { name: 'Play range preview' }).click();
+  await expect.poll(() => object.locator('audio').evaluate(element => !(element as HTMLAudioElement).paused)).toBeTruthy();
+  await expect.poll(() => object.locator('audio').evaluate(element => (element as HTMLAudioElement).paused), { timeout: 5000 }).toBeTruthy();
+  expect(await object.locator('audio').evaluate(element => (element as HTMLAudioElement).currentTime)).toBeGreaterThan(2.8);
+  const endPoint = page.getByRole('slider', { name: 'End point' }); await endPoint.focus(); await endPoint.press('End'); for (let index = 0; index < 10; index++) await endPoint.press('ArrowLeft');
+  const lightShot = info.outputPath('audio-range-light.png'); await page.locator('.annotation-full').screenshot({ path: lightShot }); console.log(`MEDIA_RANGE_SHOT ${lightShot}`);
+  await page.getByRole('button', { name: 'Switch to dark theme' }).click(); const darkShot = info.outputPath('audio-range-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
+  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await input.press('Escape'); await page.locator('#instruction').fill('Compose from this range'); await page.getByRole('button', { name: 'Send request', exact: true }).click();
   await expect.poll(async () => (await app.state()).tasks.length).toBe(1); const saved = await app.state(), annotation = saved.tasks[0].snapshot.annotations[0];
-  expect(annotation.timeStart).toBeGreaterThan(0); expect(annotation.timeEnd).toBe(4); expect(annotation.snapshotAssetId).toBeUndefined(); expect(annotation.bounds).toEqual({ x: 0, y: 0, width: 1, height: 1 }); expect(saved.tasks[0].snapshot.referenceContent.assets).toHaveLength(1); expect(saved.tasks[0].snapshot.referenceContent.assets[0].mime).toBe('audio/wav');
+  expect(annotation.timeStart).toBeGreaterThan(0); expect(annotation.timeEnd).toBeCloseTo(4, 1); expect(annotation.snapshotAssetId).toBeUndefined(); expect(annotation.bounds).toEqual({ x: 0, y: 0, width: 1, height: 1 }); expect(saved.tasks[0].snapshot.referenceContent.assets).toHaveLength(1); expect(saved.tasks[0].snapshot.referenceContent.assets[0].mime).toBe('audio/wav');
   await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await page.locator('.annotation-content').first().click();
-  const edit = page.getByLabel('Annotation text', { exact: true }); await edit.fill('Use this revised sound range.'); await page.getByLabel('End time', { exact: true }).fill('3.8'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await edit.press('Escape'); await page.getByRole('button', { name: 'Save edit', exact: true }).click();
+  const edit = page.getByLabel('Annotation text', { exact: true }); await edit.fill('Use this revised sound range.'); const revisedEnd = page.getByRole('slider', { name: 'End point' }); await revisedEnd.focus(); await revisedEnd.press('ArrowLeft'); await revisedEnd.press('ArrowLeft'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await edit.press('Escape'); await page.getByRole('button', { name: 'Save edit', exact: true }).click();
   await expect.poll(async () => (await app.state()).tasks[0].snapshot.annotations[0].text).toBe('Use this revised sound range.');
-  const edited = (await app.state()).tasks[0].snapshot.annotations[0]; expect(edited.id).toBe(annotation.id); expect(edited.assetId).toBe(annotation.assetId); expect(edited.timeStart).toBe(annotation.timeStart); expect(edited.timeEnd).toBe(3.8); expect(edited.snapshotAssetId).toBeUndefined();
+  const edited = (await app.state()).tasks[0].snapshot.annotations[0]; expect(edited.id).toBe(annotation.id); expect(edited.assetId).toBe(annotation.assetId); expect(edited.timeStart).toBe(annotation.timeStart); expect(edited.timeEnd).toBeCloseTo(3.8, 1); expect(edited.snapshotAssetId).toBeUndefined();
   await page.screenshot({ path: info.outputPath('audio-range-reference.png') });
+});
+
+test('audio range card keeps both handles and Done visible at 320 pixels', async ({ page, app }, info) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' }); await page.setViewportSize({ width: 320, height: 700 });
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'narrow-tone.wav', mimeType: 'audio/wav', buffer: toneWav() });
+  await expect(page.locator('.board-object[data-content-kind="audio"]')).toHaveCount(1);
+  const state = await app.state(), object = state.objects[0];
+  await app.call(`/api/sessions/${state.session.id}/view`, 'PUT', { x: 200 - object.x, y: 400 - object.y, zoom: 1, selectedObjectIds: [] });
+  await page.reload(); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+  await page.locator('.board-object[data-content-kind="audio"] .object-caption').click(); await page.getByRole('button', { name: 'Annotate', exact: true }).click();
+  await expect(page.locator('.annotation-time-range')).toHaveAttribute('data-ready', 'true');
+  const bounds = await page.locator('.annotation-full').boundingBox(); expect(bounds).toBeTruthy(); expect(bounds!.x).toBeGreaterThanOrEqual(0); expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(320);
+  const start = await page.getByRole('slider', { name: 'Start point' }).boundingBox(), end = await page.getByRole('slider', { name: 'End point' }).boundingBox(), done = await page.getByRole('button', { name: 'Done' }).boundingBox();
+  expect(start?.x).toBeGreaterThanOrEqual(bounds!.x); expect(end!.x + end!.width).toBeLessThanOrEqual(bounds!.x + bounds!.width); expect(done!.y).toBeGreaterThan(end!.y + end!.height);
+  const lightShot = info.outputPath('audio-range-320-light.png'); await page.locator('.annotation-full').screenshot({ path: lightShot }); console.log(`MEDIA_RANGE_SHOT ${lightShot}`);
+  await page.getByRole('button', { name: 'Switch to dark theme' }).click(); const darkShot = info.outputPath('audio-range-320-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
+  await page.getByRole('textbox', { name: 'Add a comment' }).fill('Touch selected sound.');
+  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+  const touch = await page.context().newCDPSession(page); await touch.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+  // Measure at gesture time: writing the comment reflows the card and moves the track.
+  const touchEnd = (await page.getByRole('slider', { name: 'End point' }).boundingBox())!, touchTrack = (await page.locator('.annotation-range-track').boundingBox())!;
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: touchEnd.x + touchEnd.width / 2, y: touchEnd.y + touchEnd.height / 2 }] });
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: touchTrack.x + touchTrack.width * .6, y: touchTrack.y + touchTrack.height / 2 }] });
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await touch.detach();
+  await expect.poll(async () => (await app.state()).draft.annotations[0]?.timeEnd).toBeGreaterThan(2.8);
+  expect((await app.state()).draft.annotations[0].timeStart).toBe(0);
+  await page.getByRole('button', { name: 'Play range preview' }).click();
+  await expect.poll(() => page.locator('.board-object audio').evaluate(element => !(element as HTMLAudioElement).paused)).toBeTruthy();
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect.poll(() => page.locator('.board-object audio').evaluate(element => (element as HTMLAudioElement).paused)).toBeTruthy();
 });
 
 test('HTML captures rendered content, activates on hover and saves the latest stopped view', async ({ page, app }, info) => {

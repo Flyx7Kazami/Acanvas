@@ -84,6 +84,13 @@ async function beginAnnotating(page: Page) {
   return comment;
 }
 
+async function chooseVideoPoint(page: Page, seconds: number) {
+  await expect(page.locator('.annotation-time-range')).toHaveAttribute('data-ready', 'true');
+  const duration = await page.locator('.object-video video').evaluate(element => (element as HTMLVideoElement).duration);
+  const track = (await page.locator('.annotation-range-track').boundingBox())!;
+  await page.mouse.click(track.x + track.width * seconds / duration, track.y + track.height / 2);
+}
+
 async function finishAnnotation(page: Page) { await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); }
 
 test('queued annotation chips edit beside canvas markers and preserve the draft scope', async ({ page, app }, info) => {
@@ -225,7 +232,7 @@ test('second-level video annotation preserves time frame and pending target when
   await open(page, app); await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4')); await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page)); await expect(page.locator('.board-object')).toHaveCount(2);
   const state = await app.state(); await app.call('/api/board/operations', 'POST', { sessionId: state.session.id, operations: state.objects.map((object, index) => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: index ? 850 : 450, y: 250 } })) });
   const videoObject = page.locator('.object-video'), video = videoObject.locator('video'); await expect(video).toHaveJSProperty('videoWidth', 320); await videoObject.focus(); await page.keyboard.press('Enter'); await video.evaluate(element => { (element as HTMLVideoElement).currentTime = .7; }); await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
-  const comment = await beginAnnotating(page); await comment.fill('Keep this exact moment.'); await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeDisabled(); await expect(page.getByRole('slider', { name: 'Video timeline', exact: true })).toBeDisabled();
+  const comment = await beginAnnotating(page); await chooseVideoPoint(page, .7); await comment.fill('Keep this exact moment.'); await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeDisabled(); await expect(page.getByRole('slider', { name: 'Video timeline', exact: true })).toBeDisabled();
   const box = (await videoObject.boundingBox())!; await page.mouse.move(box.x + box.width * .2, box.y + box.height * .2); await page.mouse.down(); await page.mouse.move(box.x + box.width * .7, box.y + box.height * .7, { steps: 3 }); await page.mouse.up();
   await comment.press('Escape'); await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeEnabled(); await video.evaluate(element => { (element as HTMLVideoElement).currentTime = 1.2; }); await page.locator('.annotation-content').click(); const retainedComment = page.getByRole('textbox', { name: 'Annotation text', exact: true }); await expect(video).toHaveJSProperty('currentTime', 1.2); await expect(retainedComment).toHaveValue('Keep this exact moment.');
   await page.locator('.object-image').click({ position: { x: 60, y: 60 } }); await expect(page.locator('.object-image')).toHaveAttribute('data-selected', 'true'); await expect(retainedComment).toHaveCount(0); await videoObject.click({ position: { x: 60, y: 60 } }); await page.locator('.annotation-content').click(); await expect(retainedComment).toHaveValue('Keep this exact moment.');
@@ -440,13 +447,13 @@ test('inline comments retain their targets through delayed snapshots and submit 
   await video.evaluate(element => { (element as HTMLVideoElement).currentTime = .7; });
   await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
   await page.evaluate(() => { const original = HTMLCanvasElement.prototype.toBlob; HTMLCanvasElement.prototype.toBlob = function(callback, type, quality) { setTimeout(() => original.call(this, callback, type, quality), 350); }; });
-  await beginAnnotating(page); await comment.fill('Keep this video moment');
-  await page.getByLabel('End time', { exact: true }).fill('1.2');
+  await beginAnnotating(page); await chooseVideoPoint(page, .7); await comment.fill('Keep this video moment');
+  const endPoint = page.getByRole('slider', { name: 'End point' }); await endPoint.focus(); for (let index = 0; index < 5; index++) await endPoint.press('ArrowRight');
   await page.locator('.object-image').focus(); await page.keyboard.press('Enter');
   await beginAnnotating(page); await expect(comment).toHaveValue(''); await comment.fill('Keep this image shape');
   await videoObject.focus(); await page.keyboard.press('Enter');
   await beginAnnotating(page); await expect(comment).toHaveValue('Keep this video moment');
-  await expect(page.getByLabel('End time', { exact: true })).toHaveValue('1.2');
+  await expect(page.getByRole('slider', { name: 'End point' })).toHaveAttribute('aria-valuenow', '1.2');
   await comment.evaluate(element => { element.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true })); element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); element.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true })); element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 229, bubbles: true, cancelable: true })); });
   await expect.poll(async () => (await app.state()).draft.annotations.length).toBe(2);
   await comment.press('End'); await comment.press('Shift+Enter'); await comment.pressSequentially('Keep its colors');
@@ -1038,7 +1045,7 @@ test('real video and file imports, time/frame annotations and decode fallback', 
   await expect.poll(async () => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
   await page.locator('.object-caption').first().click();
   await beginAnnotating(page);
-  await expect(page.locator('.comment-video-meta')).toContainText('0:00');
+  await chooseVideoPoint(page, .7); await expect(page.locator('.annotation-range-times')).toContainText('0:00');
   await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('在这个时间点保留主体。');
   await finishAnnotation(page);
   await expect.poll(async () => (await app.state()).draft.annotations.length).toBe(1);
