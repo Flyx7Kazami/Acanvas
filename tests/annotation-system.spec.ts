@@ -466,16 +466,15 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
     const alpha = Number((shadeStyle.backgroundColor.match(/[\d.]+\s*\)$/) || ['1)'])[0].replace(')', '')) || 1;
     const railStyle = getComputedStyle(rail), notchStyle = getComputedStyle(notch);
     const hit = notch.parentElement!.getBoundingClientRect();
-    return { fill: shadeStyle.backgroundColor, borderWidth: style.borderTopWidth, shadow: shadeStyle.boxShadow, selectionShadow: style.boxShadow, fillAlpha: alpha, insideShade: shade(shadeStyle.backgroundColor), rail: railStyle.backgroundColor, railWidth: rail.getBoundingClientRect().width, railShade: shade(railStyle.backgroundColor), notch: notchStyle.backgroundColor, width: rect.width, height: rect.height, hitWidth: hit.width, hitHeight: hit.height, notchShade: shade(notchStyle.backgroundColor) };
+    return { fill: shadeStyle.backgroundColor, border: style.borderTopColor, borderWidth: style.borderTopWidth, shadow: shadeStyle.boxShadow, selectionShadow: style.boxShadow, fillAlpha: alpha, insideShade: shade(shadeStyle.backgroundColor), rail: railStyle.backgroundColor, railWidth: rail.getBoundingClientRect().width, railShade: shade(railStyle.backgroundColor), notch: notchStyle.backgroundColor, width: rect.width, height: rect.height, hitWidth: hit.width, hitHeight: hit.height, notchShade: shade(notchStyle.backgroundColor) };
   });
   const light = await surface();
-  await expect(page.locator('.annotation-range-selection')).toHaveAttribute('data-full', 'true');
   // One rectangle: a light rail on each side of it, with a dark grip set into each rail.
   expect(await page.locator('.annotation-range-selection > .annotation-range-rail').count()).toBe(2);
   expect(light.borderWidth).toBe('2px'); expect(light.shadow).toContain('rgba(0, 0, 0, 0.58)');
-  expect(light.selectionShadow).toContain('rgba(0, 0, 0, 0.16)');
+  expect(light.border).toBe('rgb(222, 222, 222)'); expect(light.rail).toBe(light.border); expect(light.selectionShadow).toBe('none');
   // The sides are solidly light and the grips are dark, so a grip never disappears into its rail.
-  expect(light.railShade).toBeGreaterThan(230); expect(light.notchShade).toBeLessThan(120); expect(light.railShade - light.notchShade).toBeGreaterThan(120);
+  expect(light.railShade).toBeGreaterThan(200); expect(light.notchShade).toBeLessThan(120); expect(light.railShade - light.notchShade).toBeGreaterThan(120);
   // The selected interior retains the source image and waveform tone.
   expect(light.fillAlpha).toBeGreaterThan(0); expect(light.fillAlpha).toBeLessThan(0.05);
   expect(light.insideShade).toBeGreaterThan(240);
@@ -493,8 +492,8 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   const lightShot = info.outputPath('range-annotation-light.png'); await page.locator('.annotation-full').screenshot({ path: lightShot }); console.log(`MEDIA_RANGE_SHOT ${lightShot}`);
   await page.getByRole('button', { name: 'Switch to dark theme' }).click();
   const dark = await surface();
-  // The same rails, grips, wash and mask hold in the dark theme instead of inverting.
-  expect(dark.rail).toBe(light.rail); expect(dark.railShade).toBeGreaterThan(230);
+  // The dark theme retains the original white frame and grips.
+  expect(dark.rail).toBe('rgb(255, 255, 255)'); expect(dark.border).toBe(dark.rail); expect(dark.railShade).toBeGreaterThan(230);
   expect(dark.notch).toBe(light.notch); expect(dark.notchShade).toBeLessThan(120);
   expect(dark.shadow).toBe(light.shadow); expect(dark.fill).toBe(light.fill);
   expect(dark.selectionShadow).toBe('none');
@@ -505,7 +504,8 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   const track = (await page.locator('.annotation-range-timeline').boundingBox())!;
   await page.mouse.move(track.x + track.width * .3, track.y + track.height / 2); await page.mouse.down();
   await page.mouse.move(track.x + track.width * .8, track.y + track.height / 2, { steps: 5 }); await page.mouse.up();
-  await expect(page.locator('.annotation-range-selection')).toHaveAttribute('data-full', 'false');
+  const partialLight = await surface();
+  expect(partialLight.rail).toBe(light.rail); expect(partialLight.border).toBe(light.border); expect(partialLight.selectionShadow).toBe('none');
   const mask = await page.evaluate(() => {
     const box = (selector: string) => { const rect = (document.querySelector(selector) as HTMLElement).getBoundingClientRect(); return { left: Math.round(rect.left), right: Math.round(rect.right), width: Math.round(rect.width) }; };
     return {
@@ -527,6 +527,7 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   expect(selected.start).toBeGreaterThan(0); expect(selected.end).toBeLessThanOrEqual(duration); expect(selected.end).toBeGreaterThan(selected.start);
   const shot = info.outputPath('range-card.png'); await page.locator('.annotation-full').screenshot({ path: shot }); console.log(`MEDIA_RANGE_SHOT ${shot}`);
   await page.getByRole('button', { name: 'Switch to dark theme' }).click();
+  const partialDark = await surface(); expect(partialDark.rail).toBe(dark.rail); expect(partialDark.border).toBe(dark.border);
   const darkSelectedShot = info.outputPath('range-card-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkSelectedShot }); console.log(`MEDIA_RANGE_SHOT ${darkSelectedShot}`);
   await page.getByRole('button', { name: 'Switch to light theme' }).click();
 
@@ -546,6 +547,7 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   await page.locator('.draft-annotation .annotation-content').first().click();
   await expect(start).toHaveAttribute('aria-valuenow', String(selected.start)); await expect(end).toHaveAttribute('aria-valuenow', String(selected.end));
   await end.focus(); await end.press('Home'); await expect(page.locator('.annotation-range-selection')).toHaveAttribute('data-point', 'true');
+  const pointLight = await surface(); expect(pointLight.rail).toBe(light.rail); expect(pointLight.border).toBe(light.border);
   await end.press('ArrowRight');
   const shortVideo = page.locator('.annotation-range-selection');
   const shortVideoBox = (await shortVideo.boundingBox())!; expect(shortVideoBox.width).toBeGreaterThan(16); expect(shortVideoBox.width).toBeLessThan(48);

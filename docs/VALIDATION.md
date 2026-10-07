@@ -645,6 +645,12 @@ HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统�
 
 证据：[历史下角](evidence/history-toast-corners/history-empty-light.png)、[正常宽度固定角落](evidence/history-toast-corners/copy-corner-712-light.png)、[窄屏省略](evidence/history-toast-corners/copy-ellipsis-320-light.png)、[布局测量](evidence/history-toast-corners/placement.json)。
 
+## 2026-10-07 · 浅色选框全状态统一边线灰
+
+- 浅色时间选框上下边和两侧柄共用 `var(--edge)`，计算值 `rgb(222, 222, 222)`；深色主题固定白色 `rgb(255, 255, 255)`。选框没有状态专用投影，颜色在全段、拖动后的局部、短区间及单时点均保持。遮罩、媒体内容、时间数据、端点和试听逻辑保持。
+- `npm run typecheck`、`npm run build` 通过；隔离 Chrome 视频明暗/拖动/单时点、音频指针/键盘/节选试听及 320px 触屏定向 3/3 通过。浏览器分别读取全段、局部、单时点的边框/侧柄计算色，浅色均为 `rgb(222, 222, 222)`，深色均为白色；选框 `box-shadow` 为 `none`。测试使用独立临时项目和端口，用户白板未写入。本轮用户免独立审查。
+- 截图：[视频浅色全段](evidence/media-annotation-range/selection-edge-grey-video-full-light.png)、[视频浅色局部](evidence/media-annotation-range/selection-edge-grey-video-partial-light.png)、[视频深色全段](evidence/media-annotation-range/selection-edge-grey-video-full-dark.png)、[音频浅色全段](evidence/media-annotation-range/selection-edge-grey-audio-full-light.png)、[音频深色全段](evidence/media-annotation-range/selection-edge-grey-audio-full-dark.png)、[音频浅色单时点](evidence/media-annotation-range/selection-edge-grey-audio-point-light.png)、[深色单时点](evidence/media-annotation-range/selection-edge-grey-audio-point-dark.png)、[浅色短区间](evidence/media-annotation-range/selection-edge-grey-audio-short-light.png)。
+
 ## 2026-10-07 · 浅色全段选框层次
 
 - 仅浅色主题且起点为 0、终点到媒体尾部的全段选区，给白色选框添加 `0 2px 7px rgba(0,0,0,.16)` 柔和外投影；不增加硬外框、灰尾段或卡片留白，投影不覆盖视频帧和音频波形。全段及终点极值判断容纳视频时长按百分秒保存造成的最多约 0.005 秒舍入，极值处 24px 透明端点命中仍落在卡片内。局部选区和深色状态不应用新投影。

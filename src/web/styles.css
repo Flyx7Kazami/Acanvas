@@ -262,7 +262,8 @@ details[open] summary svg { rotate: 180deg; }
 .comment-video-meta input { width: 62px; padding: 3px; border: 0; border-radius: 4px; background: var(--soft); font-size: 10px; outline: 0; box-shadow: none; }
 .annotation-full:has(.annotation-time-range) { --annotation-height: 186px; }
 .annotation-full:has(.annotation-time-range) .annotation-context { width: 100%; }
-.annotation-time-range { --range-rail: #fff; --range-notch: #343434; --range-notch-hover: #171717; --range-mask: rgba(0,0,0,.58); --range-wash: rgba(255,255,255,.02); width: 100%; min-width: 0; padding: 2px 8px 0; color: var(--ink); }
+.annotation-time-range { --range-rail: var(--edge); --range-notch: #343434; --range-notch-hover: #171717; --range-mask: rgba(0,0,0,.58); --range-wash: rgba(255,255,255,.02); width: 100%; min-width: 0; padding: 2px 8px 0; color: var(--ink); }
+:root[data-theme='dark'] .annotation-time-range { --range-rail: #fff; }
 .annotation-range-track { position: relative; width: 100%; height: 26px; border-radius: 5px; cursor: crosshair; touch-action: none; user-select: none; }
 .annotation-range-viewport { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; background: #ededed; pointer-events: none; }
 .annotation-range-frames,.annotation-range-wave { position: absolute; inset: 0; display: flex; overflow: hidden; border-radius: inherit; pointer-events: none; }
@@ -273,7 +274,6 @@ details[open] summary svg { rotate: 180deg; }
 .annotation-range-wave span { display: block; width: 100%; height: 2px; background: #6d6d6d; }
 .annotation-range-shade { position: absolute; top: 0; bottom: 0; border-radius: 6px; background: var(--range-wash); box-shadow: 0 0 0 100vmax var(--range-mask); }
 .annotation-range-selection { position: absolute; top: 0; bottom: 0; box-sizing: border-box; border: 2px solid var(--range-rail); border-radius: 6px; pointer-events: none; }
-:root:not([data-theme='dark']) .annotation-range-selection[data-full='true'] { box-shadow: 0 2px 7px rgba(0,0,0,.16); }
 .annotation-range-rail { position: absolute; top: 0; bottom: 0; width: 6px; background: var(--range-rail); }
 .annotation-range-rail.start { left: 0; border-radius: 4px 0 0 4px; }
 .annotation-range-rail.end { right: 0; border-radius: 0 4px 4px 0; }
