@@ -645,6 +645,12 @@ HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统�
 
 证据：[历史下角](evidence/history-toast-corners/history-empty-light.png)、[正常宽度固定角落](evidence/history-toast-corners/copy-corner-712-light.png)、[窄屏省略](evidence/history-toast-corners/copy-ellipsis-320-light.png)、[布局测量](evidence/history-toast-corners/placement.json)。
 
+## 2026-10-07 · 短而非零区间的自适应选框
+
+- 根因是短区间实际宽度小于两侧白轨及端点命中所需空间。组件在挂载时立即测量轨道 `clientWidth`，并通过 ResizeObserver 跟随宽度变化；真实区间像素宽小于 32px 时切换为 1px 白色紧凑轮廓，隐藏白侧轨与深色可见柄，两只 24px 透明命中区在选区中线左右分列。区间仍严格对应真实起止时间，外侧遮罩沿同一个圆角轮廓生成；达到宽度后恢复完整白框，零宽保持 4px 时点标记。
+- `npm run typecheck`、`npm run build` 通过。隔离 Chrome 定向视频 1/1、音频常规视口 1/1、320px 音频触屏 1/1 通过。测试涵盖长区间无紧凑态、约 13px 短区间及 320px 下约 24px 短区间的紧凑态、零宽单时点、浅深主题、短区间起点/终点分别经指针及触屏拖开、键盘调整、草稿恢复和节选试听。测试均使用独立临时项目与端口，用户画板未写入。本轮用户免独立审查。
+- 截图：[音频浅色](evidence/media-annotation-range/selection-compact-audio-light.png)、[音频深色](evidence/media-annotation-range/selection-compact-audio-dark.png)、[320px 浅色](evidence/media-annotation-range/selection-compact-audio-320-light.png)、[320px 深色](evidence/media-annotation-range/selection-compact-audio-320-dark.png)、[视频浅色](evidence/media-annotation-range/selection-compact-video-light.png)、[视频深色](evidence/media-annotation-range/selection-compact-video-dark.png)。对应普通长区间与单时点截图见下一节。
+
 ## 2026-10-07 · 完整白框与单时点标记
 
 - 选区白色 2px 上下边与两侧白轨连成同一圆角框，侧轨连同边框共 8px；未恢复深色外框。单时点取消 38px 最小选区宽度，改为位于准确时间位置的 4px 白标记。左右各有独立 24px 命中区，抓取偏移使端点单击保留原时间，拖动按实际位移改变时间。遮罩继续由该选区的圆角外投影绘制。

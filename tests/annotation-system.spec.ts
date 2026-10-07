@@ -526,6 +526,14 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   await page.getByRole('button', { name: 'Done', exact: true }).click();
   await page.locator('.draft-annotation .annotation-content').first().click();
   await expect(start).toHaveAttribute('aria-valuenow', String(selected.start)); await expect(end).toHaveAttribute('aria-valuenow', String(selected.end));
+  await end.focus(); await end.press('Home'); await expect(page.locator('.annotation-range-selection')).toHaveAttribute('data-point', 'true');
+  await end.press('ArrowRight');
+  const shortVideo = page.locator('.annotation-range-selection'); await expect(shortVideo).toHaveAttribute('data-compact', 'true');
+  const shortVideoBox = (await shortVideo.boundingBox())!; expect(shortVideoBox.width).toBeGreaterThan(4); expect(shortVideoBox.width).toBeLessThan(32);
+  await end.evaluate(element => (element as HTMLElement).blur());
+  const shortVideoLight = info.outputPath('video-short-light.png'); await page.locator('.annotation-full').screenshot({ path: shortVideoLight }); console.log(`MEDIA_RANGE_SHOT ${shortVideoLight}`);
+  await page.getByRole('button', { name: 'Switch to dark theme' }).click();
+  const shortVideoDark = info.outputPath('video-short-dark.png'); await page.locator('.annotation-full').screenshot({ path: shortVideoDark }); console.log(`MEDIA_RANGE_SHOT ${shortVideoDark}`);
 });
 
 test('annotation text, bubble and full panel keep screen sizes while anchors follow zoom and focus stays stable', async ({ page, app }, info) => {

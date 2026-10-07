@@ -282,6 +282,10 @@ details[open] summary svg { rotate: 180deg; }
 .annotation-range-selection[data-point='true'] .annotation-range-rail,.annotation-range-selection[data-point='true'] .annotation-range-handle span { display: none; }
 .annotation-range-selection[data-point='true'] .annotation-range-handle.start { left: auto; right: 0; }
 .annotation-range-selection[data-point='true'] .annotation-range-handle.end { left: 0; right: auto; }
+.annotation-range-selection[data-compact='true'] { border-width: 1px; background: rgba(255,255,255,.12); }
+.annotation-range-selection[data-compact='true'] .annotation-range-rail,.annotation-range-selection[data-compact='true'] .annotation-range-handle span { display: none; }
+.annotation-range-selection[data-compact='true'] .annotation-range-handle.start { left: calc(50% - 24px); }
+.annotation-range-selection[data-compact='true'] .annotation-range-handle.end { left: 50%; right: auto; }
 .annotation-range-handle:hover span,.annotation-range-handle:focus-visible span { background: var(--range-notch-hover); }
 .annotation-range-handle:focus-visible { outline: 2px solid var(--annotation); outline-offset: -3px; border-radius: 4px; }
 .annotation-range-times { display: grid; grid-template-columns: 1fr 26px 1fr; align-items: center; gap: 8px; padding-top: 3px; font-size: 10px; font-variant-numeric: tabular-nums; color: var(--muted); }
