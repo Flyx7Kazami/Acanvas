@@ -688,3 +688,30 @@ HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统�
 - 同步简化结构：`.annotation-range-rail` 侧轨元素已无用途，从组件与样式中删除，选区只由"遮罩 + 半透明盒子 + 描边 + 两个握柄"构成。
 - 要求用例断言：选区填充为半透明、描边 2px 且为深色、握柄为深色、浅色与深色主题的填充与握柄取值**完全相同**、悬停不改变尺寸、控件高度小于 60px、轨道小于 30px、卡片小于 200px、左右遮罩宽度与选区位置满足加和关系、默认区间 `0…duration`、节选播放起止落在选区内、草稿评论重开后恢复已存区间。
 - `npm run typecheck`、`npm run build` 通过；该用例与音视频定向用例通过。截图：[浅色范围卡](evidence/media-annotation-range/annotation-light.png)、[深色范围卡](evidence/media-annotation-range/annotation-dark.png)、[视频浅色](evidence/media-annotation-range/video-light.png)、[视频深色](evidence/media-annotation-range/video-dark.png)、[音频浅色](evidence/media-annotation-range/audio-light.png)、[音频深色](evidence/media-annotation-range/audio-dark.png)。
+
+## 2026-10-07 · 恢复侧轨与半透明选区（推翻上一轮的定稿）
+
+用户对照原始参考图指出上一轮改坏了：侧轨（bar）被删除，选区内被填成一片发白的实色。复核确认上一轮有三处错误，其中第三处是流程问题：
+
+1. **删掉了侧轨**。参考图是"矩形两侧各有一条浅色竖轨，深色握柄嵌在轨内"，上一轮把侧轨元素连同样式一起删除，只剩一个描边盒子，握柄直接贴在盒子边缘。
+2. **把遮罩从白色薄纱改成近黑实色**（`rgba(0,0,0,.72)`），比参考图暗得多。
+3. **把回归写成了需求**。要求用例当时断言"握柄是选区的直接子元素"且遮罩为 `rgba(0,0,0,.72)`，等于用测试锁死了错误实现，所以后续再改都会被测试挡住。
+
+本轮取值改为具名自定义属性，避免各部件再次走样：
+
+| 部件 | 取值 |
+| --- | --- |
+| 侧轨 `--range-rail` | `#fdfdfd` 实色 |
+| 握柄 `--range-notch` | `#2d2d2d`，距盒子左右各 8px |
+| 选区内 `--range-wash` | `rgba(247,247,245,.62)` 半透明 |
+| 选区外 `--range-mask` | `#4a4a4a` |
+
+- 握柄 12×22px 圆角块，命中区 24×24px；轨宽 20px，命中区比轨宽 4px 并居中，因此握柄正好居中于轨内且不会越出盒子描边。上一版按边对齐会把命中区推到盒子外，实测右侧越出约 2–6px。
+- 焦点环改为 `outline-offset: -3px` 落在命中区内部，不再压到选区描边。
+- 要求用例改为：量取侧轨宽度并断言每个握柄落在**自身一侧的轨宽之内**；断言侧轨底色亮度 > 230 且握柄 < 120（避免握柄与轨同色而看不见）；断言选区填充透明度落在 0.5–0.8 之间、底色亮度 > 200；两种主题下轨、握柄、描边、填充取值完全相同。
+- 排查记录：4 倍放大图中选区四角出现纯红/青/白像素，一度怀疑是焦点环或圆角溢出，逐像素定位后确认是测试视频本身的彩条图案（行边界处的 `rgb(251,2,1)`、`rgb(3,255,254)`），属于素材内容，非样式缺陷。
+- `npm run typecheck`、`npm run build` 通过；范围外观用例、音频单行用例、320px 用例、视频区间用例共 4 项通过（19.2s + 4.5s）。证据截图已全部重出：[范围卡](evidence/media-annotation-range/video-range-card.png)、[视频浅色](evidence/media-annotation-range/video-light.png)、[视频深色](evidence/media-annotation-range/video-dark.png)、[音频浅色](evidence/media-annotation-range/audio-light.png)、[音频深色](evidence/media-annotation-range/audio-dark.png)、[320px 浅色](evidence/media-annotation-range/audio-320-light.png)、[320px 深色](evidence/media-annotation-range/audio-320-dark.png)。
+
+### 已知未通过项（与本轮改动无关）
+
+全量浏览器套件本轮 81/91，10 项未通过。已单独复核其中一项 `composer contains asset and annotation chips with quiet success feedback across viewports`：失败点是 `finishAnnotation` 里点 `Done` 时被 `.creation-dock`（composer）与 `#whiteboard` 拦截，属于控件遮挡/几何问题，与颜色无关。把标注卡的 `--annotation-height` 从 186px 临时改为 120px 后该用例**仍然以相同方式失败**，因此可以排除范围控件高度与外观的影响。其余 9 项（`short-screen contextual video controls`、`full-screen canvas`、`a different project on the same port`、`request details group each annotation`，以及 5 项音频解码/封面振幅用例）此前在干净 `HEAD` 上已复现过，属既有环境问题。本轮未逐项重新二分，仅确认失败信息均不涉及范围控件。
