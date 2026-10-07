@@ -17,7 +17,7 @@ export function AnnotationTimeRange({ kind, src, media, start, end, fresh, disab
   const [playing, setPlaying] = useState(false);
   const [preview, setPreview] = useState<Range>();
   const track = useRef<HTMLDivElement>(null);
-  const gesture = useRef<{ pointerId: number; mode: 'start' | 'end' | 'new'; anchor: number; initial: Range } | undefined>(undefined);
+  const gesture = useRef<{ pointerId: number; mode: 'start' | 'end' | 'new'; anchor: number; grabOffset: number; initial: Range } | undefined>(undefined);
   const previewing = useRef(false), previewEnd = useRef(0), previewFrame = useRef(0), previewIntent = useRef(0);
   const commit = useRef(onCommit); commit.current = onCommit;
 
@@ -78,11 +78,9 @@ export function AnnotationTimeRange({ kind, src, media, start, end, fresh, disab
     if (kind === 'audio' && left === 0 && right === precise(duration)) onCommit(undefined, undefined);
     else onCommit(left, right === left ? undefined : right);
   };
-  const move = (time: number) => {
-    const active = gesture.current;
-    if (!active) return;
-    const next = active.mode === 'start' ? { start: Math.min(time, active.initial.end), end: active.initial.end } : active.mode === 'end' ? { start: active.initial.start, end: Math.max(time, active.initial.start) } : { start: Math.min(active.anchor, time), end: Math.max(active.anchor, time) };
-    setPreview(next);
+  const rangeAt = (active: NonNullable<typeof gesture.current>, time: number): Range => {
+    const edgeTime = clamp(time - active.grabOffset, 0, duration);
+    return active.mode === 'start' ? { start: Math.min(edgeTime, active.initial.end), end: active.initial.end } : active.mode === 'end' ? { start: active.initial.start, end: Math.max(edgeTime, active.initial.start) } : { start: Math.min(active.anchor, time), end: Math.max(active.anchor, time) };
   };
   const down = (event: PointerEvent<HTMLDivElement>) => {
     if (!available || disabled || event.button !== 0) return;
@@ -91,20 +89,19 @@ export function AnnotationTimeRange({ kind, src, media, start, end, fresh, disab
     const target = event.target instanceof Element ? event.target.closest('[data-range-handle]')?.getAttribute('data-range-handle') : null;
     const mode = target === 'start' || target === 'end' ? target : 'new';
     const time = timeAt(event.clientX);
-    gesture.current = { pointerId: event.pointerId, mode, anchor: time, initial: selected };
+    gesture.current = { pointerId: event.pointerId, mode, anchor: time, grabOffset: mode === 'new' ? 0 : time - selected[mode], initial: selected };
     track.current?.setPointerCapture(event.pointerId);
     if (mode === 'new') setPreview({ start: time, end: time });
   };
   const motion = (event: PointerEvent<HTMLDivElement>) => {
     const active = gesture.current;
     if (!active || event.pointerId !== active.pointerId) return;
-    move(timeAt(event.clientX));
+    setPreview(rangeAt(active, timeAt(event.clientX)));
   };
   const up = (event: PointerEvent<HTMLDivElement>) => {
     const active = gesture.current;
     if (!active || event.pointerId !== active.pointerId) return;
-    const time = timeAt(event.clientX);
-    const next = active.mode === 'start' ? { start: Math.min(time, active.initial.end), end: active.initial.end } : active.mode === 'end' ? { start: active.initial.start, end: Math.max(time, active.initial.start) } : { start: Math.min(active.anchor, time), end: Math.max(active.anchor, time) };
+    const next = rangeAt(active, timeAt(event.clientX));
     gesture.current = undefined; setPreview(undefined); save(next);
   };
   const key = (event: KeyboardEvent<HTMLButtonElement>, edge: 'start' | 'end') => {
@@ -140,7 +137,7 @@ export function AnnotationTimeRange({ kind, src, media, start, end, fresh, disab
   return <div className="annotation-time-range" role="group" aria-label={`${kind === 'video' ? 'Video' : 'Audio'} annotation time range`} data-ready={available}>
     <div ref={track} className={`annotation-range-track annotation-range-${kind}`} onPointerDown={down} onPointerMove={motion} onPointerUp={up} onPointerCancel={() => { gesture.current = undefined; setPreview(undefined); }} onLostPointerCapture={() => { gesture.current = undefined; setPreview(undefined); }}>
       {kind === 'video' ? <div className="annotation-range-frames">{Array.from({ length: 6 }, (_, index) => <div key={index} className="annotation-range-frame" style={frames[index] ? { backgroundImage: `url(${frames[index]})` } : undefined}/>)}</div> : <div className="annotation-range-wave">{wave ? Array.from({ length: 84 }, (_, index) => { const from = Math.floor(index * wave.values.length / 84), to = Math.max(from + 1, Math.floor((index + 1) * wave.values.length / 84)); let peak = 0; for (let i = from; i < to; i++) peak = Math.max(peak, wave.values[i]); return <i key={index} style={{ height: `${Math.max(8, peak / wave.maximum * 86)}%` }}/>; }) : <span/>}</div>}
-      <div className="annotation-range-selection" style={{ left: position(selected.start), right: available ? `${(duration - selected.end) / duration * 100}%` : '100%' }}><i className="annotation-range-rail start"/><i className="annotation-range-rail end"/>{(['start', 'end'] as const).map(edge => <button key={edge} type="button" role="slider" aria-orientation="horizontal" data-range-handle={edge} className={`annotation-range-handle ${edge}`} aria-label={`${edge === 'start' ? 'Start' : 'End'} point`} aria-valuemin={0} aria-valuemax={duration} aria-valuenow={selected[edge]} aria-valuetext={exactClock(selected[edge])} disabled={!available || disabled} onKeyDown={event => key(event, edge)}><span/></button>)}</div>
+      <div className="annotation-range-selection" data-point={selected.start === selected.end} style={{ left: position(selected.start), right: selected.start === selected.end ? 'auto' : available ? `${(duration - selected.end) / duration * 100}%` : '100%' }}><i className="annotation-range-rail start"/><i className="annotation-range-rail end"/>{(['start', 'end'] as const).map(edge => <button key={edge} type="button" role="slider" aria-orientation="horizontal" data-range-handle={edge} className={`annotation-range-handle ${edge}`} aria-label={`${edge === 'start' ? 'Start' : 'End'} point`} aria-valuemin={0} aria-valuemax={duration} aria-valuenow={selected[edge]} aria-valuetext={exactClock(selected[edge])} disabled={!available || disabled} onKeyDown={event => key(event, edge)}><span/></button>)}</div>
     </div>
     <div className="annotation-range-times"><span>{available ? clock(selected.start) : 'Time unavailable'}</span><button type="button" className="annotation-range-preview" aria-label={playing ? 'Pause range preview' : 'Play range preview'} title={playing ? 'Pause preview' : 'Preview range'} disabled={!available || disabled || selected.start >= duration} onClick={() => void togglePreview()}>{playing ? <Pause size={14} fill="currentColor"/> : <Play size={14} fill="currentColor"/>}</button><span>{available ? clock(selected.end) : ''}</span></div>
   </div>;

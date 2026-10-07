@@ -457,13 +457,13 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   const light = await surface();
   // One rectangle: a light rail on each side of it, with a dark grip set into each rail.
   expect(await page.locator('.annotation-range-selection > .annotation-range-rail').count()).toBe(2);
-  expect(light.borderWidth).toBe('0px'); expect(light.shadow).toContain('rgba(0, 0, 0, 0.58)');
+  expect(light.borderWidth).toBe('2px'); expect(light.shadow).toContain('rgba(0, 0, 0, 0.58)');
   // The sides are solidly light and the grips are dark, so a grip never disappears into its rail.
   expect(light.railShade).toBeGreaterThan(230); expect(light.notchShade).toBeLessThan(120); expect(light.railShade - light.notchShade).toBeGreaterThan(120);
   // The selected interior retains the source image and waveform tone.
   expect(light.fillAlpha).toBeGreaterThan(0); expect(light.fillAlpha).toBeLessThan(0.05);
   expect(light.insideShade).toBeGreaterThan(240);
-  expect(light.railWidth).toBe(8); expect(light.width).toBe(4); expect(light.height).toBe(12);
+  expect(light.railWidth + Number.parseFloat(light.borderWidth)).toBe(8); expect(light.width).toBe(4); expect(light.height).toBe(12);
   expect(light.hitWidth).toBe(24); expect(light.hitHeight).toBe(24);
   // The frame holds two grips inside one rectangle.
   expect(await page.locator('.annotation-range-selection > .annotation-range-handle').count()).toBe(2);

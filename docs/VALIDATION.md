@@ -645,6 +645,12 @@ HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统�
 
 证据：[历史下角](evidence/history-toast-corners/history-empty-light.png)、[正常宽度固定角落](evidence/history-toast-corners/copy-corner-712-light.png)、[窄屏省略](evidence/history-toast-corners/copy-ellipsis-320-light.png)、[布局测量](evidence/history-toast-corners/placement.json)。
 
+## 2026-10-07 · 完整白框与单时点标记
+
+- 选区白色 2px 上下边与两侧白轨连成同一圆角框，侧轨连同边框共 8px；未恢复深色外框。单时点取消 38px 最小选区宽度，改为位于准确时间位置的 4px 白标记。左右各有独立 24px 命中区，抓取偏移使端点单击保留原时间，拖动按实际位移改变时间。遮罩继续由该选区的圆角外投影绘制。
+- `npm run typecheck`、`npm run build` 通过。隔离 Chrome 视频轨道定向 1/1、音频指针/键盘/试听定向 1/1、320px 触屏定向 1/1 通过；音频用例分别从单时点拖开起点及终点，触屏用例也分别验证两侧端点。验证了单时点 4px 宽度、中心与时间位置误差小于 1px、两个端点命中区互不重叠、点按端点不移动时间、已存区间和节选试听。测试使用独立临时项目与端口，用户画板未写入。本轮用户免独立审查。
+- 实际明暗截图中，区间上、下白边与侧轨为同一纯白；浅色模式白边与区间内浅灰底 RGB 237 相差 18 级，且与外侧 RGB 99 的遮罩保持清楚边界；深色模式同样清楚。截图：[浅色区间](evidence/media-annotation-range/selection-frame-range-audio-light.png)、[深色区间](evidence/media-annotation-range/selection-frame-range-audio-dark.png)、[浅色时点](evidence/media-annotation-range/selection-frame-point-audio-light.png)、[深色时点](evidence/media-annotation-range/selection-frame-point-audio-dark.png)。
+
 ## 2026-10-07 · 音视频批注侧轨收窄与遮罩贴合
 
 - 白色侧轨 16→8px，深色可见握柄 6×12→4×12px，24×24px 命中区保持；移除深色外框。选区本身的 `box-shadow` 生成左右半透明遮罩，并由轨道裁切，遮罩与选区圆角共用几何边界。音频选区内外波形灰阶保持，两种主题共用同一轨道灰阶。
