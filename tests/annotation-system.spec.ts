@@ -424,8 +424,7 @@ test('running and history annotations render real text without writes and seek v
   expect((await app.state()).draft).toEqual(before.draft); expect((await app.state()).tasks[0].snapshot).toEqual(original.snapshot);
 });
 
-test('the annotation range shows bounded neutral grips, an outside mask, a compact height and a restored span', async ({ page, app }, info) => {
-  const shadeOf = (value: string) => value.match(/\d+/g)!.slice(0, 3).reduce((sum, part) => sum + Number(part), 0) / 3;
+test('the annotation range shows narrow rails, a flush rounded mask, a compact height and a restored span', async ({ page, app }, info) => {
   await open(page, app);
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('tests/fixtures/frontend-video.mp4'));
   const video = page.locator('.object-video video'); await expect(video).toHaveJSProperty('videoWidth', 320);
@@ -452,19 +451,20 @@ test('the annotation range shows bounded neutral grips, an outside mask, a compa
     const style = getComputedStyle(box);
     const alpha = Number((style.backgroundColor.match(/[\d.]+\s*\)$/) || ['1)'])[0].replace(')', '')) || 1;
     const railStyle = getComputedStyle(rail), notchStyle = getComputedStyle(notch);
-    return { fill: style.backgroundColor, border: style.borderTopColor, borderWidth: style.borderTopWidth, fillAlpha: alpha, insideShade: shade(style.backgroundColor), rail: railStyle.backgroundColor, railShade: shade(railStyle.backgroundColor), notch: notchStyle.backgroundColor, width: rect.width, height: rect.height, notchShade: shade(notchStyle.backgroundColor) };
+    const hit = notch.parentElement!.getBoundingClientRect();
+    return { fill: style.backgroundColor, borderWidth: style.borderTopWidth, shadow: style.boxShadow, fillAlpha: alpha, insideShade: shade(style.backgroundColor), rail: railStyle.backgroundColor, railWidth: rail.getBoundingClientRect().width, railShade: shade(railStyle.backgroundColor), notch: notchStyle.backgroundColor, width: rect.width, height: rect.height, hitWidth: hit.width, hitHeight: hit.height, notchShade: shade(notchStyle.backgroundColor) };
   });
   const light = await surface();
   // One rectangle: a light rail on each side of it, with a dark grip set into each rail.
   expect(await page.locator('.annotation-range-selection > .annotation-range-rail').count()).toBe(2);
-  expect(light.borderWidth).toBe('2px');
+  expect(light.borderWidth).toBe('0px'); expect(light.shadow).toContain('rgba(0, 0, 0, 0.58)');
   // The sides are solidly light and the grips are dark, so a grip never disappears into its rail.
   expect(light.railShade).toBeGreaterThan(230); expect(light.notchShade).toBeLessThan(120); expect(light.railShade - light.notchShade).toBeGreaterThan(120);
   // The selected interior retains the source image and waveform tone.
   expect(light.fillAlpha).toBeGreaterThan(0); expect(light.fillAlpha).toBeLessThan(0.05);
   expect(light.insideShade).toBeGreaterThan(240);
-  expect(shadeOf(light.border)).toBeLessThan(120);
-  expect(light.width).toBe(6); expect(light.height).toBe(12);
+  expect(light.railWidth).toBe(8); expect(light.width).toBe(4); expect(light.height).toBe(12);
+  expect(light.hitWidth).toBe(24); expect(light.hitHeight).toBe(24);
   // The frame holds two grips inside one rectangle.
   expect(await page.locator('.annotation-range-selection > .annotation-range-handle').count()).toBe(2);
   const heights = await page.evaluate(() => ({ card: document.querySelector('.annotation-full')!.getBoundingClientRect().height, track: document.querySelector('.annotation-range-track')!.getBoundingClientRect().height, range: document.querySelector('.annotation-time-range')!.getBoundingClientRect().height }));
@@ -477,14 +477,14 @@ test('the annotation range shows bounded neutral grips, an outside mask, a compa
   const lightShot = info.outputPath('range-annotation-light.png'); await page.locator('.annotation-full').screenshot({ path: lightShot }); console.log(`MEDIA_RANGE_SHOT ${lightShot}`);
   await page.getByRole('button', { name: 'Switch to dark theme' }).click();
   const dark = await surface();
-  // The same rails, grips, wash and outline hold in the dark theme instead of inverting.
+  // The same rails, grips, wash and mask hold in the dark theme instead of inverting.
   expect(dark.rail).toBe(light.rail); expect(dark.railShade).toBeGreaterThan(230);
   expect(dark.notch).toBe(light.notch); expect(dark.notchShade).toBeLessThan(120);
-  expect(dark.border).toBe(light.border); expect(dark.fill).toBe(light.fill);
+  expect(dark.shadow).toBe(light.shadow); expect(dark.fill).toBe(light.fill);
   const darkShot = info.outputPath('range-annotation-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
   await page.getByRole('button', { name: 'Switch to light theme' }).click();
 
-  // The mask covers only the two sides, so the selected span keeps the original material colours.
+  // The rounded selection generates its own outside mask, sharing one edge with the selected span.
   const track = (await page.locator('.annotation-range-track').boundingBox())!;
   await page.mouse.move(track.x + track.width * .3, track.y + track.height / 2); await page.mouse.down();
   await page.mouse.move(track.x + track.width * .8, track.y + track.height / 2, { steps: 5 }); await page.mouse.up();
@@ -493,14 +493,14 @@ test('the annotation range shows bounded neutral grips, an outside mask, a compa
     return {
       track: box('.annotation-range-track'), selection: box('.annotation-range-selection'),
       grips: Array.from(document.querySelectorAll('.annotation-range-handle span')).map(element => { const rect = element.getBoundingClientRect(); return { left: Math.round(rect.left), right: Math.round(rect.right) }; }),
-      widths: Array.from(document.querySelectorAll('.annotation-range-outside')).map(element => Math.round((element as HTMLElement).getBoundingClientRect().width)),
       rail: Math.round((document.querySelector('.annotation-range-rail') as HTMLElement).getBoundingClientRect().width),
-      colour: getComputedStyle(document.querySelector('.annotation-range-outside') as HTMLElement).backgroundColor,
+      shadow: getComputedStyle(document.querySelector('.annotation-range-selection') as HTMLElement).boxShadow,
     };
   });
-  expect(mask.colour).toBe('rgba(0, 0, 0, 0.58)');
-  expect(mask.widths[0]).toBe(mask.selection.left - mask.track.left);
-  expect(mask.widths[1]).toBe(mask.track.width - (mask.selection.left - mask.track.left) - mask.selection.width);
+  expect(await page.locator('.annotation-range-outside').count()).toBe(0);
+  expect(mask.shadow).toContain('rgba(0, 0, 0, 0.58)');
+  expect(mask.selection.left).toBeGreaterThan(mask.track.left);
+  expect(mask.selection.right).toBeLessThan(mask.track.right);
   // Each grip stays within its own side rail and never overhangs the outside of the rectangle.
   expect(mask.grips[0].left).toBeGreaterThanOrEqual(mask.selection.left); expect(mask.grips[0].right).toBeLessThanOrEqual(mask.selection.left + mask.rail);
   expect(mask.grips[1].right).toBeLessThanOrEqual(mask.selection.right); expect(mask.grips[1].left).toBeGreaterThanOrEqual(mask.selection.right - mask.rail);

@@ -645,6 +645,12 @@ HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统�
 
 证据：[历史下角](evidence/history-toast-corners/history-empty-light.png)、[正常宽度固定角落](evidence/history-toast-corners/copy-corner-712-light.png)、[窄屏省略](evidence/history-toast-corners/copy-ellipsis-320-light.png)、[布局测量](evidence/history-toast-corners/placement.json)。
 
+## 2026-10-07 · 音视频批注侧轨收窄与遮罩贴合
+
+- 白色侧轨 16→8px，深色可见握柄 6×12→4×12px，24×24px 命中区保持；移除深色外框。选区本身的 `box-shadow` 生成左右半透明遮罩，并由轨道裁切，遮罩与选区圆角共用几何边界。音频选区内外波形灰阶保持，两种主题共用同一轨道灰阶。
+- `npm run typecheck`、`npm run build` 通过；隔离 Chrome 定向 `npm run test:browser -- tests/annotation-system.spec.ts tests/multimodal.spec.ts --grep 'the annotation range shows narrow rails|audio plays real media|audio range card keeps'` **3/3** 通过。覆盖视频全段初值与拖框、草稿恢复、节选播放起止、音频键盘时点/区间与自动暂停、320px 卡片及真实触屏端点拖动。独立临时项目、临时端口，没有写入用户画板。
+- 截图：[音频浅色](evidence/media-annotation-range/selection-flush-audio-light.png)、[音频深色](evidence/media-annotation-range/selection-flush-audio-dark.png)、[视频浅色](evidence/media-annotation-range/selection-flush-video-light.png)、[视频深色](evidence/media-annotation-range/selection-flush-video-dark.png)。音频截图的放大检查显示圆角边缘连续、两侧遮罩紧贴白色侧轨；视频测试素材为彩条视频。独立只读审查对照原参考、用户反馈及四张最终截图，三项视觉需求均 PASS；首次独立 Chrome 因沙箱启动 `SIGABRT` 中止，在获准环境复跑相同隔离三项 3/3（15.9 秒，exit 0）。综合验收 PASS，无可执行 P0–P3 发现。
+
 ## 2026-10-07 · 音视频批注选区视觉对齐
 
 - 对照用户图 1/图 2 调整：选区深灰 2px 外框；白色 16px 侧轨内有 6×12px 深色握柄，命中按钮保持 24×24px；选区外 `rgba(0,0,0,.58)` 遮罩保留波形，选区内只轻度提亮。握柄居中侧轨，不溢出选区外框。浅深主题使用同一轨道灰阶。
