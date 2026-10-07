@@ -109,7 +109,7 @@ async function select(page: Page, object: BoardObject) {
 async function chooseVideoPoint(page: Page, seconds: number) {
   await expect(page.locator('.annotation-time-range')).toHaveAttribute('data-ready', 'true');
   const duration = await page.locator('.object-video video').evaluate(element => (element as HTMLVideoElement).duration);
-  const track = (await page.locator('.annotation-range-track').boundingBox())!;
+  const track = (await page.locator('.annotation-range-timeline').boundingBox())!;
   await page.mouse.click(track.x + track.width * seconds / duration, track.y + track.height / 2);
 }
 
@@ -226,7 +226,7 @@ test('video range selection keeps playback position and replaces its representat
   await expect.poll(async () => (await app.state()).draft.annotations[0]?.snapshotAssetId).toBeTruthy();
   const originalFrame = (await app.state()).draft.annotations[0].snapshotAssetId;
   await expect.poll(() => page.locator('.annotation-range-frame').evaluateAll(elements => elements.filter(element => (element as HTMLElement).style.backgroundImage.includes('blob:')).length)).toBeGreaterThanOrEqual(2);
-  const track = page.locator('.annotation-range-track'), box = (await track.boundingBox())!;
+  const track = page.locator('.annotation-range-timeline'), box = (await track.boundingBox())!;
   await page.mouse.move(box.x + box.width * .25, box.y + box.height / 2); await page.mouse.down();
   await page.mouse.move(box.x + box.width * .75, box.y + box.height / 2, { steps: 6 }); await page.mouse.up();
   await expect.poll(async () => (await app.state()).draft.annotations[0]?.timeStart).toBeGreaterThan(.3);
@@ -267,7 +267,7 @@ test('a superseded video frame upload cannot attach to the next start point', as
     const response = await route.fetch(); staleId = (await response.json()).id; entered(); await gate; await route.fulfill({ response });
   });
   try {
-    const track = (await page.locator('.annotation-range-track').boundingBox())!;
+    const track = (await page.locator('.annotation-range-timeline').boundingBox())!;
     await page.mouse.move(track.x + track.width * .25, track.y + track.height / 2); await page.mouse.down(); await page.mouse.move(track.x + track.width * .7, track.y + track.height / 2, { steps: 4 }); await page.mouse.up();
     await first;
     const start = page.getByRole('slider', { name: 'Start point' }); await start.focus(); await start.press('ArrowRight');
@@ -440,6 +440,18 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   await expect(page.getByLabel('End time', { exact: true })).toHaveCount(0); await expect(page.getByLabel('Audio annotation target', { exact: true })).toHaveCount(0);
   const start = page.getByRole('slider', { name: 'Start point' }), end = page.getByRole('slider', { name: 'End point' });
   await expect(start).toHaveAttribute('aria-valuenow', '0'); await expect(end).toHaveAttribute('aria-valuenow', String(duration));
+  const fullBounds = await page.evaluate(() => {
+    const rect = (selector: string) => (document.querySelector(selector) as HTMLElement).getBoundingClientRect();
+    const track = rect('.annotation-range-track'), timeline = rect('.annotation-range-timeline'), selection = rect('.annotation-range-selection');
+    const start = rect('.annotation-range-handle.start'), end = rect('.annotation-range-handle.end');
+    return { trackLeft: track.left, trackRight: track.right, timelineLeft: timeline.left, timelineRight: timeline.right, selectionLeft: selection.left, selectionRight: selection.right, startLeft: start.left, startRight: start.right, endLeft: end.left, endRight: end.right };
+  });
+  expect(fullBounds.selectionLeft).toBeCloseTo(fullBounds.timelineLeft - 8, 1);
+  expect(fullBounds.selectionRight).toBeCloseTo(fullBounds.timelineRight + 8, 1);
+  expect(fullBounds.startLeft).toBeGreaterThanOrEqual(fullBounds.trackLeft);
+  expect(fullBounds.endRight).toBeLessThanOrEqual(fullBounds.trackRight);
+  expect(fullBounds.startRight).toBeLessThanOrEqual(fullBounds.timelineLeft);
+  expect(fullBounds.endLeft).toBeGreaterThanOrEqual(fullBounds.timelineRight);
 
   // Each grip is a dark slot set into a light side rail of the single selection rectangle.
   const surface = () => page.evaluate(() => {
@@ -485,7 +497,7 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   await page.getByRole('button', { name: 'Switch to light theme' }).click();
 
   // The rounded selection generates its own outside mask, sharing one edge with the selected span.
-  const track = (await page.locator('.annotation-range-track').boundingBox())!;
+  const track = (await page.locator('.annotation-range-timeline').boundingBox())!;
   await page.mouse.move(track.x + track.width * .3, track.y + track.height / 2); await page.mouse.down();
   await page.mouse.move(track.x + track.width * .8, track.y + track.height / 2, { steps: 5 }); await page.mouse.up();
   const mask = await page.evaluate(() => {
@@ -528,8 +540,9 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   await expect(start).toHaveAttribute('aria-valuenow', String(selected.start)); await expect(end).toHaveAttribute('aria-valuenow', String(selected.end));
   await end.focus(); await end.press('Home'); await expect(page.locator('.annotation-range-selection')).toHaveAttribute('data-point', 'true');
   await end.press('ArrowRight');
-  const shortVideo = page.locator('.annotation-range-selection'); await expect(shortVideo).toHaveAttribute('data-compact', 'true');
-  const shortVideoBox = (await shortVideo.boundingBox())!; expect(shortVideoBox.width).toBeGreaterThan(4); expect(shortVideoBox.width).toBeLessThan(32);
+  const shortVideo = page.locator('.annotation-range-selection');
+  const shortVideoBox = (await shortVideo.boundingBox())!; expect(shortVideoBox.width).toBeGreaterThan(16); expect(shortVideoBox.width).toBeLessThan(48);
+  await expect(shortVideo.locator('.annotation-range-handle span')).toHaveCount(2);
   await end.evaluate(element => (element as HTMLElement).blur());
   const shortVideoLight = info.outputPath('video-short-light.png'); await page.locator('.annotation-full').screenshot({ path: shortVideoLight }); console.log(`MEDIA_RANGE_SHOT ${shortVideoLight}`);
   await page.getByRole('button', { name: 'Switch to dark theme' }).click();

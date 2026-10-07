@@ -87,7 +87,7 @@ async function beginAnnotating(page: Page) {
 async function chooseVideoPoint(page: Page, seconds: number) {
   await expect(page.locator('.annotation-time-range')).toHaveAttribute('data-ready', 'true');
   const duration = await page.locator('.object-video video').evaluate(element => (element as HTMLVideoElement).duration);
-  const track = (await page.locator('.annotation-range-track').boundingBox())!;
+  const track = (await page.locator('.annotation-range-timeline').boundingBox())!;
   await page.mouse.click(track.x + track.width * seconds / duration, track.y + track.height / 2);
 }
 

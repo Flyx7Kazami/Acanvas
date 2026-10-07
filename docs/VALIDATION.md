@@ -645,6 +645,12 @@ HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统�
 
 证据：[历史下角](evidence/history-toast-corners/history-empty-light.png)、[正常宽度固定角落](evidence/history-toast-corners/copy-corner-712-light.png)、[窄屏省略](evidence/history-toast-corners/copy-ellipsis-320-light.png)、[布局测量](evidence/history-toast-corners/placement.json)。
 
+## 2026-10-07 · 两端握柄持续可见与时间内容独立几何
+
+- 轨道内时间内容轴左右各预留 24px。白色端柄各占时间线外侧 8px，24px 透明命中区分别位于起点线左侧和终点线右侧；全幅选择的首尾命中区完整落在轨道内。选区外轮廓宽度恒等于时间内容像素宽加 16px，单时点两柄相贴且内容宽度为 0，短区间继续显示两柄与内部波形。去掉依选区像素宽隐藏握柄的分支，遮罩继续与白框共享圆角边界。点击和框选时间按内侧时间轴换算。
+- `npm run typecheck`、`npm run build` 通过。隔离 Chrome 视频 1/1、音频 1/1、320px 音频触屏与 320→390→320 视口变化 1/1 通过；此外，调用视频时点 helper 的五项历史用例 5/5 通过。覆盖全幅首尾柄位置与完整命中、普通/短/单时点、两端指针/触屏/键盘操作、已存区间恢复、节选播放及自动暂停。隔离临时项目及端口，无用户白板写入。本轮用户免独立审查。
+- 视觉核对：全幅两端各有 16px 灰色非时间边距，深色槽居中于 8px 白轨；单时点两柄连续相贴，没有空隙或额外白色内容块。截图：[音频普通浅色](evidence/media-annotation-range/selection-handles-audio-range-light.png)、[深色](evidence/media-annotation-range/selection-handles-audio-range-dark.png)、[音频短区间浅色](evidence/media-annotation-range/selection-handles-audio-short-light.png)、[深色](evidence/media-annotation-range/selection-handles-audio-short-dark.png)、[单时点浅色](evidence/media-annotation-range/selection-handles-audio-point-light.png)、[深色](evidence/media-annotation-range/selection-handles-audio-point-dark.png)、[320px 浅色](evidence/media-annotation-range/selection-handles-audio-320-light.png)、[深色](evidence/media-annotation-range/selection-handles-audio-320-dark.png)、[视频全幅浅色](evidence/media-annotation-range/selection-handles-video-full-light.png)、[深色](evidence/media-annotation-range/selection-handles-video-full-dark.png)、[视频短区间浅色](evidence/media-annotation-range/selection-handles-video-short-light.png)、[深色](evidence/media-annotation-range/selection-handles-video-short-dark.png)。
+
 ## 2026-10-07 · 短而非零区间的自适应选框
 
 - 根因是短区间实际宽度小于两侧白轨及端点命中所需空间。组件在挂载时立即测量轨道 `clientWidth`，并通过 ResizeObserver 跟随宽度变化；真实区间像素宽小于 32px 时切换为 1px 白色紧凑轮廓，隐藏白侧轨与深色可见柄，两只 24px 透明命中区在选区中线左右分列。区间仍严格对应真实起止时间，外侧遮罩沿同一个圆角轮廓生成；达到宽度后恢复完整白框，零宽保持 4px 时点标记。
