@@ -67,6 +67,8 @@ export function AnnotationTimeRange({ kind, src, media, start, end, fresh, disab
   }, [kind, fresh, disabled, media, available, start, end, duration]);
   const selected: Range = preview || { start: clamp(start ?? 0, 0, duration || Infinity), end: clamp(end ?? (start === undefined ? duration : start), 0, duration || Infinity) };
   const point = selected.start === selected.end;
+  const atEnd = available && selected.end >= duration - .011;
+  const full = atEnd && !point && selected.start === 0;
   const position = (value: number) => available ? `${value / duration * 100}%` : '0%';
   const timeAt = (clientX: number) => {
     const rect = track.current?.getBoundingClientRect();
@@ -142,7 +144,7 @@ export function AnnotationTimeRange({ kind, src, media, start, end, fresh, disab
         {kind === 'video' ? <div className="annotation-range-frames">{Array.from({ length: 6 }, (_, index) => <div key={index} className="annotation-range-frame" style={frames[index] ? { backgroundImage: `url(${frames[index]})` } : undefined}/>)}</div> : <div className="annotation-range-wave">{wave ? Array.from({ length: 84 }, (_, index) => { const from = Math.floor(index * wave.values.length / 84), to = Math.max(from + 1, Math.floor((index + 1) * wave.values.length / 84)); let peak = 0; for (let i = from; i < to; i++) peak = Math.max(peak, wave.values[i]); return <i key={index} style={{ height: `${Math.max(8, peak / wave.maximum * 86)}%` }}/>; }) : <span/>}</div>}
         <div className="annotation-range-shade" style={rangeStyle}/>
       </div>
-      <div className="annotation-range-selection" data-point={point} data-at-start={selected.start === 0} data-at-end={available && selected.end === duration} style={rangeStyle}><i className="annotation-range-rail start"/><i className="annotation-range-rail end"/>{(['start', 'end'] as const).map(edge => <button key={edge} type="button" role="slider" aria-orientation="horizontal" data-range-handle={edge} className={`annotation-range-handle ${edge}`} aria-label={`${edge === 'start' ? 'Start' : 'End'} point`} aria-valuemin={0} aria-valuemax={duration} aria-valuenow={selected[edge]} aria-valuetext={exactClock(selected[edge])} disabled={!available || disabled} onKeyDown={event => key(event, edge)}><span/></button>)}</div>
+      <div className="annotation-range-selection" data-point={point} data-full={full} data-at-start={selected.start === 0} data-at-end={atEnd} style={rangeStyle}><i className="annotation-range-rail start"/><i className="annotation-range-rail end"/>{(['start', 'end'] as const).map(edge => <button key={edge} type="button" role="slider" aria-orientation="horizontal" data-range-handle={edge} className={`annotation-range-handle ${edge}`} aria-label={`${edge === 'start' ? 'Start' : 'End'} point`} aria-valuemin={0} aria-valuemax={duration} aria-valuenow={selected[edge]} aria-valuetext={exactClock(selected[edge])} disabled={!available || disabled} onKeyDown={event => key(event, edge)}><span/></button>)}</div>
     </div>
     <div className="annotation-range-times"><span>{available ? clock(selected.start) : 'Time unavailable'}</span><button type="button" className="annotation-range-preview" aria-label={playing ? 'Pause range preview' : 'Play range preview'} title={playing ? 'Pause preview' : 'Preview range'} disabled={!available || disabled || selected.start >= duration} onClick={() => void togglePreview()}>{playing ? <Pause size={14} fill="currentColor"/> : <Play size={14} fill="currentColor"/>}</button><span>{available ? clock(selected.end) : ''}</span></div>
   </div>;

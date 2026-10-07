@@ -466,12 +466,14 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
     const alpha = Number((shadeStyle.backgroundColor.match(/[\d.]+\s*\)$/) || ['1)'])[0].replace(')', '')) || 1;
     const railStyle = getComputedStyle(rail), notchStyle = getComputedStyle(notch);
     const hit = notch.parentElement!.getBoundingClientRect();
-    return { fill: shadeStyle.backgroundColor, borderWidth: style.borderTopWidth, shadow: shadeStyle.boxShadow, fillAlpha: alpha, insideShade: shade(shadeStyle.backgroundColor), rail: railStyle.backgroundColor, railWidth: rail.getBoundingClientRect().width, railShade: shade(railStyle.backgroundColor), notch: notchStyle.backgroundColor, width: rect.width, height: rect.height, hitWidth: hit.width, hitHeight: hit.height, notchShade: shade(notchStyle.backgroundColor) };
+    return { fill: shadeStyle.backgroundColor, borderWidth: style.borderTopWidth, shadow: shadeStyle.boxShadow, selectionShadow: style.boxShadow, fillAlpha: alpha, insideShade: shade(shadeStyle.backgroundColor), rail: railStyle.backgroundColor, railWidth: rail.getBoundingClientRect().width, railShade: shade(railStyle.backgroundColor), notch: notchStyle.backgroundColor, width: rect.width, height: rect.height, hitWidth: hit.width, hitHeight: hit.height, notchShade: shade(notchStyle.backgroundColor) };
   });
   const light = await surface();
+  await expect(page.locator('.annotation-range-selection')).toHaveAttribute('data-full', 'true');
   // One rectangle: a light rail on each side of it, with a dark grip set into each rail.
   expect(await page.locator('.annotation-range-selection > .annotation-range-rail').count()).toBe(2);
   expect(light.borderWidth).toBe('2px'); expect(light.shadow).toContain('rgba(0, 0, 0, 0.58)');
+  expect(light.selectionShadow).toContain('rgba(0, 0, 0, 0.16)');
   // The sides are solidly light and the grips are dark, so a grip never disappears into its rail.
   expect(light.railShade).toBeGreaterThan(230); expect(light.notchShade).toBeLessThan(120); expect(light.railShade - light.notchShade).toBeGreaterThan(120);
   // The selected interior retains the source image and waveform tone.
@@ -495,6 +497,7 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   expect(dark.rail).toBe(light.rail); expect(dark.railShade).toBeGreaterThan(230);
   expect(dark.notch).toBe(light.notch); expect(dark.notchShade).toBeLessThan(120);
   expect(dark.shadow).toBe(light.shadow); expect(dark.fill).toBe(light.fill);
+  expect(dark.selectionShadow).toBe('none');
   const darkShot = info.outputPath('range-annotation-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
   await page.getByRole('button', { name: 'Switch to light theme' }).click();
 
@@ -502,6 +505,7 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   const track = (await page.locator('.annotation-range-timeline').boundingBox())!;
   await page.mouse.move(track.x + track.width * .3, track.y + track.height / 2); await page.mouse.down();
   await page.mouse.move(track.x + track.width * .8, track.y + track.height / 2, { steps: 5 }); await page.mouse.up();
+  await expect(page.locator('.annotation-range-selection')).toHaveAttribute('data-full', 'false');
   const mask = await page.evaluate(() => {
     const box = (selector: string) => { const rect = (document.querySelector(selector) as HTMLElement).getBoundingClientRect(); return { left: Math.round(rect.left), right: Math.round(rect.right), width: Math.round(rect.width) }; };
     return {
@@ -513,6 +517,7 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   });
   expect(await page.locator('.annotation-range-outside').count()).toBe(0);
   expect(mask.shadow).toContain('rgba(0, 0, 0, 0.58)');
+  expect(await page.locator('.annotation-range-selection').evaluate(element => getComputedStyle(element).boxShadow)).toBe('none');
   expect(mask.selection.left).toBeGreaterThan(mask.track.left);
   expect(mask.selection.right).toBeLessThan(mask.track.right);
   // Each grip stays within its own side rail and never overhangs the outside of the rectangle.

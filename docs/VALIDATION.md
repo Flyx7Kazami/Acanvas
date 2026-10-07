@@ -645,6 +645,12 @@ HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统�
 
 证据：[历史下角](evidence/history-toast-corners/history-empty-light.png)、[正常宽度固定角落](evidence/history-toast-corners/copy-corner-712-light.png)、[窄屏省略](evidence/history-toast-corners/copy-ellipsis-320-light.png)、[布局测量](evidence/history-toast-corners/placement.json)。
 
+## 2026-10-07 · 浅色全段选框层次
+
+- 仅浅色主题且起点为 0、终点到媒体尾部的全段选区，给白色选框添加 `0 2px 7px rgba(0,0,0,.16)` 柔和外投影；不增加硬外框、灰尾段或卡片留白，投影不覆盖视频帧和音频波形。全段及终点极值判断容纳视频时长按百分秒保存造成的最多约 0.005 秒舍入，极值处 24px 透明端点命中仍落在卡片内。局部选区和深色状态不应用新投影。
+- `npm run typecheck`、`npm run build` 通过；隔离 Chrome 视频全段/局部与音频320触屏定向 2/2 通过。浏览器断言浅色全段存在柔和投影、深色全段和浅色局部 `box-shadow: none`，并保留首尾命中、拖动、短区间和试听行为。对照上一版截图，浅色局部视频像素完全一致；深色全段视频仅 3/201960 个 RGB 通道取值不同。测试使用独立临时项目，用户画板未写入。本轮用户免独立审查。
+- 截图：[浅色全段视频](evidence/media-annotation-range/selection-light-full-depth-video-light.png)、[深色全段视频](evidence/media-annotation-range/selection-light-full-depth-video-dark.png)、[浅色局部视频](evidence/media-annotation-range/selection-light-full-depth-video-partial-light.png)、[浅色全段音频](evidence/media-annotation-range/selection-light-full-depth-audio-light.png)、[深色全段音频](evidence/media-annotation-range/selection-light-full-depth-audio-dark.png)。
+
 ## 2026-10-07 · 满幅时间内容与内边距握柄
 
 - 可见音视频时间内容占满原轨道，0 秒与结束对应轨道左右边界。`.annotation-range-viewport` 裁切波形、视频帧及同几何遮罩；白框和两只握柄在独立上层，可伸进卡片现有内边距，遮罩不会盖到卡片其他区域。可见柄仍各在时间线外侧，单时点两柄相贴。极值处将透明 24px 命中框向内偏 4px，深色槽反向补偿并保持白轨居中；卡片和轨道宽度、水平内边距均未改变。
