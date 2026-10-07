@@ -679,3 +679,12 @@ HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统�
 - `232715f` 设计与验证文档、亮暗及 320px 证据截图
 
 按用户要求回退到浅色主题那条反馈之前的状态：要求用例名恢复为 `the annotation range shows bounded neutral grips, an outside mask, a compact height and a restored span`，遮罩断言为 `rgba(255, 255, 255, 0.66)`，`App.tsx` 恢复 `disabled || annotating`，`audio-canvas.css` 的 `.audio-player-waveform[aria-disabled=true]` 恢复 `opacity:.4`（该文件与 `HEAD` 无差异），并删除了该轮新增的波形回归用例。因缺少当时的提交，本次回退是依据代码内容手工重建的；行为与断言已逐条核对，但浅色主题侧轨的具体取值无法与当时逐字节比对。
+
+## 2026-10-07 · 时间范围控件外观定稿（两种主题同一套取值）
+
+- 用户确认目标：**两侧深色遮罩、内部浅色盒子，浅色与深色主题使用同一套取值**。此前几轮反复出错的原因是按主题各写一套灰阶，遮罩/薄纱在两种主题下产生相反的主次关系；现在不再按主题取值，问题从根上消失。
+- 定稿取值：选区外 `rgba(0,0,0,.72)` 深色遮罩；选区内 `color-mix(in srgb, #f7f7f5 76%, transparent)` 半透明浅底，画面与波形仍可见；选区外框 2px 深色圆角描边；握柄 6×12px 深色圆角块，命中区 12×22px。
+- 过程中发现并修正一处自己引入的缺陷：初版把选区底写成不透明 `#f7f7f5`，导致默认的全幅选择把素材完全遮住（新批注的默认状态就是全幅）；改为 76% 半透明后素材恢复可见。要求用例新增断言，固定半透明度落在 0.6–0.85 之间，防止再次退化为不透明。
+- 同步简化结构：`.annotation-range-rail` 侧轨元素已无用途，从组件与样式中删除，选区只由"遮罩 + 半透明盒子 + 描边 + 两个握柄"构成。
+- 要求用例断言：选区填充为半透明、描边 2px 且为深色、握柄为深色、浅色与深色主题的填充与握柄取值**完全相同**、悬停不改变尺寸、控件高度小于 60px、轨道小于 30px、卡片小于 200px、左右遮罩宽度与选区位置满足加和关系、默认区间 `0…duration`、节选播放起止落在选区内、草稿评论重开后恢复已存区间。
+- `npm run typecheck`、`npm run build` 通过；该用例与音视频定向用例通过。截图：[浅色范围卡](evidence/media-annotation-range/annotation-light.png)、[深色范围卡](evidence/media-annotation-range/annotation-dark.png)、[视频浅色](evidence/media-annotation-range/video-light.png)、[视频深色](evidence/media-annotation-range/video-dark.png)、[音频浅色](evidence/media-annotation-range/audio-light.png)、[音频深色](evidence/media-annotation-range/audio-dark.png)。
