@@ -460,13 +460,11 @@ test('the annotation range shows bounded neutral grips, an outside mask, a compa
   expect(light.borderWidth).toBe('2px');
   // The sides are solidly light and the grips are dark, so a grip never disappears into its rail.
   expect(light.railShade).toBeGreaterThan(230); expect(light.notchShade).toBeLessThan(120); expect(light.railShade - light.notchShade).toBeGreaterThan(120);
-  // The selected interior is washed light but stays translucent, so the frames and waveform still read through it.
-  expect(light.fillAlpha).toBeGreaterThan(0.5); expect(light.fillAlpha).toBeLessThan(0.8);
-  expect(light.insideShade).toBeGreaterThan(200);
+  // The selected interior retains the source image and waveform tone.
+  expect(light.fillAlpha).toBeGreaterThan(0); expect(light.fillAlpha).toBeLessThan(0.05);
+  expect(light.insideShade).toBeGreaterThan(240);
   expect(shadeOf(light.border)).toBeLessThan(120);
-  expect(light.width).toBeGreaterThanOrEqual(10); expect(light.width).toBeLessThanOrEqual(13);
-  expect(light.height).toBeGreaterThanOrEqual(20); expect(light.height).toBeLessThanOrEqual(24);
-  expect(light.height / light.width).toBeGreaterThan(1.6); expect(light.height / light.width).toBeLessThan(2.4);
+  expect(light.width).toBe(6); expect(light.height).toBe(12);
   // The frame holds two grips inside one rectangle.
   expect(await page.locator('.annotation-range-selection > .annotation-range-handle').count()).toBe(2);
   const heights = await page.evaluate(() => ({ card: document.querySelector('.annotation-full')!.getBoundingClientRect().height, track: document.querySelector('.annotation-range-track')!.getBoundingClientRect().height, range: document.querySelector('.annotation-time-range')!.getBoundingClientRect().height }));
@@ -500,7 +498,7 @@ test('the annotation range shows bounded neutral grips, an outside mask, a compa
       colour: getComputedStyle(document.querySelector('.annotation-range-outside') as HTMLElement).backgroundColor,
     };
   });
-  expect(mask.colour).toBe('rgb(74, 74, 74)');
+  expect(mask.colour).toBe('rgba(0, 0, 0, 0.58)');
   expect(mask.widths[0]).toBe(mask.selection.left - mask.track.left);
   expect(mask.widths[1]).toBe(mask.track.width - (mask.selection.left - mask.track.left) - mask.selection.width);
   // Each grip stays within its own side rail and never overhangs the outside of the rectangle.
@@ -509,6 +507,9 @@ test('the annotation range shows bounded neutral grips, an outside mask, a compa
   const selected = { start: Number(await start.getAttribute('aria-valuenow')), end: Number(await end.getAttribute('aria-valuenow')) };
   expect(selected.start).toBeGreaterThan(0); expect(selected.end).toBeLessThanOrEqual(duration); expect(selected.end).toBeGreaterThan(selected.start);
   const shot = info.outputPath('range-card.png'); await page.locator('.annotation-full').screenshot({ path: shot }); console.log(`MEDIA_RANGE_SHOT ${shot}`);
+  await page.getByRole('button', { name: 'Switch to dark theme' }).click();
+  const darkSelectedShot = info.outputPath('range-card-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkSelectedShot }); console.log(`MEDIA_RANGE_SHOT ${darkSelectedShot}`);
+  await page.getByRole('button', { name: 'Switch to light theme' }).click();
 
   // The excerpt plays from the start point and stops itself at the end point.
   await page.getByRole('button', { name: 'Play range preview' }).click();

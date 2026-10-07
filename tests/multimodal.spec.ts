@@ -100,6 +100,7 @@ test('audio plays real media in one row and saves explicit time range without fr
   await expect.poll(() => object.locator('audio').evaluate(element => (element as HTMLAudioElement).paused), { timeout: 5000 }).toBeTruthy();
   expect(await object.locator('audio').evaluate(element => (element as HTMLAudioElement).currentTime)).toBeGreaterThan(2.8);
   const endPoint = page.getByRole('slider', { name: 'End point' }); await endPoint.focus(); await endPoint.press('End'); for (let index = 0; index < 10; index++) await endPoint.press('ArrowLeft');
+  await endPoint.evaluate(element => (element as HTMLElement).blur());
   const lightShot = info.outputPath('audio-range-light.png'); await page.locator('.annotation-full').screenshot({ path: lightShot }); console.log(`MEDIA_RANGE_SHOT ${lightShot}`);
   await page.getByRole('button', { name: 'Switch to dark theme' }).click(); const darkShot = info.outputPath('audio-range-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
   await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await input.press('Escape'); await page.locator('#instruction').fill('Compose from this range'); await page.getByRole('button', { name: 'Send request', exact: true }).click();

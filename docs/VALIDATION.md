@@ -645,6 +645,12 @@ HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统�
 
 证据：[历史下角](evidence/history-toast-corners/history-empty-light.png)、[正常宽度固定角落](evidence/history-toast-corners/copy-corner-712-light.png)、[窄屏省略](evidence/history-toast-corners/copy-ellipsis-320-light.png)、[布局测量](evidence/history-toast-corners/placement.json)。
 
+## 2026-10-07 · 音视频批注选区视觉对齐
+
+- 对照用户图 1/图 2 调整：选区深灰 2px 外框；白色 16px 侧轨内有 6×12px 深色握柄，命中按钮保持 24×24px；选区外 `rgba(0,0,0,.58)` 遮罩保留波形，选区内只轻度提亮。握柄居中侧轨，不溢出选区外框。浅深主题使用同一轨道灰阶。
+- `npm run typecheck`、`npm run build` 通过。隔离 Chrome 定向执行 `npm run test:browser -- tests/annotation-system.spec.ts tests/multimodal.spec.ts --grep 'the annotation range shows bounded neutral grips|audio plays real media|audio range card keeps'`，3/3 通过；音频截图去除键盘焦点后的最终复测 1/1 通过。覆盖全段初值、拖框、恢复已存区间、节选播放与自动暂停、320px 卡片和触屏端点拖动。所有浏览器测试使用独立临时项目与临时端口，没有写入用户画板。
+- 使用 `ffmpeg` 读取参考图与最终截图的像素：图 2 选区内波形主色 RGB 112、底色约 238；最终音频截图分别为 112、237。图 2 选区外波形约 47、底色约 100；最终分别为 46、99。截图：[音频浅色](evidence/media-annotation-range/selection-reference-audio-light.png)、[音频深色](evidence/media-annotation-range/selection-reference-audio-dark.png)、[视频浅色](evidence/media-annotation-range/selection-reference-video-light.png)、[视频深色](evidence/media-annotation-range/selection-reference-video-dark.png)。视频测试素材为彩条片，时间选区与遮罩的灰阶关系照常呈现。独立只读审查复核像素与四张截图，另在隔离 Chrome 运行 3/3 定向用例，结论 PASS，无可执行 P0–P3 发现。测试对精确色值与尺寸绑定较紧，未来主动改样式时需同步维护断言。
+
 ## 2026-10-06 · 音视频批注时间范围轨道
 
 - `npm run typecheck`、`npm run build` 通过。Chrome 在独立临时项目运行六项定向用例，分别覆盖音频整段/点选/拖框/键盘范围与发送后编辑、视频真实取样帧与起点变更、旧异步帧回填、320px 卡片及真实触屏拖动、延迟上传竞态；六项均通过。主要测试位于 `tests/multimodal.spec.ts` 与 `tests/annotation-system.spec.ts`，既有 `tests/frontend.spec.ts` 视频批注回归通过。

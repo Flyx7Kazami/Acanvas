@@ -262,24 +262,24 @@ details[open] summary svg { rotate: 180deg; }
 .comment-video-meta input { width: 62px; padding: 3px; border: 0; border-radius: 4px; background: var(--soft); font-size: 10px; outline: 0; box-shadow: none; }
 .annotation-full:has(.annotation-time-range) { --annotation-height: 186px; }
 .annotation-full:has(.annotation-time-range) .annotation-context { width: 100%; }
-.annotation-time-range { --range-rail: #fdfdfd; --range-notch: #2d2d2d; --range-notch-hover: #111111; --range-mask: #4a4a4a; --range-wash: rgba(247,247,245,.62); width: 100%; min-width: 0; padding: 2px 8px 0; color: var(--ink); }
-.annotation-range-track { position: relative; width: 100%; height: 26px; overflow: hidden; border-radius: 5px; background: var(--soft); cursor: crosshair; touch-action: none; user-select: none; }
+.annotation-time-range { --range-rail: #fff; --range-notch: #343434; --range-notch-hover: #171717; --range-outline: #505050; --range-mask: rgba(0,0,0,.58); --range-wash: rgba(255,255,255,.02); width: 100%; min-width: 0; padding: 2px 8px 0; color: var(--ink); }
+.annotation-range-track { position: relative; width: 100%; height: 26px; overflow: hidden; border-radius: 5px; background: #ededed; cursor: crosshair; touch-action: none; user-select: none; }
 .annotation-range-frames,.annotation-range-wave { position: absolute; inset: 0; display: flex; overflow: hidden; border-radius: inherit; pointer-events: none; }
-.annotation-range-frames { background: var(--soft); }
-.annotation-range-frame { flex: 1; min-width: 0; background-color: var(--soft); background-size: cover; background-position: center; }
+.annotation-range-frames { background: #ededed; }
+.annotation-range-frame { flex: 1; min-width: 0; background-color: #ededed; background-size: cover; background-position: center; }
 .annotation-range-wave { align-items: center; justify-content: space-around; padding: 4px 2px; gap: 1px; }
-.annotation-range-wave i { display: block; flex: 1; min-width: 1px; border-radius: 1px; background: var(--muted); }
-.annotation-range-wave span { display: block; width: 100%; height: 2px; background: var(--muted); }
+.annotation-range-wave i { display: block; flex: 1; min-width: 1px; border-radius: 1px; background: #6d6d6d; }
+.annotation-range-wave span { display: block; width: 100%; height: 2px; background: #6d6d6d; }
 .annotation-range-outside { position: absolute; top: 0; bottom: 0; left: 0; background: var(--range-mask); pointer-events: none; }
 .annotation-range-outside.right { width: auto; right: 0; }
-.annotation-range-selection { position: absolute; top: 0; bottom: 0; min-width: 46px; box-sizing: border-box; border: 2px solid var(--range-notch); border-radius: 6px; background: var(--range-wash); pointer-events: none; }
-.annotation-range-rail { position: absolute; top: 0; bottom: 0; width: 20px; background: var(--range-rail); }
+.annotation-range-selection { position: absolute; top: 0; bottom: 0; min-width: 38px; box-sizing: border-box; border: 2px solid var(--range-outline); border-radius: 6px; background: var(--range-wash); pointer-events: none; }
+.annotation-range-rail { position: absolute; top: 0; bottom: 0; width: 16px; background: var(--range-rail); }
 .annotation-range-rail.start { left: 0; border-radius: 4px 0 0 4px; }
 .annotation-range-rail.end { right: 0; border-radius: 0 4px 4px 0; }
 .annotation-range-handle { position: absolute; z-index: 2; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; padding: 0; border: 0; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; place-items: center; background: transparent; cursor: ew-resize; touch-action: none; pointer-events: auto; }
-.annotation-range-handle.start { left: 0; }
-.annotation-range-handle.end { left: auto; right: 0; }
-.annotation-range-handle span { position: relative; grid-area: 1 / 1; width: 12px; height: 22px; border-radius: 6px; background: var(--range-notch); }
+.annotation-range-handle.start { left: -2px; }
+.annotation-range-handle.end { left: auto; right: -2px; }
+.annotation-range-handle span { position: relative; grid-area: 1 / 1; width: 6px; height: 12px; border-radius: 3px; background: var(--range-notch); }
 .annotation-range-handle:hover span,.annotation-range-handle:focus-visible span { background: var(--range-notch-hover); }
 .annotation-range-handle:focus-visible { outline: 2px solid var(--annotation); outline-offset: -3px; border-radius: 4px; }
 .annotation-range-times { display: grid; grid-template-columns: 1fr 26px 1fr; align-items: center; gap: 8px; padding-top: 3px; font-size: 10px; font-variant-numeric: tabular-nums; color: var(--muted); }
