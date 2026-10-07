@@ -669,3 +669,13 @@ HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统�
 - 顺带修正 `tests/multimodal.spec.ts` 两处受几何变化影响的用例：点选时点的点击位置由 20%（新布局下正好落在起点握柄上）移到 50% 的空轨道；320px 触屏用例改为在填写评论、卡片回流之后再测量握柄与轨道坐标，此前它读取的是回流前的位置，属于既有的偶发失败。新增用例确认触屏落点确实命中握柄（`elementFromPoint` 返回 `[data-range-handle="end"]`）。
 - 亮暗截图：[视频轨道卡](evidence/media-annotation-range/video-range-card.png)、[视频浅色](evidence/media-annotation-range/video-light.png)、[视频深色](evidence/media-annotation-range/video-dark.png)、[音频浅色](evidence/media-annotation-range/audio-light.png)、[音频深色](evidence/media-annotation-range/audio-dark.png)、[320px 浅色](evidence/media-annotation-range/audio-320-light.png)、[320px 深色](evidence/media-annotation-range/audio-320-dark.png)。测试使用独立临时项目与临时服务端口，用户白板未写入。本轮按用户要求未执行独立审计。
 - 全量浏览器套件本轮为 81/90，未通过项均属既有环境问题。其中 `short-screen contextual video controls stay reachable` 一项单独复现：在改动后的构建上 6 次中失败 2 次，在 `HEAD` 基线 worktree 上 4 次全部通过，初看像回归；把该用例的中间量打印出来后在两个构建上得到完全相同的数值（`.queue-extra` 高度 36px、`grid-template-rows: 36px`、`--queue-available-height: 243px`、2 个队列项），即断言 `> 36` 恰好卡在真实高度的取整边界上，两边都会失败。结论是该失败源于断言阈值过于贴近实际高度，与本次改动无关；本轮未改动该用例，仅在后文记录该既有限制。
+
+## 2026-10-07 · 提交检查点
+
+本轮此前所有实现、测试与文档都停留在未提交的工作树里，因此中间几轮的外观调整无法用 Git 回退，只能手工重建——这是流程失误。现已按关注点补成三个提交：
+
+- `af65277` 时间范围控件实现（`AnnotationTimeRange.tsx`、`videoFrameAt.ts`、`App.tsx`、`AnnotationCommentControl.tsx`、`styles.css`）
+- `873e3d1` 测试覆盖（`annotation-system.spec.ts`、`frontend.spec.ts`、`multimodal.spec.ts`）
+- `232715f` 设计与验证文档、亮暗及 320px 证据截图
+
+按用户要求回退到浅色主题那条反馈之前的状态：要求用例名恢复为 `the annotation range shows bounded neutral grips, an outside mask, a compact height and a restored span`，遮罩断言为 `rgba(255, 255, 255, 0.66)`，`App.tsx` 恢复 `disabled || annotating`，`audio-canvas.css` 的 `.audio-player-waveform[aria-disabled=true]` 恢复 `opacity:.4`（该文件与 `HEAD` 无差异），并删除了该轮新增的波形回归用例。因缺少当时的提交，本次回退是依据代码内容手工重建的；行为与断言已逐条核对，但浅色主题侧轨的具体取值无法与当时逐字节比对。
