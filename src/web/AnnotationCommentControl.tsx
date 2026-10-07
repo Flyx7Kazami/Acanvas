@@ -14,10 +14,11 @@ export type AnnotationCommentControlProps = {
   onBack?: () => void;
   onChange?: (text: string) => void;
   onOpen?: () => void;
+  mediaControl?: ReactNode;
   children?: ReactNode;
 };
 
-export function AnnotationCommentControl({ text, mode, inputLabel, className = '', controlRef, inputRef, compositionRef, annotationId, regionLabel, disabled, onBack, onChange, onOpen, children }: AnnotationCommentControlProps) {
+export function AnnotationCommentControl({ text, mode, inputLabel, className = '', controlRef, inputRef, compositionRef, annotationId, regionLabel, disabled, onBack, onChange, onOpen, mediaControl, children }: AnnotationCommentControlProps) {
   const ownInput = useRef<HTMLTextAreaElement>(null), ownComposition = useRef(false);
   const composing = compositionRef || ownComposition;
   const input = inputRef || ownInput;
@@ -31,6 +32,7 @@ export function AnnotationCommentControl({ text, mode, inputLabel, className = '
   }}>
     <div className="annotation-full-body">{mode === 'edit' ? <textarea ref={input} className="annotation-fulltext" data-canvas-wheel="content" rows={4} aria-label={inputLabel} placeholder="Add a comment…" value={text} disabled={disabled} onChange={event => onChange?.(event.target.value)} onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }}/>
       : <div className="annotation-fulltext" data-canvas-wheel="content" tabIndex={0} aria-label={inputLabel}>{text}</div>}
+    {mediaControl}
     <div className="annotation-footer"><div className="annotation-context">{children}</div><button type="button" className="annotation-done" aria-label={mode === 'edit' ? 'Done' : 'Close annotation'} disabled={disabled} onClick={onBack}>{mode === 'edit' ? 'Done' : 'Close'}</button></div></div>
   </div>;
 }

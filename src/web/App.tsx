@@ -13,6 +13,8 @@ import { AssetThumb, ContentRenderer } from './ContentRenderer';
 import { contentCapabilities, resolveContentKind, resolveContentMime } from '../shared/content-types';
 import { CanvasAnnotationNote } from './CanvasAnnotationNote';
 import { NotificationStack, useNotices, type Notification } from './NotificationStack';
+import { AnnotationTimeRange } from './AnnotationTimeRange';
+import { videoFrameAt } from './videoFrameAt';
 
 const statusLabels: Record<TaskStatus, string> = { queued: 'Queued', editing: 'Editing', running: 'Running', blocked: 'Needs input', interrupted: 'Interrupted', completed: 'Completed', cancelled: 'Cancelled' };
 const timeLabel = (value: number) => `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}`;
@@ -39,7 +41,7 @@ async function fileDimensions(file: File): Promise<{ width: number; height: numb
 }
 
 type UploadEntry = { id: string; name: string; controller: AbortController };
-type CommentEdit = { value: AnnotationInput; sessionId: string; draftId: string; index: number; selectionKey?: string; end: string; snapshot?: Promise<Blob | undefined>; preparing?: Promise<void>; frameNote?: string; finished?: boolean };
+type CommentEdit = { value: AnnotationInput; sessionId: string; draftId: string; index: number; selectionKey?: string; snapshot?: Promise<Blob | undefined>; snapshotGeneration: number; fresh?: boolean; preparing?: Promise<void>; preparingGeneration?: number; frameNote?: string; finished?: boolean };
 type AnnotationReader = { annotationId: string; sessionId: string; draftId?: string; taskId?: string };
 type Gesture = { kind: 'move' | 'resize' | 'pan' | 'select' | 'mark'; start: Point; point: Point; moved: boolean; preview?: Record<string, Rect>; view: SessionView; objects: BoardObject[]; sessionId: string; resizeCorner?: ResizeHandle; commentKey?: string; markBounds?: Rect; region?: Rect };
 
@@ -419,15 +421,14 @@ export default function App() {
     if (single && resolveContentKind(assetFor(single.assetId)) === 'audio') audioRefs.current.get(single.id)?.pause();
     if (single?.type === 'video') {
       const video = videoRefs.current.get(single.id);
-      value.timeStart = video?.currentTime || 0;
       video?.pause();
-      if (video && video.readyState >= 2 && video.videoWidth) {
-        try { const frame = document.createElement('canvas'); frame.width = video.videoWidth; frame.height = video.videoHeight; frame.getContext('2d')!.drawImage(video, 0, 0); snapshot = new Promise<Blob | undefined>(resolve => frame.toBlob(blob => resolve(blob || undefined), 'image/png')); }
-        catch { /* The time point remains available for files without a browser frame. */ }
+      if (video && Number.isFinite(video.duration) && video.duration > 0) {
+        value.timeStart = 0;
+        value.timeEnd = video.duration;
+        snapshot = videoFrameAt(board.api.content(single.assetId), 0);
       }
-      if (!snapshot) frameNote = 'The timestamp is saved. A frame preview is unavailable for this video.';
     }
-    const edit: CommentEdit = { value, sessionId: state.session.id, draftId: draft.id, index: draft.annotations.length, selectionKey: commentKey, snapshot, frameNote, end: '' };
+    const edit: CommentEdit = { value, sessionId: state.session.id, draftId: draft.id, index: draft.annotations.length, selectionKey: commentKey, snapshot, snapshotGeneration: 0, fresh: true, frameNote };
     comments.current.set(edit.value.id, edit); setCommentRevision(revision => revision + 1);
     return edit;
   }
@@ -489,7 +490,7 @@ export default function App() {
       clearInspection();
       const existingEdit = [...comments.current.values()].find(edit => edit.sessionId === state.session.id && edit.draftId === draft.id && edit.value.id === annotation.id);
       if (existingEdit) existingEdit.finished = false;
-      if (![...comments.current.values()].some(edit => edit.sessionId === state.session.id && edit.draftId === draft.id && edit.value.id === annotation.id)) comments.current.set(annotation.id, { value: { ...annotation, text: '' }, sessionId: state.session.id, draftId: draft.id, index: draft.annotations.findIndex(value => value.id === annotation.id), end: annotation.timeEnd === undefined ? '' : String(annotation.timeEnd) });
+      if (![...comments.current.values()].some(edit => edit.sessionId === state.session.id && edit.draftId === draft.id && edit.value.id === annotation.id)) comments.current.set(annotation.id, { value: { ...annotation, text: '' }, sessionId: state.session.id, draftId: draft.id, index: draft.annotations.findIndex(value => value.id === annotation.id), snapshotGeneration: 0 });
     }
     exitAnnotation(); setAligningKey('');
     setAnnotationReader({ annotationId: annotation.id, sessionId: state.session.id, ...(inDraft ? { draftId: draft.id } : { taskId: inspectableTask?.id }) });
@@ -516,30 +517,38 @@ export default function App() {
     if (text.trim()) void prepareComment(edit).catch(board.showError);
   }
 
-  function setAudioAnnotationTarget(edit: CommentEdit, timed: boolean) {
-    const media = edit.value.objectId ? audioRefs.current.get(edit.value.objectId) : undefined;
-    media?.pause(); edit.end = ''; patchAnnotation(edit, { timeStart: timed ? Number.isFinite(media?.currentTime) ? media!.currentTime : 0 : undefined, timeEnd: undefined, snapshotAssetId: undefined }); setCommentRevision(revision => revision + 1);
-  }
-
-  function changeAnnotationEnd(edit: CommentEdit, value: string) {
-    edit.end = value; setCommentRevision(revision => revision + 1);
-    const end = value.trim() ? Number(value) : undefined;
-    if (end === undefined || Number.isFinite(end) && end >= (edit.value.timeStart || 0)) patchAnnotation(edit, { timeEnd: end });
+  function changeAnnotationRange(edit: CommentEdit, kind: 'audio' | 'video', src: string, start?: number, end?: number) {
+    const previousStart = edit.value.timeStart;
+    if (kind === 'video' && start !== previousStart) {
+      edit.snapshotGeneration++;
+      edit.snapshot = videoFrameAt(src, start || 0);
+      edit.frameNote = undefined;
+      patchAnnotation(edit, { timeStart: start, timeEnd: end, snapshotAssetId: undefined });
+      if (board.getDraftFor(edit.sessionId, edit.draftId)?.annotations.find(value => value.id === edit.value.id)?.text.trim()) void prepareComment(edit).catch(board.showError);
+    } else patchAnnotation(edit, { timeStart: start, timeEnd: end });
+    setCommentRevision(revision => revision + 1);
   }
 
   async function prepareComment(edit: CommentEdit): Promise<void> {
-    if (edit.preparing) return edit.preparing;
+    if (edit.preparing) {
+      if (edit.preparingGeneration === edit.snapshotGeneration) return edit.preparing;
+      try { await edit.preparing; } catch { /* A superseded frame does not block the current time point. */ }
+      if (edit.preparing && edit.preparingGeneration === edit.snapshotGeneration) return edit.preparing;
+    }
     if (!edit.snapshot) return;
+    const generation = edit.snapshotGeneration;
+    const time = edit.value.timeStart || 0;
     const work = (async () => {
       const blob = await edit.snapshot;
       const current = () => board.getDraftFor(edit.sessionId, edit.draftId)?.annotations.find(annotation => annotation.id === edit.value.id);
-      if (!sameScope(edit) || !current() || !blob || current()?.snapshotAssetId) return;
+      if (generation !== edit.snapshotGeneration || !sameScope(edit) || !current() || current()?.snapshotAssetId) return;
+      if (!blob) { edit.frameNote = 'The timestamp is saved. A frame preview is unavailable for this video.'; setCommentRevision(revision => revision + 1); return; }
       if (edit.value.objectIds.some(id => !scope.current.objectIds.has(id))) return;
-      const asset = await board.api.upload(blob, `video-frame-${timeLabel(edit.value.timeStart || 0).replace(':', '-')}.png`);
-      if (!sameScope(edit) || !current() || edit.value.objectIds.some(id => !scope.current.objectIds.has(id))) return;
+      const asset = await board.api.upload(blob, `video-frame-${timeLabel(time).replace(':', '-')}.png`);
+      if (generation !== edit.snapshotGeneration || !sameScope(edit) || !current() || edit.value.objectIds.some(id => !scope.current.objectIds.has(id))) return;
       patchAnnotation(edit, { snapshotAssetId: asset.id });
     })();
-    edit.preparing = work;
+    edit.preparing = work; edit.preparingGeneration = generation;
     try { await work; }
     finally { if (edit.preparing === work) edit.preparing = undefined; }
   }
@@ -572,8 +581,6 @@ export default function App() {
     try {
       if (unavailableComments.length) throw new Error('This comment refers to a removed file. Discard it from the draft to continue.');
       for (const edit of comments.current.values()) if (edit.sessionId === owner.sessionId && edit.draftId === owner.draftId && board.getDraftFor(owner.sessionId, owner.draftId)?.annotations.some(annotation => annotation.id === edit.value.id)) {
-        const end = edit.end.trim() ? Number(edit.end) : undefined;
-        if (end !== undefined && (!Number.isFinite(end) || end < (edit.value.timeStart || 0))) throw new Error('The end time must be at or after the current timestamp.');
         await prepareComment(edit);
       }
       await board.flushDraft(owner.sessionId);
@@ -753,7 +760,7 @@ export default function App() {
         clearInspection(); exitAnnotation(); setTaskDetailId(''); setQueueExpanded(false);
         const annotation = !cancel && selectedAnnotationId ? current?.annotations.find(value => value.id === selectedAnnotationId) : undefined;
         if (annotation && current) {
-          comments.current.set(annotation.id, { value: { ...annotation, text: '' }, sessionId: current.sessionId, draftId: current.id, index: current.annotations.findIndex(value => value.id === annotation.id), end: annotation.timeEnd === undefined ? '' : String(annotation.timeEnd) });
+          comments.current.set(annotation.id, { value: { ...annotation, text: '' }, sessionId: current.sessionId, draftId: current.id, index: current.annotations.findIndex(value => value.id === annotation.id), snapshotGeneration: 0 });
           setAnnotationReader({ annotationId: annotation.id, sessionId: current.sessionId, draftId: current.id });
           requestAnimationFrame(focusAnnotation);
         } else requestAnimationFrame(() => instruction.current?.focus({ preventScroll: true }));
@@ -836,10 +843,13 @@ export default function App() {
         const editable = active && readerEditable;
         const sources = annotationSources(annotation), sourceAssetIds = unique([...sources.map(object => object.assetId), ...[annotation.assetId, annotation.snapshotAssetId].filter((id): id is string => !!id)]);
         const creation = active && annotationEdit && !annotationEdit.finished && annotating;
-        return <CanvasAnnotationNote key={`${annotation.inspectionTaskId || draft?.editingTaskId || 'draft'}-${annotation.id}`} canvas={canvas} bounds={annotationDisplayBounds(annotation)} view={view} number={index + 1} onOpen={() => openAnnotation(annotation, !annotation.inspectionTaskId)} annotationId={annotation.id} active={active} control={{ text: annotation.text, compositionRef: active ? commentComposing : undefined, mode: active ? editable ? 'edit' : 'view' : 'display', inputLabel: active ? editable ? creation ? 'Add a comment' : 'Annotation text' : 'Annotation comment' : `Comment ${index + 1}: ${annotation.text}`, inputRef: active ? annotationInput : undefined, disabled: active && disabled, onOpen: () => openAnnotation(annotation, !annotation.inspectionTaskId), onBack: closeAnnotation, onChange: changeAnnotationText, children: <>
+        const kind = resolveContentKind(assetFor(annotation.assetId || ''));
+        const timeControl = editable && annotationEdit && (kind === 'audio' || kind === 'video') && annotation.assetId ? <AnnotationTimeRange key={annotation.id} kind={kind} src={board.api.content(annotation.assetId)} media={annotation.objectId ? kind === 'video' ? videoRefs.current.get(annotation.objectId) : audioRefs.current.get(annotation.objectId) : undefined} start={annotation.timeStart} end={annotation.timeEnd} fresh={annotationEdit.fresh} disabled={disabled} onCommit={(start, end) => changeAnnotationRange(annotationEdit, kind, board.api.content(annotation.assetId!), start, end)} onError={board.showError}/> : undefined;
+        return <CanvasAnnotationNote key={`${annotation.inspectionTaskId || draft?.editingTaskId || 'draft'}-${annotation.id}`} canvas={canvas} bounds={annotationDisplayBounds(annotation)} view={view} number={index + 1} onOpen={() => openAnnotation(annotation, !annotation.inspectionTaskId)} annotationId={annotation.id} active={active} control={{ text: annotation.text, compositionRef: active ? commentComposing : undefined, mode: active ? editable ? 'edit' : 'view' : 'display', inputLabel: active ? editable ? creation ? 'Add a comment' : 'Annotation text' : 'Annotation comment' : `Comment ${index + 1}: ${annotation.text}`, inputRef: active ? annotationInput : undefined, disabled: active && disabled, onOpen: () => openAnnotation(annotation, !annotation.inspectionTaskId), onBack: closeAnnotation, onChange: changeAnnotationText, mediaControl: timeControl, children: <>
           <div className="annotation-source-thumbs">{sourceAssetIds.map(id => <AssetThumb key={id} asset={assetFor(id)} src={board.api.content(id)}/>)}</div>
           {annotation.objectIds.some(id => !objects.some(object => object.id === id)) && <span className="annotation-source-status">Source removed</span>}
-          {resolveContentKind(assetFor(annotation.assetId || '')) === 'audio' && <div className="comment-video-meta">{editable && annotationEdit ? <label>Audio target<select aria-label="Audio annotation target" disabled={disabled} value={annotation.timeStart === undefined ? 'whole' : 'time'} onChange={event => setAudioAnnotationTarget(annotationEdit, event.target.value === 'time')}><option value="whole">Whole audio</option><option value="time">Current time</option></select></label> : <span>{annotation.timeStart === undefined ? 'Whole audio' : 'Audio time'}</span>}</div>}{annotation.timeStart !== undefined && <div className="comment-video-meta"><span>{timeLabel(annotation.timeStart)}{annotation.timeEnd !== undefined && ` – ${timeLabel(annotation.timeEnd)}`}</span>{editable && annotationEdit ? <label>End time<input type="number" min={annotation.timeStart} step="0.1" placeholder="Optional" value={annotationEdit.end} disabled={disabled} onChange={event => changeAnnotationEnd(annotationEdit, event.target.value)}/></label> : annotation.objectId && (videoRefs.current.has(annotation.objectId) || audioRefs.current.has(annotation.objectId)) && <button type="button" className="annotation-media-action" onClick={() => { const media = videoRefs.current.get(annotation.objectId!) || audioRefs.current.get(annotation.objectId!); if (media) { media.pause(); media.currentTime = annotation.timeStart!; } }}>{audioRefs.current.has(annotation.objectId!) ? 'Jump to time' : 'Jump to frame'}</button>}{annotationEdit?.frameNote && <span title={annotationEdit.frameNote}>Timestamp only</span>}</div>}
+          {timeControl && annotationEdit?.frameNote && <span className="annotation-source-status" title={annotationEdit.frameNote}>Frame unavailable</span>}
+          {!timeControl && (kind === 'audio' || annotation.timeStart !== undefined) && <div className="comment-video-meta"><span>{annotation.timeStart === undefined ? 'Whole audio' : `${timeLabel(annotation.timeStart)}${annotation.timeEnd !== undefined ? ` – ${timeLabel(annotation.timeEnd)}` : ''}`}</span>{annotation.timeStart !== undefined && annotation.objectId && (videoRefs.current.has(annotation.objectId) || audioRefs.current.has(annotation.objectId)) && <button type="button" className="annotation-media-action" onClick={() => { const media = videoRefs.current.get(annotation.objectId!) || audioRefs.current.get(annotation.objectId!); if (media) { media.pause(); media.currentTime = annotation.timeStart!; } }}>{kind === 'audio' ? 'Jump to time' : 'Jump to frame'}</button>}{annotationEdit?.frameNote && <span title={annotationEdit.frameNote}>Timestamp only</span>}</div>}
         </> }}/>
       })}
       {dragOver && <div className="drop-indicator"><Upload size={28}/><span>Drop files onto the canvas</span></div>}

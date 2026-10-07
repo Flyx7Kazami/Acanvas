@@ -260,6 +260,34 @@ details[open] summary svg { rotate: 180deg; }
 .comment-video-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--muted); font-size: 10px; }
 .comment-video-meta label { display: flex; align-items: center; gap: 5px; }
 .comment-video-meta input { width: 62px; padding: 3px; border: 0; border-radius: 4px; background: var(--soft); font-size: 10px; outline: 0; box-shadow: none; }
+.annotation-full:has(.annotation-time-range) { --annotation-height: 186px; }
+.annotation-full:has(.annotation-time-range) .annotation-context { width: 100%; }
+.annotation-time-range { --range-rail: #f4f4f2; --range-notch: #3b3b3b; --range-veil: rgba(255,255,255,.66); --range-notch-hover: #1f1f1f; width: 100%; min-width: 0; padding: 2px 8px 0; color: var(--ink); }
+:root[data-theme='dark'] .annotation-time-range { --range-rail: #f2f2f0; --range-notch: #343434; --range-veil: rgba(255,255,255,.5); --range-notch-hover: #171717; }
+.annotation-range-track { position: relative; width: 100%; height: 26px; overflow: hidden; border-radius: 5px; background: var(--soft); cursor: crosshair; touch-action: none; user-select: none; }
+.annotation-range-frames,.annotation-range-wave { position: absolute; inset: 0; display: flex; overflow: hidden; border-radius: inherit; pointer-events: none; }
+.annotation-range-frames { background: var(--soft); }
+.annotation-range-frame { flex: 1; min-width: 0; background-color: var(--soft); background-size: cover; background-position: center; }
+.annotation-range-wave { align-items: center; justify-content: space-around; padding: 4px 2px; gap: 1px; }
+.annotation-range-wave i { display: block; flex: 1; min-width: 1px; border-radius: 1px; background: var(--muted); }
+.annotation-range-wave span { display: block; width: 100%; height: 2px; background: var(--muted); }
+.annotation-range-outside { position: absolute; top: 0; bottom: 0; left: 0; background: var(--range-veil); pointer-events: none; }
+.annotation-range-outside.right { width: auto; right: 0; }
+.annotation-range-selection { position: absolute; top: 0; bottom: 0; box-sizing: border-box; border: 0; border-radius: 5px; pointer-events: none; }
+.annotation-range-rail { position: absolute; top: 0; bottom: 0; width: 9px; background: var(--range-rail); }
+.annotation-range-rail.start { left: 0; border-radius: 4px 0 0 4px; }
+.annotation-range-rail.end { right: 0; border-radius: 0 4px 4px 0; }
+.annotation-range-handle { position: absolute; z-index: 2; top: 50%; transform: translateY(-50%); width: 12px; height: 22px; padding: 0; border: 0; display: grid; place-items: center; background: transparent; cursor: ew-resize; touch-action: none; pointer-events: auto; }
+.annotation-range-handle.start { left: 0; justify-items: start; padding-left: 2px; }
+.annotation-range-handle.end { left: auto; right: 0; justify-items: end; padding-right: 2px; }
+.annotation-range-handle span { position: relative; width: 4px; height: 11px; border-radius: 2px; background: var(--range-notch); box-shadow: 0 0 0 1px #ffffff7a; }
+.annotation-range-handle:hover span,.annotation-range-handle:focus-visible span { background: var(--range-notch-hover); }
+.annotation-range-handle:focus-visible { outline: 2px solid var(--annotation); outline-offset: 1px; border-radius: 3px; }
+.annotation-range-times { display: grid; grid-template-columns: 1fr 26px 1fr; align-items: center; gap: 8px; padding-top: 3px; font-size: 10px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.annotation-range-times>span:last-child { text-align: right; }
+.annotation-range-preview { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 5px; color: var(--ink); background: transparent; }
+.annotation-range-preview:hover:not(:disabled),.annotation-range-preview:focus-visible { background: var(--soft); }
+.annotation-time-range[data-ready='false'] .annotation-range-track { opacity: .6; cursor: default; }
 
 .inline-resume,.draft-conflict { margin: 0 0 8px var(--tool-clearance); background: var(--surface); border: 1px solid var(--edge); border-radius: 12px; box-shadow: var(--float-shadow); }
 .inline-resume { padding: 8px 12px; }
