@@ -644,3 +644,28 @@ HTML悬停/键盘/触屏激活、四实例LRU及静态快照保留完成；统�
 - 测试使用临时隔离项目及clipboard stub，用户白板和剪贴板保持。当前页面已加载最终构建并打开历史面板查看。
 
 证据：[历史下角](evidence/history-toast-corners/history-empty-light.png)、[正常宽度固定角落](evidence/history-toast-corners/copy-corner-712-light.png)、[窄屏省略](evidence/history-toast-corners/copy-ellipsis-320-light.png)、[布局测量](evidence/history-toast-corners/placement.json)。
+
+## 2026-10-06 · 音视频批注时间范围轨道
+
+- `npm run typecheck`、`npm run build` 通过。Chrome 在独立临时项目运行六项定向用例，分别覆盖音频整段/点选/拖框/键盘范围与发送后编辑、视频真实取样帧与起点变更、旧异步帧回填、320px 卡片及真实触屏拖动、延迟上传竞态；六项均通过。主要测试位于 `tests/multimodal.spec.ts` 与 `tests/annotation-system.spec.ts`，既有 `tests/frontend.spec.ts` 视频批注回归通过。
+- 音频默认全幅保存为 `timeStart`、`timeEnd` 双空；点选保存起点、终点空；区间保存双值。视频默认时点仍取当前播放位置（该默认值已在 2026-10-07 修订为全幅，见下节）；改变起点会清除旧 `snapshotAssetId` 并生成新代表帧。延迟旧帧上传晚于第二次起点修改时，任务快照只附新起点的帧。范围手势不改变画板播放器的 `currentTime`。
+- 320px 明暗主题下，时间轨道、分离的左右手柄与 Done 均位于卡片内。视频取样在单个离屏解码器顺序 seek，整体最多 6 秒；失败时中性轨道仍可选择时间。端点具备 slider 语义、精确百分秒读屏值与键盘箭头/Home/End 操作；真实触屏拖动更新了音频终点。
+- 亮暗截图：[视频浅色](evidence/media-annotation-range/video-light.png)、[视频深色](evidence/media-annotation-range/video-dark.png)、[音频浅色](evidence/media-annotation-range/audio-light.png)、[音频深色](evidence/media-annotation-range/audio-dark.png)、[320px 浅色](evidence/media-annotation-range/audio-320-light.png)、[320px 深色](evidence/media-annotation-range/audio-320-dark.png)。用户画板只用于既有页面背景观察，测试没有写入实际白板。本轮按用户要求未执行独立审计。
+
+## 2026-10-07 · 音视频批注时间范围外观、遮罩、高度与默认区间修订
+
+- 按用户五点要求收敛：握柄与选区轮廓改为画板批注色（浅色 `#7bbcff`、深色 `#9ed0ff`）的实体柄，尺寸 12×24px；遮罩只覆盖选区左右两侧，选区内保持素材原色；轨道 32px→26px、整块时间控件 65px→57px、批注卡片 210px→186px；新建批注默认 `0…duration`，不继承播放头或上一次选区；节选播放从起点开始并在终点暂停。
+- `npm run typecheck`、`npm run build` 通过。隔离 Chrome 运行 11 项既有音视频批注用例加 1 项新增要求用例（`tests/annotation-system.spec.ts` 的 `the annotation range shows coloured grips, an outside mask, a compact height and a restored span`，重复两次），12 项全部通过。新增用例逐条断言：握柄背景与描边为 `rgb(123, 188, 255)` 且不小于 12×24px；控件高度小于 60px、轨道小于 30px、卡片小于 200px；左右遮罩宽度与选区位置、轨道宽度满足加和关系且遮罩为 `rgba(0, 0, 0, 0.58)`；默认起止为 `0` 与完整时长（播放头已预先移到 60% 处）；节选播放的起止落在所选区间内；Done 后从草稿评论重新打开时恢复已存区间。
+- 音频整段语义保持：新建音频批注不写入 `timeStart`/`timeEnd`（保持双空），左右遮罩宽度均为 0。视频在时长尚未就绪、批注先建立的情况下，由新建批注补全逻辑写为 `0…duration`；该补全只作用于本次新建的视频批注，重新打开的历史批注与既有单时点选择不受影响。
+- 全量浏览器套件 80/90 通过。10 项失败为 `HEAD` 基线同样失败的既有环境问题（MP3/M4A 解码振幅、HTML iframe 悬停、若干合成器与详情布局用例）；在基线 worktree 上运行同一套件得到完全相同的 10 项失败，本次改动没有新增失败。改动过程中一度出现的音频默认区间写为 `0…duration`、以及旧草稿被改写为整段两处回归已在提交前修正。
+- 亮暗截图：[视频轨道卡](evidence/media-annotation-range/video-range-card.png)、[视频浅色](evidence/media-annotation-range/video-light.png)、[视频深色](evidence/media-annotation-range/video-dark.png)、[音频浅色](evidence/media-annotation-range/audio-light.png)、[音频深色](evidence/media-annotation-range/audio-dark.png)、[320px 浅色](evidence/media-annotation-range/audio-320-light.png)、[320px 深色](evidence/media-annotation-range/audio-320-dark.png)。测试使用独立临时项目与临时服务端口，用户白板未写入。本轮按用户要求未执行独立审计。
+
+## 2026-10-07 · 音视频批注时间范围改为单一矩形选区
+
+- 用户指出上一轮"有颜色的柄"理解有误：参考图里选中范围是**一个矩形，两侧边框就是握柄**，而不是两个独立浮柄，也不应使用批注蓝。本轮按此重构：握柄改为 `.annotation-range-selection` 的子节点；矩形外框为 2px 白色连续轮廓，两侧 9px 白色侧轨（`.annotation-range-rail`）构成边框，两条 4×11px 深色窄槽嵌在侧轨内作为握柄，命中区 12×22px；矩形内部保持透明以透出选中素材，选区外为深色遮罩；批注蓝只保留在键盘焦点环上。
+- 第一版重构曾把整块选区涂成白底，反而遮住了选中的素材（用户第二次反馈"这是你的样式，你看看对吗"后按参考图逐像素比对发现）。改为只给两侧窄轨上白色、其余透明，并把握柄由白色宽条改为深色窄槽，才与参考图一致。
+- 重构中修正三处真实缺陷：（1）握柄原先由组件以行内 `left` 定位，行内样式压过 CSS，导致尾柄落到选区外 18px；（2）按钮沿用浏览器默认 `padding: 1px 6px`，使柄偏离其值 6px；（3）柄移入选区后继承了选择框的 `pointer-events: none`，导致无法命中拖动。三处均由浏览器实测几何与 `elementFromPoint` 命中结果定位并修复。
+- `npm run typecheck`、`npm run build` 通过。12 项音视频批注定向用例全部通过，其中要求用例逐条断言：握柄为 `rgb(59, 59, 59)` 深色窄槽（宽不大于 8px、高不小于 9px 且高于宽）、两只握柄与两条白色侧轨都挂在同一个 `.annotation-range-selection` 上、侧轨为 `rgb(255, 255, 255)`、外框为 `rgb(255, 255, 255)`、遮罩为 `rgba(0, 0, 0, 0.58)` 且左右宽度与选区位置满足加和关系、控件高度小于 60px、轨道小于 30px、卡片小于 200px、默认区间为 `0…duration`、节选播放起止落在选区内、草稿评论重开后恢复已存区间。断言中不再出现批注蓝。
+- 顺带修正 `tests/multimodal.spec.ts` 两处受几何变化影响的用例：点选时点的点击位置由 20%（新布局下正好落在起点握柄上）移到 50% 的空轨道；320px 触屏用例改为在填写评论、卡片回流之后再测量握柄与轨道坐标，此前它读取的是回流前的位置，属于既有的偶发失败。新增用例确认触屏落点确实命中握柄（`elementFromPoint` 返回 `[data-range-handle="end"]`）。
+- 亮暗截图：[视频轨道卡](evidence/media-annotation-range/video-range-card.png)、[视频浅色](evidence/media-annotation-range/video-light.png)、[视频深色](evidence/media-annotation-range/video-dark.png)、[音频浅色](evidence/media-annotation-range/audio-light.png)、[音频深色](evidence/media-annotation-range/audio-dark.png)、[320px 浅色](evidence/media-annotation-range/audio-320-light.png)、[320px 深色](evidence/media-annotation-range/audio-320-dark.png)。测试使用独立临时项目与临时服务端口，用户白板未写入。本轮按用户要求未执行独立审计。
+- 全量浏览器套件本轮为 81/90，未通过项均属既有环境问题。其中 `short-screen contextual video controls stay reachable` 一项单独复现：在改动后的构建上 6 次中失败 2 次，在 `HEAD` 基线 worktree 上 4 次全部通过，初看像回归；把该用例的中间量打印出来后在两个构建上得到完全相同的数值（`.queue-extra` 高度 36px、`grid-template-rows: 36px`、`--queue-available-height: 243px`、2 个队列项），即断言 `> 36` 恰好卡在真实高度的取整边界上，两边都会失败。结论是该失败源于断言阈值过于贴近实际高度，与本次改动无关；本轮未改动该用例，仅在后文记录该既有限制。
