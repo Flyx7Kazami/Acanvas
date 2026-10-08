@@ -1,0 +1,1347 @@
+{
+  "generatedAt": "2026-10-08T04:13:40.674Z",
+  "environment": {
+    "node": "v24.21.0",
+    "os": "darwin",
+    "isolatedProject": true,
+    "headless": false,
+    "chrome": "154.0.8037.98"
+  },
+  "automationTransport": "Playwright/CDP on the same live page; product host capture is not integrated",
+  "checks": [
+    {
+      "name": "same-page-live-media",
+      "passed": true,
+      "state": {
+        "viewport": {
+          "width": 1440,
+          "height": 1000,
+          "dpr": 2
+        },
+        "transform": "translate(0px, 0px) scale(1)",
+        "video": [
+          {
+            "currentTime": 0.111867,
+            "paused": false,
+            "readyState": 4
+          }
+        ],
+        "audio": [
+          {
+            "currentTime": 0.6,
+            "paused": true,
+            "duration": 24
+          }
+        ],
+        "markdownScroll": 260,
+        "html": {
+          "frameUrlOrigin": "http://localhost:57418",
+          "parentOrigin": "http://127.0.0.1:57419",
+          "sandbox": "allow-scripts"
+        },
+        "objects": [
+          {
+            "id": "b9b17d65-8f47-45fa-8762-cd6f9b61d0d3",
+            "kind": "image",
+            "version": "1",
+            "rect": {
+              "x": 120,
+              "y": 100,
+              "width": 340,
+              "height": 200,
+              "top": 100,
+              "right": 460,
+              "bottom": 300,
+              "left": 120
+            }
+          },
+          {
+            "id": "92e1a149-91b5-4f07-b6aa-6c25319dbab6",
+            "kind": "video",
+            "version": "1",
+            "rect": {
+              "x": 500,
+              "y": 100,
+              "width": 400,
+              "height": 225,
+              "top": 100,
+              "right": 900,
+              "bottom": 325,
+              "left": 500
+            }
+          },
+          {
+            "id": "58100497-6059-459d-a27a-ba7b80a82344",
+            "kind": "gif",
+            "version": "1",
+            "rect": {
+              "x": 950,
+              "y": 100,
+              "width": 250,
+              "height": 210,
+              "top": 100,
+              "right": 1200,
+              "bottom": 310,
+              "left": 950
+            }
+          },
+          {
+            "id": "da1e94d8-77b9-495e-939a-2662e8c99f34",
+            "kind": "audio",
+            "version": "1",
+            "rect": {
+              "x": 120,
+              "y": 410,
+              "width": 390,
+              "height": 100,
+              "top": 410,
+              "right": 510,
+              "bottom": 510,
+              "left": 120
+            }
+          },
+          {
+            "id": "fdf0b63a-a626-442b-a960-2fa8df80dbfc",
+            "kind": "markdown",
+            "version": "1",
+            "rect": {
+              "x": 560,
+              "y": 410,
+              "width": 350,
+              "height": 340,
+              "top": 410,
+              "right": 910,
+              "bottom": 750,
+              "left": 560
+            }
+          },
+          {
+            "id": "6d64c69e-da1e-45d6-9274-29d7d35b4d13",
+            "kind": "html",
+            "version": "1",
+            "rect": {
+              "x": 950,
+              "y": 410,
+              "width": 360,
+              "height": 310,
+              "top": 410,
+              "right": 1310,
+              "bottom": 720,
+              "left": 950
+            }
+          },
+          {
+            "id": "ec820f69-602f-46a2-84f1-c1b8b60efe93",
+            "kind": "file",
+            "version": "1",
+            "rect": {
+              "x": 120,
+              "y": 600,
+              "width": 310,
+              "height": 140,
+              "top": 600,
+              "right": 430,
+              "bottom": 740,
+              "left": 120
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parent-cross-origin-read",
+      "passed": true,
+      "error": "SecurityError"
+    },
+    {
+      "name": "dpr2-zoom1-mapping",
+      "passed": true
+    },
+    {
+      "name": "dpr2-zoom0833-mapping",
+      "passed": true
+    },
+    {
+      "name": "dpr2-zoom144-mapping",
+      "passed": true
+    },
+    {
+      "name": "dynamic-html-and-gif-pixels",
+      "passed": true,
+      "gifDifferent": true,
+      "htmlDifferent": true
+    }
+  ],
+  "metrics": [
+    {
+      "route": "CDP-compositor",
+      "label": "dpr2-zoom1",
+      "captureAndEncodeMs": 114.81562500000018,
+      "viewportBytes": 264232,
+      "mapping": {
+        "viewport": {
+          "width": 1440,
+          "height": 1000,
+          "devicePixelRatio": 2
+        },
+        "source": {
+          "width": 2880,
+          "height": 2000
+        },
+        "cssRect": {
+          "x": 205,
+          "y": 95,
+          "width": 1035,
+          "height": 640
+        },
+        "pixelRect": {
+          "x": 410,
+          "y": 190,
+          "width": 2070,
+          "height": 1280
+        },
+        "scale": {
+          "x": 2,
+          "y": 2
+        },
+        "worldTransform": "translate(0px, 0px) scale(1)",
+        "mark": {
+          "css": {
+            "x": 365,
+            "y": 245,
+            "width": 385,
+            "height": 260,
+            "top": 245,
+            "right": 750,
+            "bottom": 505,
+            "left": 365
+          },
+          "pixel": {
+            "x": 320,
+            "y": 300
+          },
+          "sampledColor": [
+            255,
+            107,
+            0,
+            255
+          ]
+        },
+        "verified": true
+      },
+      "imageDecodeMs": 31.200000047683716,
+      "cropDrawMs": 0.2999999523162842,
+      "cropEncodeMs": 68.5,
+      "bytes": 292700,
+      "before": {
+        "viewport": {
+          "width": 1440,
+          "height": 1000,
+          "dpr": 2
+        },
+        "transform": "translate(0px, 0px) scale(1)",
+        "video": [
+          {
+            "currentTime": 0.158406,
+            "paused": false,
+            "readyState": 4
+          }
+        ],
+        "audio": [
+          {
+            "currentTime": 0.6,
+            "paused": true,
+            "duration": 24
+          }
+        ],
+        "markdownScroll": 260,
+        "html": {
+          "frameUrlOrigin": "http://localhost:57418",
+          "parentOrigin": "http://127.0.0.1:57419",
+          "sandbox": "allow-scripts"
+        },
+        "objects": [
+          {
+            "id": "b9b17d65-8f47-45fa-8762-cd6f9b61d0d3",
+            "kind": "image",
+            "version": "1",
+            "rect": {
+              "x": 120,
+              "y": 100,
+              "width": 340,
+              "height": 200,
+              "top": 100,
+              "right": 460,
+              "bottom": 300,
+              "left": 120
+            }
+          },
+          {
+            "id": "92e1a149-91b5-4f07-b6aa-6c25319dbab6",
+            "kind": "video",
+            "version": "1",
+            "rect": {
+              "x": 500,
+              "y": 100,
+              "width": 400,
+              "height": 225,
+              "top": 100,
+              "right": 900,
+              "bottom": 325,
+              "left": 500
+            }
+          },
+          {
+            "id": "58100497-6059-459d-a27a-ba7b80a82344",
+            "kind": "gif",
+            "version": "1",
+            "rect": {
+              "x": 950,
+              "y": 100,
+              "width": 250,
+              "height": 210,
+              "top": 100,
+              "right": 1200,
+              "bottom": 310,
+              "left": 950
+            }
+          },
+          {
+            "id": "da1e94d8-77b9-495e-939a-2662e8c99f34",
+            "kind": "audio",
+            "version": "1",
+            "rect": {
+              "x": 120,
+              "y": 410,
+              "width": 390,
+              "height": 100,
+              "top": 410,
+              "right": 510,
+              "bottom": 510,
+              "left": 120
+            }
+          },
+          {
+            "id": "fdf0b63a-a626-442b-a960-2fa8df80dbfc",
+            "kind": "markdown",
+            "version": "1",
+            "rect": {
+              "x": 560,
+              "y": 410,
+              "width": 350,
+              "height": 340,
+              "top": 410,
+              "right": 910,
+              "bottom": 750,
+              "left": 560
+            }
+          },
+          {
+            "id": "6d64c69e-da1e-45d6-9274-29d7d35b4d13",
+            "kind": "html",
+            "version": "1",
+            "rect": {
+              "x": 950,
+              "y": 410,
+              "width": 360,
+              "height": 310,
+              "top": 410,
+              "right": 1310,
+              "bottom": 720,
+              "left": 950
+            }
+          },
+          {
+            "id": "ec820f69-602f-46a2-84f1-c1b8b60efe93",
+            "kind": "file",
+            "version": "1",
+            "rect": {
+              "x": 120,
+              "y": 600,
+              "width": 310,
+              "height": 140,
+              "top": 600,
+              "right": 430,
+              "bottom": 740,
+              "left": 120
+            }
+          }
+        ]
+      },
+      "after": {
+        "viewport": {
+          "width": 1440,
+          "height": 1000,
+          "dpr": 2
+        },
+        "transform": "translate(0px, 0px) scale(1)",
+        "video": [
+          {
+            "currentTime": 0.275336,
+            "paused": false,
+            "readyState": 4
+          }
+        ],
+        "audio": [
+          {
+            "currentTime": 0.6,
+            "paused": true,
+            "duration": 24
+          }
+        ],
+        "markdownScroll": 260,
+        "html": {
+          "frameUrlOrigin": "http://localhost:57418",
+          "parentOrigin": "http://127.0.0.1:57419",
+          "sandbox": "allow-scripts"
+        },
+        "objects": [
+          {
+            "id": "b9b17d65-8f47-45fa-8762-cd6f9b61d0d3",
+            "kind": "image",
+            "version": "1",
+            "rect": {
+              "x": 120,
+              "y": 100,
+              "width": 340,
+              "height": 200,
+              "top": 100,
+              "right": 460,
+              "bottom": 300,
+              "left": 120
+            }
+          },
+          {
+            "id": "92e1a149-91b5-4f07-b6aa-6c25319dbab6",
+            "kind": "video",
+            "version": "1",
+            "rect": {
+              "x": 500,
+              "y": 100,
+              "width": 400,
+              "height": 225,
+              "top": 100,
+              "right": 900,
+              "bottom": 325,
+              "left": 500
+            }
+          },
+          {
+            "id": "58100497-6059-459d-a27a-ba7b80a82344",
+            "kind": "gif",
+            "version": "1",
+            "rect": {
+              "x": 950,
+              "y": 100,
+              "width": 250,
+              "height": 210,
+              "top": 100,
+              "right": 1200,
+              "bottom": 310,
+              "left": 950
+            }
+          },
+          {
+            "id": "da1e94d8-77b9-495e-939a-2662e8c99f34",
+            "kind": "audio",
+            "version": "1",
+            "rect": {
+              "x": 120,
+              "y": 410,
+              "width": 390,
+              "height": 100,
+              "top": 410,
+              "right": 510,
+              "bottom": 510,
+              "left": 120
+            }
+          },
+          {
+            "id": "fdf0b63a-a626-442b-a960-2fa8df80dbfc",
+            "kind": "markdown",
+            "version": "1",
+            "rect": {
+              "x": 560,
+              "y": 410,
+              "width": 350,
+              "height": 340,
+              "top": 410,
+              "right": 910,
+              "bottom": 750,
+              "left": 560
+            }
+          },
+          {
+            "id": "6d64c69e-da1e-45d6-9274-29d7d35b4d13",
+            "kind": "html",
+            "version": "1",
+            "rect": {
+              "x": 950,
+              "y": 410,
+              "width": 360,
+              "height": 310,
+              "top": 410,
+              "right": 1310,
+              "bottom": 720,
+              "left": 950
+            }
+          },
+          {
+            "id": "ec820f69-602f-46a2-84f1-c1b8b60efe93",
+            "kind": "file",
+            "version": "1",
+            "rect": {
+              "x": 120,
+              "y": 600,
+              "width": 310,
+              "height": 140,
+              "top": 600,
+              "right": 430,
+              "bottom": 740,
+              "left": 120
+            }
+          }
+        ]
+      },
+      "note": "CDP capture and its PNG encoding are one measured operation. Crop decoding/draw/re-encoding are measured separately. Continuous media pixels represent the captured frame; before/after times are an interval, not an exact synchronized media time."
+    },
+    {
+      "route": "CDP-compositor",
+      "label": "dpr2-zoom0833",
+      "captureAndEncodeMs": 119.15433299999995,
+      "viewportBytes": 233933,
+      "mapping": {
+        "viewport": {
+          "width": 1440,
+          "height": 1000,
+          "devicePixelRatio": 2
+        },
+        "source": {
+          "width": 2880,
+          "height": 2000
+        },
+        "cssRect": {
+          "x": 264.1666564941406,
+          "y": 137.5,
+          "width": 970.8333435058594,
+          "height": 596.6666564941406
+        },
+        "pixelRect": {
+          "x": 528,
+          "y": 275,
+          "width": 1942,
+          "height": 1194
+        },
+        "scale": {
+          "x": 2,
+          "y": 2
+        },
+        "worldTransform": "translate(120px, 83.3333px) scale(0.833333)",
+        "mark": {
+          "css": {
+            "x": 424.1666564941406,
+            "y": 287.5,
+            "width": 320.8333435058594,
+            "height": 216.66665649414062,
+            "top": 287.5,
+            "right": 745,
+            "bottom": 504.1666564941406,
+            "left": 424.1666564941406
+          },
+          "pixel": {
+            "x": 320,
+            "y": 300
+          },
+          "sampledColor": [
+            255,
+            107,
+            0,
+            255
+          ]
+        },
+        "verified": true
+      },
+      "imageDecodeMs": 21.699999928474426,
+      "cropDrawMs": 0,
+      "cropEncodeMs": 43,
+      "bytes": 264301,
+      "before": {
+        "viewport": {
+          "width": 1440,
+          "height": 1000,
+          "dpr": 2
+        },
+        "transform": "translate(120px, 83.3333px) scale(0.833333)",
+        "video": [
+          {
+            "currentTime": 0.451533,
+            "paused": false,
+            "readyState": 4
+          }
+        ],
+        "audio": [
+          {
+            "currentTime": 0.6,
+            "paused": true,
+            "duration": 24
+          }
+        ],
+        "markdownScroll": 260,
+        "html": {
+          "frameUrlOrigin": "http://localhost:57418",
+          "parentOrigin": "http://127.0.0.1:57419",
+          "sandbox": "allow-scripts"
+        },
+        "objects": [
+          {
+            "id": "b9b17d65-8f47-45fa-8762-cd6f9b61d0d3",
+            "kind": "image",
+            "version": "1",
+            "rect": {
+              "x": 220,
+              "y": 166.66665649414062,
+              "width": 283.33331298828125,
+              "height": 166.66668701171875,
+              "top": 166.66665649414062,
+              "right": 503.33331298828125,
+              "bottom": 333.3333435058594,
+              "left": 220
+            }
+          },
+          {
+            "id": "92e1a149-91b5-4f07-b6aa-6c25319dbab6",
+            "kind": "video",
+            "version": "1",
+            "rect": {
+              "x": 536.6666259765625,
+              "y": 166.66665649414062,
+              "width": 333.3333740234375,
+              "height": 187.5,
+              "top": 166.66665649414062,
+              "right": 870,
+              "bottom": 354.1666564941406,
+              "left": 536.6666259765625
+            }
+          },
+          {
+            "id": "58100497-6059-459d-a27a-ba7b80a82344",
+            "kind": "gif",
+            "version": "1",
+            "rect": {
+              "x": 911.6666259765625,
+              "y": 166.66665649414062,
+              "width": 208.3333740234375,
+              "height": 175,
+              "top": 166.66665649414062,
+              "right": 1120,
+              "bottom": 341.6666564941406,
+              "left": 911.6666259765625
+            }
+          },
+          {
+            "id": "da1e94d8-77b9-495e-939a-2662e8c99f34",
+            "kind": "audio",
+            "version": "1",
+            "rect": {
+              "x": 220,
+              "y": 425,
+              "width": 325,
+              "height": 83.33334350585938,
+              "top": 425,
+              "right": 545,
+              "bottom": 508.3333435058594,
+              "left": 220
+            }
+          },
+          {
+            "id": "fdf0b63a-a626-442b-a960-2fa8df80dbfc",
+            "kind": "markdown",
+            "version": "1",
+            "rect": {
+              "x": 586.6666259765625,
+              "y": 425,
+              "width": 291.66668701171875,
+              "height": 283.33331298828125,
+              "top": 425,
+              "right": 878.3333129882812,
+              "bottom": 708.3333129882812,
+              "left": 586.6666259765625
+            }
+          },
+          {
+            "id": "6d64c69e-da1e-45d6-9274-29d7d35b4d13",
+            "kind": "html",
+            "version": "1",
+            "rect": {
+              "x": 911.6666259765625,
+              "y": 425,
+              "width": 300,
+              "height": 258.33331298828125,
+              "top": 425,
+              "right": 1211.6666259765625,
+              "bottom": 683.3333129882812,
+              "left": 911.6666259765625
+            }
+          },
+          {
+            "id": "ec820f69-602f-46a2-84f1-c1b8b60efe93",
+            "kind": "file",
+            "version": "1",
+            "rect": {
+              "x": 220,
+              "y": 583.3333129882812,
+              "width": 258.33331298828125,
+              "height": 116.6666259765625,
+              "top": 583.3333129882812,
+              "right": 478.33331298828125,
+              "bottom": 699.9999389648438,
+              "left": 220
+            }
+          }
+        ]
+      },
+      "after": {
+        "viewport": {
+          "width": 1440,
+          "height": 1000,
+          "dpr": 2
+        },
+        "transform": "translate(120px, 83.3333px) scale(0.833333)",
+        "video": [
+          {
+            "currentTime": 0.576435,
+            "paused": false,
+            "readyState": 4
+          }
+        ],
+        "audio": [
+          {
+            "currentTime": 0.6,
+            "paused": true,
+            "duration": 24
+          }
+        ],
+        "markdownScroll": 260,
+        "html": {
+          "frameUrlOrigin": "http://localhost:57418",
+          "parentOrigin": "http://127.0.0.1:57419",
+          "sandbox": "allow-scripts"
+        },
+        "objects": [
+          {
+            "id": "b9b17d65-8f47-45fa-8762-cd6f9b61d0d3",
+            "kind": "image",
+            "version": "1",
+            "rect": {
+              "x": 220,
+              "y": 166.66665649414062,
+              "width": 283.33331298828125,
+              "height": 166.66668701171875,
+              "top": 166.66665649414062,
+              "right": 503.33331298828125,
+              "bottom": 333.3333435058594,
+              "left": 220
+            }
+          },
+          {
+            "id": "92e1a149-91b5-4f07-b6aa-6c25319dbab6",
+            "kind": "video",
+            "version": "1",
+            "rect": {
+              "x": 536.6666259765625,
+              "y": 166.66665649414062,
+              "width": 333.3333740234375,
+              "height": 187.5,
+              "top": 166.66665649414062,
+              "right": 870,
+              "bottom": 354.1666564941406,
+              "left": 536.6666259765625
+            }
+          },
+          {
+            "id": "58100497-6059-459d-a27a-ba7b80a82344",
+            "kind": "gif",
+            "version": "1",
+            "rect": {
+              "x": 911.6666259765625,
+              "y": 166.66665649414062,
+              "width": 208.3333740234375,
+              "height": 175,
+              "top": 166.66665649414062,
+              "right": 1120,
+              "bottom": 341.6666564941406,
+              "left": 911.6666259765625
+            }
+          },
+          {
+            "id": "da1e94d8-77b9-495e-939a-2662e8c99f34",
+            "kind": "audio",
+            "version": "1",
+            "rect": {
+              "x": 220,
+              "y": 425,
+              "width": 325,
+              "height": 83.33334350585938,
+              "top": 425,
+              "right": 545,
+              "bottom": 508.3333435058594,
+              "left": 220
+            }
+          },
+          {
+            "id": "fdf0b63a-a626-442b-a960-2fa8df80dbfc",
+            "kind": "markdown",
+            "version": "1",
+            "rect": {
+              "x": 586.6666259765625,
+              "y": 425,
+              "width": 291.66668701171875,
+              "height": 283.33331298828125,
+              "top": 425,
+              "right": 878.3333129882812,
+              "bottom": 708.3333129882812,
+              "left": 586.6666259765625
+            }
+          },
+          {
+            "id": "6d64c69e-da1e-45d6-9274-29d7d35b4d13",
+            "kind": "html",
+            "version": "1",
+            "rect": {
+              "x": 911.6666259765625,
+              "y": 425,
+              "width": 300,
+              "height": 258.33331298828125,
+              "top": 425,
+              "right": 1211.6666259765625,
+              "bottom": 683.3333129882812,
+              "left": 911.6666259765625
+            }
+          },
+          {
+            "id": "ec820f69-602f-46a2-84f1-c1b8b60efe93",
+            "kind": "file",
+            "version": "1",
+            "rect": {
+              "x": 220,
+              "y": 583.3333129882812,
+              "width": 258.33331298828125,
+              "height": 116.6666259765625,
+              "top": 583.3333129882812,
+              "right": 478.33331298828125,
+              "bottom": 699.9999389648438,
+              "left": 220
+            }
+          }
+        ]
+      },
+      "note": "CDP capture and its PNG encoding are one measured operation. Crop decoding/draw/re-encoding are measured separately. Continuous media pixels represent the captured frame; before/after times are an interval, not an exact synchronized media time."
+    },
+    {
+      "route": "CDP-compositor",
+      "label": "dpr2-zoom144",
+      "captureAndEncodeMs": 121.51549999999997,
+      "viewportBytes": 320150,
+      "mapping": {
+        "viewport": {
+          "width": 1440,
+          "height": 1000,
+          "devicePixelRatio": 2
+        },
+        "source": {
+          "width": 2880,
+          "height": 2000
+        },
+        "cssRect": {
+          "x": 48.800048828125,
+          "y": 0,
+          "width": 1204.3999633789062,
+          "height": 754.3999938964844
+        },
+        "pixelRect": {
+          "x": 97,
+          "y": 0,
+          "width": 2410,
+          "height": 1509
+        },
+        "scale": {
+          "x": 2,
+          "y": 2
+        },
+        "worldTransform": "translate(-316.8px, -220px) scale(1.44)",
+        "mark": {
+          "css": {
+            "x": 208.800048828125,
+            "y": 132.80001831054688,
+            "width": 554.3999633789062,
+            "height": 374.3999938964844,
+            "top": 132.80001831054688,
+            "right": 763.2000122070312,
+            "bottom": 507.20001220703125,
+            "left": 208.800048828125
+          },
+          "pixel": {
+            "x": 320,
+            "y": 265.60003662109375
+          },
+          "sampledColor": [
+            255,
+            107,
+            0,
+            255
+          ]
+        },
+        "verified": true
+      },
+      "imageDecodeMs": 27.600000023841858,
+      "cropDrawMs": 0.10000002384185791,
+      "cropEncodeMs": 50.5,
+      "bytes": 380108,
+      "before": {
+        "viewport": {
+          "width": 1440,
+          "height": 1000,
+          "dpr": 2
+        },
+        "transform": "translate(-316.8px, -220px) scale(1.44)",
+        "video": [
+          {
+            "currentTime": 0.7417,
+            "paused": false,
+            "readyState": 4
+          }
+        ],
+        "audio": [
+          {
+            "currentTime": 0.6,
+            "paused": true,
+            "duration": 24
+          }
+        ],
+        "markdownScroll": 260,
+        "html": {
+          "frameUrlOrigin": "http://localhost:57418",
+          "parentOrigin": "http://127.0.0.1:57419",
+          "sandbox": "allow-scripts"
+        },
+        "objects": [
+          {
+            "id": "b9b17d65-8f47-45fa-8762-cd6f9b61d0d3",
+            "kind": "image",
+            "version": "1",
+            "rect": {
+              "x": -143.99998474121094,
+              "y": -76,
+              "width": 489.60003662109375,
+              "height": 288.0000305175781,
+              "top": -76,
+              "right": 345.6000518798828,
+              "bottom": 212.00003051757812,
+              "left": -143.99998474121094
+            }
+          },
+          {
+            "id": "92e1a149-91b5-4f07-b6aa-6c25319dbab6",
+            "kind": "video",
+            "version": "1",
+            "rect": {
+              "x": 403.20001220703125,
+              "y": -76,
+              "width": 576,
+              "height": 324.0000305175781,
+              "top": -76,
+              "right": 979.2000122070312,
+              "bottom": 248.00003051757812,
+              "left": 403.20001220703125
+            }
+          },
+          {
+            "id": "58100497-6059-459d-a27a-ba7b80a82344",
+            "kind": "gif",
+            "version": "1",
+            "rect": {
+              "x": 1051.199951171875,
+              "y": -76,
+              "width": 360.000244140625,
+              "height": 302.4000244140625,
+              "top": -76,
+              "right": 1411.2001953125,
+              "bottom": 226.4000244140625,
+              "left": 1051.199951171875
+            }
+          },
+          {
+            "id": "da1e94d8-77b9-495e-939a-2662e8c99f34",
+            "kind": "audio",
+            "version": "1",
+            "rect": {
+              "x": -143.99998474121094,
+              "y": 370.4000244140625,
+              "width": 561.6000366210938,
+              "height": 144,
+              "top": 370.4000244140625,
+              "right": 417.6000518798828,
+              "bottom": 514.4000244140625,
+              "left": -143.99998474121094
+            }
+          },
+          {
+            "id": "fdf0b63a-a626-442b-a960-2fa8df80dbfc",
+            "kind": "markdown",
+            "version": "1",
+            "rect": {
+              "x": 489.60003662109375,
+              "y": 370.4000244140625,
+              "width": 504,
+              "height": 489.5999755859375,
+              "top": 370.4000244140625,
+              "right": 993.6000366210938,
+              "bottom": 860,
+              "left": 489.60003662109375
+            }
+          },
+          {
+            "id": "6d64c69e-da1e-45d6-9274-29d7d35b4d13",
+            "kind": "html",
+            "version": "1",
+            "rect": {
+              "x": 1051.199951171875,
+              "y": 370.4000244140625,
+              "width": 518.400146484375,
+              "height": 446.4000244140625,
+              "top": 370.4000244140625,
+              "right": 1569.60009765625,
+              "bottom": 816.800048828125,
+              "left": 1051.199951171875
+            }
+          },
+          {
+            "id": "ec820f69-602f-46a2-84f1-c1b8b60efe93",
+            "kind": "file",
+            "version": "1",
+            "rect": {
+              "x": -143.99998474121094,
+              "y": 644.0000610351562,
+              "width": 446.4000244140625,
+              "height": 201.60003662109375,
+              "top": 644.0000610351562,
+              "right": 302.40003967285156,
+              "bottom": 845.60009765625,
+              "left": -143.99998474121094
+            }
+          }
+        ]
+      },
+      "after": {
+        "viewport": {
+          "width": 1440,
+          "height": 1000,
+          "dpr": 2
+        },
+        "transform": "translate(-316.8px, -220px) scale(1.44)",
+        "video": [
+          {
+            "currentTime": 0.865768,
+            "paused": false,
+            "readyState": 4
+          }
+        ],
+        "audio": [
+          {
+            "currentTime": 0.6,
+            "paused": true,
+            "duration": 24
+          }
+        ],
+        "markdownScroll": 260,
+        "html": {
+          "frameUrlOrigin": "http://localhost:57418",
+          "parentOrigin": "http://127.0.0.1:57419",
+          "sandbox": "allow-scripts"
+        },
+        "objects": [
+          {
+            "id": "b9b17d65-8f47-45fa-8762-cd6f9b61d0d3",
+            "kind": "image",
+            "version": "1",
+            "rect": {
+              "x": -143.99998474121094,
+              "y": -76,
+              "width": 489.60003662109375,
+              "height": 288.0000305175781,
+              "top": -76,
+              "right": 345.6000518798828,
+              "bottom": 212.00003051757812,
+              "left": -143.99998474121094
+            }
+          },
+          {
+            "id": "92e1a149-91b5-4f07-b6aa-6c25319dbab6",
+            "kind": "video",
+            "version": "1",
+            "rect": {
+              "x": 403.20001220703125,
+              "y": -76,
+              "width": 576,
+              "height": 324.0000305175781,
+              "top": -76,
+              "right": 979.2000122070312,
+              "bottom": 248.00003051757812,
+              "left": 403.20001220703125
+            }
+          },
+          {
+            "id": "58100497-6059-459d-a27a-ba7b80a82344",
+            "kind": "gif",
+            "version": "1",
+            "rect": {
+              "x": 1051.199951171875,
+              "y": -76,
+              "width": 360.000244140625,
+              "height": 302.4000244140625,
+              "top": -76,
+              "right": 1411.2001953125,
+              "bottom": 226.4000244140625,
+              "left": 1051.199951171875
+            }
+          },
+          {
+            "id": "da1e94d8-77b9-495e-939a-2662e8c99f34",
+            "kind": "audio",
+            "version": "1",
+            "rect": {
+              "x": -143.99998474121094,
+              "y": 370.4000244140625,
+              "width": 561.6000366210938,
+              "height": 144,
+              "top": 370.4000244140625,
+              "right": 417.6000518798828,
+              "bottom": 514.4000244140625,
+              "left": -143.99998474121094
+            }
+          },
+          {
+            "id": "fdf0b63a-a626-442b-a960-2fa8df80dbfc",
+            "kind": "markdown",
+            "version": "1",
+            "rect": {
+              "x": 489.60003662109375,
+              "y": 370.4000244140625,
+              "width": 504,
+              "height": 489.5999755859375,
+              "top": 370.4000244140625,
+              "right": 993.6000366210938,
+              "bottom": 860,
+              "left": 489.60003662109375
+            }
+          },
+          {
+            "id": "6d64c69e-da1e-45d6-9274-29d7d35b4d13",
+            "kind": "html",
+            "version": "1",
+            "rect": {
+              "x": 1051.199951171875,
+              "y": 370.4000244140625,
+              "width": 518.400146484375,
+              "height": 446.4000244140625,
+              "top": 370.4000244140625,
+              "right": 1569.60009765625,
+              "bottom": 816.800048828125,
+              "left": 1051.199951171875
+            }
+          },
+          {
+            "id": "ec820f69-602f-46a2-84f1-c1b8b60efe93",
+            "kind": "file",
+            "version": "1",
+            "rect": {
+              "x": -143.99998474121094,
+              "y": 644.0000610351562,
+              "width": 446.4000244140625,
+              "height": 201.60003662109375,
+              "top": 644.0000610351562,
+              "right": 302.40003967285156,
+              "bottom": 845.60009765625,
+              "left": -143.99998474121094
+            }
+          }
+        ]
+      },
+      "note": "CDP capture and its PNG encoding are one measured operation. Crop decoding/draw/re-encoding are measured separately. Continuous media pixels represent the captured frame; before/after times are an interval, not an exact synchronized media time."
+    }
+  ],
+  "screenCapture": [
+    {
+      "capabilities": {
+        "secureContext": true,
+        "getDisplayMedia": "function",
+        "setCaptureHandleConfig": "function",
+        "getCaptureHandle": "function",
+        "dpr": 2,
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        }
+      }
+    },
+    {
+      "event": "sharing",
+      "elapsedMs": 170.39999997615814,
+      "settings": {
+        "aspectRatio": 1.951219512195122,
+        "cursor": "motion",
+        "deviceId": "web-contents-media-stream://7:8",
+        "displaySurface": "browser",
+        "frameRate": 30,
+        "height": 1476,
+        "logicalSurface": true,
+        "resizeMode": "crop-and-scale",
+        "screenPixelRatio": 2,
+        "width": 2880
+      },
+      "identity": {
+        "ownHandleMatches": true,
+        "originMatches": true
+      }
+    }
+  ],
+  "error": {
+    "name": "Error",
+    "message": "page.evaluate: Error: viewport_capture_aspect_mismatch\n    at cropMapping (http://127.0.0.1:57419/capture-probe.js:33:40)\n    at Object.capture (http://127.0.0.1:57419/capture-probe.js:63:50)\n    at async eval (eval at evaluate (:291:30), <anonymous>:2:26)\n    at async <anonymous>:317:30"
+  },
+  "failureScene": {
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 2
+    },
+    "transform": "translate(1.13687e-13px, 5.68434e-14px) scale(1)",
+    "video": [
+      {
+        "currentTime": 1.688915,
+        "paused": false,
+        "readyState": 4
+      }
+    ],
+    "audio": [
+      {
+        "currentTime": 0.6,
+        "paused": true,
+        "duration": 24
+      }
+    ],
+    "markdownScroll": 260,
+    "html": {
+      "frameUrlOrigin": "http://localhost:57418",
+      "parentOrigin": "http://127.0.0.1:57419",
+      "sandbox": "allow-scripts"
+    },
+    "objects": [
+      {
+        "id": "b9b17d65-8f47-45fa-8762-cd6f9b61d0d3",
+        "kind": "image",
+        "version": "1",
+        "rect": {
+          "x": 120,
+          "y": 100,
+          "width": 340,
+          "height": 200,
+          "top": 100,
+          "right": 460,
+          "bottom": 300,
+          "left": 120
+        }
+      },
+      {
+        "id": "92e1a149-91b5-4f07-b6aa-6c25319dbab6",
+        "kind": "video",
+        "version": "1",
+        "rect": {
+          "x": 500,
+          "y": 100,
+          "width": 400,
+          "height": 225,
+          "top": 100,
+          "right": 900,
+          "bottom": 325,
+          "left": 500
+        }
+      },
+      {
+        "id": "58100497-6059-459d-a27a-ba7b80a82344",
+        "kind": "gif",
+        "version": "1",
+        "rect": {
+          "x": 950,
+          "y": 100,
+          "width": 250,
+          "height": 210,
+          "top": 100,
+          "right": 1200,
+          "bottom": 310,
+          "left": 950
+        }
+      },
+      {
+        "id": "da1e94d8-77b9-495e-939a-2662e8c99f34",
+        "kind": "audio",
+        "version": "1",
+        "rect": {
+          "x": 120,
+          "y": 410,
+          "width": 390,
+          "height": 100,
+          "top": 410,
+          "right": 510,
+          "bottom": 510,
+          "left": 120
+        }
+      },
+      {
+        "id": "fdf0b63a-a626-442b-a960-2fa8df80dbfc",
+        "kind": "markdown",
+        "version": "1",
+        "rect": {
+          "x": 560,
+          "y": 410,
+          "width": 350,
+          "height": 340,
+          "top": 410,
+          "right": 910,
+          "bottom": 750,
+          "left": 560
+        }
+      },
+      {
+        "id": "6d64c69e-da1e-45d6-9274-29d7d35b4d13",
+        "kind": "html",
+        "version": "1",
+        "rect": {
+          "x": 950,
+          "y": 410,
+          "width": 360,
+          "height": 310,
+          "top": 410,
+          "right": 1310,
+          "bottom": 720,
+          "left": 950
+        }
+      },
+      {
+        "id": "ec820f69-602f-46a2-84f1-c1b8b60efe93",
+        "kind": "file",
+        "version": "1",
+        "rect": {
+          "x": 120,
+          "y": 600,
+          "width": 310,
+          "height": 140,
+          "top": 600,
+          "right": 430,
+          "bottom": 740,
+          "left": 120
+        }
+      }
+    ]
+  }
+}

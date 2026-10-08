@@ -6,6 +6,10 @@
 - 适用范围：本地项目创作白板、通用 Agent Skill、同一用户的多个 agent 会话。
 - 计划变更通过 Git 记录；本文件的进度区记录实际执行与验收情况。
 
+## Chatbox 截图环境与捕获基础验证（2026-10-08）
+
+按[方案审查](chatbox/CHATBOX_REFERENCES_ANNOTATION_REVIEW.md)的第 1、2 项完成隔离基础验证，范围见[基础设计](chatbox/CAPTURE_FOUNDATION_DESIGN.md)，结果见[专项记录](chatbox/CAPTURE_FOUNDATION_VALIDATION.md)。直接核对当前 Codex 安装源码，正式方向采用受信宿主在后台截取原页面、关闭编辑浮层并保留标记；Chrome 原型覆盖七类媒体、坐标映射及完整捕获提交链。后台 20/20、Node 72/72、类型检查和构建通过，独立代码、原型、证据与文档总验收 PASS；预备和上传期间取消的版本失效已完成真实延迟复验。持久批注版本、每条现场快照、PNG 提交/查询/重拍、会话证据归属、CLI 和发送事务基础已实现。生产 chatbox UI、实际宿主截图接线、引用交互和宿主消息投递按后续阶段推进。测试使用独立临时项目，用户白板及现有服务保持原样。
+
 ## Chatbox 文档归档与方案审查（2026-10-08）
 
 将[功能计划](chatbox/CHATBOX_REFERENCES_ANNOTATION_PLAN.md)与[消息桥调研](chatbox/CODEX_MESSAGE_BRIDGE_RESEARCH.md)统一移入 `docs/chatbox/`，新增[方案审查](chatbox/CHATBOX_REFERENCES_ANNOTATION_REVIEW.md)，记录截图路线、批注持久状态、捕获与发送语义、上传恢复、引用确认和证据归属等结论及建议验收场景。原文档内容保留，相关路径随目录调整。本轮为文档整理，功能状态继续为待实施；94 个本地链接、章节锚点与相对路径检查通过，`git diff --check` 和独立文档验收 PASS，无未解决发现。本轮未运行代码测试或截图原型。

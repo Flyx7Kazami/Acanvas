@@ -12,6 +12,7 @@ The runnable P0 prototype includes a full-screen canvas, floating controls, an a
 - [Frontend design](docs/FRONTEND.md): visual references, grayscale themes, and interaction rules.
 - [Multimodal canvas design](docs/MULTIMODAL_CANVAS_DESIGN.md): content types, references, and preview boundaries.
 - [Validation record](docs/VALIDATION.md): verified behavior and remaining limitations.
+- [Chatbox capture foundation](docs/chatbox/CAPTURE_FOUNDATION_DESIGN.md): background capture direction, persistent evidence APIs, and [validation](docs/chatbox/CAPTURE_FOUNDATION_VALIDATION.md).
 - [Agent Skill](skill/acanvas/SKILL.md): task processing and recovery.
 
 ## Install and run
@@ -110,6 +111,14 @@ npm run test:browser -- --config tests/audio-player.config.ts
 npm run test:browser -- --config tests/content-surface.config.ts
 npm run test:browser -- --config tests/html-preview-security.config.ts
 ```
+
+The isolated background capture prototype uses the project runtime and a managed Chrome page:
+
+```sh
+.runtime/node_modules/node/bin/node scripts/chatbox-capture-prototype.mjs background
+```
+
+The prototype verifies same-page media capture and the service submission lifecycle. The production chatbox UI and its host screenshot connection follow the capture foundation's recorded integration scope.
 
 Tests use isolated temporary projects. Localhost services and Chrome may require execution permissions in restricted environments. Validation records distinguish environment restrictions from product failures.
 

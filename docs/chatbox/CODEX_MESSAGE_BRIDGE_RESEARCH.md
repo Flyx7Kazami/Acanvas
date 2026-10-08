@@ -2,6 +2,8 @@
 
 日期：2026-10-06；补充实测：2026-10-08。状态：调研；尚未接入消息发送。
 
+2026-10-08 的后台截图源码核对与捕获原型另见[基础设计](CAPTURE_FOUNDATION_DESIGN.md)和[验证记录](CAPTURE_FOUNDATION_VALIDATION.md)。该验证覆盖原页面截图与 acanvas 本地证据提交，宿主消息投递继续按本文边界实施。
+
 ## 当前链路
 
 画板输入经 `sendRequest()` 保存草稿，再调用 `/api/sessions/:session/tasks`，由本地服务创建持久任务。CLI 的 `CODEX_THREAD_ID` 只用于把 Codex 对话绑定到白板任务范围。画板发送成功后，Codex 对话没有自动新增用户消息；需要在宿主对话中显式接续队列。

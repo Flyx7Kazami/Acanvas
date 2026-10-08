@@ -6,6 +6,8 @@
 
 关联资料：[Codex 消息桥调研](CODEX_MESSAGE_BRIDGE_RESEARCH.md)、[项目计划](../PLAN.md)。
 
+后续第 1、2 项的实现范围、后台截图要求和实际验证见[基础设计](CAPTURE_FOUNDATION_DESIGN.md)与[验证记录](CAPTURE_FOUNDATION_VALIDATION.md)。下文保留本次方案审查时的结论，完整 chatbox 交互继续按功能计划推进。
+
 ## 1. 总体结论与审查范围
 
 方案方向可行，现有草稿 revision、任务快照、对象版本和 SQLite 短事务可以继续使用。完整实施前应补齐批注完成状态、捕获与发送的数据语义、截图提交恢复、引用预览状态以及证据资产归属。截图原型验证可以先行，原型结果决定首发支持环境与媒体范围。

@@ -1,10 +1,12 @@
 import Database from 'better-sqlite3';
 import { randomUUID } from 'node:crypto';
-import { mkdirSync, realpathSync, statSync } from 'node:fs';
+import { mkdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
-import type { Annotation, AnnotationInput, Asset, BoardObject, BoardOperation, BoardState, Claim, CompleteInput, Draft, HostBinding, HtmlBundle, Project, Run, RunIdentity, ServiceIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
+import { isDeepStrictEqual } from 'node:util';
+import type { Annotation, AnnotationCapture, AnnotationCaptureInput, AnnotationInput, Asset, BoardObject, BoardOperation, BoardState, CaptureResult, CaptureRetryResult, Claim, CompleteInput, Draft, HostBinding, HtmlBundle, Project, Run, RunIdentity, ServiceIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
 import { bundleLimits, bundleMime, validBundlePath } from '../shared/html-bundle.js';
 import { contentCapabilities, resolveContentKind } from '../shared/content-types.js';
+import { annotationTarget, sameAnnotationTarget, rasterDimensions } from './annotation-capture.js';
 
 type Row = Record<string, any>;
 export class ApiFailure extends Error {
@@ -35,7 +37,7 @@ export class CanvasService {
     mkdirSync(requestedData, { recursive: true, mode: 0o700 });
     this.dataDir = realpathSync(requestedData);
     if (!within(this.root, this.dataDir)) fail(403, 'path_boundary', 'The project data directory must remain inside the project.');
-    for (const folder of ['assets', 'outputs', 'tmp']) {
+    for (const folder of ['assets', 'outputs', 'tmp', 'evidence']) {
       const path = resolve(this.dataDir, folder);
       mkdirSync(path, { recursive: true, mode: 0o700 });
       if (!within(this.dataDir, realpathSync(path))) fail(403, 'path_boundary', 'Project storage must remain inside the data directory.');
@@ -58,6 +60,10 @@ export class CanvasService {
       CREATE TABLE IF NOT EXISTS annotations(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), task_id TEXT NOT NULL, data_json TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), draft_id TEXT NOT NULL UNIQUE, sequence INTEGER NOT NULL, status TEXT NOT NULL, snapshot_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, current_run_id TEXT, reason TEXT, receipt_json TEXT, replies_json TEXT NOT NULL DEFAULT '[]', UNIQUE(session_id, sequence));
       CREATE TABLE IF NOT EXISTS task_edits(draft_id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), task_id TEXT NOT NULL REFERENCES tasks(id), previous_draft_json TEXT NOT NULL, state TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS annotation_captures(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), draft_id TEXT NOT NULL, annotation_id TEXT NOT NULL, version INTEGER NOT NULL, asset_id TEXT NOT NULL UNIQUE, path TEXT NOT NULL UNIQUE, data_json TEXT NOT NULL, state TEXT NOT NULL, UNIQUE(session_id,draft_id,annotation_id,version));
+      CREATE TABLE IF NOT EXISTS evidence_assets(asset_id TEXT PRIMARY KEY REFERENCES assets(id), session_id TEXT NOT NULL REFERENCES sessions(id), draft_id TEXT NOT NULL, capture_id TEXT NOT NULL UNIQUE REFERENCES annotation_captures(id));
+      CREATE TABLE IF NOT EXISTS annotation_identities(session_id TEXT NOT NULL REFERENCES sessions(id), draft_id TEXT NOT NULL, annotation_id TEXT NOT NULL, data_json TEXT NOT NULL, PRIMARY KEY(session_id,draft_id,annotation_id));
+      CREATE TABLE IF NOT EXISTS capture_retries(session_id TEXT NOT NULL REFERENCES sessions(id), draft_id TEXT NOT NULL, annotation_id TEXT NOT NULL, version INTEGER NOT NULL, next_version INTEGER NOT NULL, PRIMARY KEY(session_id,draft_id,annotation_id,version));
       CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id), consumer_id TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, progress_json TEXT NOT NULL DEFAULT '[]', output_asset_ids_json TEXT NOT NULL DEFAULT '[]', recovery_resolution TEXT);
       CREATE TABLE IF NOT EXISTS late_results(id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id), run_id TEXT NOT NULL REFERENCES runs(id), consumer_id TEXT NOT NULL, received_at TEXT NOT NULL, payload_json TEXT NOT NULL);
     `);
@@ -125,16 +131,18 @@ export class CanvasService {
     const row = this.db.prepare('SELECT * FROM drafts WHERE session_id=?').get(sessionId) as Row;
     return { ...(row.editing_task_id ? { editingTaskId: row.editing_task_id } : {}), id: row.id, sessionId, revision: row.revision, text: row.text, attachments: parse(row.attachments_json), annotations: parse(row.annotations_json), references: parse(row.references_json), updatedAt: row.updated_at };
   }
-  private assetFrom(row: Row): Asset { const bundle = this.db.prepare('SELECT manifest_json FROM html_bundles WHERE asset_id=?').get(row.id) as Row | undefined; return { ...(bundle ? { htmlBundle: parse<HtmlBundle>(bundle.manifest_json) } : {}), id: row.id, name: row.name, mime: row.mime, size: row.size, kind: row.kind, createdAt: row.created_at, ...(row.source_task_id ? { sourceTaskId: row.source_task_id, sourceRunId: row.source_run_id } : {}) }; }
+  private assetFrom(row: Row): Asset { const bundle = this.db.prepare('SELECT manifest_json FROM html_bundles WHERE asset_id=?').get(row.id) as Row | undefined; const evidence = this.db.prepare('SELECT * FROM evidence_assets WHERE asset_id=?').get(row.id) as Row | undefined; return { ...(bundle ? { htmlBundle: parse<HtmlBundle>(bundle.manifest_json) } : {}), ...(evidence ? { evidence: { sessionId: evidence.session_id, draftId: evidence.draft_id, captureId: evidence.capture_id } } : {}), id: row.id, name: row.name, mime: row.mime, size: row.size, kind: row.kind, createdAt: row.created_at, ...(row.source_task_id ? { sourceTaskId: row.source_task_id, sourceRunId: row.source_run_id } : {}) }; }
   asset(id: string): Asset { nonempty(id, 'Asset ID', 200); const row = this.db.prepare('SELECT * FROM assets WHERE id=?').get(id) as Row; return row ? this.assetFrom(row) : fail(404, 'asset_missing', 'The referenced asset is unavailable.'); }
   assets(): Asset[] { return (this.db.prepare('SELECT * FROM assets ORDER BY created_at,id').all() as Row[]).map((row) => this.assetFrom(row)); }
+  sharedAsset(id: string): Asset { const asset = this.asset(id); if (asset.evidence) fail(403, 'evidence_usage', 'Capture evidence belongs to its annotation.'); return asset; }
+  readableAsset(id: string, sessionId?: string): Asset { const asset = this.asset(id); if (asset.evidence) { if (!sessionId || asset.evidence.sessionId !== sessionId) fail(403, 'evidence_scope', 'Read capture evidence in its session.'); this.sessionRow(sessionId!); } return asset; }
   registerHtmlBundle(input: HtmlBundle & { source?: { sessionId: string; taskId: string } & RunIdentity }): Asset {
     return this.transaction(() => {
       if (!input || !validBundlePath(input.entryPath) || !/\.html?$/i.test(input.entryPath) || !input.files || typeof input.files !== 'object' || Array.isArray(input.files)) fail(400, 'bundle_invalid', 'Choose an HTML entry and a relative resource mapping.');
       const files = Object.entries(input.files);
       if (!files.length || files.length > bundleLimits.files) fail(400, 'bundle_limit', 'HTML bundles support up to 128 files.');
       const entryId = Object.hasOwn(input.files, input.entryPath) ? input.files[input.entryPath] : '';
-      const entry = this.asset(entryId);
+      const entry = this.sharedAsset(entryId);
       if (entry.sourceTaskId) {
         if (!input.source || input.source.taskId !== entry.sourceTaskId || input.source.runId !== entry.sourceRunId) fail(409, 'bundle_source', 'Output bundles require their task and execution identity.');
         this.requireCurrent(input.source!.sessionId, input.source!.taskId, input.source!);
@@ -144,7 +152,7 @@ export class CanvasService {
       let total = 0;
       for (const [path, id] of files) {
         if (!validBundlePath(path) || !bundleMime(path)) fail(400, 'bundle_path', 'Bundle files must use supported non-hidden relative paths.');
-        const asset = this.asset(id); this.assetPath(id);
+        const asset = this.sharedAsset(id); this.assetPath(id);
         if (asset.htmlBundle || asset.sourceTaskId !== entry.sourceTaskId || asset.sourceRunId !== entry.sourceRunId) fail(400, 'bundle_source', 'Bundle resources must belong to the same import source.');
         if (asset.size > bundleLimits.fileBytes || (total += asset.size) > bundleLimits.totalBytes) fail(413, 'bundle_limit', 'HTML bundles support 10 MiB per file and 32 MiB total.');
       }
@@ -169,6 +177,7 @@ export class CanvasService {
   registerAsset(asset: Asset, relativePath: string, source?: { sessionId: string; taskId: string } & RunIdentity): Asset {
     let stale = false;
     this.transaction(() => {
+      if (asset.evidence || within(resolve(this.dataDir, 'evidence'), resolve(this.dataDir, relativePath)) || this.db.prepare('SELECT id FROM annotation_captures WHERE asset_id=? OR path=?').get(asset.id, relativePath)) fail(403, 'evidence_usage', 'Register capture evidence through its capture operation.');
       if (source) {
         this.taskRow(source.sessionId, source.taskId);
         const run = this.runRow(source.runId);
@@ -197,27 +206,35 @@ export class CanvasService {
     const objectIds = ids(value.objectIds, 'Annotation object IDs');
     for (const objectId of objectIds) if (!source?.referenceContent.objects.some(object => object.id === objectId)) this.object(objectId);
     if (value.objectId && !source?.referenceContent.objects.some(object => object.id === value.objectId)) this.object(value.objectId);
-    if (value.assetId) this.asset(value.assetId);
-    if (value.snapshotAssetId) this.asset(value.snapshotAssetId);
+    if (value.assetId) this.sharedAsset(value.assetId);
+    if (value.snapshotAssetId) this.sharedAsset(value.snapshotAssetId);
     if (!value.bounds || typeof value.bounds !== 'object') fail(400, 'invalid_annotation', 'Annotation bounds are required.');
     for (const key of ['x', 'y', 'width', 'height'] as const) finite(value.bounds[key], `Annotation ${key}`);
-    if (value.bounds.width <= 0 || value.bounds.height <= 0) fail(400, 'invalid_annotation', 'Annotation bounds must have positive dimensions.');
+    if (value.geometry !== undefined && !['point', 'rect'].includes(value.geometry)) fail(400, 'invalid_annotation', 'Choose point or rect geometry.');
+    if (value.captureState && value.geometry === 'point' ? value.bounds.width !== 0 || value.bounds.height !== 0 : value.bounds.width <= 0 || value.bounds.height <= 0) fail(400, 'invalid_annotation', 'Points use zero dimensions and regions use positive dimensions.');
     if (value.coordinateSpace === 'normalized' && (value.bounds.x < 0 || value.bounds.y < 0 || value.bounds.x + value.bounds.width > 1.000001 || value.bounds.y + value.bounds.height > 1.000001)) fail(400, 'invalid_annotation', 'Object annotations must fit within normalized object coordinates.');
     if (value.scope === 'object' && (!value.objectId || value.coordinateSpace !== 'normalized')) fail(400, 'invalid_annotation', 'Object annotations require an object and normalized coordinates.');
     if (value.scope === 'region' && value.coordinateSpace !== 'world') fail(400, 'invalid_annotation', 'Canvas regions require world coordinates.');
     if (value.scope === 'group' && (value.coordinateSpace !== 'world' || objectIds.length < 2 || value.objectId || value.assetId || value.timeStart !== undefined || value.timeEnd !== undefined || value.snapshotAssetId)) fail(400, 'invalid_annotation', 'A group annotation references two or more whole objects and a world display anchor.');
     if (value.timeStart !== undefined && finite(value.timeStart, 'Media time') < 0) fail(400, 'invalid_annotation', 'Media time must be positive.');
     if (value.timeEnd !== undefined && finite(value.timeEnd, 'Media end time') < (value.timeStart ?? 0)) fail(400, 'invalid_annotation', 'The media interval must follow its start time.');
-    const contentTarget = (annotation: AnnotationInput) => json({ scope: annotation.scope, coordinateSpace: annotation.coordinateSpace, objectId: annotation.objectId, objectIds: [...new Set(annotation.objectIds)].sort(), assetId: annotation.assetId, bounds: { x: annotation.bounds.x, y: annotation.bounds.y, width: annotation.bounds.width, height: annotation.bounds.height }, timeStart: annotation.timeStart, timeEnd: annotation.timeEnd, snapshotAssetId: annotation.snapshotAssetId });
-    const preserved = source?.annotations.some(annotation => annotation.id === value.id && contentTarget(annotation) === contentTarget(value));
+    if (value.contentAnchor) {
+      const anchor = value.contentAnchor;
+      if (!['visual', 'text'].includes(anchor.kind)) fail(400, 'invalid_annotation', 'Use a visual or text content anchor.');
+      if (anchor.scroll) { finite(anchor.scroll.x, 'Scroll x'); finite(anchor.scroll.y, 'Scroll y'); }
+      for (const key of ['quote', 'context', 'path'] as const) if (anchor[key] !== undefined) text(anchor[key], `Anchor ${key}`, 10_000);
+      for (const key of ['start', 'end'] as const) if (anchor[key] !== undefined && (!Number.isSafeInteger(anchor[key]) || anchor[key]! < 0)) fail(400, 'invalid_annotation', 'Text offsets use positive integers.');
+      if (anchor.end !== undefined && anchor.end < (anchor.start ?? 0)) fail(400, 'invalid_annotation', 'Text offsets follow their start.');
+    }
+    const preserved = source?.annotations.some(annotation => annotation.id === value.id && sameAnnotationTarget(annotation, value));
     const referenced = [...new Set([...objectIds, ...(value.objectId ? [value.objectId] : [])])].map(id => source?.referenceContent.objects.find(object => object.id === id) || this.object(id));
     const targetObject = referenced.find(object => object.id === value.objectId);
     const targetId = targetObject?.assetId ?? value.assetId;
     const target = targetId ? source?.referenceContent.assets.find(asset => asset.id === targetId) || this.asset(targetId) : undefined;
     const kind = resolveContentKind(target);
     if (!preserved) {
-      if (value.scope === 'object' && !contentCapabilities[kind].region && (value.bounds.x !== 0 || value.bounds.y !== 0 || value.bounds.width !== 1 || value.bounds.height !== 1)) fail(400, 'invalid_annotation', 'This content uses whole-file annotations.');
-      if (value.scope === 'region' && referenced.some(object => !contentCapabilities[resolveContentKind(source?.referenceContent.assets.find(asset => asset.id === object.assetId) || this.asset(object.assetId))].region)) fail(400, 'invalid_annotation', 'Canvas regions reference image or video content.');
+      if (!value.captureState && value.scope === 'object' && !contentCapabilities[kind].region && (value.bounds.x !== 0 || value.bounds.y !== 0 || value.bounds.width !== 1 || value.bounds.height !== 1)) fail(400, 'invalid_annotation', 'This content uses whole-file annotations.');
+      if (!value.captureState && value.scope === 'region' && referenced.some(object => !contentCapabilities[resolveContentKind(source?.referenceContent.assets.find(asset => asset.id === object.assetId) || this.asset(object.assetId))].region)) fail(400, 'invalid_annotation', 'Canvas regions reference image or video content.');
       if ((value.timeStart !== undefined || value.timeEnd !== undefined) && (value.scope !== 'object' || !contentCapabilities[kind].time)) fail(400, 'invalid_annotation', 'Time annotations reference audio or video content.');
       if (value.timeEnd !== undefined && value.timeStart === undefined) fail(400, 'invalid_annotation', 'A media interval requires its start time.');
       if (kind === 'audio' && value.snapshotAssetId) fail(400, 'invalid_annotation', 'Audio annotations reference the original audio and its time.');
@@ -233,16 +250,147 @@ export class CanvasService {
       if (input.editingTaskId !== draft.editingTaskId) fail(409, 'draft_conflict', 'The request editing target has changed. Read the current draft.');
       const source = draft.editingTaskId ? this.task(sessionId, draft.editingTaskId).snapshot : undefined;
       const attachments = ids(input.attachments, 'Attachments');
-      attachments.forEach((id) => this.asset(id));
+      attachments.forEach((id) => this.sharedAsset(id));
       if (!Array.isArray(input.annotations) || input.annotations.length > 1000) fail(400, 'invalid_annotation', 'Annotations must be a list.');
-      const annotations = input.annotations.map((annotation) => this.validateAnnotation(annotation, source));
+      const annotations = input.annotations.map((annotation) => {
+        const identity = this.db.prepare('SELECT data_json FROM annotation_identities WHERE session_id=? AND draft_id=? AND annotation_id=?').get(sessionId, draft.id, annotation?.id) as Row | undefined;
+        const prior = identity ? parse<AnnotationInput>(identity.data_json) : draft.annotations.find(value => value.id === annotation?.id);
+        if (prior?.captureState && !annotation.captureState) fail(409, 'annotation_version_conflict', 'Keep the saved capture state when editing this annotation.');
+        if (!annotation.captureState) { if (annotation.capture) fail(400, 'invalid_annotation', 'Capture records require capture state.'); return this.validateAnnotation(annotation, source); }
+        const state = annotation.captureState;
+        if (!Number.isSafeInteger(state.version) || state.version < 1 || !['incomplete', 'complete'].includes(state.status)) fail(400, 'invalid_annotation', 'Capture state requires an integer version and completion status.');
+        if (prior?.captureState) {
+          if (json(state) !== json(prior.captureState) || json(annotation.capture) !== json(prior.capture)) fail(409, 'annotation_version_conflict', 'Use the capture state returned by the service.');
+        } else if (state.version !== 1 || state.status !== 'incomplete' || state.captureId || annotation.capture) fail(409, 'annotation_version_conflict', 'New capture annotations start at version 1 and incomplete.');
+        const frozen = prior?.capture;
+        const validationSource = frozen ? { ...(source ?? { userRequest: { source: 'user_instruction' as const, text: '' }, annotations: [], referenceContent: { source: 'reference_content' as const, objects: [], assets: [], taskIds: [] } }), annotations: [prior!], referenceContent: { source: 'reference_content' as const, objects: frozen.scene.objects.map(value => value.object), assets: frozen.scene.assets, taskIds: [] } } : source;
+        const validated = this.validateAnnotation(annotation, validationSource);
+        const changed = prior?.captureState && !sameAnnotationTarget(prior, validated);
+        const managed: AnnotationInput = { ...validated, captureState: changed ? { version: prior!.captureState!.version + 1, status: 'incomplete' } : structuredClone(prior?.captureState ?? state) };
+        if (changed) delete managed.capture;
+        this.db.prepare('INSERT INTO annotation_identities VALUES(?,?,?,?) ON CONFLICT(session_id,draft_id,annotation_id) DO UPDATE SET data_json=excluded.data_json').run(sessionId, draft.id, managed.id, json(managed));
+        return managed;
+      });
       if (new Set(annotations.map((annotation) => annotation.id)).size !== annotations.length) fail(400, 'invalid_annotation', 'Each annotation needs a distinct ID.');
       const references = { objectIds: ids(input.references?.objectIds, 'Object references'), taskIds: ids(input.references?.taskIds, 'Task references') };
       references.objectIds.forEach((id) => { if (!source?.referenceContent.objects.some(object => object.id === id)) this.object(id); });
-      references.taskIds.forEach((id) => { if (!this.db.prepare('SELECT id FROM tasks WHERE id=?').get(id)) fail(404, 'task_missing', 'The referenced task is unavailable.'); });
+      references.taskIds.forEach((id) => { const row = this.db.prepare('SELECT session_id FROM tasks WHERE id=?').get(id) as Row | undefined; if (!row) fail(404, 'task_missing', 'The referenced task is unavailable.'); if (row!.session_id !== sessionId && !draft.references.taskIds.includes(id)) fail(403, 'task_reference_scope', 'Add tasks from the current session. Saved historical references remain available.'); });
       const updated = this.db.prepare('UPDATE drafts SET text=?,attachments_json=?,annotations_json=?,references_json=?,updated_at=?,revision=revision+1 WHERE id=? AND revision=?').run(text(input.text, 'Draft text'), json(attachments), json(annotations), json(references), now(), draft.id, input.revision);
       if (updated.changes !== 1) fail(409, 'draft_revision_conflict', 'The saved draft changed. Review both versions before saving.');
       return this.draft(sessionId);
+    });
+  }
+  private captureRow(sessionId: string, draftId: string, annotationId: string, version: number): Row {
+    this.sessionRow(sessionId);
+    if (!Number.isSafeInteger(version) || version < 1) fail(400, 'invalid_capture', 'Capture versions use positive integers.');
+    return this.db.prepare('SELECT * FROM annotation_captures WHERE session_id=? AND draft_id=? AND annotation_id=? AND version=?').get(sessionId, draftId, annotationId, version) as Row || fail(404, 'capture_missing', 'Prepare this annotation capture first.');
+  }
+  private captureAnnotation(sessionId: string, draftId: string, annotationId: string, version: number): { draft: Draft; annotation: AnnotationInput } {
+    const draft = this.draft(sessionId), annotation = draft.annotations.find(value => value.id === annotationId);
+    if (draft.id !== draftId || !annotation?.captureState || annotation.captureState.version !== version) fail(409, 'capture_version_conflict', 'This capture belongs to another draft or annotation version.');
+    return { draft, annotation: annotation! };
+  }
+  prepareCapture(sessionId: string, draftId: string, annotationId: string, version: number, input: AnnotationCaptureInput): CaptureResult {
+    return this.transaction(() => {
+      this.sessionRow(sessionId);
+      const existing = this.db.prepare('SELECT * FROM annotation_captures WHERE session_id=? AND draft_id=? AND annotation_id=? AND version=?').get(sessionId, draftId, annotationId, version) as Row | undefined;
+      if (existing) {
+        const capture = parse<AnnotationCapture>(existing.data_json);
+        const { id, sessionId: savedSession, draftId: savedDraft, annotationId: savedAnnotation, version: savedVersion, screenshotAssetId, source, ...savedInput } = capture;
+        if (!input?.target?.bounds || !Array.isArray(input.target.objectIds) || !Array.isArray(input.scene?.objects) || !Array.isArray(input.scene?.assets)) fail(400, 'invalid_capture', 'Save the capture target and scene.');
+        const replay = { ...input, target: annotationTarget(input.target), scene: { ...input.scene, objects: [...input.scene.objects].sort((a, b) => a.layer - b.layer || a.object.id.localeCompare(b.object.id)), assets: savedInput.scene.assets.map(asset => input.scene.assets.find(value => value.id === asset.id)) } };
+        if (input.scene.assets.length !== savedInput.scene.assets.length || !isDeepStrictEqual(savedInput, replay)) fail(409, 'capture_conflict', 'This annotation version already has a prepared capture. Query its saved result.');
+        if (existing.state !== 'committed') this.captureAnnotation(sessionId, draftId, annotationId, version);
+        return { status: existing.state, capture, ...(this.draft(sessionId).id === draftId ? { draft: this.draft(sessionId) } : {}) };
+      }
+      const { annotation } = this.captureAnnotation(sessionId, draftId, annotationId, version);
+      if (!input?.target?.bounds || !Array.isArray(input.target.objectIds) || !sameAnnotationTarget(annotation, input.target)) fail(409, 'capture_target_conflict', 'Capture the saved annotation target and position.');
+      const image = input.image;
+      if (!image || image.mime !== 'image/png' || !Number.isSafeInteger(image.width) || !Number.isSafeInteger(image.height) || image.width < 1 || image.height < 1 || image.width > 16_384 || image.height > 16_384 || image.width * image.height > 16_000_000 || !Number.isSafeInteger(image.bytes) || image.bytes < 1 || image.bytes > 20 * 1024 * 1024) fail(400, 'invalid_capture', 'Capture images support PNG, 16 million pixels and 20 MiB.');
+      if (typeof input.capturedAt !== 'string' || !Number.isFinite(Date.parse(input.capturedAt)) || new Date(input.capturedAt).toISOString() !== input.capturedAt) fail(400, 'invalid_capture', 'Save the ISO capture time.');
+      const bounds = (value: any, label: string, point = false) => {
+        if (!value || typeof value !== 'object') fail(400, 'invalid_capture', `${label} requires bounds.`);
+        for (const key of ['x', 'y', 'width', 'height'] as const) finite(value[key], `${label} ${key}`);
+        if (point ? value.width < 0 || value.height < 0 : value.width <= 0 || value.height <= 0) fail(400, 'invalid_capture', `${label} requires valid dimensions.`);
+        return { x: value.x, y: value.y, width: value.width, height: value.height };
+      };
+      const worldBounds = bounds(input.worldBounds, 'World geometry', annotation.geometry === 'point');
+      if (annotation.geometry === 'point' && (worldBounds.width !== 0 || worldBounds.height !== 0)) fail(400, 'invalid_capture', 'World point geometry uses zero dimensions.');
+      const view = input.viewport;
+      if (!view) fail(400, 'invalid_capture', 'Save the capture viewport.');
+      for (const key of ['x', 'y', 'zoom', 'width', 'height', 'devicePixelRatio'] as const) finite(view[key], `Viewport ${key}`);
+      if (view.zoom < .05 || view.zoom > 10 || view.width <= 0 || view.height <= 0 || view.devicePixelRatio <= 0 || view.devicePixelRatio > 8) fail(400, 'invalid_capture', 'Save a valid viewport scale and dimensions.');
+      const mapping = input.mapping;
+      if (!mapping) fail(400, 'invalid_capture', 'Save the screenshot mapping.');
+      const crop = bounds(mapping.crop, 'Screenshot crop');
+      if (crop.x < 0 || crop.y < 0 || crop.x + crop.width > view.width + .000001 || crop.y + crop.height > view.height + .000001 || mapping.pixelWidth !== image.width || mapping.pixelHeight !== image.height || Math.abs(finite(mapping.scaleX, 'Mapping scale x') - image.width / crop.width) > .000001 || Math.abs(finite(mapping.scaleY, 'Mapping scale y') - image.height / crop.height) > .000001) fail(400, 'invalid_capture', 'Map the actual image dimensions to its viewport crop.');
+      const scene = input.scene;
+      if (!scene || !Array.isArray(scene.objects) || scene.objects.length > 64 || !Array.isArray(scene.assets) || scene.assets.length > 256 || !Number.isSafeInteger(scene.omittedCount) || scene.omittedCount < 0) fail(400, 'invalid_capture', 'Capture scenes support 64 visible objects and a saved omitted count.');
+      const seen = new Set<string>();
+      const objects = scene.objects.map(value => {
+        if (!value?.object || seen.has(value.object.id)) fail(400, 'invalid_capture', 'Scene objects have distinct IDs.');
+        const object = this.object(value.object.id); seen.add(object.id);
+        if (!isDeepStrictEqual(object, value.object)) fail(409, 'capture_scene_conflict', 'The scene object changed before capture preparation.');
+        if (!Number.isSafeInteger(value.layer) || Math.abs(value.layer) > 1e9) fail(400, 'invalid_capture', 'Save an integer scene layer.');
+        if (value.media) { if (!contentCapabilities[resolveContentKind(this.sharedAsset(object.assetId))].time) fail(400, 'invalid_capture', 'Media positions belong to audio or video.'); for (const key of ['playbackTime', 'presentedTime', 'representativeTime'] as const) if (value.media[key] !== undefined && finite(value.media[key], `Media ${key}`) < 0) fail(400, 'invalid_capture', 'Media positions use positive seconds.'); }
+        if (value.scroll) { finite(value.scroll.x, 'Scene scroll x'); finite(value.scroll.y, 'Scene scroll y'); }
+        return { object, renderedBounds: bounds(value.renderedBounds, 'Rendered object'), layer: value.layer, ...(value.visibleBounds ? { visibleBounds: bounds(value.visibleBounds, 'Visible object') } : {}), ...(value.media ? { media: structuredClone(value.media) } : {}), ...(value.scroll ? { scroll: structuredClone(value.scroll) } : {}) };
+      }).sort((a, b) => a.layer - b.layer || a.object.id.localeCompare(b.object.id));
+      const targetIds = [...annotation.objectIds, ...(annotation.objectId ? [annotation.objectId] : [])];
+      if (targetIds.some(id => !seen.has(id))) fail(400, 'invalid_capture', 'Capture scenes include each explicit target object.');
+      const needed = this.expandAssetIds([...new Set([...objects.map(value => value.object.assetId), ...[annotation.assetId, annotation.snapshotAssetId].filter((id): id is string => !!id)])]);
+      const supplied = ids(scene.assets.map(value => value?.id), 'Scene assets');
+      if (needed.length !== supplied.length || needed.some(id => !supplied.includes(id))) fail(400, 'invalid_capture', 'Save all scene assets and bundle resources.');
+      const assets = needed.map(id => { const asset = this.sharedAsset(id); this.assetPath(id); return asset; });
+      const normalized: AnnotationCaptureInput = { capturedAt: input.capturedAt, target: annotationTarget(annotation), worldBounds, viewport: structuredClone(view), mapping: { crop, pixelWidth: image.width, pixelHeight: image.height, scaleX: mapping.scaleX, scaleY: mapping.scaleY }, scene: { objects, assets, omittedCount: scene.omittedCount }, image: structuredClone(image) };
+      const id = randomUUID(), screenshotAssetId = randomUUID();
+      const capture: AnnotationCapture = { ...normalized, id, sessionId, draftId, annotationId, version, screenshotAssetId, source: 'reference_content' };
+      this.db.prepare('INSERT INTO annotation_captures VALUES(?,?,?,?,?,?,?,?,?)').run(id, sessionId, draftId, annotationId, version, screenshotAssetId, `evidence/${id}.png`, json(capture), 'prepared');
+      return { status: 'prepared', capture, draft: this.draft(sessionId) };
+    });
+  }
+  retryCapture(sessionId: string, draftId: string, annotationId: string, version: number): CaptureRetryResult {
+    return this.transaction(() => {
+      this.sessionRow(sessionId);
+      const saved = this.db.prepare('SELECT next_version FROM capture_retries WHERE session_id=? AND draft_id=? AND annotation_id=? AND version=?').get(sessionId, draftId, annotationId, version) as Row | undefined;
+      if (saved) { const draft = this.draft(sessionId); if (draft.id !== draftId) fail(409, 'capture_version_conflict', 'Read the current draft after this capture retry.'); return { version: saved.next_version, draft }; }
+      const { draft, annotation } = this.captureAnnotation(sessionId, draftId, annotationId, version);
+      const nextVersion = version + 1;
+      const replacement: AnnotationInput = { ...annotation, captureState: { version: nextVersion, status: 'incomplete' } }; delete replacement.capture;
+      const annotations = draft.annotations.map(value => value.id === annotationId ? replacement : value);
+      this.db.prepare('INSERT INTO capture_retries VALUES(?,?,?,?,?)').run(sessionId, draftId, annotationId, version, nextVersion);
+      this.db.prepare('UPDATE drafts SET annotations_json=?,revision=revision+1,updated_at=? WHERE id=?').run(json(annotations), now(), draftId);
+      this.db.prepare('UPDATE annotation_identities SET data_json=? WHERE session_id=? AND draft_id=? AND annotation_id=?').run(json(replacement), sessionId, draftId, annotationId);
+      return { version: nextVersion, draft: this.draft(sessionId) };
+    });
+  }
+  captureUpload(sessionId: string, draftId: string, annotationId: string, version: number) {
+    const row = this.captureRow(sessionId, draftId, annotationId, version), capture = parse<AnnotationCapture>(row.data_json);
+    if (row.state !== 'committed') this.captureAnnotation(sessionId, draftId, annotationId, version);
+    return { capture, committed: row.state === 'committed', temporary: resolve(this.dataDir, 'tmp', `${row.id}.capture-upload`), destination: resolve(this.dataDir, row.path) };
+  }
+  captureResult(sessionId: string, draftId: string, annotationId: string, version: number): CaptureResult {
+    const row = this.captureRow(sessionId, draftId, annotationId, version), capture = parse<AnnotationCapture>(row.data_json);
+    if (row.state === 'committed') { this.assetPath(capture.screenshotAssetId); return { status: 'committed', capture, ...(this.draft(sessionId).id === draftId ? { draft: this.draft(sessionId) } : {}) }; }
+    const current = this.captureAnnotation(sessionId, draftId, annotationId, version);
+    const destination = resolve(this.dataDir, row.path);
+    let actual: string;
+    try { actual = realpathSync(destination); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return { status: 'prepared', capture, draft: current.draft }; throw error; }
+    if (!within(this.dataDir, actual)) fail(403, 'path_boundary', 'Capture evidence remains inside project storage.');
+    const info = statSync(actual);
+    if (!info.isFile() || info.size !== capture.image.bytes) fail(409, 'capture_file_invalid', 'Upload the complete capture image.');
+    const dimensions = rasterDimensions(readFileSync(actual), capture.image.mime);
+    if (!dimensions || dimensions.width !== capture.image.width || dimensions.height !== capture.image.height) fail(409, 'capture_file_invalid', 'Upload the PNG matching the capture dimensions.');
+    return this.transaction(() => {
+      const { draft, annotation } = this.captureAnnotation(sessionId, draftId, annotationId, version);
+      if (!sameAnnotationTarget(annotation, capture.target)) fail(409, 'capture_target_conflict', 'Capture the current annotation target.');
+      this.db.prepare('INSERT INTO assets VALUES(?,?,?,?,?,?,?,?,?)').run(capture.screenshotAssetId, `capture-${annotationId}.png`, capture.image.mime, info.size, 'image', row.path, now(), null, null);
+      this.db.prepare('INSERT INTO evidence_assets VALUES(?,?,?,?)').run(capture.screenshotAssetId, sessionId, draftId, capture.id);
+      this.db.prepare("UPDATE annotation_captures SET state='committed' WHERE id=?").run(capture.id);
+      const annotations = draft.annotations.map(value => value.id === annotationId ? { ...value, captureState: { version, status: 'complete' as const, captureId: capture.id }, capture } : value);
+      this.db.prepare('UPDATE drafts SET annotations_json=?,revision=revision+1,updated_at=? WHERE id=?').run(json(annotations), now(), draftId);
+      this.db.prepare('UPDATE annotation_identities SET data_json=? WHERE session_id=? AND draft_id=? AND annotation_id=?').run(json(annotations.find(value => value.id === annotationId)), sessionId, draftId, annotationId);
+      return { status: 'committed', capture, draft: this.draft(sessionId) };
     });
   }
   saveView(sessionId: string, view: SessionView): Session {
@@ -271,6 +419,7 @@ export class CanvasService {
       this.db.prepare("UPDATE tasks SET status='editing',updated_at=? WHERE id=? AND status='queued'").run(now(), taskId);
       this.db.prepare('DELETE FROM drafts WHERE id=?').run(previous.id);
       this.db.prepare('INSERT INTO drafts(id,session_id,revision,text,attachments_json,annotations_json,references_json,updated_at,editing_task_id) VALUES(?,?,1,?,?,?,?,?,?)').run(id, sessionId, snapshot.userRequest.text, json(attachments), json(snapshot.annotations), json({ objectIds, taskIds: snapshot.referenceContent.taskIds }), now(), taskId);
+      for (const annotation of snapshot.annotations) if (annotation.captureState) this.db.prepare('INSERT INTO annotation_identities VALUES(?,?,?,?)').run(sessionId, id, annotation.id, json(annotation));
       return { task: this.task(sessionId, taskId), draft: this.draft(sessionId) };
     });
   }
@@ -307,9 +456,19 @@ export class CanvasService {
       if (source && source.status !== 'editing') fail(409, 'task_edit_conflict', 'The request changed state. Read the current request.');
       const edit = source ? this.db.prepare("SELECT * FROM task_edits WHERE draft_id=? AND state='active'").get(draftId) as Row : undefined;
       if (source && !edit) fail(409, 'task_edit_conflict', 'The request edit is unavailable. Read the current draft.');
-      const objectIds = [...new Set([...draft.references.objectIds, ...draft.annotations.flatMap((annotation) => [...annotation.objectIds, ...(annotation.objectId ? [annotation.objectId] : [])])])];
+      for (const annotation of draft.annotations) if (annotation.captureState) {
+        const capture = annotation.capture ?? fail(409, 'annotation_incomplete', 'Complete each annotation capture before sending.');
+        if (annotation.captureState.status !== 'complete') fail(409, 'annotation_incomplete', 'Complete each annotation capture before sending.');
+        if (capture.sessionId !== sessionId || capture.annotationId !== annotation.id || capture.version !== annotation.captureState.version || capture.id !== annotation.captureState.captureId || !sameAnnotationTarget(annotation, capture.target)) fail(409, 'capture_version_conflict', 'Send the capture matching this annotation version.');
+        const row = this.captureRow(sessionId, capture.draftId, annotation.id, capture.version);
+        if (row.state !== 'committed' || json(capture) !== row.data_json || capture.draftId !== draftId && !source?.snapshot.annotations.some(value => value.id === annotation.id && value.capture?.id === capture.id)) fail(409, 'capture_version_conflict', 'The capture belongs to this draft or its original queued request.');
+        this.readableAsset(capture.screenshotAssetId, sessionId); this.assetPath(capture.screenshotAssetId);
+        for (const asset of capture.scene.assets) { this.sharedAsset(asset.id); this.assetPath(asset.id); }
+      }
+      const legacyAnnotations = draft.annotations.filter(annotation => !annotation.captureState);
+      const objectIds = [...new Set([...draft.references.objectIds, ...legacyAnnotations.flatMap((annotation) => [...annotation.objectIds, ...(annotation.objectId ? [annotation.objectId] : [])])])];
       const objects = objectIds.map((id) => source?.snapshot.referenceContent.objects.find(object => object.id === id) || this.object(id));
-      const assetIds = this.expandAssetIds([...new Set([...draft.attachments, ...objects.map((object) => object.assetId), ...draft.annotations.flatMap((annotation) => [annotation.assetId, annotation.snapshotAssetId].filter((id): id is string => !!id))])]);
+      const assetIds = this.expandAssetIds([...new Set([...draft.attachments, ...objects.map((object) => object.assetId), ...legacyAnnotations.flatMap((annotation) => [annotation.assetId, annotation.snapshotAssetId].filter((id): id is string => !!id)), ...draft.annotations.flatMap(annotation => annotation.capture ? [annotation.capture.screenshotAssetId, ...annotation.capture.scene.assets.map(asset => asset.id)] : [])])]);
       const snapshot: TaskSnapshot = { userRequest: { source: 'user_instruction', text: draft.text }, requestReferences: { attachmentIds: [...draft.attachments], objectIds: [...draft.references.objectIds] }, annotations: structuredClone(draft.annotations), referenceContent: { source: 'reference_content', assets: assetIds.map((id) => { this.assetPath(id); return source?.snapshot.referenceContent.assets.find(asset => asset.id === id) || this.asset(id); }), objects, taskIds: draft.references.taskIds } };
       const id = source?.id || randomUUID(), time = now();
       if (source) {
@@ -320,6 +479,7 @@ export class CanvasService {
         this.db.prepare("INSERT INTO tasks(id,session_id,draft_id,sequence,status,snapshot_json,created_at,updated_at) VALUES(?,?,?,?,'queued',?,?,?)").run(id, sessionId, draftId, sequence, json(snapshot), time, time);
       }
       for (const input of draft.annotations) {
+        if (input.captureState) continue;
         const annotation: Annotation = { ...input, id: randomUUID(), source: 'user_annotation', createdAt: time, sourceTaskId: id, sessionId };
         this.db.prepare('INSERT INTO annotations VALUES(?,?,?,?)').run(annotation.id, sessionId, id, json(annotation));
       }
@@ -341,12 +501,14 @@ export class CanvasService {
     const task = this.task(sessionId, taskId);
     const referencedTasks = task.snapshot.referenceContent.taskIds.map((id) => {
       const row = this.db.prepare('SELECT session_id FROM tasks WHERE id=?').get(id) as Row;
-      return this.task(row.session_id, id);
+      const referenced = this.task(row.session_id, id);
+      if (row.session_id === sessionId) return referenced;
+      return { ...referenced, snapshot: { ...referenced.snapshot, annotations: referenced.snapshot.annotations.filter(annotation => !annotation.captureState), referenceContent: { ...referenced.snapshot.referenceContent, assets: referenced.snapshot.referenceContent.assets.filter(asset => !asset.evidence) } } };
     });
     const recentReceipts = this.tasks(sessionId).filter((prior) => prior.sequence < task.sequence && prior.receipt).slice(-3).map((prior) => ({ taskId: prior.id, receipt: prior.receipt }));
     return { task, context: { referencedTasks, recentReceipts } };
   }
-  state(sessionId: string): BoardState { return { project: this.project, sessions: this.sessions(), session: this.session(sessionId), draft: this.draft(sessionId), assets: this.assets(), objects: this.objects(), annotations: this.annotations(), tasks: this.tasks(sessionId) }; }
+  state(sessionId: string): BoardState { return { project: this.project, sessions: this.sessions(), session: this.session(sessionId), draft: this.draft(sessionId), assets: this.assets().filter(asset => !asset.evidence || asset.evidence.sessionId === sessionId), objects: this.objects(), annotations: this.annotations(), tasks: this.tasks(sessionId) }; }
   private newRun(taskId: string, consumerId: string, recovery?: string): Run {
     const id = randomUUID(), time = now();
     this.db.prepare("INSERT INTO runs(id,task_id,consumer_id,status,created_at,updated_at,recovery_resolution) VALUES(?,?,?,'running',?,?,?)").run(id, taskId, consumerId, time, time, recovery ?? null);
@@ -408,7 +570,7 @@ export class CanvasService {
     return this.transaction(() => {
       const run = this.runRow(input.runId);
       const assetIds = input.assetIds ? ids(input.assetIds, 'Progress assets') : [];
-      assetIds.forEach((id) => this.asset(id));
+      assetIds.forEach((id) => this.sharedAsset(id));
       const progress = parse<Run['progress']>(run.progress_json);
       progress.push({ message: nonempty(input.message, 'Progress message'), ...(input.externalJobId ? { externalJobId: nonempty(input.externalJobId, 'External job ID', 1000) } : {}), ...(assetIds.length ? { assetIds } : {}), createdAt: now() });
       this.db.prepare('UPDATE runs SET progress_json=?,updated_at=? WHERE id=?').run(json(progress), now(), input.runId);
@@ -473,7 +635,7 @@ export class CanvasService {
     for (const operation of operations) {
       if (operation?.type === 'create') {
         const object = operation.object;
-        const asset = this.asset(object?.assetId); this.assetPath(asset.id);
+        const asset = this.sharedAsset(object?.assetId); this.assetPath(asset.id);
         const id = object.id ? nonempty(object.id, 'Object ID', 200) : randomUUID();
         for (const key of ['x', 'y', 'width', 'height'] as const) finite(object[key], `Object ${key}`);
         if (object.width <= 0 || object.height <= 0) fail(400, 'invalid_object', 'Objects require positive dimensions.');

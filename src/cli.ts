@@ -22,11 +22,16 @@ project status | project stop
 session create --name NAME | session list | session read --session ID
 session resume --session ID [--consumer ID] --expected-consumer ID|none --resolution TEXT
 draft save --session ID --input draft.json | draft send --session ID --draft ID --revision NUMBER
+capture prepare --session ID --draft ID --annotation ID --version NUMBER --input capture.json
+capture commit --session ID --draft ID --annotation ID --version NUMBER --file IMAGE [--allow-directory DIR]
+capture result --session ID --draft ID --annotation ID --version NUMBER
+capture retry --session ID --draft ID --annotation ID --version NUMBER
 view save --session ID --input view.json
 asset import --file FILE [--mime MIME] [--allow-directory DIR] [--bundle-root DIR]
   --bundle-root authorizes and imports a publishable HTML directory (128 files / 32 MiB; hidden files skipped).
   Outputs also require --session ID --task ID --run ID --consumer ID.
-asset read --asset ID --out FILE
+asset read --asset ID --out FILE [--session ID]
+  Capture evidence requires its original session.
 board operations --session ID --input operations.json
 task next --session ID [--consumer ID]
 task read --session ID --task ID
@@ -99,6 +104,21 @@ export async function cli(args: string[]): Promise<unknown> {
     if (action === 'save') return request(`${sessionPath()}/draft`, 'PUT', await input());
     if (action === 'send') return request(`${sessionPath()}/tasks`, 'POST', { draftId: required('draft'), expectedRevision: Number(required('revision')) });
   }
+  if (group === 'capture') {
+    const path = `${sessionPath()}/drafts/${encodeURIComponent(required('draft'))}/annotations/${encodeURIComponent(required('annotation'))}/captures/${Number(required('version'))}`;
+    if (action === 'prepare') return request(path, 'POST', await input());
+    if (action === 'result') return request(path);
+    if (action === 'retry') return request(`${path}/retry`, 'POST', {});
+    if (action === 'commit') {
+      const saved = await request(path);
+      if (saved.status === 'committed') return saved;
+      const file = await realpath(required('file')), allowed = options.has('allow-directory') ? await realpath(required('allow-directory')) : projectRoot;
+      if (!within(allowed, file)) throw new Error('The capture file must be within the project or --allow-directory.');
+      const info = await stat(file); if (!info.isFile()) throw new Error('Choose a regular capture image.');
+      const response = await fetch(new URL(`${path}/content`, base), { method: 'PUT', headers: { Authorization: `Bearer ${bootstrap.token}`, 'Content-Type': 'application/octet-stream', 'Content-Length': String(info.size) }, body: createReadStream(file) as unknown as BodyInit, duplex: 'half' } as RequestInit & { duplex: string });
+      const result = await response.json(); if (!response.ok) throw new Error(JSON.stringify(result)); return result;
+    }
+  }
   if (group === 'view' && action === 'save') return request(`${sessionPath()}/view`, 'PUT', await input());
   if (group === 'board' && action === 'operations') { const value = await input(); return request('/api/board/operations', 'POST', { sessionId: required('session'), operations: value.operations }); }
   if (group === 'asset') {
@@ -139,7 +159,8 @@ export async function cli(args: string[]): Promise<unknown> {
       const result = await response.json(); if (!response.ok) throw new Error(JSON.stringify(result)); return result;
     }
     if (action === 'read') {
-      const response = await fetch(new URL(`/api/assets/${encodeURIComponent(required('asset'))}/content`, base), { headers: { Authorization: `Bearer ${bootstrap.token}` } });
+      const params = options.has('session') ? `?sessionId=${encodeURIComponent(required('session'))}` : '';
+      const response = await fetch(new URL(`/api/assets/${encodeURIComponent(required('asset'))}/content${params}`, base), { headers: { Authorization: `Bearer ${bootstrap.token}` } });
       if (!response.ok) throw new Error(JSON.stringify(await response.json()));
       await writeFile(required('out'), Buffer.from(await response.arrayBuffer()), { flag: 'wx', mode: 0o600 });
       return { assetId: required('asset'), file: required('out') };

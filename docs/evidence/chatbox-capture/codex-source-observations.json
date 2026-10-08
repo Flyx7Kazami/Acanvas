@@ -1,0 +1,740 @@
+{
+  "kind": "read-only-installed-source-observations",
+  "observedAt": "2026-10-08T04:16:05.002Z",
+  "product": {
+    "bundlePath": "/Applications/ChatGPT.app",
+    "bundleIdentifier": "com.openai.codex",
+    "version": "26.1002.52244",
+    "build": "13536",
+    "appAsarBytes": 561986445,
+    "appAsarMtime": "2026-10-07T07:03:02.000Z",
+    "asarHeaderBytes": 5808776,
+    "asarFileCount": 20915,
+    "mainEntry": ".vite/build/early-bootstrap.js"
+  },
+  "scope": {
+    "performed": [
+      "read Info.plist",
+      "read app.asar header",
+      "extract selected source files to /private/tmp",
+      "parse JavaScript without execution"
+    ],
+    "excluded": [
+      "installed-app mutation",
+      "config/plugin/service/Keychain access",
+      "real comment or message submission",
+      "live screenshot measurement"
+    ]
+  },
+  "facts": [
+    {
+      "id": "installation",
+      "fact": "The requested /Applications/Codex.app path is absent. The installed product is /Applications/ChatGPT.app with com.openai.codex identifier and Codex signing base name. Info.plist and app package both report version 26.1002.52244; Info.plist build is 13536.",
+      "sources": [
+        "Info.plist",
+        "package.json"
+      ]
+    },
+    {
+      "id": "submission",
+      "fact": "The button has data-browser-comment-submit. The popup callback sends browser-sidebar-comment-overlay-submit with browserTabId, conversationId, sessionId, body, attachedImages, designChange and conditional cropScreenshotToRegion/submitDirectly. The UI uses the current sessionId to suppress duplicate submission.",
+      "sources": [
+        "renderer.submitButton",
+        "renderer.submit"
+      ]
+    },
+    {
+      "id": "ipc",
+      "fact": "Renderer bridge sendMessageFromView invokes codex_desktop:message-from-view. Main dispatches editor submission to BrowserHostManager.handleCommentOverlaySubmit and ECe.handleOverlaySubmit. Browser page runtime messages use ipcRenderer.invoke(codex_desktop:browser-sidebar-runtime-message); main parses _Ce and resolves the sender BrowserWindow/context before dispatch.",
+      "sources": [
+        "renderer.ipc",
+        "main.editorIpc",
+        "main.handleCommentOverlaySubmit",
+        "main.runtimeIpc"
+      ]
+    },
+    {
+      "id": "saveThenCapture",
+      "fact": "handleOverlaySubmit validates current overlay sessionId and thread state. Create/design save builds a comment (id, createdAt, body, anchor, viewportSize), writes it to threadState.snapshot.comments, dismisses editor, synchronizes comment snapshot, then awaits captureSavedCommentScreenshot.",
+      "sources": [
+        "main.handleOverlaySubmit",
+        "main.xW"
+      ]
+    },
+    {
+      "id": "mode",
+      "fact": "Shared batch flow has default saved submission and persistent=true; quick flow has default direct and persistent=false. A new nonpersistent comment resets interactionMode to browse through BR; persistent batch save retains comment mode. Screenshot mode can render the target even while interaction mode is browse.",
+      "sources": [
+        "shared.flow",
+        "main.BR",
+        "main.handleOverlaySubmit",
+        "page.qy"
+      ]
+    },
+    {
+      "id": "editorHidden",
+      "fact": "ECe.dismiss calls aCe.dismiss plus closeRuntimeEditor. aCe.dismiss marks overlay not visible and UU hides the popup BrowserWindow. closeRuntimeEditor sends close-editor; the preload clears editor/hover/draft/screenshot state using React flushSync.",
+      "sources": [
+        "main.dismiss",
+        "overlay.dismiss",
+        "main.UU",
+        "page.prepare",
+        "page.qy"
+      ]
+    },
+    {
+      "id": "prepareReady",
+      "fact": "captureSavedCommentScreenshot sends prepare-comment-screenshot(commentId) to the same page webContents. Preload qy sets screenshot state D. It selects that saved annotation, resolves live target geometry, and schedules ready using one requestAnimationFrame from a React effect; ready reports annotationViewportRect and markerViewportPoint, plus conditional skipScreenshotCapture.",
+      "sources": [
+        "main.captureSavedCommentScreenshot",
+        "page.prepare",
+        "page.ready",
+        "page.geometry",
+        "page.qy"
+      ]
+    },
+    {
+      "id": "liveAnchors",
+      "fact": "During open editing, visualViewport/window/frame resize and scroll trigger new anchor calculation and runtime-update-anchor. X_ resolves saved element targets again in screenshot mode; $u prefers a connected cached element, then selector lookup on the same URL and frame, filtering live candidates and matching name/nearby text. Geometry uses getBoundingClientRect plus frame offset.",
+      "sources": [
+        "page.refreshEvents",
+        "main.handleRuntimeUpdateAnchor",
+        "page.X_",
+        "page.$u",
+        "page.Ju",
+        "page.rv",
+        "page.tv"
+      ]
+    },
+    {
+      "id": "screenshotGeometry",
+      "fact": "The screenshot-ready annotation rectangle is the union of current selected highlight/text/additional rectangles. Marker point is the rendered marker position divided by browser zoom factor P. captureBrowserScreenshot prefers ready geometry over the originally saved geometry.",
+      "sources": [
+        "page.geometry",
+        "page.zoom",
+        "page.qy",
+        "main.captureBrowserScreenshot"
+      ]
+    },
+    {
+      "id": "captureSurface",
+      "fact": "captureBrowserScreenshot calls await pageWebContents.capturePage() with zero arguments. It supplies no Electron capture rectangle/options, does not load a new page, and does not create a DOM rasterization surface in this path. NativeImage crop/resize happen after the visible page surface capture.",
+      "sources": [
+        "main.captureBrowserScreenshot",
+        "main.vW",
+        "main.bW"
+      ],
+      "quote": "vW(await e.capturePage(), {...})"
+    },
+    {
+      "id": "cropSelection",
+      "fact": "Default capture is full visible page. A single non-element target can request region cropping when screenshot preference is necessary. A single-anchor non-edit comment at ordinal >=10 selects compact capture. Crop target unions target rectangle with a marker-sized rectangle.",
+      "sources": [
+        "renderer.submit",
+        "main.handleOverlaySubmit",
+        "main._W"
+      ]
+    },
+    {
+      "id": "limits",
+      "fact": "Source constants: readiness timeout=1000ms, normal crop padding=32 CSS units, compact padding=16 CSS units; maximum long edge full viewport=1280, normal crop=1024, compact=768. At >=10 saved comments existing eligible screenshots are compacted; multi-anchor screenshots are skipped by that compactor.",
+      "sources": [
+        "main.constants",
+        "main.vW",
+        "main.bW",
+        "main.DCe"
+      ]
+    },
+    {
+      "id": "pixelMapping",
+      "fact": "lW maps viewport crop to image pixel coordinates using imageWidth/viewportWidth and imageHeight/viewportHeight independently; floor for start, ceil for end, clamp to image boundaries. The screenshot pipeline does not read or hardcode devicePixelRatio. Browser overlay CSS applies inverse browser-zoom scaling. Main cropping therefore accounts for actual captured surface dimensions rather than multiplying an assumed DPR. The viewportSize denominator comes from the stored annotation; ready does not return a new viewportSize. A viewport resize between save and capture can therefore require an explicit current-size check in a different product implementation.",
+      "sources": [
+        "main.lW",
+        "main.vW",
+        "page.zoom"
+      ],
+      "quote": "let i=e.width/n.width,a=e.height/n.height"
+    },
+    {
+      "id": "encoding",
+      "fact": "yW stores NativeImage.toDataURL(), width, height, annotationViewportRect, markerViewportPoint and conditional cropViewportRect, cropPaddingPx, isCompact. There is no explicit MIME/quality argument, separate MIME field, byte length, capture latency or screenshot capturedAt in this helper. createdAt belongs to comment creation in xW. PNG interpretation relies on Electron nativeImage.toDataURL API behavior; no real image was captured in this read-only research.",
+      "sources": [
+        "main.yW",
+        "main.xW"
+      ],
+      "quote": "dataUrl:e.toDataURL()"
+    },
+    {
+      "id": "ownership",
+      "fact": "A readiness waiter is a single entry keyed by webContents.id with commentId; starting another resolves the previous waiter(null). Ready resolves only matching webContents.id/commentId. Saved capture looks up commentId before capture and maps screenshot onto that id afterward; deletion is not undone. This saved method does not compare generation/content revision or revalidate page/tab/conversation ownership after capture.",
+      "sources": [
+        "main.waitForRuntimeCommentScreenshotReady",
+        "main.handleRuntimeCommentScreenshotReady",
+        "main.captureSavedCommentScreenshot"
+      ]
+    },
+    {
+      "id": "directOwnership",
+      "fact": "Direct submission captures first, then validates owner not destroyed, same page object/webContents/browserTabId/conversationId, and same thread state. It sends the comment only when these still match. If image is absent and ownership remains valid it sends textual comment without screenshot.",
+      "sources": [
+        "main.handleOverlaySubmit",
+        "main.captureDirectCommentScreenshot"
+      ]
+    },
+    {
+      "id": "failure",
+      "fact": "Missing/destroyed page returns without image; ready timeout or skipScreenshotCapture returns without image; capture exception reports a nonfatal error and returns undefined. Saved text/anchor already in snapshot remain. finally clears screenshot UI state when page remains alive. Element disappearance can cause skipScreenshotCapture; exact renderer predicate depends on all element targets failing live resolution.",
+      "sources": [
+        "main.captureSavedCommentScreenshot",
+        "main.captureBrowserScreenshot",
+        "main.captureDirectCommentScreenshot",
+        "page.qy"
+      ]
+    },
+    {
+      "id": "edit",
+      "fact": "Ordinary edit submission updates body/attachedImages/designChange, dismisses and synchronizes; it does not call captureSavedCommentScreenshot again and retains existing screenshot.",
+      "sources": [
+        "main.handleOverlaySubmit"
+      ]
+    },
+    {
+      "id": "navigation",
+      "fact": "Committed navigation to a different normalized URL invokes dismissForCommittedNavigation during comment mode. Certain pending or virtual/unlocated saved edits preserve editor fallback. URL normalization ignores hash for http/file comparisons. closePage requests thread teardown and invalidates page routing; it does not itself provide an explicit screenshot generation guard.",
+      "sources": [
+        "main.dismissCommentEditorForCommittedNavigation",
+        "main.dismissForCommittedNavigation",
+        "main.closePage"
+      ]
+    },
+    {
+      "id": "captureMoment",
+      "fact": "Capture uses the live user page surface after editor dismissal and readiness frame. This path does not freeze media/animations or provide a transaction tying comment createdAt, DOM geometry, and captured pixels to one moment. Latest ready geometry and crop surface can be separated by async time. Screenshot-ready geometry is stored on screenshot metadata; the saved comment anchor is not replaced with that later live anchor in captureSavedCommentScreenshot.",
+      "sources": [
+        "main.handleOverlaySubmit",
+        "main.captureBrowserScreenshot",
+        "page.ready"
+      ]
+    }
+  ],
+  "sourceReferences": {
+    "main.ze": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/src-BPM2XJL0.js",
+      "symbol": "ze",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 10368,
+      "end": 10406,
+      "line": 1
+    },
+    "main.gs": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "gs",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 147931,
+      "end": 148020,
+      "line": 32
+    },
+    "main.Ju": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "Ju",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 229798,
+      "end": 230082,
+      "line": 93
+    },
+    "main.$u": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/src-BPM2XJL0.js",
+      "symbol": "$u",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 118166,
+      "end": 118282,
+      "line": 52
+    },
+    "main.od": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "od",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 240515,
+      "end": 240569,
+      "line": 93
+    },
+    "main.u_": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "u_",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 511151,
+      "end": 511219,
+      "line": 434
+    },
+    "main.BR": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "BR",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1432075,
+      "end": 1432476,
+      "line": 709
+    },
+    "overlay.dismiss": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "aCe.dismiss",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1526630,
+      "end": 1527110,
+      "line": 995
+    },
+    "main.UU": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "UU",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1540967,
+      "end": 1541137,
+      "line": 995
+    },
+    "main.lW": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "lW",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1551505,
+      "end": 1551866,
+      "line": 995
+    },
+    "main.dismiss": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "ECe.dismiss",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1558107,
+      "end": 1558330,
+      "line": 995
+    },
+    "main.dismissForCommittedNavigation": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "dismissForCommittedNavigation",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1558330,
+      "end": 1558732,
+      "line": 995
+    },
+    "main.handleRuntimeUpdateAnchor": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "handleRuntimeUpdateAnchor",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1972471,
+      "end": 1972547,
+      "line": 1017
+    },
+    "main.handleRuntimeCommentScreenshotReady": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "handleRuntimeCommentScreenshotReady",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1573362,
+      "end": 1573557,
+      "line": 995
+    },
+    "main.handleOverlaySubmit": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "handleOverlaySubmit",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1573557,
+      "end": 1577658,
+      "line": 995
+    },
+    "main.captureBrowserScreenshot": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "captureBrowserScreenshot",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1587705,
+      "end": 1588339,
+      "line": 995
+    },
+    "main.captureSavedCommentScreenshot": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "captureSavedCommentScreenshot",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1588339,
+      "end": 1589709,
+      "line": 995
+    },
+    "main.captureSavedDesignChangeScreenshot": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "captureSavedDesignChangeScreenshot",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1589709,
+      "end": 1590992,
+      "line": 995
+    },
+    "main.captureDirectCommentScreenshot": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "captureDirectCommentScreenshot",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1590992,
+      "end": 1591999,
+      "line": 995
+    },
+    "main.sendRuntimeStateToPage": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "sendRuntimeStateToPage",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1593130,
+      "end": 1594325,
+      "line": 995
+    },
+    "main.waitForRuntimeCommentScreenshotReady": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "waitForRuntimeCommentScreenshotReady",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1596713,
+      "end": 1597201,
+      "line": 995
+    },
+    "main.DCe": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "DCe",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1597203,
+      "end": 1597865,
+      "line": 995
+    },
+    "main._W": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "_W",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1598079,
+      "end": 1598361,
+      "line": 995
+    },
+    "main.vW": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "vW",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1598361,
+      "end": 1598552,
+      "line": 995
+    },
+    "main.yW": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "yW",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1598552,
+      "end": 1598791,
+      "line": 995
+    },
+    "main.ACe": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "ACe",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1598868,
+      "end": 1599455,
+      "line": 995
+    },
+    "main.bW": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "bW",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1599455,
+      "end": 1599637,
+      "line": 995
+    },
+    "main.xW": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "xW",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1599637,
+      "end": 1600189,
+      "line": 995
+    },
+    "host.handleRuntimeCommentScreenshotReady": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "handleRuntimeCommentScreenshotReady",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1954904,
+      "end": 1955000,
+      "line": 1017
+    },
+    "main.closePage": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "closePage",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1969846,
+      "end": 1970755,
+      "line": 1017
+    },
+    "main.handleCommentOverlaySubmit": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "handleCommentOverlaySubmit",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1976055,
+      "end": 1976133,
+      "line": 1017
+    },
+    "main.dismissCommentEditorForCommittedNavigation": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "dismissCommentEditorForCommittedNavigation",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1983859,
+      "end": 1984094,
+      "line": 1017
+    },
+    "page.gs": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "gs",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 228385,
+      "end": 228559,
+      "line": 134
+    },
+    "page.Ju": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "Ju",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 293170,
+      "end": 293389,
+      "line": 134
+    },
+    "page.$u": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "$u",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 118442,
+      "end": 118719,
+      "line": 127
+    },
+    "page.rd": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "rd",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 119505,
+      "end": 119917,
+      "line": 127
+    },
+    "page.od": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "od",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 293950,
+      "end": 294346,
+      "line": 134
+    },
+    "page.Ed": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "Ed",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 299542,
+      "end": 303724,
+      "line": 134
+    },
+    "page.u_": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "u_",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 417400,
+      "end": 417472,
+      "line": 160
+    },
+    "page.b_": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "b_",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 419150,
+      "end": 419420,
+      "line": 160
+    },
+    "page.Y_": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "Y_",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 425709,
+      "end": 425784,
+      "line": 160
+    },
+    "page.X_": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "X_",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 425784,
+      "end": 426494,
+      "line": 160
+    },
+    "page.tv": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "tv",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 427256,
+      "end": 427795,
+      "line": 160
+    },
+    "page.rv": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "rv",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 427949,
+      "end": 428687,
+      "line": 160
+    },
+    "page.qy": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "qy",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 460859,
+      "end": 497958,
+      "line": 210
+    },
+    "renderer.submit": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": "webview/assets/comment-popup-portal-fdc548d74368.js",
+      "symbol": "b.dispatchMessage(`browser-sidebar-comment-overlay-submit`",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 11879,
+      "end": 12777,
+      "line": 1
+    },
+    "renderer.submitButton": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": "webview/assets/annotation-comment-editor-card-46fcc470d986.js",
+      "symbol": "\"data-browser-comment-submit\":!0",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 128968,
+      "end": 129320,
+      "line": 1
+    },
+    "renderer.ipc": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/preload.js",
+      "symbol": "sendMessageFromView:async",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 3250,
+      "end": 3635,
+      "line": 1
+    },
+    "main.runtimeIpc": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "m.ipcMain.handle(p.at,async",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 3341263,
+      "end": 3342290,
+      "line": 1323
+    },
+    "main.editorIpc": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "case`browser-sidebar-comment-overlay-submit`",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 2066909,
+      "end": 2067253,
+      "line": 1020
+    },
+    "main.constants": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/main-B6ZOwXa3.js",
+      "symbol": "vCe=1e3,dW=32,fW=16,pW=1280,yCe=1024,mW=768",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 1551815,
+      "end": 1552058,
+      "line": 995
+    },
+    "page.prepare": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "case`browser-sidebar-runtime-prepare-comment-screenshot`:ee(e.commentId)",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 474161,
+      "end": 474593,
+      "line": 210
+    },
+    "page.ready": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "let un=(0,$.useEffectEvent)",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 494947,
+      "end": 495374,
+      "line": 210
+    },
+    "page.refreshEvents": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "c?.addEventListener(`resize`,i)",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 486436,
+      "end": 488267,
+      "line": 210
+    },
+    "page.geometry": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "let $t=F==null?null",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 493658,
+      "end": 494037,
+      "line": 210
+    },
+    "page.zoom": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/browser-page-preload.js",
+      "symbol": "cn=P===1?{}",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 494218,
+      "end": 494629,
+      "line": 210
+    },
+    "shared.flow": {
+      "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+      "internalPath": ".vite/build/src-BPM2XJL0.js",
+      "symbol": "Re={[Le.BATCH]",
+      "positionUnit": "UTF-16 code units, zero-based, end exclusive",
+      "start": 10176,
+      "end": 10350,
+      "line": 1
+    }
+  },
+  "notes": [
+    "Compressed symbol names and file names are version-specific. Source positions reference current installed archive; temporary readable extracts are not source authority.",
+    "The facts describe the browser comment screenshot path, not clipboard, diagnostic screenshots, inline visualization screenshot, or MCP App screenshot paths.",
+    "No large installed source text is copied into the repository."
+  ]
+}

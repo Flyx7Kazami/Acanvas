@@ -1,6 +1,10 @@
 # acanvas 验证记录
 
-本文保留各轮实际验证结果；早期 P0 记录可从 Git 提交 `d62e8ad` 查询。最新记录见下方音频波形加载外观条目。
+本文保留各轮实际验证结果；早期 P0 记录可从 Git 提交 `d62e8ad` 查询。最新专项为 Chatbox 后台截图与捕获基础，记录见下文。
+
+## 2026-10-08 · Chatbox 后台截图与捕获基础
+
+完成[方案审查](chatbox/CHATBOX_REFERENCES_ANNOTATION_REVIEW.md)第 1、2 项的隔离验证。Codex 安装源码核对、七类媒体原页面截图、后台完成/保存/发送链、持久状态、结果核对、会话归属及真实中断恢复见[专项验证](chatbox/CAPTURE_FOUNDATION_VALIDATION.md)。后台 20/20、Node 72/72、类型检查和构建通过；独立代码及原型验收 PASS。生产 UI 与实际宿主截图接线按[基础设计](chatbox/CAPTURE_FOUNDATION_DESIGN.md)的后续范围推进，用户白板及现有服务保持原样。
 
 ## 音频波形加载外观（2026-10-06）
 

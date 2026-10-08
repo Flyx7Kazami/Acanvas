@@ -4,7 +4,7 @@ import { createReadStream } from 'node:fs';
 import { open, mkdir, readFile, realpath, rename, rm, stat } from 'node:fs/promises';
 import { dirname, extname, resolve, relative } from 'node:path';
 import type { AddressInfo } from 'node:net';
-import type { Asset, Bootstrap, CompleteInput, Draft, ServiceRuntime, SessionView } from '../shared/types.js';
+import type { AnnotationCaptureInput, Asset, Bootstrap, CompleteInput, Draft, ServiceRuntime, SessionView } from '../shared/types.js';
 import { resolveContentKind, resolveContentMime, storageAssetKind } from '../shared/content-types.js';
 import { ApiFailure, CanvasService, within } from './service.js';
 import { AudioArtworkReader } from './audio-artwork.js';
@@ -33,6 +33,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   const responses = new Set<ServerResponse>();
   const requests = new Set<IncomingMessage>();
   const handlers = new Set<Promise<void>>();
+  const captureUploads = new Set<string>();
   let stopService: () => Promise<void>;
   let closing = false;
   let port = options.port ?? 4317;
@@ -92,11 +93,48 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
         const previewAssetMatch = path.match(/^\/api\/assets\/([^/]+)\/html-preview$/);
         if (previewAssetMatch && method === 'POST') {
           await payload(request);
+          service.sharedAsset(decodeURIComponent(previewAssetMatch[1]));
           send(response, 201, preview.issue(decodeURIComponent(previewAssetMatch[1]), request.headers.origin ?? `http://${request.headers.host}`)); return;
         }
         const previewMatch = path.match(/^\/api\/html-previews\/([A-Za-z0-9_-]{43})$/);
         if (previewMatch && method === 'DELETE') { preview.revoke(previewMatch[1]); send(response, 200, { revoked: true }); return; }
         if (path === '/api/html-bundles' && method === 'POST') { send(response, 201, service.registerHtmlBundle(await payload(request))); return; }
+        const captureMatch = path.match(/^\/api\/sessions\/([^/]+)\/drafts\/([^/]+)\/annotations\/([^/]+)\/captures\/(\d+)(\/(?:content|retry))?$/);
+        if (captureMatch) {
+          const sessionId = decodeURIComponent(captureMatch[1]), draftId = decodeURIComponent(captureMatch[2]), annotationId = decodeURIComponent(captureMatch[3]), version = Number(captureMatch[4]);
+          if (!captureMatch[5] && method === 'POST') { send(response, 200, service.prepareCapture(sessionId, draftId, annotationId, version, await payload(request) as AnnotationCaptureInput)); return; }
+          if (!captureMatch[5] && method === 'GET') { send(response, 200, service.captureResult(sessionId, draftId, annotationId, version)); return; }
+          if (captureMatch[5] === '/retry' && method === 'POST') { await payload(request); send(response, 200, service.retryCapture(sessionId, draftId, annotationId, version)); return; }
+          if (captureMatch[5] === '/content' && method === 'PUT') {
+            const upload = service.captureUpload(sessionId, draftId, annotationId, version);
+            if (upload.committed) { request.resume(); send(response, 200, service.captureResult(sessionId, draftId, annotationId, version)); return; }
+            try { const result = service.captureResult(sessionId, draftId, annotationId, version); if (result.status === 'committed') { request.resume(); send(response, 200, result); return; } }
+            catch (error) { if (!(error instanceof ApiFailure) || error.code !== 'capture_file_invalid') throw error; }
+            const expected = upload.capture.image.bytes, declared = Number(request.headers['content-length']);
+            if (expected > maxUploadBytes || Number.isFinite(declared) && declared !== expected) { request.resume(); throw new ApiFailure(413, 'capture_file_invalid', 'Upload the declared capture image bytes.'); }
+            if (captureUploads.has(upload.capture.id)) { request.resume(); throw new ApiFailure(409, 'capture_upload_active', 'Query the active capture upload result.'); }
+            captureUploads.add(upload.capture.id);
+            const temporary = `${upload.temporary}.${randomUUID()}`;
+            let file: Awaited<ReturnType<typeof open>> | undefined;
+            try {
+              if (!within(service.dataDir, await realpath(dirname(upload.destination))) || !within(service.dataDir, await realpath(dirname(temporary)))) throw new ApiFailure(403, 'path_boundary', 'Capture storage remains inside the project.');
+              file = await open(temporary, 'wx', 0o600); let size = 0;
+              for await (const chunk of request) {
+                size += chunk.length;
+                if (size > expected) throw new ApiFailure(413, 'capture_file_invalid', 'Upload the declared capture image bytes.');
+                let position = 0;
+                while (position < chunk.length) { const result = await file.write(chunk, position, chunk.length - position); position += result.bytesWritten; }
+              }
+              if (!request.complete || size !== expected) throw new ApiFailure(400, 'capture_file_invalid', 'Upload the complete capture image.');
+              await file.sync(); await file.close(); file = undefined;
+              // Check ownership after receiving bytes, then publish one complete file.
+              service.captureUpload(sessionId, draftId, annotationId, version);
+              await rename(temporary, upload.destination);
+              send(response, 200, service.captureResult(sessionId, draftId, annotationId, version));
+            } finally { await file?.close().catch(() => {}); await rm(temporary, { force: true }); captureUploads.delete(upload.capture.id); }
+            return;
+          }
+        }
         if (path === '/api/assets' && method === 'POST') {
           const declaredLength = Number(request.headers['content-length']);
           if (Number.isFinite(declaredLength) && declaredLength > maxUploadBytes) { request.resume(); throw new ApiFailure(413, 'upload_too_large', `Files may contain up to ${maxUploadBytes} bytes.`); }
@@ -138,7 +176,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
         }
         const artworkMatch = path.match(/^\/api\/assets\/([^/]+)\/artwork$/);
         if (artworkMatch && (method === 'GET' || method === 'HEAD')) {
-          const cover = await artwork.get(service.asset(decodeURIComponent(artworkMatch[1])));
+          const cover = await artwork.get(service.readableAsset(decodeURIComponent(artworkMatch[1]), url.searchParams.get('sessionId') ?? undefined));
           response.setHeader('Cache-Control', 'private, no-store');
           if (!cover) { response.writeHead(204); response.end(); return; }
           response.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
@@ -147,7 +185,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
         }
         const assetMatch = path.match(/^\/api\/assets\/([^/]+)\/content$/);
         if (assetMatch && (method === 'GET' || method === 'HEAD')) {
-          const asset = service.asset(decodeURIComponent(assetMatch[1]));
+          const asset = service.readableAsset(decodeURIComponent(assetMatch[1]), url.searchParams.get('sessionId') ?? undefined);
           const file = service.assetPath(asset.id);
           const info = await stat(file);
           if (!info.isFile() || info.size !== asset.size) throw new ApiFailure(409, 'asset_integrity', 'The asset file differs from its saved metadata.');

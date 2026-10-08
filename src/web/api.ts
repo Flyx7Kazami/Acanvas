@@ -1,5 +1,5 @@
 import { resolveContentMime } from '../shared/content-types';
-import type { ApiError, Asset, BoardOperation, BoardState, Bootstrap, Draft, Session, SessionView, Task } from '../shared/types';
+import type { AnnotationCaptureInput, ApiError, Asset, BoardOperation, BoardState, Bootstrap, CaptureResult, CaptureRetryResult, Draft, Session, SessionView, Task } from '../shared/types';
 
 const errorMessages: Record<string, string> = {
   authentication_required: 'Your connection has expired. Reconnect to continue.',
@@ -20,6 +20,19 @@ const errorMessages: Record<string, string> = {
   request_too_large: 'This request is too large. Reduce the attachments or text and try again.',
   task_edit_conflict: 'This request changed state. Save the current edit or select a waiting request.',
   invalid_annotation: 'Check the annotation area, timestamp and file references, then try again.',
+  annotation_incomplete: 'Complete each annotation capture before sending.',
+  annotation_version_conflict: 'Load the saved annotation version before editing.',
+  capture_version_conflict: 'Capture the current draft and annotation version.',
+  capture_target_conflict: 'Capture the saved target and position.',
+  capture_scene_conflict: 'The canvas changed. Capture the scene again.',
+  capture_conflict: 'Query the saved capture result for this version.',
+  capture_file_invalid: 'Upload the complete screenshot with its saved dimensions.',
+  capture_upload_active: 'Wait for the current upload and query its result.',
+  capture_missing: 'Prepare this annotation capture first.',
+  invalid_capture: 'Check the screenshot and scene metadata.',
+  evidence_scope: 'Read this screenshot in its original task context.',
+  evidence_usage: 'Use this screenshot as annotation evidence.',
+  task_reference_scope: 'Choose a task from this conversation.',
   invalid_input: 'Check the entered content and try again.',
   invalid_view: 'Adjust the canvas view and try again.',
   invalid_object: 'Check the file dimensions and try again.',
@@ -86,7 +99,12 @@ export class BoardApi {
   view(sessionId: string, view: SessionView) { return this.request<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/view`, { method: 'PUT', body: JSON.stringify(view) }); }
   operations(sessionId: string, operations: BoardOperation[]) { return this.request<{ objects: BoardState['objects'] }>('/api/board/operations', { method: 'POST', body: JSON.stringify({ sessionId, operations }) }); }
   upload(file: Blob, name: string, signal?: AbortSignal) { return this.request<Asset>(`/api/assets?name=${encodeURIComponent(name)}&mime=${encodeURIComponent(resolveContentMime(name, file.type))}`, { method: 'POST', body: file, signal }); }
-  content(assetId: string) { return `/api/assets/${encodeURIComponent(assetId)}/content`; }
+  content(assetId: string, sessionId?: string) { return `/api/assets/${encodeURIComponent(assetId)}/content${sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : ''}`; }
+  private capturePath(sessionId: string, draftId: string, annotationId: string, version: number) { return `/api/sessions/${encodeURIComponent(sessionId)}/drafts/${encodeURIComponent(draftId)}/annotations/${encodeURIComponent(annotationId)}/captures/${version}`; }
+  prepareCapture(sessionId: string, draftId: string, annotationId: string, version: number, input: AnnotationCaptureInput) { return this.request<CaptureResult>(this.capturePath(sessionId, draftId, annotationId, version), { method: 'POST', body: JSON.stringify(input) }); }
+  commitCapture(sessionId: string, draftId: string, annotationId: string, version: number, image: Blob, signal?: AbortSignal) { return this.request<CaptureResult>(`${this.capturePath(sessionId, draftId, annotationId, version)}/content`, { method: 'PUT', body: image, signal }); }
+  captureResult(sessionId: string, draftId: string, annotationId: string, version: number) { return this.request<CaptureResult>(this.capturePath(sessionId, draftId, annotationId, version)); }
+  retryCapture(sessionId: string, draftId: string, annotationId: string, version: number) { return this.request<CaptureRetryResult>(`${this.capturePath(sessionId, draftId, annotationId, version)}/retry`, { method: 'POST', body: '{}' }); }
   createHtmlPreview(assetId: string, signal?: AbortSignal) { return this.request<HtmlPreviewGrant>(`/api/assets/${encodeURIComponent(assetId)}/html-preview`, { method: 'POST', body: '{}', signal }); }
   revokeHtmlPreview(id: string, signal?: AbortSignal) { return this.request<{ revoked: boolean }>(`/api/html-previews/${encodeURIComponent(id)}`, { method: 'DELETE', signal }); }
 }
