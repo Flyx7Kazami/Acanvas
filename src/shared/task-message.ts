@@ -1,18 +1,43 @@
 import type { DraftReferences, RequestReference, ResolvedRequestReference, TaskSnapshot } from './types.js';
 
-export function referenceOrder(references: DraftReferences): RequestReference[] {
-  return references.order ?? [...references.objectIds.map(id => ({ kind: 'object' as const, id })), ...references.taskIds.map(id => ({ kind: 'task' as const, id }))];
+export function referenceOrder(references: DraftReferences, text?: string): RequestReference[] {
+  const order: RequestReference[] = references.order ?? [...references.objectIds.map(id => ({ kind: 'object' as const, id })), ...references.taskIds.map(id => ({ kind: 'task' as const, id }))];
+  return text === undefined ? order : order.map(reference => ({ ...reference, textOffset: reference.textOffset ?? text.length }));
 }
 
-function snapshotReferences(snapshot: TaskSnapshot): (RequestReference | ResolvedRequestReference)[] {
+export type ReferencePart<T extends RequestReference> = { kind: 'text'; text: string } | { kind: 'reference'; reference: T };
+
+/** References use pure-text UTF-16 offsets; entries at the same offset retain their array order. */
+export function referenceParts<T extends RequestReference>(text: string, order: readonly T[]): ReferencePart<T>[] {
+  const parts: ReferencePart<T>[] = [];
+  let cursor = 0;
+  for (const reference of order) {
+    const offset = reference.textOffset ?? text.length;
+    if (offset > cursor) parts.push({ kind: 'text', text: text.slice(cursor, offset) });
+    parts.push({ kind: 'reference', reference });
+    cursor = offset;
+  }
+  if (cursor < text.length) parts.push({ kind: 'text', text: text.slice(cursor) });
+  return parts;
+}
+
+export function snapshotReferences(snapshot: TaskSnapshot): (RequestReference | ResolvedRequestReference)[] {
   return snapshot.requestReferences?.order ?? referenceOrder({ objectIds: snapshot.requestReferences?.objectIds ?? snapshot.referenceContent.objects.map(object => object.id), taskIds: snapshot.requestReferences?.taskIds ?? snapshot.referenceContent.taskIds });
 }
 
 const encoded = (value: unknown) => JSON.stringify(value);
 
+export function referenceLabel(snapshot: TaskSnapshot, reference: RequestReference | ResolvedRequestReference): string {
+  if ('label' in reference) return reference.label;
+  if (reference.kind === 'task') return `Request ${reference.id}`;
+  const object = snapshot.referenceContent.objects.find(object => object.id === reference.id);
+  return snapshot.referenceContent.assets.find(asset => asset.id === object?.assetId)?.name ?? reference.id;
+}
+
 /** The original request and comments are user input; imported material and scenes are reference evidence. */
 export function generateRequirementText(snapshot: TaskSnapshot): string {
   const sections: string[] = [], references = snapshotReferences(snapshot);
+  const requestText = referenceParts(snapshot.userRequest.text, references).map(part => part.kind === 'text' ? part.text : `[@${encoded(referenceLabel(snapshot, part.reference))} (reference_content; ${encoded({ kind: part.reference.kind, id: part.reference.id })})]`).join('');
   if (references.length) sections.push(`References (reference_content):\n${references.map((reference, index) => {
     if (reference.kind === 'object') {
       const object = 'object' in reference ? reference.object : snapshot.referenceContent.objects.find(object => object.id === reference.id);
@@ -39,5 +64,5 @@ export function generateRequirementText(snapshot: TaskSnapshot): string {
     }
     sections.push(lines.join('\n'));
   });
-  return snapshot.userRequest.text + (sections.length ? `\n\n${sections.join('\n\n')}` : '');
+  return requestText + (sections.length ? `\n\n${sections.join('\n\n')}` : '');
 }

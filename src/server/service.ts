@@ -21,20 +21,26 @@ const text = (value: unknown, label: string, maximum = 100_000) => typeof value 
 const nonempty = (value: unknown, label: string, maximum = 100_000) => { const result = text(value, label, maximum).trim(); return result || fail(400, 'invalid_input', `${label} is required.`); };
 const ids = (value: unknown, label: string): string[] => Array.isArray(value) && value.length <= 1000 && value.every((id) => typeof id === 'string' && id.length < 200) ? [...new Set(value)] : fail(400, 'invalid_input', `${label} must contain IDs.`);
 const finite = (value: unknown, label: string): number => typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1e9 ? value : fail(400, 'invalid_input', `${label} must be a finite number.`);
-const draftReferences = (input: DraftReferences): DraftReferences => {
+const draftReferences = (input: DraftReferences, requestText: string): DraftReferences => {
   const objectIds = ids(input?.objectIds, 'Object references'), taskIds = ids(input?.taskIds, 'Task references');
   if (objectIds.length !== input.objectIds.length || taskIds.length !== input.taskIds.length) fail(400, 'invalid_references', 'Each reference identity appears once.');
   if (input.order !== undefined && (!Array.isArray(input.order) || input.order.length > 2000)) fail(400, 'invalid_references', 'Reference order must be a list.');
   const order = referenceOrder({ objectIds, taskIds, ...(input.order === undefined ? {} : { order: input.order }) });
   const seen = new Set<string>();
+  let previousOffset = 0;
   for (const reference of order) {
     if (!reference || !['object', 'task'].includes(reference.kind) || typeof reference.id !== 'string' || !reference.id || reference.id.length >= 200) fail(400, 'invalid_references', 'References require a kind and stable ID.');
     const key = `${reference.kind}:${reference.id}`;
     if (seen.has(key) || !(reference.kind === 'object' ? objectIds : taskIds).includes(reference.id)) fail(400, 'invalid_references', 'Reference order contains each grouped identity once.');
+    const offset = reference.textOffset ?? requestText.length;
+    if (reference.textOffset !== undefined && (!Number.isSafeInteger(reference.textOffset) || reference.textOffset < 0 || reference.textOffset > requestText.length)) fail(400, 'invalid_references', 'Reference positions use integer UTF-16 offsets within the request text.');
+    if (offset > 0 && offset < requestText.length && requestText.charCodeAt(offset - 1) >= 0xD800 && requestText.charCodeAt(offset - 1) <= 0xDBFF && requestText.charCodeAt(offset) >= 0xDC00 && requestText.charCodeAt(offset) <= 0xDFFF) fail(400, 'invalid_references', 'Reference positions use complete Unicode code points.');
+    if (offset < previousOffset) fail(400, 'invalid_references', 'References follow their positions in the request text.');
+    previousOffset = offset;
     seen.add(key);
   }
   if (seen.size !== objectIds.length + taskIds.length) fail(400, 'invalid_references', 'Reference order contains every grouped identity.');
-  return { objectIds, taskIds, order: order.map(({ kind, id }) => ({ kind, id })) };
+  return { objectIds, taskIds, order: order.map(({ kind, id, textOffset }) => ({ kind, id, ...(textOffset === undefined ? {} : { textOffset }) })) };
 };
 export const within = (root: string, path: string) => { const rel = relative(root, path); return rel === '' || (!isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`)); };
 
@@ -145,7 +151,7 @@ export class CanvasService {
   draft(sessionId: string): Draft {
     this.sessionRow(sessionId);
     const row = this.db.prepare('SELECT * FROM drafts WHERE session_id=?').get(sessionId) as Row;
-    return { ...(row.editing_task_id ? { editingTaskId: row.editing_task_id } : {}), id: row.id, sessionId, revision: row.revision, text: row.text, attachments: parse(row.attachments_json), annotations: parse(row.annotations_json), references: draftReferences(parse(row.references_json)), updatedAt: row.updated_at };
+    return { ...(row.editing_task_id ? { editingTaskId: row.editing_task_id } : {}), id: row.id, sessionId, revision: row.revision, text: row.text, attachments: parse(row.attachments_json), annotations: parse(row.annotations_json), references: draftReferences(parse(row.references_json), row.text), updatedAt: row.updated_at };
   }
   private assetFrom(row: Row): Asset { const bundle = this.db.prepare('SELECT manifest_json FROM html_bundles WHERE asset_id=?').get(row.id) as Row | undefined; const evidence = this.db.prepare('SELECT * FROM evidence_assets WHERE asset_id=?').get(row.id) as Row | undefined; return { ...(bundle ? { htmlBundle: parse<HtmlBundle>(bundle.manifest_json) } : {}), ...(evidence ? { evidence: { sessionId: evidence.session_id, draftId: evidence.draft_id, captureId: evidence.capture_id } } : {}), id: row.id, name: row.name, mime: row.mime, size: row.size, kind: row.kind, createdAt: row.created_at, ...(row.source_task_id ? { sourceTaskId: row.source_task_id, sourceRunId: row.source_run_id } : {}) }; }
   asset(id: string): Asset { nonempty(id, 'Asset ID', 200); const row = this.db.prepare('SELECT * FROM assets WHERE id=?').get(id) as Row; return row ? this.assetFrom(row) : fail(404, 'asset_missing', 'The referenced asset is unavailable.'); }
@@ -264,6 +270,7 @@ export class CanvasService {
       if (input?.id !== draft.id || (input.sessionId && input.sessionId !== sessionId)) fail(409, 'draft_conflict', 'This draft has already been sent or replaced. Read the current draft.');
       if (!Number.isSafeInteger(input.revision) || input.revision !== draft.revision) fail(409, 'draft_revision_conflict', 'The saved draft changed. Review both versions before saving.', { currentRevision: draft.revision });
       if (input.editingTaskId !== draft.editingTaskId) fail(409, 'draft_conflict', 'The request editing target has changed. Read the current draft.');
+      const requestText = text(input.text, 'Draft text');
       const source = draft.editingTaskId ? this.task(sessionId, draft.editingTaskId).snapshot : undefined;
       const attachments = ids(input.attachments, 'Attachments');
       attachments.forEach((id) => this.sharedAsset(id));
@@ -288,10 +295,10 @@ export class CanvasService {
         return managed;
       });
       if (new Set(annotations.map((annotation) => annotation.id)).size !== annotations.length) fail(400, 'invalid_annotation', 'Each annotation needs a distinct ID.');
-      const references = draftReferences(input.references);
+      const references = draftReferences(input.references, requestText);
       references.objectIds.forEach((id) => { if (!draft.references.objectIds.includes(id)) this.object(id); });
       references.taskIds.forEach((id) => { const row = this.db.prepare('SELECT session_id FROM tasks WHERE id=?').get(id) as Row | undefined; if (!row) fail(404, 'task_missing', 'The referenced task is unavailable.'); if (row!.session_id !== sessionId && !draft.references.taskIds.includes(id)) fail(403, 'task_reference_scope', 'Add tasks from the current session. Saved historical references remain available.'); });
-      const updated = this.db.prepare('UPDATE drafts SET text=?,attachments_json=?,annotations_json=?,references_json=?,updated_at=?,revision=revision+1 WHERE id=? AND revision=?').run(text(input.text, 'Draft text'), json(attachments), json(annotations), json(references), now(), draft.id, input.revision);
+      const updated = this.db.prepare('UPDATE drafts SET text=?,attachments_json=?,annotations_json=?,references_json=?,updated_at=?,revision=revision+1 WHERE id=? AND revision=?').run(requestText, json(attachments), json(annotations), json(references), now(), draft.id, input.revision);
       if (updated.changes !== 1) fail(409, 'draft_revision_conflict', 'The saved draft changed. Review both versions before saving.');
       return this.draft(sessionId);
     });
@@ -434,7 +441,7 @@ export class CanvasService {
       this.db.prepare('INSERT INTO task_edits VALUES(?,?,?,?,?)').run(id, sessionId, taskId, json(previous), 'active');
       this.db.prepare("UPDATE tasks SET status='editing',updated_at=? WHERE id=? AND status='queued'").run(now(), taskId);
       this.db.prepare('DELETE FROM drafts WHERE id=?').run(previous.id);
-      const references = draftReferences({ objectIds, taskIds: snapshot.requestReferences?.taskIds ?? snapshot.referenceContent.taskIds, ...(snapshot.requestReferences?.order ? { order: snapshot.requestReferences.order } : {}) });
+      const references = draftReferences({ objectIds, taskIds: snapshot.requestReferences?.taskIds ?? snapshot.referenceContent.taskIds, ...(snapshot.requestReferences?.order ? { order: snapshot.requestReferences.order } : {}) }, snapshot.userRequest.text);
       this.db.prepare('INSERT INTO drafts(id,session_id,revision,text,attachments_json,annotations_json,references_json,updated_at,editing_task_id) VALUES(?,?,1,?,?,?,?,?,?)').run(id, sessionId, snapshot.userRequest.text, json(attachments), json(snapshot.annotations), json(references), now(), taskId);
       for (const annotation of snapshot.annotations) if (annotation.captureState) this.db.prepare('INSERT INTO annotation_identities VALUES(?,?,?,?)').run(sessionId, id, annotation.id, json(annotation));
       return { task: this.task(sessionId, taskId), draft: this.draft(sessionId) };
@@ -460,8 +467,12 @@ export class CanvasService {
   }
   private resolveRequestReferences(draft: Draft, source?: TaskSnapshot): ResolvedRequestReference[] {
     return referenceOrder(draft.references).map(reference => {
+      const position = reference.textOffset === undefined ? {} : { textOffset: reference.textOffset };
       const saved = source?.requestReferences?.order?.find(value => value.kind === reference.kind && value.id === reference.id);
-      if (saved) return structuredClone(saved);
+      if (saved) {
+        const { textOffset, ...content } = structuredClone(saved);
+        return { ...content, ...position };
+      }
       if (reference.kind === 'object') {
         const sourceIds = source?.requestReferences?.objectIds ?? source?.referenceContent.objects.map(value => value.id) ?? [];
         let object = sourceIds.includes(reference.id) ? source?.referenceContent.objects.find(value => value.id === reference.id) : undefined;
@@ -472,12 +483,12 @@ export class CanvasService {
         }
         const asset = source?.referenceContent.assets.find(value => value.id === object!.assetId) ?? this.sharedAsset(object.assetId);
         const sourceRow = object.sourceTaskId ? this.db.prepare('SELECT session_id FROM tasks WHERE id=?').get(object.sourceTaskId) as Row | undefined : undefined;
-        return { kind: 'object', id: reference.id, label: asset.name, source: 'reference_content', object: structuredClone(object), asset: structuredClone(asset), ...(sourceRow ? { sourceSessionId: sourceRow.session_id } : {}), ...(object.sourceTaskId ? { sourceTaskId: object.sourceTaskId } : {}), ...(object.sourceRunId ? { sourceRunId: object.sourceRunId } : {}) };
+        return { kind: 'object', id: reference.id, ...position, label: asset.name, source: 'reference_content', object: structuredClone(object), asset: structuredClone(asset), ...(sourceRow ? { sourceSessionId: sourceRow.session_id } : {}), ...(object.sourceTaskId ? { sourceTaskId: object.sourceTaskId } : {}), ...(object.sourceRunId ? { sourceRunId: object.sourceRunId } : {}) };
       }
       const row = this.db.prepare('SELECT session_id,sequence,snapshot_json FROM tasks WHERE id=?').get(reference.id) as Row | undefined;
       if (!row) fail(404, 'task_missing', 'The referenced task is unavailable.');
       const snapshot = parse<TaskSnapshot>(row!.snapshot_json);
-      return { kind: 'task', id: reference.id, label: `Request ${row!.sequence}`, source: 'reference_content', task: { sessionId: row!.session_id, sequence: row!.sequence, text: snapshot.userRequest.text }, sourceSessionId: row!.session_id, sourceTaskId: reference.id };
+      return { kind: 'task', id: reference.id, ...position, label: `Request ${row!.sequence}`, source: 'reference_content', task: { sessionId: row!.session_id, sequence: row!.sequence, text: snapshot.userRequest.text }, sourceSessionId: row!.session_id, sourceTaskId: reference.id };
     });
   }
   sendDraft(sessionId: string, draftId: string, expectedRevision: number): { task: Task; draft: Draft } {

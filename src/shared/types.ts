@@ -20,11 +20,11 @@ export interface Session { id: string; name: string; createdAt: string; view: Se
 export interface HostBinding { host: string; threadId: string; sessionId: string }
 export interface ServiceIdentity { pid: number; instanceId: string }
 export interface ServiceRuntime extends ServiceIdentity { project: Project; url: string }
-export interface RequestReference { kind: 'object' | 'task'; id: string }
+export interface RequestReference { kind: 'object' | 'task'; id: string; textOffset?: number }
 export interface DraftReferences { objectIds: string[]; taskIds: string[]; order?: RequestReference[] }
-export type ResolvedRequestReference =
+export type ResolvedRequestReference = RequestReference & (
   | { kind: 'object'; id: string; label: string; source: 'reference_content'; object: BoardObject; asset: Asset; sourceSessionId?: string; sourceTaskId?: string; sourceRunId?: string }
-  | { kind: 'task'; id: string; label: string; source: 'reference_content'; task: { sessionId: string; sequence: number; text: string }; sourceSessionId: string; sourceTaskId: string };
+  | { kind: 'task'; id: string; label: string; source: 'reference_content'; task: { sessionId: string; sequence: number; text: string }; sourceSessionId: string; sourceTaskId: string });
 export interface Draft { editingTaskId?: string; id: string; sessionId: string; revision: number; text: string; attachments: string[]; annotations: AnnotationInput[]; references: DraftReferences; updatedAt: string }
 export interface TaskSnapshot { userRequest: { source: 'user_instruction'; text: string }; requestReferences?: { attachmentIds: string[]; objectIds: string[]; taskIds?: string[]; order?: ResolvedRequestReference[] }; annotations: AnnotationInput[]; referenceContent: { source: 'reference_content'; assets: Asset[]; objects: BoardObject[]; taskIds: string[] }; requirementText?: string }
 export interface Progress { message: string; externalJobId?: string; assetIds?: string[]; createdAt: string }

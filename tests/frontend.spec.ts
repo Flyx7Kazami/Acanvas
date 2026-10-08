@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect, type Locator, type Page } from '@playwright/test';
 import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -65,6 +65,43 @@ async function composerAction(page: Page, label: 'Request history' | 'Copy resum
   await page.getByRole('menuitem', { name: label, exact: true }).click();
 }
 
+async function instructionText(input: Locator): Promise<string> {
+  return input.evaluate(element => Array.from(element.childNodes).filter(node => !(node instanceof HTMLElement && (node.dataset.editorReference || node.classList.contains('task-inline-reference')))).map(node => node.textContent || '').join(''));
+}
+
+async function expectInstructionText(input: Locator, value: string) {
+  await expect.poll(() => instructionText(input)).toBe(value);
+}
+
+async function expectInstructionVisible(input: Locator, minimumLines: number) {
+  expect(await input.evaluate((element, minimumLines) => {
+    const bounds = element.getBoundingClientRect();
+    const inside = (rect: DOMRect) => rect.left >= bounds.left - .5 && rect.right <= bounds.right + .5 && rect.top >= bounds.top - .5 && rect.bottom <= bounds.bottom + .5;
+    const textLines = Array.from(element.childNodes).filter(node => node.nodeType === Node.TEXT_NODE && !!node.textContent).flatMap(node => { const range = document.createRange(); range.selectNodeContents(node); return Array.from(range.getClientRects()); }).filter(rect => rect.width > 0);
+    const references = Array.from(element.querySelectorAll('.chatbox-reference')).map(reference => reference.getBoundingClientRect());
+    return element.scrollHeight === element.clientHeight && textLines.length >= minimumLines && textLines.every(inside) && references.every(inside);
+  }, minimumLines)).toBeTruthy();
+}
+
+/** Replace the body through native editing while keeping independent reference atoms. */
+async function replaceInstructionText(input: Locator, value: string) {
+  await input.click({ position: { x: 2, y: 2 } });
+  if (!await input.locator('[data-editor-reference]').count()) { await input.fill(value); return; }
+  while (true) {
+    const before = (await instructionText(input)).length;
+    const selectedLength = await input.evaluate(element => {
+      const node = Array.from(element.childNodes).reverse().find(node => node.nodeType === Node.TEXT_NODE && !!node.textContent);
+      if (!node) return 0;
+      const range = document.createRange(); range.selectNodeContents(node); const selection = window.getSelection()!; selection.removeAllRanges(); selection.addRange(range); return node.textContent!.length;
+    });
+    if (!selectedLength) break;
+    await input.press('Backspace');
+    await expect.poll(async () => (await instructionText(input)).length).toBe(before - selectedLength);
+  }
+  await input.evaluate(element => { const range = document.createRange(); range.setStart(element, 0); range.collapse(true); const selection = window.getSelection()!; selection.removeAllRanges(); selection.addRange(range); });
+  if (value) await input.page().keyboard.insertText(value);
+}
+
 async function png(page: Page) {
   const encoded = await page.evaluate(() => {
     const canvas = document.createElement('canvas'); canvas.width = 600; canvas.height = 300;
@@ -104,12 +141,14 @@ test('queued annotation chips edit beside canvas markers and preserve the draft 
   await expect(page.locator('.canvas-annotation-comment')).toHaveCount(2);
   const initial = await app.state(), annotationIds = initial.draft.annotations.map(annotation => annotation.id);
   for (const id of annotationIds) {
-    const pin = await page.locator(`.canvas-annotation-group[data-annotation-id="${id}"] .annotation-pin`).boundingBox(), note = await page.locator(`.canvas-annotation-comment[data-annotation-id="${id}"]`).boundingBox();
+    const group = page.locator(`.canvas-annotation-group[data-annotation-id="${id}"]`);
+    await group.evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
+    const { pin, note } = await group.evaluate(element => { const pin = element.querySelector('.annotation-pin')!.getBoundingClientRect(), note = element.querySelector('.canvas-annotation-comment')!.getBoundingClientRect(); return { pin: { x: pin.x, y: pin.y, width: pin.width, height: pin.height }, note: { x: note.x, y: note.y, width: note.width, height: note.height } }; });
     expect(note!.x).toBeGreaterThan(pin!.x + pin!.width); expect(Math.abs(note!.y + note!.height / 2 - pin!.y - pin!.height / 2)).toBeLessThan(.5); expect(note!.y + note!.height).toBeLessThanOrEqual((await object.boundingBox())!.y - 7.5);
   }
   await page.getByRole('button', { name: 'Send request', exact: true }).click(); await expect(page.locator('.annotation-pin')).toHaveCount(0);
   const original = (await app.state()).tasks[0], snapshot = JSON.stringify(original.snapshot), shared = JSON.stringify((await app.state()).annotations);
-  await page.locator('#instruction').fill('The next unsent request.'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+  await replaceInstructionText(page.locator('#instruction'), 'The next unsent request.'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   await page.getByRole('button', { name: 'Edit request 1', exact: true }).click();
   await page.locator('.queue-task').click(); await expect(page.locator('[data-annotation-source=draft]')).toHaveCount(2);
   const initialView = await page.locator('.canvas-world').getAttribute('style');
@@ -138,7 +177,7 @@ test('queued annotation chips edit beside canvas markers and preserve the draft 
   expect(await narrowText.evaluate(element => { const box = element.getBoundingClientRect(); return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2) === element; })).toBeTruthy();
   const narrowView = await page.locator('.canvas-world').getAttribute('style'); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible(); await narrowText.click(); await expect(input).toBeFocused(); expect(await page.locator('.canvas-world').getAttribute('style')).toBe(narrowView); await input.press('Escape');
 
-  await page.getByRole('button', { name: 'Save edit', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('The next unsent request.');
+  await page.getByRole('button', { name: 'Save edit', exact: true }).click(); await expectInstructionText(page.locator('#instruction'), 'The next unsent request.');
   const result = await app.state(); expect(result.tasks[0].id).toBe(original.id); expect(result.tasks[0].sequence).toBe(original.sequence); expect(result.tasks[0].snapshot.annotations[0]).toEqual({ ...original.snapshot.annotations[0], text: 'Use the revised framing.' }); expect(result.tasks[0].snapshot.annotations[1]).toEqual({ ...original.snapshot.annotations[1], text: 'Keep the revised palette.' });
   await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await page.locator('.annotation-content').first().click(); await expect(input).toHaveValue('Use the revised framing.');
   await page.screenshot({ path: info.outputPath('queued-annotation-canvas-edit.png') });
@@ -214,7 +253,7 @@ test('annotation levels retain clipped regions and sent task markings follow exp
   await page.screenshot({ path: info.outputPath('annotation-region-blue.png') });
   await finishAnnotation(page); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible(); await expect(page.locator('[data-annotation-source=draft]')).toHaveCount(1);
   const draft = (await app.state()).draft; expect(draft.annotations[0].bounds).toEqual({ x: .2, y: .2, width: .8, height: .8 });
-  await page.locator('#instruction').fill('Use this annotated detail.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1); await expect(page.locator('.annotation-outline')).toHaveCount(0);
+  await replaceInstructionText(page.locator('#instruction'), 'Use this annotated detail.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1); await expect(page.locator('.annotation-outline')).toHaveCount(0);
   const sent = await app.state(), snapshot = JSON.stringify(sent.tasks[0].snapshot); expect(sent.annotations).toHaveLength(1);
   await beginAnnotating(page); await comment.fill('Keep this new draft separate.'); await finishAnnotation(page); await expect(page.locator('[data-annotation-source=draft]')).toHaveCount(1);
   const row = page.locator('.queue-task').first(); await row.click(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(1); await expect(page.locator('[data-annotation-source=draft]')).toHaveCount(0);
@@ -295,7 +334,7 @@ test('shared annotation bubbles and static queue previews preserve snapshot refe
   for (const object of await page.locator('.object-image').all()) { await object.focus(); await page.keyboard.press('Shift+Enter'); }
   await page.getByRole('button', { name: 'Attach to request', exact: true }).click();
   const thumb = page.locator('.draft-asset .asset-thumb[data-kind=video] img'); await expect(thumb).toHaveAttribute('src', firstFrame); await expect(video).toHaveJSProperty('currentTime', .9); await expect(video).toHaveJSProperty('paused', true);
-  await page.locator('#instruction').fill('Create a quiet cover using these visual references.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1);
+  await replaceInstructionText(page.locator('#instruction'), 'Create a quiet cover using these visual references.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1);
   const row = page.locator('.queue-item').first(); await expect(row.locator('.queue-preview')).toHaveCount(3); await expect(row.locator('.queue-preview-overflow')).toHaveText('+1'); await expect(row.locator('.asset-thumb[data-kind=video] img')).toHaveAttribute('src', firstFrame); expect(await row.locator('.queue-row').evaluate(element => element.getBoundingClientRect().height)).toBe(36);
   for (const [index, object] of (await page.locator('.board-object').all()).entries()) { await object.focus(); await page.keyboard.press(index ? 'Shift+Enter' : 'Enter'); }
   await page.getByRole('button', { name: 'Attach to request', exact: true }).click();
@@ -304,7 +343,7 @@ test('shared annotation bubbles and static queue previews preserve snapshot refe
   await expect(page.locator('.annotation-pin')).toHaveCount(2); await expect(page.locator('.draft-annotation .annotation-bubble text')).toHaveText(['1', '2']);
   const paths = await page.locator('.annotation-pin .annotation-bubble path,.draft-annotation .annotation-bubble path').evaluateAll(elements => elements.map(element => element.getAttribute('d'))); expect(paths.every(path => path === bubblePath)).toBeTruthy();
   await page.screenshot({ path: info.outputPath('compact-references-and-queue.png') });
-  await page.locator('#instruction').fill('Refine the cover around these two annotated details.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(2);
+  await replaceInstructionText(page.locator('#instruction'), 'Refine the cover around these two annotated details.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(2);
   const second = page.locator('.queue-item').nth(1); await expect(second.locator('.queue-preview')).toHaveCount(3); await expect(second.locator('.queue-preview-overflow')).toHaveText('+3'); await expect(second.locator('.queue-previews')).toHaveAttribute('aria-label', '6 references');
   const immutable = JSON.stringify((await app.state()).tasks[1].snapshot);
   await page.locator('.object-video').focus(); await page.keyboard.press('Enter'); const comment = await beginAnnotating(page); await comment.fill('Use this exact motion frame.'); await comment.press('Control+Enter'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeEnabled();
@@ -358,28 +397,28 @@ test('each confirmed local send animates once including SSE-first and recovered 
       let entered!: () => void; arrived = new Promise(resolve => { entered = resolve; }); const delayed = new Promise<void>(resolve => { release = resolve; });
       await page.route(`**/api/sessions/${sessionId}/tasks`, async route => { const response = await route.fetch(); entered(); await delayed; await route.fulfill({ response }); });
     }
-    await input.fill(`Motion direction ${index}`); await input.press('Enter'); if (index === 1) await page.locator('.queue-stack').hover();
+    await replaceInstructionText(input, `Motion direction ${index}`); await input.press('Enter'); if (index === 1) await page.locator('.queue-stack').hover();
     if (arrived) { await arrived; await expect(page.locator('.queue-item')).toHaveCount(2); expect((await motions()).starts).toHaveLength(1); release(); }
     await expect(input).toBeEnabled(); await expect.poll(async () => (await motions()).starts.length).toBe(index);
     if (index === 2) await page.unroute(`**/api/sessions/${sessionId}/tasks`);
   }
   await expect.poll(async () => (await motions()).ends.length).toBe(3);
-  await input.fill('Visible fourth direction'); await input.press('Enter'); await expect(input).toBeEnabled(); await expect.poll(async () => (await motions()).starts.length).toBe(4);
+  await replaceInstructionText(input, 'Visible fourth direction'); await input.press('Enter'); await expect(input).toBeEnabled(); await expect.poll(async () => (await motions()).starts.length).toBe(4);
   await page.locator('.queue-stack').hover(); await expect(page.locator('.queue-expand')).toHaveAttribute('aria-expanded', 'true'); await expect(page.locator('.queue-item').last()).toBeInViewport();
   await page.locator('#whiteboard').click({ position: { x: 1200, y: 100 } }); await page.locator('.queue-stack').hover();
   await expect.poll(async () => page.locator('.queue-entering').count()).toBe(0); expect((await motions()).starts).toHaveLength(4);
   const state = await app.state(); await app.call(`/api/sessions/${sessionId}/tasks/${state.tasks[0].id}/cancel`, 'POST', { reason: 'Updated direction' }); await expect(page.locator('.queue-item')).toHaveCount(3);
   await composerAction(page, 'Request history'); await page.getByRole('button', { name: 'Close request history', exact: true }).click(); expect((await motions()).starts).toHaveLength(4);
   await page.route(`**/api/sessions/${sessionId}/tasks`, route => route.fulfill({ status: 500, contentType: 'application/json', body: '{}' }));
-  await input.fill('Failed direction'); await input.press('Enter'); await expect(input).toBeEnabled(); await expect(page.getByRole('alert')).toContainText('(500)'); expect((await motions()).starts).toHaveLength(4); expect((await app.state()).tasks).toHaveLength(4);
+  await replaceInstructionText(input, 'Failed direction'); await input.press('Enter'); await expect(input).toBeEnabled(); await expect(page.getByRole('alert')).toContainText('(500)'); expect((await motions()).starts).toHaveLength(4); expect((await app.state()).tasks).toHaveLength(4);
   await page.unroute(`**/api/sessions/${sessionId}/tasks`);
-  await page.emulateMedia({ reducedMotion: 'reduce' }); await input.fill('Immediate reduced motion result'); await input.press('Enter'); await expect(input).toBeEnabled(); await expect(page.locator('.queue-item')).toHaveCount(4); expect((await motions()).starts).toHaveLength(4); await expect(page.locator('.queue-entering')).toHaveCount(0);
+  await page.emulateMedia({ reducedMotion: 'reduce' }); await replaceInstructionText(input, 'Immediate reduced motion result'); await input.press('Enter'); await expect(input).toBeEnabled(); await expect(page.locator('.queue-item')).toHaveCount(4); expect((await motions()).starts).toHaveLength(4); await expect(page.locator('.queue-entering')).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: 'no-preference' }); expect((await motions()).starts).toHaveLength(4);
   await page.route(`**/api/sessions/${sessionId}/tasks`, async route => { await route.fetch(); await route.abort('failed'); });
-  await input.fill('Recovered response direction'); await input.press('Enter'); await expect(input).toBeEnabled(); await page.locator('.queue-stack').hover(); await expect.poll(async () => (await motions()).starts.length).toBe(5); await page.unroute(`**/api/sessions/${sessionId}/tasks`);
+  await replaceInstructionText(input, 'Recovered response direction'); await input.press('Enter'); await expect(input).toBeEnabled(); await page.locator('.queue-stack').hover(); await expect.poll(async () => (await motions()).starts.length).toBe(5); await page.unroute(`**/api/sessions/${sessionId}/tasks`);
   const ids = (await motions()).starts; expect(new Set(ids).size).toBe(ids.length);
   const second = await app.call('/api/sessions', 'POST', { name: 'Independent motion scope' }); const other = await page.context().newPage();
-  await other.goto(`${app.server.url}/?session=${second.id}`); await expect(other.locator('#instruction')).toBeEnabled(); await other.locator('#instruction').fill('Other scope direction'); await other.locator('#instruction').press('Enter'); await expect(other.locator('.queue-item')).toHaveCount(1); expect((await motions()).starts).toHaveLength(5); await other.close();
+  await other.goto(`${app.server.url}/?session=${second.id}`); await expect(other.locator('#instruction')).toBeEnabled(); await replaceInstructionText(other.locator('#instruction'), 'Other scope direction'); await other.locator('#instruction').press('Enter'); await expect(other.locator('.queue-item')).toHaveCount(1); expect((await motions()).starts).toHaveLength(5); await other.close();
   await expect.poll(async () => page.locator('.queue-entering').count()).toBe(0); await writeFile(info.outputPath('queue-motion-events.json'), JSON.stringify(await motions(), null, 2));
   await page.reload(); await expect(page.locator('.queue-item')).toHaveCount(5); expect((await motions()).starts).toHaveLength(0);
 });
@@ -388,7 +427,7 @@ test('composer contains asset and annotation chips with quiet success feedback a
   await open(page, app);
   const input = page.locator('#instruction'), composer = page.locator('.composer');
   expect((await composer.boundingBox())!.height).toBe(52);
-  await input.fill('Initial direction'); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1);
+  await replaceInstructionText(input, 'Initial direction'); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1);
   const image = await png(page);
   const names = ['Product reference with a long descriptive file name one.png', 'Product reference with a long descriptive file name two.png', 'Product reference with a long descriptive file name three.png'];
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(names.map(name => ({ ...image, name })));
@@ -399,7 +438,7 @@ test('composer contains asset and annotation chips with quiet success feedback a
   const comment = page.getByRole('textbox', { name: 'Add a comment', exact: true });
   for (const text of ['Keep these proportions and the breathing room around the subject.', 'Use the reference colors across the composition.']) { await beginAnnotating(page); await comment.fill(text); await comment.press('Control+Enter'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeEnabled(); await expect(page.locator('.toast')).toHaveCount(0); }
   await expect(page.locator('.composer .draft-annotation')).toHaveCount(2);
-  await input.fill('Use these references.\nKeep the visual hierarchy.');
+  await replaceInstructionText(input, 'Use these references.\nKeep the visual hierarchy.');
   await expect(composer).toHaveAttribute('data-save-state', 'saved');
   for (const { width, height } of [{ width: 1440, height: 1000 }, { width: 390, height: 480 }, { width: 320, height: 480 }]) {
     await page.setViewportSize({ width, height });
@@ -467,7 +506,7 @@ test('inline comments retain their targets through delayed snapshots and submit 
   const frame = annotations.find(annotation => annotation.objectId === saved.objects.find(object => object.type === 'video')!.id)!;
   expect(frame.text).toBe('Keep this video moment\nKeep its colors'); expect(frame.timeStart).toBeCloseTo(.7, 1); expect(frame.timeEnd).toBe(1.2); expect(frame.snapshotAssetId).toBeTruthy();
   expect(annotations.find(annotation => annotation.objectId === saved.objects.find(object => object.type === 'image')!.id)!.text).toBe('Keep this image shape');
-  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible(); await expect(comment).toHaveCount(0); await expect(page.locator('#instruction')).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible(); await expect(comment).toHaveCount(0); await expectInstructionText(page.locator('#instruction'), '');
   const imageObject = saved.objects.find(object => object.type === 'image')!, savedVideo = saved.objects.find(object => object.type === 'video')!;
   await page.setViewportSize({ width: 320, height: 480 });
   await app.call('/api/board/operations', 'POST', { sessionId: saved.session.id, operations: [
@@ -506,7 +545,7 @@ test('inline details history media and resume fallback keep short-screen canvas 
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
   await page.locator('.board-object').focus(); await page.keyboard.press('Enter');
   await page.getByRole('button', { name: 'Attach to request', exact: true }).click();
-  await page.locator('#instruction').fill('Explore this reference'); await page.locator('#instruction').press('Enter');
+  await replaceInstructionText(page.locator('#instruction'), 'Explore this reference'); await page.locator('#instruction').press('Enter');
   const row = page.locator('.queue-task').first(); await row.click();
   await expect(row).toHaveAttribute('aria-expanded', 'true');
   const details = page.getByRole('region', { name: 'Request 1', exact: true }); await expect(details).toBeVisible();
@@ -547,7 +586,7 @@ test('removing a file clears only its pending comment and external removal prese
   await page.locator('.board-object').last().focus(); await page.keyboard.press('Enter'); await beginAnnotating(page); await comment.fill('Keep this other file');
   await page.locator('.board-object').first().focus(); await page.keyboard.press('Enter');
   await page.getByRole('button', { name: 'Remove selected files from canvas', exact: true }).click(); await expect(page.locator('.board-object')).toHaveCount(1);
-  await page.locator('#instruction').fill('Create with the remaining file'); await page.locator('#instruction').press('Enter');
+  await replaceInstructionText(page.locator('#instruction'), 'Create with the remaining file'); await page.locator('#instruction').press('Enter');
   await expect(page.locator('.queue-item')).toHaveCount(1);
   const sent = await app.state(); expect(sent.tasks[0].snapshot.annotations.map(annotation => annotation.text)).toEqual(['Keep this other file']);
   await page.locator('.board-object').focus(); await page.keyboard.press('Enter'); await beginAnnotating(page); await comment.fill('Keep this unsent text'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
@@ -560,7 +599,7 @@ test('removing a file clears only its pending comment and external removal prese
   await app.call('/api/board/operations', 'POST', { sessionId: current.session.id, operations: [{ type: 'delete', objectId: current.objects[0].id, expectedVersion: current.objects[0].version }] });
   await expect(page.locator('.board-object')).toHaveCount(0);
   await expect(page.getByLabel('Unavailable comments')).toContainText('Keep this unsent text');
-  await page.locator('#instruction').fill('Continue with a new direction'); await page.locator('#instruction').press('Enter');
+  await replaceInstructionText(page.locator('#instruction'), 'Continue with a new direction'); await page.locator('#instruction').press('Enter');
   await expect(page.getByRole('alert')).toContainText('Discard it from the draft to continue');
   expect((await app.state()).draft.annotations).toHaveLength(1); expect((await app.state()).tasks).toHaveLength(1);
   await page.getByRole('button', { name: 'Discard unavailable comment', exact: true }).click();
@@ -619,17 +658,17 @@ test('composer grows with wrap and newlines, restores height, sends Enter and pr
   const input = page.locator('#instruction'), composer = page.locator('.composer');
   expect((await composer.boundingBox())!.height).toBe(52);
   const wrapped = 'Keep the subject in the center with enough space for a title and retain the shapes and colors from this reference.';
-  await input.fill(wrapped);
+  await replaceInstructionText(input, wrapped);
   await expect.poll(async () => (await composer.boundingBox())!.height).toBeGreaterThan(52);
   expect((await input.boundingBox())!.height).toBeGreaterThan(24);
   await expect(composer).toHaveAttribute('data-save-state', 'saved');
   await expect.poll(async () => (await composer.boundingBox())!.width).toBe(358);
   await composer.evaluate(async element => { await Promise.all(element.getAnimations().map(animation => animation.finished.catch(() => {}))); });
   const grown = (await composer.boundingBox())!.height;
-  await page.reload(); await expect(input).toHaveValue(wrapped);
+  await page.reload(); await expectInstructionText(input, wrapped);
   await expect.poll(async () => (await composer.boundingBox())!.height).toBe(grown);
-  await input.fill('First line'); await input.press('Shift+Enter'); await input.pressSequentially('Second line');
-  await expect(input).toHaveValue('First line\nSecond line');
+  await replaceInstructionText(input, 'First line'); await input.press('Shift+Enter'); await input.pressSequentially('Second line');
+  await expectInstructionText(input, 'First line\nSecond line');
   await expect.poll(async () => (await composer.boundingBox())!.height).toBe(76);
   expect((await app.state()).tasks).toHaveLength(0);
   await input.evaluate(element => {
@@ -641,13 +680,13 @@ test('composer grows with wrap and newlines, restores height, sends Enter and pr
   });
   await expect(composer).toHaveAttribute('data-save-state', 'saved');
   expect((await app.state()).tasks).toHaveLength(0);
-  await expect(input).toHaveValue('First line\nSecond line');
-  await input.press('Enter'); await expect(input).toHaveValue('');
+  await expectInstructionText(input, 'First line\nSecond line');
+  await input.press('Enter'); await expectInstructionText(input, '');
   await expect.poll(async () => (await composer.boundingBox())!.height).toBe(52);
   expect((await app.state()).tasks[0].snapshot.userRequest.text).toBe('First line\nSecond line');
-  for (let index = 2; index <= 6; index++) { await input.fill(`Request ${index}`); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); }
+  for (let index = 2; index <= 6; index++) { await replaceInstructionText(input, `Request ${index}`); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); }
   const long = Array.from({ length: 12 }, (_, index) => `Line ${index + 1}`).join('\n');
-  await input.fill(long);
+  await replaceInstructionText(input, long);
   await expect.poll(async () => input.evaluate(element => element.scrollHeight > element.clientHeight)).toBeTruthy();
   await page.locator('.queue-expand').click();
   for (const width of [390, 320]) {
@@ -662,7 +701,7 @@ test('composer grows with wrap and newlines, restores height, sends Enter and pr
   await page.emulateMedia({ reducedMotion: 'reduce' });
   expect(await composer.evaluate(element => getComputedStyle(element).transitionDuration)).toBe('0s');
   expect(await page.locator('.queue-list').evaluate(element => getComputedStyle(element).animationName)).toBe('none');
-  await input.press('Enter'); await expect(input).toHaveValue('');
+  await input.press('Enter'); await expectInstructionText(input, '');
   await expect.poll(async () => (await composer.boundingBox())!.height).toBe(52);
   expect((await app.state()).tasks.at(-1)!.snapshot.userRequest.text).toBe(long);
 });
@@ -674,12 +713,12 @@ test('short-screen contextual video controls stay reachable beside a clipped sel
   const object = page.locator('.board-object'), video = object.locator('video'), input = page.locator('#instruction');
   await expect(video).toHaveJSProperty('videoWidth', 320);
   await object.focus(); await page.keyboard.press('Enter');
-  for (let index = 1; index <= 2; index++) { await input.fill(`Queued direction ${index}`); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); }
+  for (let index = 1; index <= 2; index++) { await replaceInstructionText(input, `Queued direction ${index}`); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); }
   await beginAnnotating(page);
   await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Keep this moment.');
   await finishAnnotation(page);
   await expect(page.locator('.draft-annotation')).toHaveCount(1);
-  await input.fill(Array.from({ length: 50 }, (_, index) => `Draft line ${index + 1}`).join('\n'));
+  await replaceInstructionText(input, Array.from({ length: 50 }, (_, index) => `Draft line ${index + 1}`).join('\n'));
   await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   const current = await app.state();
   await app.call('/api/board/operations', 'POST', { sessionId: current.session.id, operations: [{ type: 'update', objectId: current.objects[0].id, expectedVersion: current.objects[0].version, changes: { x: 0, y: 0, width: 160 / 1.7, height: 90 / 1.7 } }] });
@@ -702,14 +741,14 @@ test('short-screen contextual video controls stay reachable beside a clipped sel
     expect(await page.locator('.queue-item').last().getByRole('button').first().evaluate(element => { const rect = element.getBoundingClientRect(); return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; })).toBeTruthy();
     await page.screenshot({ path: info.outputPath(`context-video-queued-${width}x480.png`) });
   }
-  await input.press('Enter'); await expect(input).toHaveValue(''); await expect(page.locator('.queue-item')).toHaveCount(3);
-  for (let index = 4; index <= 6; index++) { await input.fill(`Queued direction ${index}`); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); }
-  await input.fill(Array.from({ length: 50 }, (_, index) => `Draft line ${index + 1}`).join('\n'));
+  await input.press('Enter'); await expectInstructionText(input, ''); await expect(page.locator('.queue-item')).toHaveCount(3);
+  for (let index = 4; index <= 6; index++) { await replaceInstructionText(input, `Queued direction ${index}`); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); }
+  await replaceInstructionText(input, Array.from({ length: 50 }, (_, index) => `Draft line ${index + 1}`).join('\n'));
   await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   const six = await app.state();
   await app.call('/api/board/operations', 'POST', { sessionId: six.session.id, operations: [{ type: 'update', objectId: six.objects[0].id, expectedVersion: six.objects[0].version, changes: { width: 150, height: 84 } }] });
   await app.call(`/api/sessions/${six.session.id}/view`, 'PUT', { ...six.session.view, x: 130, y: 140, zoom: 1 });
-  await page.reload(); await expect(input).toHaveValue(Array.from({ length: 50 }, (_, index) => `Draft line ${index + 1}`).join('\n'));
+  await page.reload(); await expectInstructionText(input, Array.from({ length: 50 }, (_, index) => `Draft line ${index + 1}`).join('\n'));
   await page.locator('.queue-expand').click();
   await expect(page.locator('.queue-extra').last()).toHaveClass(/(?:^| )open(?: |$)/);
   await expect.poll(async () => page.locator('.queue-stack').evaluate(element => element.getAnimations({ subtree: true }).length)).toBe(0);
@@ -817,7 +856,7 @@ test('two URL task contexts keep drafts and sends isolated through delayed saves
   const second = await app.call('/api/sessions', 'POST', { name: '另一条探索' });
   const secondPage = await page.context().newPage();
   await secondPage.goto(`${app.server.url}/?session=${second.id}`);
-  await expect(secondPage.locator('#instruction')).toHaveValue('');
+  await expectInstructionText(secondPage.locator('#instruction'), '');
   await expect(page.locator('.session-list,.session-panel')).toHaveCount(0);
   let release!: () => void, entered!: () => void;
   const enteredPromise = new Promise<void>(resolve => { entered = resolve; });
@@ -827,29 +866,30 @@ test('two URL task contexts keep drafts and sends isolated through delayed saves
     if (held) return route.continue(); held = true;
     const response = await route.fetch(); entered(); await delayed; await route.fulfill({ response });
   });
-  await page.locator('#instruction').fill('第一个上下文的草稿'); await enteredPromise;
-  await secondPage.locator('#instruction').fill('第二个上下文的新想法');
+  await replaceInstructionText(page.locator('#instruction'), '第一个上下文的草稿'); await enteredPromise;
+  await replaceInstructionText(secondPage.locator('#instruction'), '第二个上下文的新想法');
   release();
   await expect.poll(async () => (await app.state(second.id)).draft.text).toBe('第二个上下文的新想法');
-  await expect(secondPage.locator('#instruction')).toHaveValue('第二个上下文的新想法');
-  await expect(page.locator('#instruction')).toHaveValue('第一个上下文的草稿');
+  await expectInstructionText(secondPage.locator('#instruction'), '第二个上下文的新想法');
+  await expectInstructionText(page.locator('#instruction'), '第一个上下文的草稿');
+  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   await page.unroute(`**/api/sessions/${firstId}/draft`);
   let releaseSend!: () => void, saving!: () => void;
   const savingPromise = new Promise<void>(resolve => { saving = resolve; });
   const sendDelay = new Promise<void>(resolve => { releaseSend = resolve; });
   await page.route(`**/api/sessions/${firstId}/draft`, async route => { const response = await route.fetch(); saving(); await sendDelay; await route.fulfill({ response }); });
-  await page.locator('#instruction').fill('发送这条完整需求');
+  await replaceInstructionText(page.locator('#instruction'), '发送这条完整需求');
   await page.getByRole('button', { name: 'Send request', exact: true }).click(); await savingPromise;
   await expect(page.locator('#instruction')).toBeDisabled();
-  releaseSend(); await expect(page.locator('#instruction')).toBeEnabled(); await expect(page.locator('#instruction')).toHaveValue('');
+  releaseSend(); await expect(page.locator('#instruction')).toBeEnabled(); await expectInstructionText(page.locator('#instruction'), '');
   await expect.poll(async () => (await app.state(firstId)).draft.id).not.toBe(initial.draft.id);
   expect((await app.state(firstId)).tasks[0].snapshot.userRequest.text).toBe('发送这条完整需求');
   await expect(secondPage.locator('.queue-item')).toHaveCount(0);
-  await page.locator('#instruction').fill('发送后的下一条草稿');
+  await replaceInstructionText(page.locator('#instruction'), '发送后的下一条草稿');
   await expect.poll(async () => (await app.state(firstId)).draft.text).toBe('发送后的下一条草稿');
   await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
-  await page.reload(); await expect(page.locator('#instruction')).toHaveValue('发送后的下一条草稿');
-  await secondPage.reload(); await expect(secondPage.locator('#instruction')).toHaveValue('第二个上下文的新想法');
+  await page.reload(); await expectInstructionText(page.locator('#instruction'), '发送后的下一条草稿');
+  await secondPage.reload(); await expectInstructionText(secondPage.locator('#instruction'), '第二个上下文的新想法');
   expect((await app.state(second.id)).draft.text).toBe('第二个上下文的新想法');
   await secondPage.close();
 });
@@ -1077,11 +1117,11 @@ test('real video and file imports, time/frame annotations and decode fallback', 
 test('file paste and drop add canvas objects from every input while text remains editable', async ({ page, app }) => {
   await open(page, app); const image = await png(page); const data = [...image.buffer];
   const unprevented = await page.locator('#instruction').evaluate(element => { const data = new DataTransfer(); data.setData('text/plain', '普通文字'); const event = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: data }); element.dispatchEvent(event); return !event.defaultPrevented; });
-  expect(unprevented).toBeTruthy();
-  await page.locator('#instruction').fill('保留这段文字');
+  expect(unprevented).toBeFalsy(); await expectInstructionText(page.locator('#instruction'), '普通文字');
+  await replaceInstructionText(page.locator('#instruction'), '保留这段文字');
   await page.locator('#instruction').evaluate((element, data) => { const transfer = new DataTransfer(); transfer.items.add(new File([new Uint8Array(data)], 'pasted.png', { type: 'image/png' })); element.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: transfer })); }, data);
   await expect(page.locator('.board-object')).toHaveCount(1);
-  await expect(page.locator('.draft-asset')).toHaveCount(0); await expect(page.locator('#instruction')).toHaveValue('保留这段文字');
+  await expect(page.locator('.draft-asset')).toHaveCount(0); await expectInstructionText(page.locator('#instruction'), '保留这段文字');
   const first = await app.state(), bounds = (await page.locator('#whiteboard').boundingBox())!;
   expect(first.objects[0].x + first.objects[0].width / 2).toBeCloseTo((bounds.width / 2 - first.session.view.x) / first.session.view.zoom, 1);
   expect(first.objects[0].y + first.objects[0].height / 2).toBeCloseTo((bounds.height / 2 - first.session.view.y) / first.session.view.zoom, 1);
@@ -1093,7 +1133,7 @@ test('file paste and drop add canvas objects from every input while text remains
   await page.locator('.composer').evaluate((element, data) => { const transfer = new DataTransfer(); transfer.items.add(new File([new Uint8Array(data)], 'composer-drop.png', { type: 'image/png' })); element.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: transfer })); }, data);
   await expect(page.locator('.board-object')).toHaveCount(3);
   expect((await app.state()).draft.attachments).toEqual([]);
-  await expect(page.locator('#instruction')).toHaveValue('保留这段文字');
+  await expectInstructionText(page.locator('#instruction'), '保留这段文字');
 });
 
 test('full-screen canvas and floating controls preserve multiline drafts and references', async ({ page, app }, info) => {
@@ -1104,9 +1144,9 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
   await page.locator('.board-object').focus(); await page.keyboard.press('Enter');
   await page.getByRole('button', { name: 'Attach to request', exact: true }).click();
   const text = '保持主体的轮廓与比例。\n留出标题空间。\n使用现有参考中的色彩。';
-  await page.locator('#instruction').fill(text);
+  await replaceInstructionText(page.locator('#instruction'), text);
   await expect.poll(async () => (await app.state()).draft.text).toBe(text);
-  await page.reload(); await expect(page.locator('#instruction')).toHaveValue(text);
+  await page.reload(); await expectInstructionText(page.locator('#instruction'), text);
   await expect(page.locator('.draft-asset')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Add attachment to request', exact: true })).toHaveCount(0);
   await expect(page.getByLabel('Select request attachments', { exact: true })).toHaveCount(0);
@@ -1116,10 +1156,13 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
     if (width <= 1160) await page.getByRole('button', { name: 'Fit all files', exact: true }).click();
     if (dark && await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).count()) await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
     const input = page.locator('#instruction'); await input.focus();
+    await page.locator('.composer').evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
     const composer = (await page.locator('.composer').boundingBox())!, box = (await input.boundingBox())!, send = (await page.getByRole('button', { name: 'Send request', exact: true }).boundingBox())!;
     const canvas = (await page.locator('#whiteboard').boundingBox())!, tools = (await page.getByRole('toolbar', { name: 'Board tools', exact: true }).boundingBox())!;
     expect(canvas).toEqual({ x: 0, y: 0, width, height });
-    await expect.poll(async () => (await page.locator('.composer').boundingBox())!.height).toBe(152);
+    await expectInstructionText(input, text); await expect(input.locator('.chatbox-reference')).toHaveCount(1);
+    expect(composer.y).toBeGreaterThanOrEqual(0); expect(composer.x).toBeGreaterThanOrEqual(16); expect(composer.x + composer.width).toBeLessThanOrEqual(width - 16); expect(composer.y + composer.height).toBeLessThanOrEqual(height);
+    await expectInstructionVisible(input, 3);
     expect(composer.width).toBeLessThanOrEqual(720);
     expect(Math.abs(box.y + box.height - 12 - send.y - send.height / 2)).toBeLessThan(1);
     expect(tools.x - canvas.x).toBe(16); expect(tools.height).toBeGreaterThan(tools.width);
@@ -1131,11 +1174,11 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
     expect(await floating.evaluateAll(buttons => buttons.every(button => { const bounds = button.getBoundingClientRect(); return bounds.top >= 14 && bounds.right <= innerWidth - 14 && document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === button; }))).toBeTruthy();
     const actions = (await page.locator('.selection-actions').boundingBox())!, imports = (await page.locator('.canvas-actions').boundingBox())!;
     expect(actions.x + actions.width <= imports.x || actions.y >= imports.y + imports.height).toBeTruthy();
-    await expect(page.locator('.canvas-toolbar button')).toHaveCount(6);
+    await expect(page.locator('.canvas-toolbar button')).toHaveCount(7); await expect(page.getByRole('button', { name: 'Mark canvas', exact: true })).toBeEnabled();
     await expect(page.locator('.canvas-zoom')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Draw region annotation', exact: true })).toHaveCount(0);
     await expect(page.locator('header,.canvas-heading,.draft-save,.send-hint')).toHaveCount(0);
-    expect(await input.evaluate(element => ({ rows: (element as HTMLTextAreaElement).rows, overflow: element.scrollHeight > element.clientHeight, outline: getComputedStyle(element).outlineStyle, border: getComputedStyle(element).borderWidth, shadow: getComputedStyle(element).boxShadow, surface: getComputedStyle(element).backgroundColor }))).toEqual({ rows: 1, overflow: false, outline: 'none', border: '0px', shadow: 'none', surface: 'rgba(0, 0, 0, 0)' });
+    expect(await input.evaluate(element => ({ editable: (element as HTMLElement).contentEditable, overflow: element.scrollHeight > element.clientHeight, outline: getComputedStyle(element).outlineStyle, border: getComputedStyle(element).borderWidth, shadow: getComputedStyle(element).boxShadow, surface: getComputedStyle(element).backgroundColor }))).toEqual({ editable: 'true', overflow: false, outline: 'none', border: '0px', shadow: 'none', surface: 'rgba(0, 0, 0, 0)' });
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBeFalsy();
     measurements.push({ name, viewport: { width, height }, composer, input: box, send, canvas, tools, references: await page.locator('.draft-attachments').boundingBox() });
     await page.locator('.board-object img').evaluateAll(images => Promise.all(images.map(image => (image as HTMLImageElement).decode())));
@@ -1146,24 +1189,28 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
   await expect(page.locator('.queue-item')).toHaveCount(1);
   const sent = await app.state(); expect(sent.tasks[0].snapshot.userRequest.text).toBe(text); expect(sent.tasks[0].snapshot.referenceContent.assets).toHaveLength(1);
   for (let index = 2; index <= 6; index++) {
-    await page.locator('#instruction').fill(`构图探索 ${index}`);
+    await replaceInstructionText(page.locator('#instruction'), `构图探索 ${index}`);
     await page.getByRole('button', { name: 'Send request', exact: true }).click();
     await expect(page.locator('.queue-item')).toHaveCount(index);
   }
   await page.locator('.board-object').focus(); await page.keyboard.press('Enter');
   await page.getByRole('button', { name: 'Attach to request', exact: true }).click();
-  await page.locator('#instruction').fill(text);
+  await replaceInstructionText(page.locator('#instruction'), text);
   await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   await expect(page.locator('.toast')).toHaveCount(0);
   await page.locator('.queue-expand').click(); await expect(page.locator('.queue-item:visible')).toHaveCount(6);
   for (const width of [390, 560, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 844 });
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    await page.locator('.creation-dock').evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
+    await expectInstructionText(page.locator('#instruction'), text); await expect(page.locator('#instruction .chatbox-reference')).toHaveCount(1); await expectInstructionVisible(page.locator('#instruction'), 3);
     const queue = (await page.locator('.queue-list').boundingBox())!, tools = (await page.locator('.canvas-toolbar').boundingBox())!, composer = (await page.locator('.composer').boundingBox())!, references = (await page.locator('.draft-attachments').boundingBox())!;
     expect(queue.x).toBeGreaterThanOrEqual(tools.x + tools.width + 4);
     expect(references.x).toBeGreaterThan(composer.x);
     expect(references.height).toBeLessThanOrEqual(44); expect(references.y).toBeGreaterThan(composer.y); expect(references.y + references.height).toBeLessThan(composer.y + composer.height);
-    expect((await page.locator('.queue-item').last().boundingBox())!.y + (await page.locator('.queue-item').last().boundingBox())!.height).toBeLessThanOrEqual(references.y);
-    expect(composer.height).toBe(152);
+    const lastQueued = (await page.locator('.queue-item').last().boundingBox())!;
+    expect(lastQueued.y + lastQueued.height).toBeLessThanOrEqual(references.y);
+    expect(composer.x).toBeGreaterThanOrEqual(16); expect(composer.x + composer.width).toBeLessThanOrEqual(width - 16); expect(composer.y).toBeGreaterThan(tools.y + tools.height); expect(composer.y + composer.height).toBeLessThanOrEqual(844);
     expect(await page.locator('.canvas-toolbar button').evaluateAll(buttons => buttons.every(button => { const bounds = button.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === button; }))).toBeTruthy();
     measurements.push({ name: `expanded-queue-${width}`, viewport: { width, height: 844 }, queue, tools, composer, references });
     await page.screenshot({ path: info.outputPath(`floating-queue-${width}.png`) });
@@ -1178,7 +1225,7 @@ test('dark narrow composer keeps text styling stable, restores inline focus and 
   const composer = page.locator('.composer'), input = page.locator('#instruction');
   const before = await composer.evaluate(element => ({ border: getComputedStyle(element).borderColor, surface: getComputedStyle(element).backgroundColor }));
   await input.focus(); await expect(input).toBeFocused();
-  await input.fill('窄屏中的真实草稿');
+  await replaceInstructionText(input, '窄屏中的真实草稿');
   await expect.poll(async () => (await app.state()).draft.text).toBe('窄屏中的真实草稿');
   const styling = await input.evaluate(element => ({ outline: getComputedStyle(element).outlineStyle, border: getComputedStyle(element).borderWidth, background: getComputedStyle(element).backgroundColor, shadow: getComputedStyle(element).boxShadow, animation: getComputedStyle(element).animationName, overflow: document.documentElement.scrollWidth > innerWidth }));
   expect(styling).toEqual({ outline: 'none', border: '0px', background: 'rgba(0, 0, 0, 0)', shadow: 'none', animation: 'none', overflow: false });
@@ -1199,18 +1246,18 @@ test('clean drafts absorb CLI edits; conflicting unsaved drafts keep both copies
   const externalFile = join(app.root, 'external-draft.json');
   await writeFile(externalFile, JSON.stringify({ ...first.draft, text: 'CLI 保存的草稿' }));
   await cli(['draft', 'save', ...args, '--input', externalFile]);
-  await expect(page.locator('#instruction')).toHaveValue('CLI 保存的草稿');
+  await expectInstructionText(page.locator('#instruction'), 'CLI 保存的草稿');
   let release!: () => void, entered!: () => void;
   const enteredPromise = new Promise<void>(resolve => { entered = resolve; });
   const delayed = new Promise<void>(resolve => { release = resolve; });
   await page.route(`**/api/sessions/${first.session.id}/draft`, async route => { entered(); await delayed; await route.continue(); });
-  await page.locator('#instruction').fill('本地尚未保存的想法');
+  await replaceInstructionText(page.locator('#instruction'), '本地尚未保存的想法');
   await enteredPromise;
   const current = await app.state();
   await writeFile(externalFile, JSON.stringify({ ...current.draft, text: '服务端新增的完整想法' }));
   await cli(['draft', 'save', ...args, '--input', externalFile]);
   await expect(page.getByText('Draft updated elsewhere', { exact: true })).toBeVisible();
-  await expect(page.locator('#instruction')).toHaveValue('本地尚未保存的想法');
+  await expectInstructionText(page.locator('#instruction'), '本地尚未保存的想法');
   const dialog = page.getByRole('region', { name: 'Resolve draft update', exact: true });
   await expect(dialog.getByText('本地尚未保存的想法', { exact: true })).toBeVisible();
   await expect(dialog.getByText('服务端新增的完整想法', { exact: true })).toBeVisible();
@@ -1223,12 +1270,12 @@ test('clean drafts absorb CLI edits; conflicting unsaved drafts keep both copies
   await expect.poll(async () => (await app.state()).draft.text).toBe('本地尚未保存的想法');
   await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   await page.unroute(`**/api/sessions/${first.session.id}/draft`);
-  await page.locator('#instruction').fill('第二次本地输入');
+  await replaceInstructionText(page.locator('#instruction'), '第二次本地输入');
   const latest = await app.state();
   await app.call(`/api/sessions/${first.session.id}/draft`, 'PUT', { ...latest.draft, text: '第二次服务端更新' });
   await expect(page.getByText('Draft updated elsewhere', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Use saved draft', exact: true }).click();
-  await expect(page.locator('#instruction')).toHaveValue('第二次服务端更新');
+  await expectInstructionText(page.locator('#instruction'), '第二次服务端更新');
 });
 
 test('two URL task contexts preserve their independent viewport during a delayed load', async ({ page, app }) => {
@@ -1262,11 +1309,11 @@ test('committed saves converge after lost responses before or after SSE confirma
       await route.abort('failed'); handled();
     });
     const text = `已持久保存但响应丢失 ${delay}`;
-    await page.locator('#instruction').fill(text);
+    await replaceInstructionText(page.locator('#instruction'), text);
     await expect.poll(async () => (await app.state()).draft.text).toBe(text);
     await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
     await expect(page.locator('.draft-conflict')).toHaveCount(0);
-    await expect(page.locator('#instruction')).toHaveValue(text);
+    await expectInstructionText(page.locator('#instruction'), text);
     await handledPromise;
     await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
     await page.unroute(`**/api/sessions/${sessionId}/draft`);
@@ -1280,7 +1327,7 @@ test('isolated production processes repeatedly restart, claim and publish withou
   await open(page, app);
   const sessionId = (await app.state()).session.id;
   for (let index = 0; index < 3; index++) {
-    await page.locator('#instruction').fill(`生产生命周期需求 ${index + 1}`);
+    await replaceInstructionText(page.locator('#instruction'), `生产生命周期需求 ${index + 1}`);
     await page.getByRole('button', { name: 'Send request', exact: true }).click();
     await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(1);
     const args = ['--project', app.root, '--url', app.server.url, '--session', sessionId];
@@ -1302,10 +1349,10 @@ test('isolated production processes repeatedly restart, claim and publish withou
 
 test('same-port service restart refreshes authentication and SSE while the browser stays open', async ({ page, app }) => {
   await open(page, app);
-  await page.locator('#instruction').fill('重启前已入队的需求');
+  await replaceInstructionText(page.locator('#instruction'), '重启前已入队的需求');
   await page.getByRole('button', { name: 'Send request', exact: true }).click();
   await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(1);
-  await page.locator('#instruction').fill('重启前的持久草稿');
+  await replaceInstructionText(page.locator('#instruction'), '重启前的持久草稿');
   await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   const url = page.url();
   let bootstrapResponses = 0;
@@ -1314,9 +1361,9 @@ test('same-port service restart refreshes authentication and SSE while the brows
   await expect.poll(() => bootstrapResponses, { timeout: 15_000 }).toBeGreaterThan(0);
   await expect(page.locator('.connection-feedback')).toHaveCount(0, { timeout: 15_000 });
   expect(page.url()).toBe(url);
-  await expect(page.locator('#instruction')).toHaveValue('重启前的持久草稿');
+  await expectInstructionText(page.locator('#instruction'), '重启前的持久草稿');
   await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(1);
-  await page.locator('#instruction').fill('自动重连后的新草稿');
+  await replaceInstructionText(page.locator('#instruction'), '自动重连后的新草稿');
   await expect.poll(async () => (await app.state()).draft.text).toBe('自动重连后的新草稿');
   await page.getByRole('button', { name: 'Send request', exact: true }).click();
   await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(2);
@@ -1343,13 +1390,13 @@ test('a different project on the same port keeps dirty content and blocks asset/
     if (request.method() === 'PUT' && request.url().endsWith(`/api/sessions/${sessionId}/draft`)) draftWrites++;
   });
   await page.route(`**/api/sessions/${sessionId}/draft`, async route => { entered(); await delayed; await route.continue(); });
-  await page.locator('#instruction').fill('旧项目尚未保存的完整输入'); await enteredPromise;
+  await replaceInstructionText(page.locator('#instruction'), '旧项目尚未保存的完整输入'); await enteredPromise;
   const nextRoot = await app.replaceProject();
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(image);
   await expect(page.getByRole('alert')).toContainText('This address now serves another project');
   release();
-  await expect(page.locator('#instruction')).toHaveValue('旧项目尚未保存的完整输入');
-  await expect(page.locator('#instruction')).toHaveAttribute('readonly', '');
+  await expectInstructionText(page.locator('#instruction'), '旧项目尚未保存的完整输入');
+  await expect(page.locator('#instruction')).toHaveAttribute('contenteditable', 'false');
   await expect(page.getByRole('button', { name: 'Send request', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Reopen board', exact: true })).toBeVisible();
   expect(await app.call('/api/sessions')).toEqual([]);
@@ -1368,13 +1415,13 @@ test('lost send responses query the persisted draft association and keep one tas
   let handled!: () => void;
   const handledPromise = new Promise<void>(resolve => { handled = resolve; });
   await page.route(`**/api/sessions/${sessionId}/tasks`, async route => { await route.fetch(); await route.abort('failed'); handled(); });
-  await page.locator('#instruction').fill('响应丢失仍保留的一次需求');
+  await replaceInstructionText(page.locator('#instruction'), '响应丢失仍保留的一次需求');
   await page.getByRole('button', { name: 'Send request', exact: true }).click(); await handledPromise;
   await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(1);
-  await expect(page.locator('#instruction')).toHaveValue('');
+  await expectInstructionText(page.locator('#instruction'), '');
   await expect(page.locator('.error-banner')).toHaveCount(0);
   await page.unroute(`**/api/sessions/${sessionId}/tasks`);
-  await page.locator('#instruction').fill('后续独立需求');
+  await replaceInstructionText(page.locator('#instruction'), '后续独立需求');
   await page.getByRole('button', { name: 'Send request', exact: true }).click();
   await expect(page.locator('.queue-item[data-status="queued"]')).toHaveCount(2);
   expect((await app.state()).tasks.map(task => task.snapshot.userRequest.text)).toEqual(['响应丢失仍保留的一次需求', '后续独立需求']);
@@ -1384,8 +1431,8 @@ test('queue accessible statuses and symmetric insets stay usable across viewport
   await open(page, app); const image = await png(page);
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(['Cover study.png', 'Palette study.png', 'Light study.png', 'Texture study.png'].map(name => ({ ...image, name }))); await expect(page.locator('.board-object')).toHaveCount(4);
   for (const [index, object] of (await page.locator('.board-object').all()).entries()) { await object.focus(); await page.keyboard.press(index ? 'Shift+Enter' : 'Enter'); }
-  await page.getByRole('button', { name: 'Attach to request', exact: true }).click(); await page.locator('#instruction').fill('Compose a quiet cover from these references.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1);
-  await page.locator('#instruction').fill('Refine the title spacing and hierarchy.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Attach to request', exact: true }).click(); await replaceInstructionText(page.locator('#instruction'), 'Compose a quiet cover from these references.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1);
+  await replaceInstructionText(page.locator('#instruction'), 'Refine the title spacing and hierarchy.'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(2);
   const first = page.locator('.queue-item').first(), second = page.locator('.queue-item').nth(1), measurements: unknown[] = [];
   for (const row of [first, second]) { await expect(row.locator('.queue-task-mark')).toHaveAttribute('aria-hidden', 'true'); await expect(row.locator('.queue-task-mark svg.lucide-circle')).toHaveCount(1); await expect(row.locator('.queue-row>.status-badge')).toHaveCount(0); await expect(row.locator('.queue-task')).toHaveAttribute('aria-label', /Queued$/); }
   await expect(first.locator('.queue-preview')).toHaveCount(3); await expect(first.locator('.queue-preview-overflow')).toHaveText('+1');
@@ -1409,7 +1456,7 @@ test('queue accessible statuses and symmetric insets stay usable across viewport
 
 test('compact queue opens on hover with nonlinear motion and supports keyboard and touch access', async ({ page, browser, app }, info) => {
   await open(page, app);
-  for (let index = 1; index <= 6; index++) { await page.locator('#instruction').fill(`Composition ${index}`); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); await expect(page.locator('#instruction')).toBeEnabled(); }
+  for (let index = 1; index <= 6; index++) { await replaceInstructionText(page.locator('#instruction'), `Composition ${index}`); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(index); await expect(page.locator('#instruction')).toBeEnabled(); }
   const toggle = page.locator('.queue-expand'); await page.locator('#whiteboard').click({ position: { x: 1100, y: 100 } }); await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await expect.poll(async () => page.locator('.queue-extra').first().evaluate(element => element.getBoundingClientRect().height)).toBe(0);
   await page.evaluate(() => { const motion: number[] = []; (window as any).hoverMotion = motion; const started = performance.now(); const sample = () => { motion.push(new DOMMatrix(getComputedStyle(document.querySelector('.queue-extra')!).transform).m42); if (performance.now() - started < 600) requestAnimationFrame(sample); }; requestAnimationFrame(sample); });
@@ -1429,10 +1476,10 @@ test('spring queue and composer keep compact references, editable FIFO slots and
   const composer = page.locator('.composer'), input = page.locator('#instruction');
   const narrow = (await composer.boundingBox())!.width; await input.click(); await expect(composer).toHaveAttribute('data-compact', 'false');
   await expect.poll(async () => (await composer.boundingBox())!.width).toBeGreaterThan(narrow + 100);
-  await input.fill('One line\nSecond line\nThird line');
+  await replaceInstructionText(input, 'One line\nSecond line\nThird line');
   await expect.poll(async () => composer.evaluate(form => { const outer = form.getBoundingClientRect(), send = form.querySelector('.send-button')!.getBoundingClientRect(); return Math.abs((outer.right - send.right) - (outer.bottom - send.bottom)); })).toBeLessThan(.1);
   expect((await page.locator('.send-button').boundingBox())!.width).toBe(32);
-  await input.fill(''); await page.locator('#whiteboard').click({ position: { x: 1000, y: 150 } }); await expect(composer).toHaveAttribute('data-compact', 'true');
+  await replaceInstructionText(input, ''); await page.locator('#whiteboard').click({ position: { x: 1000, y: 150 } }); await expect(composer).toHaveAttribute('data-compact', 'true');
   const springImage = await png(page); await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(['Cover.png', 'Palette.png'].map(name => ({ ...springImage, name })));
   await expect(page.locator('.board-object')).toHaveCount(2);
   const initial = await app.state(), objectA = initial.objects[0], objectB = initial.objects[1];
@@ -1440,24 +1487,24 @@ test('spring queue and composer keep compact references, editable FIFO slots and
   await app.call(`/api/sessions/${initial.session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision });
   for (const text of ['Second queued request', 'Third queued request']) { const state = await app.state(); saved = await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...state.draft, text }); await app.call(`/api/sessions/${initial.session.id}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision }); }
   await page.reload(); await expect(page.locator('.queue-item')).toHaveCount(3); await expect(page.locator('.queue-stack')).not.toHaveClass(/expanded/);
-  await input.fill(''); await page.locator('#whiteboard').click({ position: { x: 1000, y: 150 } }); await expect(composer).toHaveAttribute('data-compact', 'false'); expect((await composer.boundingBox())!.width).toBe(720);
+  await replaceInstructionText(input, ''); await page.locator('#whiteboard').click({ position: { x: 1000, y: 150 } }); await expect(composer).toHaveAttribute('data-compact', 'false'); expect((await composer.boundingBox())!.width).toBe(720);
   await expect.poll(async () => page.locator('.queue-extra').first().evaluate(element => element.getBoundingClientRect().height)).toBe(0);
   await page.locator('.queue-stack').hover(); await expect(page.locator('.queue-stack')).toHaveClass(/expanded/); await expect.poll(async () => page.locator('.queue-extra').first().evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThan(30);
   await expect(page.locator('.queue-task-mark svg.lucide-circle')).toHaveCount(3); await expect(page.locator('.queue-task .lucide-loader-circle')).toHaveCount(0); await expect(page.getByRole('button', { name: 'Collapse queue', exact: true })).toHaveCount(0);
   const first = page.locator('.queue-item').first(); await first.locator('.queue-task').click(); await expect(first.locator('.motion-disclosure')).toHaveAttribute('data-motion', 'open');
-  await expect(first.locator('.task-instruction,.task-heading')).toHaveCount(0); await expect(first.locator('.task-reference-group[data-annotation-id]')).toHaveCount(3); await expect(first.locator(`[data-reference-item="${objectA.id}"]`)).toHaveCount(2); await expect(first.locator(`[data-reference-item="${objectB.id}"]`)).toHaveCount(1); await expect(first.locator('.task-item-annotation')).toHaveCount(3);
+  await expect(first.locator('.task-instruction')).toHaveCount(1); await expectInstructionText(first.locator('.task-instruction'), 'Create from each reference.'); await expect(first.locator('.task-instruction .task-inline-reference')).toHaveCount(2); await expect(first.locator('.task-heading')).toHaveCount(0); await expect(first.locator('.task-reference-group[data-annotation-id]')).toHaveCount(3); await expect(first.locator(`[data-reference-item="${objectA.id}"]`)).toHaveCount(2); await expect(first.locator(`[data-reference-item="${objectB.id}"]`)).toHaveCount(1); await expect(first.locator('.task-item-annotation')).toHaveCount(3);
   expect(await first.getByRole('button', { name: 'Collapse request details', exact: true }).locator('svg').getAttribute('class')).toContain('chevron-down');
   await page.screenshot({ path: info.outputPath('spring-queue-wide.png') });
   await first.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(first.locator('.motion-disclosure')).toHaveAttribute('data-motion', 'closing'); await expect(first.locator('.motion-disclosure')).toHaveCount(0);
-  const queued = await app.state(), ids = queued.tasks.map(task => task.id); saved = await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...queued.draft, text: 'Next unsent idea' }); await expect(input).toHaveValue('Next unsent idea');
-  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(input).toHaveValue('Create from each reference.'); await expect(page.locator('.draft-annotation')).toHaveCount(3); await expect(page.locator('.composer-editing')).toBeVisible();
-  await input.fill('Revised request'); await expect(composer).toHaveAttribute('data-save-state', 'saved'); await page.reload(); await expect(input).toHaveValue('Revised request'); await expect(page.getByRole('button', { name: 'Cancel edit', exact: true })).toBeVisible();
+  const queued = await app.state(), ids = queued.tasks.map(task => task.id); saved = await app.call(`/api/sessions/${initial.session.id}/draft`, 'PUT', { ...queued.draft, text: 'Next unsent idea' }); await expectInstructionText(input, 'Next unsent idea');
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expectInstructionText(input, 'Create from each reference.'); await expect(page.locator('.draft-annotation')).toHaveCount(3); await expect(page.locator('.composer-editing')).toBeVisible();
+  await replaceInstructionText(input, 'Revised request'); await expect(composer).toHaveAttribute('data-save-state', 'saved'); await page.reload(); await expectInstructionText(input, 'Revised request'); await expect(page.getByRole('button', { name: 'Cancel edit', exact: true })).toBeVisible();
   await page.locator('.annotation-content').first().click(); const annotationText = page.getByRole('textbox', { name: 'Annotation text', exact: true }); await annotationText.fill('Revised first comment'); await annotationText.press('Escape');
   await page.route(`**/api/sessions/${initial.session.id}/tasks`, async route => { await route.fetch(); await route.abort('failed'); });
-  await page.getByRole('button', { name: 'Save edit', exact: true }).click(); await expect(input).toHaveValue('Next unsent idea'); await expect(page.getByRole('alert')).toHaveCount(0); await page.unroute(`**/api/sessions/${initial.session.id}/tasks`);
+  await page.getByRole('button', { name: 'Save edit', exact: true }).click(); await expectInstructionText(input, 'Next unsent idea'); await expect(page.getByRole('alert')).toHaveCount(0); await page.unroute(`**/api/sessions/${initial.session.id}/tasks`);
   const result = await app.state(); expect(result.tasks.map(task => task.id)).toEqual(ids); expect(result.tasks[0].snapshot.userRequest.text).toBe('Revised request'); expect(result.tasks[0].snapshot.annotations[0].text).toBe('Revised first comment'); expect(result.tasks[0].sequence).toBe(1);
   for (const width of [390, 320]) { await page.setViewportSize({ width, height: 480 }); await expect(page.getByRole('button', { name: 'More request actions', exact: true })).toBeInViewport(); await page.locator('.queue-stack').hover(); await expect(page.getByRole('button', { name: 'Edit request 1', exact: true })).toBeInViewport(); await page.screenshot({ path: info.outputPath(`spring-queue-${width}.png`) }); }
-  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(input).toHaveValue('Revised request'); await input.fill('Discarded edit'); await page.getByRole('button', { name: 'Cancel edit', exact: true }).click(); await expect(input).toHaveValue('Next unsent idea'); expect((await app.state()).tasks[0].snapshot.userRequest.text).toBe('Revised request');
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expectInstructionText(input, 'Revised request'); await replaceInstructionText(input, 'Discarded edit'); await page.getByRole('button', { name: 'Cancel edit', exact: true }).click(); await expectInstructionText(input, 'Next unsent idea'); expect((await app.state()).tasks[0].snapshot.userRequest.text).toBe('Revised request');
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' }); await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click(); await first.locator('.queue-task').click(); await expect(first.locator('.motion-disclosure')).toHaveAttribute('data-motion', 'open'); expect(await first.locator('.motion-disclosure').evaluate(element => getComputedStyle(element).transitionDuration)).toBe('0s'); await first.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(first.locator('.motion-disclosure')).toHaveCount(0); await page.screenshot({ path: info.outputPath('spring-queue-dark-reduced.png') });
 });
 
@@ -1477,7 +1524,7 @@ test('request details group each annotation once with all snapshot targets in on
   await app.call('/api/board/operations', 'POST', { sessionId: initial.session.id, operations: [{ type: 'delete', objectId: objects[0].id, expectedVersion: objects[0].version }] });
   await page.reload();
   const composer = page.locator('.composer');
-  await page.locator('#whiteboard').click({ position: { x: 1000, y: 150 } }); await expect(page.locator('#instruction')).toHaveValue(''); await expect(composer).toHaveAttribute('data-compact', 'false'); expect((await composer.boundingBox())!.width).toBe(720);
+  await page.locator('#whiteboard').click({ position: { x: 1000, y: 150 } }); await expectInstructionText(page.locator('#instruction'), ''); await expect(composer).toHaveAttribute('data-compact', 'false'); expect((await composer.boundingBox())!.width).toBe(720);
   await page.locator('.queue-task').click();
   const details = page.getByRole('region', { name: 'Request 1', exact: true }), groups = details.locator('.task-reference-group[data-annotation-id]');
   await page.locator('.queue-item').evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
@@ -1529,8 +1576,8 @@ test('editing annotations restores their chips and preserves an explicit attachm
   const original = (await app.state()).tasks[0]; expect(original.snapshot.annotations.map(annotation => annotation.text)).toEqual(['abc', 'g']); expect(original.snapshot.referenceContent.assets).toHaveLength(4);
   await page.getByRole('button', { name: 'Edit request 1', exact: true }).click();
   await expect(page.locator('.draft-annotation')).toHaveCount(2); await expect(page.locator('.draft-asset')).toHaveCount(0);
-  await page.locator('#instruction').fill('efg'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
-  await page.reload(); await expect(page.locator('#instruction')).toHaveValue('efg'); await expect(page.locator('.draft-asset')).toHaveCount(0);
+  await replaceInstructionText(page.locator('#instruction'), 'efg'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+  await page.reload(); await expectInstructionText(page.locator('#instruction'), 'efg'); await expect(page.locator('.draft-asset')).toHaveCount(0);
   await page.getByRole('button', { name: 'Save edit', exact: true }).click(); await expect(page.locator('.composer-editing')).toHaveCount(0);
   const revised = (await app.state()).tasks[0]; expect(revised.id).toBe(original.id); expect(revised.snapshot.referenceContent.assets).toEqual(original.snapshot.referenceContent.assets); expect(revised.snapshot.requestReferences).toEqual({ attachmentIds: [], objectIds: [] });
   await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.locator('.draft-asset')).toHaveCount(0);
@@ -1557,21 +1604,21 @@ test('an earlier annotation-only request keeps its references after a normal com
   const database = new Database(join(app.root, '.acanvas', 'board.sqlite'));
   try { database.prepare('UPDATE tasks SET snapshot_json=? WHERE id=?').run(JSON.stringify(original.snapshot), original.id); } finally { database.close(); }
   await page.reload();
-  await page.locator('#instruction').fill('Unsent next idea'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+  await replaceInstructionText(page.locator('#instruction'), 'Unsent next idea'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   await page.getByRole('button', { name: 'Edit request 1', exact: true }).click();
   await expect(page.locator('.draft-asset')).toHaveCount(4); await expect(page.locator('.draft-annotation')).toHaveCount(2);
   for (let index = 1; index <= 4; index++) await page.getByRole('button', { name: `Remove attachment Earlier source ${index}.png`, exact: true }).click();
   await expect(page.locator('.draft-asset')).toHaveCount(0); await expect(page.locator('.draft-annotation')).toHaveCount(2);
   await page.getByRole('button', { name: 'Save edit', exact: true }).click(); await expect(page.locator('.composer-editing')).toHaveCount(0);
-  await expect(page.locator('#instruction')).toHaveValue('Unsent next idea');
+  await expectInstructionText(page.locator('#instruction'), 'Unsent next idea');
   const revised = (await app.state()).tasks[0];
   expect(revised.id).toBe(original.id); expect(revised.sequence).toBe(original.sequence); expect(revised.status).toBe('queued');
   expect(revised.snapshot).toEqual({ ...original.snapshot, requestReferences: { attachmentIds: [], objectIds: [] } });
   await app.restart(true); await page.reload(); await expect(page.locator('.queue-item')).toHaveCount(1);
   await page.getByRole('button', { name: 'Edit request 1', exact: true }).click();
-  await expect(page.locator('.draft-asset')).toHaveCount(0); await expect(page.locator('.draft-annotation')).toHaveCount(2); await expect(page.locator('#instruction')).toHaveValue('efg');
+  await expect(page.locator('.draft-asset')).toHaveCount(0); await expect(page.locator('.draft-annotation')).toHaveCount(2); await expectInstructionText(page.locator('#instruction'), 'efg');
   await page.screenshot({ path: info.outputPath('earlier-annotations-edit.png') });
-  await page.getByRole('button', { name: 'Cancel edit', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Unsent next idea');
+  await page.getByRole('button', { name: 'Cancel edit', exact: true }).click(); await expectInstructionText(page.locator('#instruction'), 'Unsent next idea');
   expect((await app.state()).tasks[0].snapshot).toEqual(revised.snapshot);
 });
 
@@ -1693,28 +1740,28 @@ test('four square file corners preserve opposite anchors and commit snapped resi
 });
 
 test('explicit draft conflict choices adopt the current editing scope in both directions', async ({ page, app }) => {
-  await open(page, app); const input = page.locator('#instruction'); await input.fill('Queued original'); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1);
+  await open(page, app); const input = page.locator('#instruction'); await replaceInstructionText(input, 'Queued original'); await input.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1);
   const first = await app.state(), sessionId = first.session.id, task = first.tasks[0];
   const conflict = page.getByRole('region', { name: 'Resolve draft update', exact: true });
   for (const entering of [true, false]) {
     let release!: () => void, entered!: () => void; const enteredPromise = new Promise<void>(resolve => { entered = resolve; }), delayed = new Promise<void>(resolve => { release = resolve; });
     await page.route(`**/api/sessions/${sessionId}/draft`, async route => { entered(); await delayed; await route.continue(); });
-    const localText = entering ? 'Local ordinary draft' : 'Local editing draft'; await input.fill(localText); await enteredPromise;
+    const localText = entering ? 'Local ordinary draft' : 'Local editing draft'; await replaceInstructionText(input, localText); await enteredPromise;
     const current = await app.state(); await app.call(`/api/sessions/${sessionId}/tasks/${task.id}/${entering ? 'edit' : 'cancel-edit'}`, 'POST', { draftId: current.draft.id, expectedRevision: current.draft.revision });
-    await expect(conflict).toBeVisible(); await expect(input).toHaveValue(localText); release();
+    await expect(conflict).toBeVisible(); await expectInstructionText(input, localText); release();
     await page.getByRole('button', { name: 'Keep your draft', exact: true }).click(); await expect(conflict).not.toBeVisible(); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
     const result = await app.state(); expect(result.draft.text).toBe(localText); expect(result.draft.editingTaskId).toBe(entering ? task.id : undefined); expect(result.tasks[0].snapshot.userRequest.text).toBe('Queued original'); await expect(page.getByRole('alert')).toHaveCount(0);
     await page.unroute(`**/api/sessions/${sessionId}/draft`);
   }
 });
 
-test('editing one removed source attachment preserves the other original object reference', async ({ page, app }) => {
+test('editing one removed source attachment and reference independently preserves the other original object', async ({ page, app }) => {
   await open(page, app); await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(['A.txt', 'B.txt'].map(name => ({ name, mimeType: 'text/plain', buffer: Buffer.from(`Reference ${name}`) }))); await expect(page.locator('.board-object')).toHaveCount(2);
   const initial = await app.state(), sessionId = initial.session.id, sourceA = initial.objects.find(object => initial.assets.find(asset => asset.id === object.assetId)?.name === 'A.txt')!, sourceB = initial.objects.find(object => initial.assets.find(asset => asset.id === object.assetId)?.name === 'B.txt')!;
   const saved = await app.call(`/api/sessions/${sessionId}/draft`, 'PUT', { ...initial.draft, text: 'Use these sources', attachments: initial.assets.map(asset => asset.id), references: { objectIds: [sourceA.id, sourceB.id], taskIds: [] } });
   await app.call(`/api/sessions/${sessionId}/tasks`, 'POST', { draftId: saved.id, expectedRevision: saved.revision });
   await app.call('/api/board/operations', 'POST', { sessionId, operations: initial.objects.map(object => ({ type: 'delete', objectId: object.id, expectedVersion: object.version })) }); await expect(page.locator('.board-object')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Use these sources'); await page.getByRole('button', { name: 'Remove attachment A.txt', exact: true }).click(); await page.getByRole('button', { name: 'Save edit', exact: true }).click(); await expect(page.locator('.composer-editing')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expectInstructionText(page.locator('#instruction'), 'Use these sources'); await page.getByRole('button', { name: 'Remove attachment A.txt', exact: true }).click(); await expect(page.locator('#instruction .chatbox-reference')).toHaveCount(2); await page.getByRole('button', { name: 'Remove reference A.txt', exact: true }).click(); await expect(page.locator('#instruction .chatbox-reference')).toHaveCount(1); await page.getByRole('button', { name: 'Save edit', exact: true }).click(); await expect(page.locator('.composer-editing')).toHaveCount(0);
   const task = (await app.state()).tasks[0]; expect(task.snapshot.referenceContent.objects).toEqual([sourceB]); expect(task.snapshot.referenceContent.assets.map(asset => asset.id)).toEqual([sourceB.assetId]);
 });
 
@@ -1839,10 +1886,10 @@ test('composer More menu preserves compact layout, real click targets, keyboard 
   await page.keyboard.press('End'); await expect(page.getByRole('menuitem', { name: 'Copy resume prompt' })).toBeFocused();
   await page.keyboard.press('Escape'); await expect(menu).toHaveCount(0); await expect(more).toBeFocused(); await expect(form).toHaveAttribute('data-compact', 'true');
   await more.press(' '); await expect(menu).toBeVisible(); await input.click(); await expect(menu).toHaveCount(0); await expect(input).toBeFocused();
-  await input.fill('Keep this draft.'); await expect(form).toHaveAttribute('data-save-state', 'saved');
+  await replaceInstructionText(input, 'Keep this draft.'); await expect(form).toHaveAttribute('data-save-state', 'saved');
   await more.click(); await page.getByRole('button', { name: 'Switch to light theme', exact: true }).click(); await expect(menu).toHaveCount(0); await expect(page.getByRole('button', { name: 'Switch to dark theme', exact: true })).toBeFocused();
   await more.focus(); await more.press('Enter'); await page.keyboard.press('End'); await page.keyboard.press('Enter');
-  await expect(page.getByRole('region', { name: 'Resume prompt', exact: true })).toBeVisible(); await expect(input).toHaveValue('Keep this draft.'); expect((await app.state()).tasks).toHaveLength(0);
+  await expect(page.getByRole('region', { name: 'Resume prompt', exact: true })).toBeVisible(); await expectInstructionText(input, 'Keep this draft.'); expect((await app.state()).tasks).toHaveLength(0);
   await page.getByRole('button', { name: 'Close resume prompt', exact: true }).click();
   await page.evaluate(() => { Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: async () => undefined }); });
   await composerAction(page, 'Copy resume prompt'); await expect(page.locator('.notification-stack')).toBeVisible(); await more.click();
@@ -1888,12 +1935,12 @@ test('copy feedback stays fixed in the corner and truncates its text when room i
     await expect(stack.locator('.toast>span')).toHaveCSS('white-space', 'nowrap'); await expect(stack.locator('.toast>span')).toHaveCSS('text-overflow', 'ellipsis');
     expect(await stack.locator('.toast>span').evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true);
     const singleLineHeight = (await geometry()).height; measured.push({ viewport: width, mode: 'compact', ...await geometry() }); await page.clock.runFor(2800);
-    await input.fill('One line\nSecond line\nThird line'); await page.clock.runFor(650); await composerAction(page, 'Copy resume prompt'); await page.clock.runFor(30);
+    await replaceInstructionText(input, 'One line\nSecond line\nThird line'); await page.clock.runFor(650); await composerAction(page, 'Copy resume prompt'); await page.clock.runFor(30);
     await expect.poll(geometry).toMatchObject({ right: 16, bottom: 16, width: 44, height: singleLineHeight });
     expect(await page.locator('.send-button').evaluate(element => { const bounds = element.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('.send-button') === element; })).toBe(true);
     await page.getByRole('button', { name: 'More request actions', exact: true }).click(); await page.clock.runFor(30); await expect.poll(geometry).toMatchObject({ right: 16, bottom: 16 });
     await page.keyboard.press('Escape'); await composerAction(page, 'Request history'); await page.clock.runFor(30); await expect.poll(geometry).toMatchObject({ right: 16, bottom: 16 });
-    await page.getByRole('button', { name: 'Close request history', exact: true }).click(); await input.fill(''); await page.locator('#whiteboard').focus(); await page.clock.runFor(3000);
+    await page.getByRole('button', { name: 'Close request history', exact: true }).click(); await replaceInstructionText(input, ''); await page.locator('#whiteboard').focus(); await page.clock.runFor(3000);
   }
   await page.setViewportSize({ width: 712, height: 720 }); await input.focus(); await page.clock.runFor(500); await composerAction(page, 'Copy resume prompt'); await page.clock.runFor(30);
   await expect.poll(geometry).toMatchObject({ right: 16, bottom: 16, width: 44 });

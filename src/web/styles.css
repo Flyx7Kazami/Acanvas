@@ -162,19 +162,19 @@ details[open] summary svg { rotate: 180deg; }
 .composer { display: flex; flex-direction: column; height: 52px; min-height: 52px; overflow: hidden; background: var(--surface); border: 1px solid color-mix(in srgb,var(--edge) 85%,transparent); border-radius: 26px; padding: 9px 9px 9px 16px; position: relative; box-shadow: var(--float-shadow); width: 100%; transition: height 180ms var(--ease); }
 .composer:has(.draft-attachments) { padding-top: 10px; }
 .composer-input-row { display: flex; flex: 0 0 auto; align-items: flex-end; gap: 8px; min-width: 0; }
-.composer-input-row>textarea,.composer-input-row>textarea:focus,.composer-input-row>textarea:focus-visible { flex: 1; min-width: 0; width: 100%; resize: none; height: 24px; min-height: 24px; overflow: hidden; scrollbar-width: thin; font-size: 15px; line-height: 24px; padding: 0; margin: 4px 0; background: transparent; border: 0; border-radius: 0; outline: 0; box-shadow: none; caret-color: var(--ink); display: block; }
-.composer-input-row>textarea::placeholder { color: var(--muted); }
-.chatbox-references { display:flex; flex:0 0 auto; gap:6px; height:32px; margin:5px 0 0; overflow:auto hidden; scrollbar-width:none; }
-.chatbox-reference,.chatbox-reference-preview { display:flex; align-items:center; gap:5px; max-width:100%; flex:0 0 auto; border:1px solid color-mix(in srgb,var(--annotation) 45%,var(--edge)); border-radius:9px; background:var(--annotation-fill); padding:3px 4px; font-size:11px; color:var(--ink); }
+.composer-input-row>.chatbox-editor,.composer-input-row>.chatbox-editor:focus,.composer-input-row>.chatbox-editor:focus-visible { flex: 1; min-width: 0; width: 100%; height: 24px; min-height: 24px; overflow: hidden; scrollbar-width: thin; font-size: 15px; line-height: 24px; padding: 0; margin: 4px 0; background: transparent; border: 0; border-radius: 0; outline: 0; box-shadow: none; caret-color: var(--ink); display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chatbox-editor[data-empty='true']::before { content:attr(data-placeholder); color:var(--muted); pointer-events:none; }
+.inline-reference-node { display:inline; white-space:normal; }
+.chatbox-reference,.chatbox-reference-preview,.task-inline-reference { display:inline-flex; vertical-align:middle; align-items:center; gap:5px; max-width:calc(100% - 6px); margin:1px 3px; border:1px solid color-mix(in srgb,var(--annotation) 45%,var(--edge)); border-radius:9px; background:var(--annotation-fill); padding:2px 3px; font-size:11px; line-height:24px; color:var(--ink); white-space:nowrap; user-select:all; }
 .chatbox-reference>span:not(.asset-thumb) { max-width:180px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .chatbox-reference button,.chatbox-reference-preview>button:last-child { display:grid; place-items:center; width:24px; height:24px; border:0; border-radius:6px; background:transparent; flex-shrink:0; }
 .chatbox-reference button:hover,.chatbox-reference-preview>button:last-child:hover { background:var(--hover); }
-.chatbox-reference .asset-thumb,.chatbox-reference-preview .asset-thumb { width:22px; height:22px; flex-basis:22px; border-radius:5px; }
+.chatbox-reference .asset-thumb,.chatbox-reference-preview .asset-thumb,.task-inline-reference .asset-thumb { width:22px; height:22px; flex-basis:22px; border-radius:5px; }
 .chatbox-reference-preview { background:color-mix(in srgb,var(--surface) 85%,var(--annotation-fill)); border-color:color-mix(in srgb,var(--edge) 65%,transparent); box-shadow:0 2px 6px color-mix(in srgb,var(--ink) 8%,transparent); color:var(--muted); }
-.reference-preview-confirm { display:flex; align-items:center; gap:6px; min-width:0; max-width:240px; background:transparent; padding:0; border:0; font-size:11px; }
+.chatbox-reference-preview>.reference-preview-confirm { display:flex; align-items:center; gap:6px; width:auto; height:24px; min-width:0; max-width:240px; background:transparent; padding:0; border:0; font-size:11px; }
 .reference-preview-confirm>span:last-child { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-.reference-preview-thumbs { display:flex; flex-shrink:0; }
-.reference-preview-thumbs .asset-thumb+.asset-thumb { margin-left:-7px; outline:2px solid var(--surface); }
+.task-inline-reference { padding-right:6px; user-select:text; }
+.task-inline-reference>span:last-child { max-width:180px; overflow:hidden; text-overflow:ellipsis; }
 .chatbox-reference[data-reference-unavailable] { border-style:dashed; color:var(--muted); }
 .reference-search { position:absolute; left:0; right:0; bottom:calc(100% + 8px); z-index:6; max-height:240px; overflow:auto; padding:5px; background:var(--surface); border:1px solid var(--edge); border-radius:12px; box-shadow:var(--float-shadow); pointer-events:auto; }
 .reference-search>button { display:flex; align-items:center; gap:8px; width:100%; min-height:40px; padding:6px; border:0; border-radius:7px; background:transparent; text-align:left; }
@@ -246,7 +246,7 @@ details[open] summary svg { rotate: 180deg; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes context-reveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 760px) { .creation-dock { bottom: 14px; } }
-@media (max-width: 540px) { .project-identity { top: 14px; left: 14px; gap: 8px; padding-inline: 9px; max-width: calc(100% - 122px); } .project-name { padding-left: 8px; } .canvas-actions { top: 14px; right: 14px; } .creation-dock { --dock-width: min(720px,calc(100vw - 32px)); bottom: 12px; } .composer { padding-left: 16px; } .composer-input-row>textarea,.inline-resume textarea { font-size: 16px; } .queue-list { padding-inline: 5px; } .queue-item { gap: 3px; } .queue-task { gap: 7px; padding-inline: 6px; } .queue-title { font-size: 11px; } .queue-item .status-badge { font-size: 8px; padding-inline: 4px; } .selection-actions { padding-inline: 4px; gap: 1px; max-width: calc(100% - 24px); } .selection-actions>button:not(.icon-button) { padding-inline: 4px; gap: 4px; font-size: 9px; } }
+@media (max-width: 540px) { .project-identity { top: 14px; left: 14px; gap: 8px; padding-inline: 9px; max-width: calc(100% - 122px); } .project-name { padding-left: 8px; } .canvas-actions { top: 14px; right: 14px; } .creation-dock { --dock-width: min(720px,calc(100vw - 32px)); bottom: 12px; } .composer { padding-left: 16px; } .composer-input-row>.chatbox-editor,.inline-resume textarea { font-size: 16px; } .queue-list { padding-inline: 5px; } .queue-item { gap: 3px; } .queue-task { gap: 7px; padding-inline: 6px; } .queue-title { font-size: 11px; } .queue-item .status-badge { font-size: 8px; padding-inline: 4px; } .selection-actions { padding-inline: 4px; gap: 1px; max-width: calc(100% - 24px); } .selection-actions>button:not(.icon-button) { padding-inline: 4px; gap: 4px; font-size: 9px; } }
 @media (pointer: coarse) { .icon-button { min-width: 40px; min-height: 40px; } .canvas-toolbar .icon-button { min-width: 32px; min-height: 32px; } .resize-handle { width: 16px; height: 16px; } .draft-asset,.draft-annotation { height: 36px; } .draft-asset .icon-button,.draft-annotation .icon-button { min-width: 28px; min-height: 28px; width: 28px; height: 28px; flex-basis: 28px; } }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none!important; transition: none!important; scroll-behavior: auto!important; } button:active:not(:disabled) { scale: 1; } }
 
@@ -283,6 +283,10 @@ details[open] summary svg { rotate: 180deg; }
 .canvas-annotation-group[data-positioned='true'] { visibility: visible; }
 .canvas-annotation-group[data-active='true'] { z-index: 9; }
 .canvas-annotation-group>.annotation-pin { position: relative; top: 0; bottom: auto; left: 0; transform: none; flex: 0 0 28px; }
+.canvas-annotation-group[data-geometry='point'] { display: block; width: 0; height: 0; }
+.canvas-annotation-group[data-geometry='point']>.annotation-pin { position: absolute; left: -14px; top: -14px; flex: none; }
+.canvas-annotation-group[data-geometry='point']>.canvas-annotation-note { position: absolute; }
+.canvas-annotation-group[data-geometry='point'][data-anchor-visible='false'] { visibility: hidden; }
 .canvas-annotation-note { position: relative; pointer-events: auto; }
 .canvas-annotation-summary { display: block; width: 220px; height: 28px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; padding: 4px 0; font-size: 13px; line-height: 20px; background: transparent; }
 .canvas-annotation-summary:hover { color: var(--annotation); }

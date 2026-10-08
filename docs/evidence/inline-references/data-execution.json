@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-08",
+  "scope": "Inline reference positions, snapshots, readable messages, and CLI",
+  "runtime": "Project Node v24.21.0",
+  "resources": "Independent temporary projects under /private/tmp",
+  "checks": [
+    { "command": "npm run build:server", "result": "PASS" },
+    { "command": "node --test dist/tests/server.test.js dist/tests/annotation-capture.test.js dist/tests/task-message.test.js", "result": "PASS", "passed": 44, "failed": 0 },
+    { "command": "git diff --check", "result": "PASS" }
+  ],
+  "coverage": [
+    "Pure-text UTF-16 positions before, between, and after text",
+    "Independent same-asset objects and stable equal-position order",
+    "Position range, Unicode code-point boundary, visual order, identity, and session scope validation",
+    "Atomic draft rejection preserves revision and contents",
+    "Legacy entries preserve their stored field shape and render at the text end",
+    "Service restart restores the submitted positions",
+    "Queued edits update positions and retain saved reference content and provenance",
+    "Native CLI process saves and sends JSON drafts and reads identical --format text messages",
+    "Imported labels and source text remain escaped reference evidence"
+  ],
+  "execution": {
+    "initialLoopbackAttempt": "Sandbox listen EPERM",
+    "permittedIsolatedReplay": "PASS",
+    "userBoardWrites": 0,
+    "liveServiceChanges": 0,
+    "commits": 0
+  }
+}

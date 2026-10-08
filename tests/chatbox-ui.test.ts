@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { expect } from '@playwright/test';
 import type { Page } from 'playwright-core';
 import { startServer } from '../src/server/http.js';
-import type { AnnotationInput, Asset, BoardObject } from '../src/shared/types.js';
+import type { AnnotationInput, Asset, BoardObject, RequestReference } from '../src/shared/types.js';
 
 async function fixture(t: test.TestContext, narrow = false) {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'acanvas-chatbox-ui-')));
@@ -90,16 +90,233 @@ test('chatbox @ search orders object and task identities and keeps IME, paste an
   const asset = await app.image('Shared asset.png'), first = await app.object(asset), second = await app.object(asset, { x: 780, y: 300, width: 300, height: 180 });
   await page.locator('#instruction').fill('Earlier request'); await page.getByRole('button', { name: 'Send request', exact: true }).click(); await expect(page.locator('.queue-item')).toHaveCount(1);
   await page.locator('#instruction').fill('@Request'); await page.keyboard.press('Enter');
-  await page.locator('#instruction').fill('@Shared'); await page.keyboard.press('Enter');
-  await page.locator('#instruction').fill('@Shared'); await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
-  const draft = await app.saved(); assert.deepEqual(draft.references.order, [{ kind: 'task', id: app.state().tasks[0].id }, { kind: 'object', id: first.id }, { kind: 'object', id: second.id }]);
+  await page.keyboard.type('@Shared'); await page.keyboard.press('Enter');
+  await page.keyboard.type('@Shared'); await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
+  const draft = await app.saved(); assert.deepEqual(draft.references.order, [{ kind: 'task', id: app.state().tasks[0].id, textOffset: 0 }, { kind: 'object', id: first.id, textOffset: 0 }, { kind: 'object', id: second.id, textOffset: 0 }]);
   assert.deepEqual(draft.attachments, []); assert.equal(draft.text, '');
-  await page.locator('#instruction').fill('Literal @unknown name'); await page.keyboard.press('Escape');
+  await page.keyboard.type('Literal @unknown name'); await page.keyboard.press('Escape');
   await page.locator('#instruction').dispatchEvent('compositionstart'); await page.locator('#instruction').dispatchEvent('keydown', { key: 'Enter', keyCode: 229, isComposing: true });
   assert.equal(app.state().tasks.length, 1); await page.locator('#instruction').dispatchEvent('compositionend');
   await page.locator('#instruction').dispatchEvent('paste'); await page.keyboard.press('Escape'); await page.getByRole('button', { name: 'Send request', exact: true }).click();
   await expect(page.locator('.queue-item')).toHaveCount(2); assert.equal(app.state().tasks[1].snapshot.userRequest.text, 'Literal @unknown name');
   assert.deepEqual(app.state().tasks[1].snapshot.requestReferences?.order?.map(value => `${value.kind}:${value.id}`), draft.references.order?.map(value => `${value.kind}:${value.id}`));
+});
+
+async function editorSelection(page: Page, start: number, end = start) {
+  await page.locator('#instruction').evaluate((element, selection) => {
+    const root = element as HTMLElement; root.focus();
+    const point = (position: number): [Node, number] => {
+      let cursor = 0;
+      for (const node of Array.from(root.childNodes)) {
+        const length = node.nodeType === Node.TEXT_NODE ? node.textContent?.length || 0 : 1;
+        if (node.nodeType === Node.TEXT_NODE && position <= cursor + length) return [node, position - cursor];
+        if (position <= cursor) return [root, Array.from(root.childNodes).indexOf(node)];
+        cursor += length;
+      }
+      return [root, root.childNodes.length];
+    };
+    const range = document.createRange(); range.setStart(...point(selection.start)); range.setEnd(...point(selection.end));
+    window.getSelection()!.removeAllRanges(); window.getSelection()!.addRange(range); document.dispatchEvent(new Event('selectionchange'));
+  }, { start, end });
+}
+
+async function editorParts(page: Page) {
+  return page.locator('#instruction').evaluate(element => Array.from(element.childNodes).flatMap<{ text: string } | { kind?: string; id?: string; preview: boolean }>(node => node.nodeType === Node.TEXT_NODE ? node.textContent ? [{ text: node.textContent }] : [] : (node as HTMLElement).dataset.editorReference ? [{ kind: (node as HTMLElement).dataset.editorKind, id: (node as HTMLElement).dataset.editorReference, preview: (node as HTMLElement).dataset.editorPreview === 'true' }] : []));
+}
+
+test('chatbox inline previews insert two independent objects at the last caret and restore send, refresh and queue edit positions', async t => {
+  const app = await fixture(t), { page } = app;
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  const asset = await app.image('Two instances.png'), first = await app.object(asset), second = await app.object(asset, { x: 770, y: 300, width: 300, height: 180 });
+  await page.locator('#instruction').fill('before after'); await editorSelection(page, 7);
+  await app.select(first); await page.locator(`[data-object-id="${second.id}"]`).focus(); await page.keyboard.press('Shift+Enter');
+  await expect(page.locator('[data-reference-preview]')).toHaveCount(2);
+  assert.deepEqual(await editorParts(page), [{ text: 'before ' }, { kind: 'object', id: first.id, preview: true }, { kind: 'object', id: second.id, preview: true }, { text: 'after' }]);
+  await page.locator('.composer').screenshot({ path: join(app.evidence, 'inline-previews.png') });
+  await page.locator('#instruction').focus(); assert.deepEqual((await app.saved()).references.objectIds, []);
+  await page.locator('.composer-more').focus(); await page.keyboard.press('Tab');
+  await expect(page.locator('#instruction .chatbox-reference')).toHaveCount(2);
+  const expected: RequestReference[] = [{ kind: 'object', id: first.id, textOffset: 7 }, { kind: 'object', id: second.id, textOffset: 7 }];
+  assert.deepEqual((await app.saved()).references.order, expected);
+  assert.deepEqual(await editorParts(page), [{ text: 'before ' }, { kind: 'object', id: first.id, preview: false }, { kind: 'object', id: second.id, preview: false }, { text: 'after' }]);
+  await page.locator('.composer').screenshot({ path: join(app.evidence, 'inline-confirmed.png') });
+  await page.reload(); await expect(page.locator('#instruction .chatbox-reference')).toHaveCount(2); assert.deepEqual((await app.saved()).references.order, expected);
+  await page.getByRole('button', { name: 'Send request', exact: true }).click(); await expect(page.locator('.queue-item')).toHaveCount(1);
+  const task = app.state().tasks[0]; assert.equal(task.snapshot.userRequest.text, 'before after'); assert.deepEqual(task.snapshot.requestReferences?.order?.map(({ kind, id, textOffset }) => ({ kind, id, textOffset })), expected);
+  assert(task.requirementText.indexOf('before ') < task.requirementText.indexOf(first.id)); assert(task.requirementText.indexOf(second.id) < task.requirementText.indexOf('after'));
+  await page.getByRole('button', { name: /View request 1:/ }).click(); await expect(page.locator('.task-instruction .task-inline-reference')).toHaveCount(2);
+  const rendered = await page.locator('.task-instruction').innerText(); assert.match(rendered, /^before .*Two instances\.png.*Two instances\.png.*after$/s);
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.getByRole('button', { name: 'Save edit', exact: true })).toBeVisible();
+  assert.deepEqual((await app.saved()).references.order, expected);
+  await editorSelection(page, 0); await page.keyboard.type('new '); await page.getByRole('button', { name: 'Save edit', exact: true }).click();
+  await expect(page.locator('.composer-editing')).toHaveCount(0);
+  const changed = app.state().tasks[0]; assert.equal(changed.id, task.id); assert.equal(changed.snapshot.userRequest.text, 'new before after'); assert.deepEqual(changed.snapshot.requestReferences?.order?.map(entry => entry.textOffset), [11, 11]);
+  assert.deepEqual(errors, []);
+});
+
+test('chatbox inline atoms support native caret movement, both delete keys, cross selection, Unicode, IME and plaintext paste', async t => {
+  const app = await fixture(t), { page } = app;
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  const first = await app.object(await app.image('Left.png')), second = await app.object(await app.image('Right.png'), { x: 770, y: 300, width: 300, height: 180 });
+  await page.locator('#instruction').fill('😀left right'); await editorSelection(page, 7);
+  await app.select(first); await page.getByRole('button', { name: 'Add selected Left.png to request', exact: true }).click();
+  assert.deepEqual((await app.saved()).references.order?.map(entry => entry.textOffset), [7]);
+  await editorSelection(page, 8); await page.keyboard.press('ArrowLeft'); await page.keyboard.type('X');
+  assert.equal((await app.saved()).text, '😀left Xright'); assert.equal((await app.saved()).references.order?.[0].textOffset, 8);
+  await page.keyboard.press('Delete'); assert.deepEqual((await app.saved()).references.objectIds, []); assert.equal((await app.saved()).text, '😀left Xright');
+  await editorSelection(page, 7); await page.keyboard.type('@Left'); await page.keyboard.press('Enter');
+  assert.equal((await app.saved()).references.order?.[0].textOffset, 7); await page.keyboard.press('Backspace'); assert.deepEqual((await app.saved()).references.objectIds, []);
+  await editorSelection(page, 7); await page.keyboard.type('@Left'); await page.keyboard.press('Enter'); await page.keyboard.type('@Right'); await page.keyboard.press('Enter');
+  assert.deepEqual((await app.saved()).references.objectIds, [first.id, second.id]);
+  await editorSelection(page, 7, 12); await page.keyboard.press('Backspace');
+  assert.equal((await app.saved()).text, '😀left ght'); assert.deepEqual((await app.saved()).references.objectIds, []);
+  await editorSelection(page, 2); await page.keyboard.press('Shift+Enter'); await page.keyboard.type('中文');
+  await page.locator('#instruction').evaluate(element => {
+    const data = new DataTransfer(); data.setData('text/plain', '<b>plain</b>\nnext'); data.setData('text/html', '<strong>rich</strong>');
+    element.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: data }));
+  });
+  assert.equal((await app.saved()).text, '😀\n中文<b>plain</b>\nnextleft ght'); assert.equal(await page.locator('#instruction strong,#instruction b').count(), 0);
+  await page.locator('#instruction').dispatchEvent('compositionstart'); await page.locator('#instruction').dispatchEvent('keydown', { key: 'Enter', keyCode: 229, isComposing: true });
+  assert.equal(app.state().tasks.length, 0); await page.locator('#instruction').dispatchEvent('compositionend');
+  await editorSelection(page, 0); await page.keyboard.type('@Right'); await page.keyboard.press('Enter');
+  assert.equal((await app.saved()).references.order?.[0].textOffset, 0);
+  await page.reload(); await expect(page.locator('#instruction .chatbox-reference')).toHaveCount(1); assert.equal((await app.saved()).references.order?.[0].textOffset, 0);
+  assert.deepEqual(errors, []);
+});
+
+test('chatbox native composition, backward keyboard selection and delayed rerenders keep the caret and independent atoms', async t => {
+  const app = await fixture(t), { page } = app;
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  const object = await app.object(await app.image('Native reference.png'));
+  await page.locator('#instruction').fill('left right'); await editorSelection(page, 5);
+  await app.select(object); await page.getByRole('button', { name: 'Add selected Native reference.png to request', exact: true }).click();
+  await editorSelection(page, 0);
+  const cdp = await page.context().newCDPSession(page);
+  await page.locator('#instruction').evaluate(element => { (window as any).editorCompositionEvents = []; ['compositionstart', 'compositionend'].forEach(name => element.addEventListener(name, () => (window as any).editorCompositionEvents.push(name))); });
+  await cdp.send('Input.imeSetComposition', { text: '你', selectionStart: 1, selectionEnd: 1 });
+  await page.locator('#instruction').dispatchEvent('keydown', { key: 'Enter', keyCode: 229, isComposing: true }); assert.equal(app.state().tasks.length, 0);
+  await cdp.send('Input.insertText', { text: '你好' }); await cdp.detach();
+  const composed = await app.saved(); assert.equal(composed.text, '你好left right'); assert.equal(composed.references.order?.[0].textOffset, 7);
+  assert.deepEqual(await page.evaluate(() => (window as any).editorCompositionEvents), ['compositionstart', 'compositionend']);
+  await editorSelection(page, 8); await page.keyboard.press('Shift+ArrowLeft'); await page.keyboard.press('Shift+ArrowLeft'); await page.keyboard.press('Backspace');
+  const removed = await app.saved(); assert.equal(removed.text, '你好leftright'); assert.deepEqual(removed.references.objectIds, []);
+  await editorSelection(page, 2); await page.keyboard.type(' X');
+  await app.saved(); await page.keyboard.type('Y'); assert.equal((await app.saved()).text, '你好 XYleftright');
+  await editorSelection(page, 5); await app.select(object); await page.locator('.composer-more').focus(); await page.locator('#instruction').focus();
+  assert.deepEqual((await app.saved()).references.objectIds, []);
+  await page.getByRole('button', { name: 'Add selected Native reference.png to request', exact: true }).click(); assert.equal((await app.saved()).references.order?.[0].textOffset, 5);
+  await page.locator('#instruction').fill('@Native'); await page.keyboard.press('Enter'); await page.keyboard.press('Shift+Enter'); await page.locator('#instruction').pressSequentially('After reference');
+  assert.equal((await app.saved()).text, '\nAfter reference'); assert.equal((await app.saved()).references.order?.[0].textOffset, 0);
+  await page.locator('#instruction').fill('First line'); await page.keyboard.press('Shift+Enter'); await page.locator('#instruction').pressSequentially('Second line');
+  assert.equal((await app.saved()).text, 'First line\nSecond line');
+  await page.keyboard.press('Shift+Enter'); await page.keyboard.press('Shift+Enter'); await page.keyboard.type('Final');
+  assert.equal((await app.saved()).text, 'First line\nSecond line\n\nFinal');
+  await page.locator('#instruction').fill('');
+  await page.keyboard.insertText('Native first\nNative second'); assert.equal((await app.saved()).text, 'Native first\nNative second');
+  await page.locator('#instruction').fill(''); await page.keyboard.insertText('\nLeading\n\n'); assert.equal((await app.saved()).text, '\nLeading\n\n');
+  assert.deepEqual(errors, []);
+});
+
+test('chatbox independent inline previews and formal atoms wrap within 320px light and dark themes', async t => {
+  const app = await fixture(t, true), { page } = app;
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const first = await app.object(await app.image('A longer independent source name.png')), second = await app.object(await app.image('Another independent source name.png'), { x: 770, y: 300, width: 300, height: 180 });
+  await page.locator('#instruction').fill('Before after'); await editorSelection(page, 7);
+  await app.select(first); await page.locator(`[data-object-id="${second.id}"]`).focus(); await page.keyboard.press('Shift+Enter');
+  for (const theme of ['light', 'dark']) {
+    if (theme === 'dark') await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+    await expect(page.locator('[data-reference-preview]')).toHaveCount(2);
+    const rects = await page.locator('[data-reference-preview]').evaluateAll(elements => elements.map(element => { const box = element.getBoundingClientRect(); return { x: box.x, right: box.right, width: box.width }; }));
+    rects.forEach(rect => { assert(rect.x >= 0 && rect.right <= 321 && rect.width > 80); });
+    await page.locator('.composer').screenshot({ path: join(app.evidence, `inline-320-${theme}-preview.png`) });
+  }
+  await page.locator('.composer-more').focus(); await page.keyboard.press('Tab'); await expect(page.locator('#instruction .chatbox-reference')).toHaveCount(2);
+  const form = await page.locator('.composer').boundingBox(); assert(form && form.x >= 0 && form.x + form.width <= 321);
+  await page.locator('.composer').screenshot({ path: join(app.evidence, 'inline-320-dark-confirmed.png') });
+  assert.equal(await page.locator('#instruction').evaluate(element => element.scrollWidth <= element.clientWidth + 1), true);
+});
+
+test('chatbox legacy grouped draft and snapshot references use the shared body-tail fallback', async t => {
+  const app = await fixture(t), { page } = app;
+  await page.locator('#instruction').fill('Earlier source'); await page.keyboard.press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1);
+  const earlier = app.state().tasks[0], asset = await app.image('Legacy shared.png'), first = await app.object(asset), second = await app.object(asset, { x: 770, y: 300, width: 300, height: 180 });
+  await app.call(`/api/sessions/${app.session.id}/draft`, 'PUT', { ...await app.saved(), text: 'Legacy words', references: { objectIds: [first.id, second.id], taskIds: [earlier.id] } });
+  await page.reload(); await expect(page.locator('#instruction .chatbox-reference')).toHaveCount(3);
+  assert.deepEqual(await editorParts(page), [{ text: 'Legacy words' }, { kind: 'object', id: first.id, preview: false }, { kind: 'object', id: second.id, preview: false }, { kind: 'task', id: earlier.id, preview: false }]);
+  assert((await app.saved()).references.order?.every(reference => reference.textOffset === undefined));
+  await page.getByRole('button', { name: 'Send request', exact: true }).click(); await expect(page.locator('.queue-item')).toHaveCount(2);
+  const task = app.state().tasks[1];
+  await page.route('**/api/state?*', async route => {
+    const response = await route.fetch(), value = await response.json();
+    const legacy = value.tasks.find((item: { id: string }) => item.id === task.id); delete legacy.snapshot.requestReferences.order;
+    await route.fulfill({ response, json: value });
+  });
+  await page.reload(); await page.locator('.queue-expand').click(); await page.getByRole('button', { name: /View request 2:/ }).click();
+  await expect(page.locator(`.task-card[data-task-id="${task.id}"] .task-inline-reference`)).toHaveCount(3);
+  assert.deepEqual(await page.locator(`.task-card[data-task-id="${task.id}"] .task-inline-reference`).evaluateAll(elements => elements.map(element => element.getAttribute('data-reference-id'))), [first.id, second.id, earlier.id]);
+  assert.match(await page.locator(`.task-card[data-task-id="${task.id}"] .task-instruction`).innerText(), /^Legacy words.*Legacy shared\.png.*Legacy shared\.png.*Request /s);
+  await page.unroute('**/api/state?*');
+  await page.route('**/api/state?*', async route => {
+    const response = await route.fetch(), value = await response.json(); delete value.tasks.find((item: { id: string }) => item.id === task.id).snapshot.requestReferences;
+    await route.fulfill({ response, json: value });
+  });
+  await page.reload(); await page.locator('.queue-expand').click(); await page.getByRole('button', { name: /View request 2:/ }).click(); await expect(page.locator(`.task-card[data-task-id="${task.id}"] .task-inline-reference`)).toHaveCount(3);
+});
+
+test('chatbox nonempty inline references reconcile held saves and SSE by business fields independently of JSON key order', async t => {
+  const app = await fixture(t), { page } = app;
+  const object = await app.object(await app.image('Ordered source.png'));
+  await page.locator('#instruction').fill('Body tail'); await editorSelection(page, 5); await app.select(object);
+  await page.getByRole('button', { name: 'Add selected Ordered source.png to request', exact: true }).click(); await app.saved();
+  await page.route('**/api/state?*', async route => {
+    const response = await route.fetch(), value = await response.json();
+    value.draft.references = { order: value.draft.references.order?.map(({ kind, id, textOffset }: RequestReference) => ({ id, ...(textOffset === undefined ? {} : { textOffset }), kind })), taskIds: value.draft.references.taskIds, objectIds: value.draft.references.objectIds };
+    await route.fulfill({ response, json: value });
+  });
+  let release!: () => void, entered!: () => void;
+  const held = new Promise<void>(resolve => release = resolve), saving = new Promise<void>(resolve => entered = resolve);
+  let delay = true;
+  await page.route('**/api/sessions/*/draft', async route => {
+    if (route.request().method() === 'PUT' && delay) { delay = false; const response = await route.fetch(); entered(); await held; await route.fulfill({ response }); }
+    else await route.continue();
+  });
+  await editorSelection(page, 0); await page.keyboard.type('first '); await saving;
+  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await expect(page.locator('.draft-conflict')).toHaveCount(0);
+  await page.keyboard.type('later '); release();
+  const value = await app.saved(); assert.equal(value.text, 'first later Body tail'); assert.deepEqual(value.references.order, [{ kind: 'object', id: object.id, textOffset: 17 }]);
+  await expect(page.locator('.draft-conflict')).toHaveCount(0); assert.equal(await page.locator('#instruction .chatbox-reference').count(), 1);
+  await page.reload(); await expect(page.locator('#instruction .chatbox-reference')).toHaveCount(1); assert.equal((await app.saved()).text, value.text);
+});
+
+test('chatbox native text replacement preserves two atoms, exact multiline text and empty-body offsets through refresh and Send', async t => {
+  const app = await fixture(t), { page } = app;
+  const first = await app.object(await app.image('First kept source.png')), second = await app.object(await app.image('Second kept source.png'), { x: 770, y: 300, width: 300, height: 180 }), third = await app.object(await app.image('Third inserted source.png'), { x: 1100, y: 300, width: 200, height: 120 });
+  const entries = [first, second].map(object => ({ kind: 'object' as const, id: object.id, textOffset: 0 }));
+  await app.call(`/api/sessions/${app.session.id}/draft`, 'PUT', { ...await app.saved(), references: { objectIds: [first.id, second.id], taskIds: [], order: entries } });
+  await page.reload(); await expect(page.locator('#instruction .chatbox-reference')).toHaveCount(2);
+  await page.locator('#instruction').evaluate(element => {
+    (element as HTMLElement).focus(); const range = document.createRange(); range.setStart(element, 0); range.collapse(true); window.getSelection()!.removeAllRanges(); window.getSelection()!.addRange(range);
+  });
+  const body = '保持主体的轮廓与比例。\n留出标题空间。\n使用现有参考中的色彩。';
+  await page.keyboard.insertText(body);
+  assert.equal((await app.saved()).text, body); assert.deepEqual((await app.saved()).references.order?.map(reference => reference.textOffset), [body.length, body.length]);
+  let currentBody = body;
+  for (const key of ['Backspace', 'Delete']) {
+    await editorSelection(page, 0, currentBody.length); await page.keyboard.press(key);
+    const empty = await app.saved(); assert.equal(empty.text, ''); assert.deepEqual(empty.references.order, entries); await expect(page.locator('#instruction .chatbox-reference')).toHaveCount(2);
+    await page.keyboard.type('X'); await page.keyboard.press('Backspace'); assert.equal((await app.saved()).text, ''); assert.deepEqual((await app.saved()).references.order, entries);
+    currentBody = key === 'Backspace' ? '\n' + body + '\n\n' : body;
+    await page.keyboard.insertText(currentBody); const current = await app.saved(); assert.equal(current.text, currentBody); assert.deepEqual(current.references.order?.map(reference => reference.textOffset), [currentBody.length, currentBody.length]);
+  }
+  await editorSelection(page, body.length); await page.keyboard.press('Shift+Enter'); assert.deepEqual((await app.saved()).references.order?.map(reference => reference.textOffset), [body.length + 1, body.length + 1]);
+  await page.keyboard.press('Shift+Enter'); assert.deepEqual((await app.saved()).references.order?.map(reference => reference.textOffset), [body.length + 2, body.length + 2]);
+  await page.locator('#instruction').evaluate(element => { const data = new DataTransfer(); data.setData('text/plain', 'Pasted line\n'); element.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: data })); });
+  assert.equal((await app.saved()).text, body + '\n\nPasted line\n');
+  await page.keyboard.type('After newline @Third'); await page.keyboard.press('Enter');
+  const value = await app.saved(); assert.equal(value.text, body + '\n\nPasted line\nAfter newline '); assert.deepEqual(value.references.order?.map(reference => reference.id), [third.id, first.id, second.id]);
+  await page.reload(); await expect(page.locator('#instruction .chatbox-reference')).toHaveCount(3); assert.equal((await app.saved()).text, value.text);
+  await page.getByRole('button', { name: 'Send request', exact: true }).click(); await expect(page.locator('.queue-item')).toHaveCount(1);
+  const task = app.state().tasks[0]; assert.equal(task.snapshot.userRequest.text, value.text); assert.deepEqual(task.snapshot.requestReferences?.order?.map(({ kind, id, textOffset }) => ({ kind, id, textOffset })), value.references.order);
 });
 
 test('managed React Done captures blank points, cross-object regions and historical scenes with separate current locate', async t => {

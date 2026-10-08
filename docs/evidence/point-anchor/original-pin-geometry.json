@@ -1,0 +1,54 @@
+[
+  {
+    "name": "blank-point",
+    "click": {
+      "x": 950,
+      "y": 450
+    },
+    "pin": {
+      "x": 950,
+      "y": 282,
+      "width": 28,
+      "height": 28
+    },
+    "coordinateSpace": "world",
+    "bounds": {
+      "x": 950,
+      "y": 450,
+      "width": 0,
+      "height": 0
+    },
+    "worldBounds": {
+      "x": 950,
+      "y": 450,
+      "width": 0,
+      "height": 0
+    }
+  },
+  {
+    "name": "image-point",
+    "click": {
+      "x": 520,
+      "y": 360
+    },
+    "pin": {
+      "x": 400,
+      "y": 132,
+      "width": 28,
+      "height": 28
+    },
+    "coordinateSpace": "normalized",
+    "bounds": {
+      "x": 0.4,
+      "y": 0.3333333333333333,
+      "width": 0,
+      "height": 0
+    },
+    "worldBounds": {
+      "x": 520,
+      "y": 360,
+      "width": 0,
+      "height": 0
+    }
+  }
+]

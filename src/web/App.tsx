@@ -15,13 +15,25 @@ import { CanvasAnnotationNote } from './CanvasAnnotationNote';
 import { NotificationStack, useNotices, type Notification } from './NotificationStack';
 import { AnnotationTimeRange } from './AnnotationTimeRange';
 import { videoFrameAt } from './videoFrameAt';
-import { ChatboxReferences, ReferenceSearch, addReferences, removeReference, referenceCandidates, referenceOrder, type ReferenceCandidate } from './ChatboxReferences';
+import { ReferenceSearch, referenceCandidates, type ReferenceCandidate } from './ChatboxReferences';
+import { ChatboxEditor, type ChatboxEditorHandle, type EditorCaret } from './ChatboxEditor';
+import { referenceLabel, referenceParts, snapshotReferences } from '../shared/task-message';
 import { annotationTarget, captureScene, contains, markdownAnchor, markTarget } from './annotation-scene';
 import type { BrowserCaptureFrame, BrowserCaptureIdentity } from '../shared/browser-capture';
 
 const statusLabels: Record<TaskStatus, string> = { queued: 'Queued', editing: 'Editing', running: 'Running', blocked: 'Needs input', interrupted: 'Interrupted', completed: 'Completed', cancelled: 'Cancelled' };
 const timeLabel = (value: number) => `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}`;
 const unique = (values: string[]) => [...new Set(values)];
+
+function requestParts(task: Task) {
+  const snapshot = task.snapshot;
+  return referenceParts(snapshot.userRequest.text, snapshotReferences(snapshot).map(reference => {
+    const object = 'object' in reference ? reference.object : snapshot.referenceContent.objects.find(object => object.id === reference.id);
+    const asset = 'asset' in reference ? reference.asset : snapshot.referenceContent.assets.find(asset => asset.id === object?.assetId);
+    return { ...reference, label: referenceLabel(snapshot, reference), asset };
+  }));
+}
+function requestTitle(task: Task) { return requestParts(task).map(part => part.kind === 'text' ? part.text : ` @${part.reference.label} `).join(''); }
 
 function IconButton({ label, children, className = '', ...props }: { label: string; children: ReactNode; className?: string } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return <button type="button" className={`icon-button ${className}`} title={label} aria-label={label} {...props}>{children}</button>;
@@ -178,8 +190,8 @@ function TaskCard({ task, assets, objects, content, api, onReloadBoard, locateAs
   const assetAction = (asset: Asset, thumbnail: boolean) => resolveContentKind(asset) === 'file' ? <a href={content(asset.id)} download={asset.name} title={asset.name} aria-label={`Download ${asset.name}`} key={asset.id}>{thumbnail ? <AssetThumb asset={asset} src={content(asset.id)}/> : <><ArrowDownToLine size={12}/>{asset.name}</>}</a> : <button type="button" title={asset.name} aria-label={`View ${asset.name}`} key={asset.id} onClick={() => { if (objects.some(object => object.assetId === asset.id)) locateAsset(asset.id); else setPreviewId(current => current === asset.id ? '' : asset.id); }}>{thumbnail ? <AssetThumb asset={asset} src={content(asset.id)}/> : asset.name}</button>;
   return <article className="task-card" data-task-id={task.id} data-status={task.status}>
     {!compact && <div className="task-heading"><span className="task-sequence">Request {String(task.sequence).padStart(2, '0')}</span><span className={`status-badge status-${task.status}`}>{task.status === 'completed' && <Check size={11}/>} {statusLabels[task.status]}</span></div>}
-    {!compact && <p className="task-instruction">{task.snapshot.userRequest.text || 'Create from the attachments and annotations.'}</p>}
-    <div className="task-detail-content">{!summary && !!task.snapshot.requestReferences?.order?.length && <div className="task-explicit-references" aria-label="Request references">{task.snapshot.requestReferences.order.map(entry => <span key={`${entry.kind}:${entry.id}`} data-reference-kind={entry.kind} data-reference-id={entry.id}>@{entry.label}</span>)}</div>}<div className={`task-reference-groups${compact ? ' queue-previews' : ''}`} aria-label={compact ? `${references.count} references` : undefined}>
+    {(!compact || !summary) && <p className="task-instruction">{requestTitle(task) ? requestParts(task).map(part => part.kind === 'text' ? part.text : <span className="task-inline-reference" key={`${part.reference.kind}:${part.reference.id}`} data-reference-kind={part.reference.kind} data-reference-id={part.reference.id}>{part.reference.kind === 'object' ? <AssetThumb asset={part.reference.asset} src={part.reference.asset ? content(part.reference.asset.id) : ''}/> : <History size={14}/>}<span>@{part.reference.label}</span></span>) : 'Create from the attachments and annotations.'}</p>}
+    <div className="task-detail-content"><div className={`task-reference-groups${compact ? ' queue-previews' : ''}`} aria-label={compact ? `${references.count} references` : undefined}>
       {references.groups.map(({ annotation, items, primary }, index) => {
         const summaryIndex = references.attachments.length + index, shown = summary && summaryIndex < previewLimit;
         return <div className={`task-reference-group${shown ? ' summary-group' : ''}`} key={annotation.id} data-annotation-id={annotation.id}>
@@ -263,7 +275,8 @@ export default function App() {
   const canvas = useRef<HTMLDivElement>(null);
   const dock = useRef<HTMLElement>(null);
   const notifications = useRef<HTMLElement>(null);
-  const instruction = useRef<HTMLTextAreaElement>(null);
+  const instruction = useRef<HTMLDivElement>(null);
+  const editor = useRef<ChatboxEditorHandle>(null);
   const selectionActions = useRef<HTMLDivElement>(null);
   const playbackControls = useRef<HTMLDivElement>(null);
   const composing = useRef(false);
@@ -440,22 +453,19 @@ export default function App() {
   const selectObjects = (ids: string[], user = true) => { if ([...ids].sort().join(',') !== [...selectedIds].sort().join(',')) { clearInspection(); exitAnnotation(); } const ordered = unique(ids); if (user) setReferencePreview(ordered); viewUpdate({ selectedObjectIds: ordered }); };
   function confirmReferencePreview() {
     if (!referencePreview.length || disabled) return;
-    const entries = referencePreview.map(id => ({ kind: 'object' as const, id }));
-    board.changeDraft(current => ({ ...current, references: addReferences(current.references, entries) }));
-    setReferencePreview([]);
+    editor.current?.confirmPreview();
   }
-  function updateMention(text: string, caret: number) {
+  function updateMention({ text, caret, segmentStart, collapsed }: EditorCaret) {
     if (composing.current) { setMention(null); return; }
-    const match = /(?:^|\s)@([^\n@]*)$/.exec(text.slice(0, caret));
+    const match = collapsed ? /(?:^|\s)@([^\n@]*)$/.exec(text.slice(segmentStart, caret)) : null;
     const next = match ? { start: caret - match[1].length - 1, end: caret, query: match[1] } : null;
     if (mention?.start !== next?.start || mention?.end !== next?.end || mention?.query !== next?.query) setMentionIndex(0);
     setMention(next);
   }
   function chooseReference(entry: ReferenceCandidate) {
     const active = mention;
-    board.changeDraft(current => ({ ...current, text: active ? current.text.slice(0, active.start) + current.text.slice(active.end) : current.text, references: addReferences(current.references, [entry]) }));
+    editor.current?.insertReference(entry, active || undefined);
     setMention(null); setReferencePreview([]);
-    requestAnimationFrame(() => { instruction.current?.focus({ preventScroll: true }); if (active) instruction.current?.setSelectionRange(active.start, active.start); });
   }
   const localPoint = (event: { clientX: number; clientY: number }): Point => { const bounds = canvas.current!.getBoundingClientRect(); return { x: event.clientX - bounds.left, y: event.clientY - bounds.top }; };
   const contentBounds = (object: BoardObject) => mediaContentRect(object, mediaSizes[object.id]);
@@ -1017,7 +1027,7 @@ export default function App() {
       {pending > 1 && !historyOpen && <div className="queue-peeks" aria-hidden="true">{Array.from({ length: Math.min(pending - 1, 2) }, (_, index) => <span key={index} style={{ '--peek': index + 1 } as React.CSSProperties}/>)}</div>}
       {historyOpen ? <div className="queue-list history-list" id="request-history" role="region" aria-label="Request history"><div className="inline-heading"><span>Request history</span><IconButton label="Close request history" onClick={() => { clearInspection(); setHistoryOpen(false); composerMore.current?.focus({ preventScroll: true }); }}><ChevronDown size={14}/></IconButton></div>{state.tasks.length ? [...state.tasks].reverse().map(task => <div key={task.id}>{taskCard(task)}</div>) : <p className="field-hint">Your requests, progress and receipts appear here.</p>}</div> : <div className="queue-list" id="creation-queue" role="list" aria-label="Task queue">
         {queuedTasks.map((task, index) => <div key={task.id} className={index ? `queue-extra ${queueOpen ? 'open' : ''}` : 'queue-first'} inert={index > 0 && !queueOpen} aria-hidden={index > 0 && !queueOpen}><div className="queue-extra-content"><QueueItem task={task} detailOpen={taskDetailId === task.id} visible={queueOpen || index === 0} animateSend={sentTaskId === task.id} played={playedSendIds.current}>
-          <div className={`queue-row ${taskDetailId === task.id ? 'detail-open' : ''}`}><button type="button" className="queue-task" aria-label={`View request ${task.sequence}: ${task.snapshot.userRequest.text || 'Attachments and annotations'} — ${statusLabels[task.status]}`} aria-expanded={taskDetailId === task.id} aria-controls={`request-details-${task.id}`} onClick={() => toggleTaskDetail(task)}>{task.status === 'queued' && <span className="queue-task-mark" aria-hidden="true"><Circle size={14}/></span>}<span className="queue-title" data-queue-layout="title">{task.snapshot.userRequest.text || 'Create from the attachments and annotations.'}</span></button>
+          <div className={`queue-row ${taskDetailId === task.id ? 'detail-open' : ''}`}><button type="button" className="queue-task" aria-label={`View request ${task.sequence}: ${requestTitle(task) || 'Attachments and annotations'} — ${statusLabels[task.status]}`} aria-expanded={taskDetailId === task.id} aria-controls={`request-details-${task.id}`} onClick={() => toggleTaskDetail(task)}>{task.status === 'queued' && <span className="queue-task-mark" aria-hidden="true"><Circle size={14}/></span>}<span className="queue-title" data-queue-layout="title">{requestTitle(task) || 'Create from the attachments and annotations.'}</span></button>
           {['blocked', 'interrupted', 'editing'].includes(task.status) && <span className={`status-badge status-${task.status}`} aria-hidden="true">{statusLabels[task.status]}</span>}{task.status === 'queued' && <IconButton label={`Edit request ${task.sequence}`} disabled={disabled || !!draft.editingTaskId} onClick={() => void editRequest(task)}><Pencil size={14}/></IconButton>}{['queued', 'blocked', 'interrupted'].includes(task.status) && <IconButton label={`Cancel request ${task.sequence}`} disabled={disabled || !!cancellingTask} onClick={() => void cancelTask(task)}>{cancellingTask === task.id ? <LoaderCircle size={14} className="spin"/> : <Trash2 size={14}/>}</IconButton>}{taskDetailId === task.id && <IconButton label="Collapse request details" onClick={() => { clearInspection(); setTaskDetailId(''); document.querySelector<HTMLButtonElement>(`.queue-item[data-task-id="${task.id}"] .queue-task`)?.focus({ preventScroll: true }); }}><ChevronDown size={14}/></IconButton>}</div>
           <MotionDisclosure open={taskDetailId === task.id} className="inline-task-detail" id={`request-details-${task.id}`} role="region" aria-label={`Request ${task.sequence}`}>{taskCard(task, true)}</MotionDisclosure>
         </QueueItem></div></div>)}
@@ -1042,7 +1052,7 @@ export default function App() {
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); event.stopPropagation(); openComposerMenu(event.key === 'ArrowUp' ? 1 : 0); }
         else if (event.key === 'Escape' && composerMenuOpen) { event.preventDefault(); event.stopPropagation(); closeComposerMenu(); }
       }}><Ellipsis size={16}/></button>
-      <label className="sr-only" htmlFor="instruction">Request</label><textarea ref={instruction} id="instruction" rows={1} placeholder={composerCompact ? 'Create…' : 'What would you like to create?'} onPointerDown={event => { if (event.isTrusted) confirmReferencePreview(); }} onFocus={() => { setComposerFocused(true); if (tabFocus.current) confirmReferencePreview(); tabFocus.current = false; }} value={draft.text} readOnly={board.projectChanged} disabled={board.switching || board.sending || annotationSaving} onChange={event => { board.changeDraft(current => ({ ...current, text: event.target.value })); updateMention(event.target.value, event.target.selectionStart); }} onSelect={event => { if (!composing.current) updateMention(event.currentTarget.value, event.currentTarget.selectionStart); }} onCompositionStart={() => { composing.current = true; setMention(null); }} onCompositionEnd={event => { composing.current = false; updateMention(event.currentTarget.value, event.currentTarget.selectionStart); }} role="combobox" aria-autocomplete="list" aria-expanded={!!mention} aria-controls={mention ? 'reference-search' : undefined} aria-activedescendant={mention && candidates[mentionIndex] ? `reference-option-${mentionIndex}` : undefined} onKeyDown={event => {
+      <ChatboxEditor draft={draft} preview={referencePreview} objects={objects} assets={assets} tasks={state.tasks} content={id => board.api.content(id, state.session.id)} inputRef={instruction} controller={editor} composing={composing} disabled={board.projectChanged || board.switching || board.sending || annotationSaving} placeholder={composerCompact ? 'Create…' : 'What would you like to create?'} expanded={!!mention} activeDescendant={mention && candidates[mentionIndex] ? `reference-option-${mentionIndex}` : undefined} onChange={value => board.changeDraft(current => ({ ...current, ...value }))} onCaret={updateMention} onConsumePreview={() => setReferencePreview([])} onPreviewRemove={id => setReferencePreview(current => current.filter(value => value !== id))} onUserPointer={confirmReferencePreview} onFocus={() => { setComposerFocused(true); if (tabFocus.current) confirmReferencePreview(); tabFocus.current = false; }} onComposition={active => { if (active) setMention(null); }} onKeyDown={event => {
         if (composing.current || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
         if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); setMention(null); setReferencePreview([]); return; }
         if (mention && ['ArrowDown', 'ArrowUp'].includes(event.key)) { event.preventDefault(); setMentionIndex(current => candidates.length ? (current + (event.key === 'ArrowDown' ? 1 : -1) + candidates.length) % candidates.length : 0); return; }
@@ -1050,7 +1060,6 @@ export default function App() {
         event.preventDefault(); if (mention) { if (candidates[mentionIndex]) chooseReference(candidates[mentionIndex]); } else void sendRequest();
       }}/><button className="send-button" type="submit" disabled={disabled || !!uploads.length || !!board.draftConflict || !hasRequest || !!incompleteAnnotations.length || draft.annotations.some(annotation => !!captureErrors[annotation.id])} aria-label={draft.editingTaskId ? "Save edit" : "Send request"}>{board.sending || annotationSaving ? <LoaderCircle size={17} className="spin"/> : <ArrowUp size={16}/>}</button>
       </div>
-      <ChatboxReferences draft={draft} preview={referencePreview} objects={objects} assets={assets} tasks={state.tasks} content={id => board.api.content(id, state.session.id)} disabled={disabled} onConfirm={confirmReferencePreview} onDismiss={() => setReferencePreview([])} onRemove={entry => board.changeDraft(current => ({ ...current, references: removeReference(current.references, entry) }))}/>
     </form>
     {mention && <ReferenceSearch candidates={candidates} selected={mentionIndex} content={id => board.api.content(id, state.session.id)} onSelect={chooseReference} onHover={setMentionIndex}/>}
     {composerMenuOpen && <div ref={composerMenu} className="composer-menu" id="composer-actions" role="menu" aria-label="Request actions" onKeyDown={event => {
@@ -1094,7 +1103,7 @@ export default function App() {
         const creation = active && annotationEdit && annotationEdit.fresh && !annotationEdit.finished && annotating;
         const kind = resolveContentKind(assetFor(annotation.assetId || ''));
         const timeControl = editable && annotationEdit && (kind === 'audio' || kind === 'video') && annotation.assetId ? <AnnotationTimeRange key={annotation.id} kind={kind} src={board.api.content(annotation.assetId)} media={annotation.objectId ? kind === 'video' ? videoRefs.current.get(annotation.objectId) : audioRefs.current.get(annotation.objectId) : undefined} start={annotation.timeStart} end={annotation.timeEnd} fresh={annotationEdit.fresh} disabled={disabled} onCommit={(start, end) => changeAnnotationRange(annotationEdit, kind, board.api.content(annotation.assetId!), start, end)} onError={board.showError}/> : undefined;
-        return <CanvasAnnotationNote key={`${annotation.inspectionTaskId || draft?.editingTaskId || 'draft'}-${annotation.id}`} canvas={canvas} bounds={annotationDisplayBounds(annotation)} view={view} number={index + 1} onOpen={() => openAnnotation(annotation, !annotation.inspectionTaskId)} annotationId={annotation.id} active={active} control={{ text: annotation.text, compositionRef: active ? commentComposing : undefined, mode: active ? editable ? 'edit' : 'view' : 'display', inputLabel: active ? editable ? creation ? 'Add a comment' : 'Annotation text' : 'Annotation comment' : `Comment ${index + 1}: ${annotation.text}`, inputRef: active ? annotationInput : undefined, disabled: active && disabled, onOpen: () => openAnnotation(annotation, !annotation.inspectionTaskId), onBack: closeAnnotation, onDone: editable ? () => void finishAnnotation(annotation) : undefined, onChange: changeAnnotationText, mediaControl: timeControl, children: <>
+        return <CanvasAnnotationNote key={`${annotation.inspectionTaskId || draft?.editingTaskId || 'draft'}-${annotation.id}`} canvas={canvas} bounds={annotationDisplayBounds(annotation)} markBounds={bounds} geometry={annotation.geometry} view={view} number={index + 1} onOpen={() => openAnnotation(annotation, !annotation.inspectionTaskId)} annotationId={annotation.id} active={active} control={{ text: annotation.text, compositionRef: active ? commentComposing : undefined, mode: active ? editable ? 'edit' : 'view' : 'display', inputLabel: active ? editable ? creation ? 'Add a comment' : 'Annotation text' : 'Annotation comment' : `Comment ${index + 1}: ${annotation.text}`, inputRef: active ? annotationInput : undefined, disabled: active && disabled, onOpen: () => openAnnotation(annotation, !annotation.inspectionTaskId), onBack: closeAnnotation, onDone: editable ? () => void finishAnnotation(annotation) : undefined, onChange: changeAnnotationText, mediaControl: timeControl, children: <>
           {editable && annotation.captureState && annotationEdit && <div className="annotation-target-actions"><label>Target<select aria-label="Annotation target" disabled={disabled} value={annotation.objectId || ''} onChange={event => { const world = annotationBounds(annotation) || annotation.bounds; const changes = event.target.value ? targetForWorld(world, annotation.geometry || 'rect', event.target.value) : markTarget(world, annotation.geometry || 'rect', [], contentBounds); patchAnnotation(annotationEdit, { ...changes, timeStart: undefined, timeEnd: undefined, snapshotAssetId: undefined, contentAnchor: changes.objectId ? markdownAnchor(changes.objectId) : undefined }); setCommentRevision(value => value + 1); }}><option value="">Canvas region</option>{objects.filter(object => contains(contentBounds(object), annotationBounds(annotation) || annotation.bounds)).map((object, index) => <option key={object.id} value={object.id}>{assetFor(object.assetId)?.name || 'File'} · {index + 1}</option>)}</select></label><button type="button" disabled={disabled} onClick={() => setMode('mark')}>Redraw mark</button></div>}
           <div className="annotation-source-thumbs">{sourceAssetIds.map(id => <AssetThumb key={id} asset={assetFor(id)} src={board.api.content(id)}/>)}</div>
           {annotation.objectIds.some(id => !objects.some(object => object.id === id)) && <span className="annotation-source-status">Source removed</span>}

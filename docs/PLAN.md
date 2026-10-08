@@ -6,6 +6,10 @@
 - 适用范围：本地项目创作白板、通用 Agent Skill、同一用户的多个 agent 会话。
 - 计划变更通过 Git 记录；本文件的进度区记录实际执行与验收情况。
 
+## 正文引用与点位标记调整（2026-10-08）
+
+用户要求普通引用位于正文文字之间，多素材各自显示；点批注编号直接位于点击点。按[调整设计](chatbox/INLINE_REFERENCES_POINT_ANCHOR_DESIGN.md)完成正文引用原子与持久位置、任务消息同步，以及标记/评论框独立布局。原生输入、空行、IME、Unicode、删除、刷新、队列与延迟保存语义一并核对。最终类型检查/构建、默认回归 125/125、生产 UI 20 项、既有适用 Chrome 12/12 通过；独立数据/捕获 44、点位 2、引用 9 与原生定点 14 验收 PASS，全部发现闭合。结果与普通页面 provider、既有区域过渡的实际边界见[专项验证](chatbox/INLINE_REFERENCES_POINT_ANCHOR_VALIDATION.md)。验证使用隔离资源，正式服务已在原端口/会话更新并保持项目 Chrome 运行；两次业务字段比较均一致，4 会话、25 任务、25 素材、12 对象、15 批注与 4 草稿保持。运行核对使用受控 API/CLI，原生 Chrome DOM 通道的实际限制已记录。
+
 ## Chatbox 完整交互实施（2026-10-08）
 
 剩余 implementation 已完成，范围见[实施设计](chatbox/CHATBOX_IMPLEMENTATION_DESIGN.md)与[验证记录](chatbox/CHATBOX_IMPLEMENTATION_VALIDATION.md)。acanvas 保持宿主无关，项目本地服务提供独立 Chrome 页面与后台截图，任何 agent 通过统一 CLI/API 和明确会话使用；显式会话优先于环境默认，host/thread 绑定按明确参数处理。对象/任务引用的一次性预览、统一顺序与可读消息、任意位置批注、后台捕获、历史现场和队列编辑已接通。Chrome OS renderer sandbox 保持启用，实际采样隐藏固定浮层，所有异步结果按完整身份处理。最终默认 Node 111/111、真实 React UI 13/13、Chrome 20/20、既有相关浏览器 8/8、类型检查和构建通过；独立源码及精准增量验收 PASS。已验证点/区域、媒体局部/时点、DPR2、320px 触屏、刷新/丢图/迟到响应及同版本完成时序。自动宿主消息投递继续按独立范围推进，测试使用隔离资源。

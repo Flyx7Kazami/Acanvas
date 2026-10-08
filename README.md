@@ -8,7 +8,7 @@ Import images, video, audio, and documents, select materials, and add annotation
 
 The runnable P0 prototype includes a full-screen canvas, floating controls, an adaptive composer, an expandable request queue, material imports and annotations, host conversation binding, and a persistent local service. The latest multimodal interactions support direct document interaction, eight-point resizing, embedded audio artwork, and a compact player with a complete audio waveform.
 
-Chatbox references use one-time previews and object/task search. Point and region annotations capture the current scene in the background through the project's managed Chrome, and task history reads the saved scene.
+Chatbox references appear inline with the text, with a separate preview for each selected material and object/task search. Point markers stay at the clicked position. Point and region annotations capture the current scene in the background through the project's managed Chrome, and task history reads the saved scene.
 
 - [Project plan](docs/PLAN.md): requirements, architecture, implementation stages, and acceptance criteria.
 - [Frontend design](docs/FRONTEND.md): visual references, grayscale themes, and interaction rules.
@@ -16,6 +16,7 @@ Chatbox references use one-time previews and object/task search. Point and regio
 - [Validation record](docs/VALIDATION.md): verified behavior and remaining limitations.
 - [Chatbox capture foundation](docs/chatbox/CAPTURE_FOUNDATION_DESIGN.md): background capture direction, persistent evidence APIs, and [validation](docs/chatbox/CAPTURE_FOUNDATION_VALIDATION.md).
 - [Chatbox implementation](docs/chatbox/CHATBOX_IMPLEMENTATION_DESIGN.md): references, annotations, task messages, history and the project-managed browser; [validation](docs/chatbox/CHATBOX_IMPLEMENTATION_VALIDATION.md).
+- [Inline references and point markers](docs/chatbox/INLINE_REFERENCES_POINT_ANCHOR_DESIGN.md): caret placement, saved reference positions and anchored annotation numbers; [validation](docs/chatbox/INLINE_REFERENCES_POINT_ANCHOR_VALIDATION.md).
 - [Agent Skill](skill/acanvas/SKILL.md): task processing and recovery.
 
 ## Install and run
@@ -63,8 +64,8 @@ A production service rejects duplicate instances and unapproved development orig
 ## Workflow
 
 1. Open the project whiteboard in the intended session. Materials and layout belong to the project; requests belong to that session. Use the managed Chrome window for background capture.
-2. Import, drop, or paste materials onto the canvas. Selecting objects previews references at the end of the composer; entering the composer confirms them. Type `@` to select objects or tasks from the current session. Confirmed references retain their order and can be removed individually.
-3. Use **Annotate** to mark a point or region, including blank canvas and areas crossing materials. Enter a comment and choose **Done**; the managed browser saves a screenshot in the background. Annotation summaries keep their thumbnails above the composer. Failed captures retain the comment and offer **Retry**.
+2. Import, drop, or paste materials onto the canvas. Selecting objects previews each reference at the current or last composer caret; entering the composer confirms them in place. Type `@` to select objects or tasks from the current session. References move with text edits, can be removed individually, and keep their positions after refresh or queue editing.
+3. Use **Annotate** to mark a point or region, including blank canvas and areas crossing materials. A point's number appears at the clicked position, with its comment beside it. Enter a comment and choose **Done**; the managed browser saves a screenshot in the background. Annotation summaries keep their thumbnails above the composer. Failed captures retain the comment and offer **Retry**.
 4. Add instructions and send. Text, formal references and complete annotations become one task. Task history displays the saved scene, and current-object location is a separate action. Dragging, multi-selection, alignment and Alt snapping bypass retain their canvas controls. The composer supports Enter to send and Shift+Enter for a new line.
 5. The agent reads the repository Skill and processes requests within the explicit project and task scope. The UI can copy a resume prompt containing the current whiteboard link.
 6. The agent registers outputs, publishes canvas changes, completes the task, and proceeds to the next request. Processing stops when the queue is empty or user input is needed.

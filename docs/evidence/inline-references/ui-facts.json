@@ -1,0 +1,58 @@
+{
+  "environment": {
+    "runtime": "project Node 24",
+    "browser": "project managed Chrome",
+    "projects": "isolated temporary fixtures",
+    "productionDataWrites": false
+  },
+  "referenceAcceptance": {
+    "existingCases": 2,
+    "newCases": 7,
+    "verifiedCases": 9,
+    "runs": [
+      {
+        "scope": "final inline references including native text operation, legacy fallback and save reconciliation",
+        "passed": 9,
+        "total": 9,
+        "durationSeconds": 35.0
+      },
+      {
+        "scope": "native composition, native atom-preserving replacement and held-save SSE focus group",
+        "passed": 3,
+        "total": 3,
+        "durationSeconds": 18.5,
+        "alreadyIncludedInReferences": true
+      }
+    ]
+  },
+  "fullManagedUiRegression": {
+    "previousPassed": 17,
+    "previousTotal": 17,
+    "newReferenceCasesIncludedInPreviousRun": 4,
+    "finalManagedSuiteCaseCount": 20,
+    "finalCombinedChecks": "delegated after source stability"
+  },
+  "uiFacts": {
+    "textStoredAsOriginalPlainText": true,
+    "eachSelectedObjectHasIndependentInlinePreviewAndReference": true,
+    "sameAssetDifferentObjectIdentityPreserved": true,
+    "lastCaretInsertionAndOneShotConfirmationVerified": true,
+    "rawTextOffsetsPreservedAfterRefreshSendAndQueueEdit": true,
+    "nativeCompositionEventsAndCommitVerified": true,
+    "backwardShiftSelectionAcrossTokenVerified": true,
+    "terminalAndReferenceLineBreaksRetainSubsequentTyping": true,
+    "nativeMultilineLeadingAndTrailingBlankLinesBeforeAtomsRetained": true,
+    "textOnlyRangeDeletionAndLastCharacterDeletionKeepTwoAtomsAtOffsetZero": true,
+    "nativeInputBatchConsumesCompleteTextOperationOnce": true,
+    "trailingNewlinePlaintextPasteBeforeAtomsRetained": true,
+    "legacyMissingOrderAndRequestReferencesRenderAtBodyTail": true,
+    "narrowThemeTokensRemainWithinEditorWidth": true,
+    "equivalentSaveAndSseJsonKeyOrderingReconcilesByBusinessFields": true
+  },
+  "visuals": [
+    "inline-previews.png",
+    "inline-confirmed.png",
+    "inline-320-light-preview.png",
+    "inline-320-dark-confirmed.png"
+  ]
+}

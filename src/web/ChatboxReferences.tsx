@@ -1,51 +1,22 @@
 import { History, X } from 'lucide-react';
-import type { Asset, BoardObject, Draft, Task } from '../shared/types';
+import type { Asset, BoardObject, Draft, RequestReference, Task } from '../shared/types';
 import { AssetThumb } from './ContentRenderer';
 
-export type ReferenceIdentity = { kind: 'object' | 'task'; id: string };
-export function referenceOrder(references: Draft['references']): ReferenceIdentity[] {
-  return (references as Draft['references'] & { order?: ReferenceIdentity[] }).order || [
-    ...references.objectIds.map(id => ({ kind: 'object' as const, id })),
-    ...references.taskIds.map(id => ({ kind: 'task' as const, id })),
-  ];
-}
+export type ReferenceIdentity = RequestReference;
 
-export function addReferences(references: Draft['references'], entries: ReferenceIdentity[]): Draft['references'] {
-  const order = [...referenceOrder(references)];
-  for (const entry of entries) if (!order.some(value => value.kind === entry.kind && value.id === entry.id)) order.push(entry);
-  return { objectIds: order.filter(entry => entry.kind === 'object').map(entry => entry.id), taskIds: order.filter(entry => entry.kind === 'task').map(entry => entry.id), order };
-}
-
-export function removeReference(references: Draft['references'], entry: ReferenceIdentity): Draft['references'] {
-  const order = referenceOrder(references).filter(value => value.kind !== entry.kind || value.id !== entry.id);
-  return { objectIds: order.filter(value => value.kind === 'object').map(value => value.id), taskIds: order.filter(value => value.kind === 'task').map(value => value.id), order };
-}
-
-export function ChatboxReferences({ draft, preview, objects, assets, tasks, content, disabled, onConfirm, onDismiss, onRemove }: {
-  draft: Draft; preview: string[]; objects: BoardObject[]; assets: Asset[]; tasks: Task[]; content: (id: string) => string;
-  disabled: boolean; onConfirm: () => void; onDismiss: () => void; onRemove: (entry: ReferenceIdentity) => void;
+export function ChatboxReference({ entry, draft, preview = false, objects, assets, tasks, content, disabled, onConfirm, onRemove }: {
+  entry: ReferenceIdentity; draft: Draft; preview?: boolean; objects: BoardObject[]; assets: Asset[]; tasks: Task[]; content: (id: string) => string;
+  disabled: boolean; onConfirm: () => void; onRemove: () => void;
 }) {
-  const order = referenceOrder(draft.references);
-  if (!order.length && !preview.length) return null;
   const source = tasks.find(task => task.id === draft.editingTaskId)?.snapshot.referenceContent;
-  return <div className="chatbox-references" aria-label="Request references">
-    {order.map(entry => {
-      const object = objects.find(value => value.id === entry.id) || source?.objects.find(value => value.id === entry.id);
-      const asset = [...assets, ...(source?.assets || [])].find(value => value.id === object?.assetId);
-      const task = tasks.find(value => value.id === entry.id);
-      const name = entry.kind === 'object' ? asset?.name || 'Removed object' : task ? `Request ${task.sequence}` : 'Historical request';
-      return <div className="chatbox-reference" key={`${entry.kind}:${entry.id}`} data-reference-kind={entry.kind} data-reference-id={entry.id} data-reference-unavailable={entry.kind === 'object' && !object || undefined}>
-        {entry.kind === 'object' ? <AssetThumb asset={asset} src={asset ? content(asset.id) : ''}/> : <History size={14}/>}
-        <span title={name}>@{name}</span><button type="button" aria-label={`Remove reference ${name}`} disabled={disabled} onClick={() => onRemove(entry)}><X size={13}/></button>
-      </div>;
-    })}
-    {!!preview.length && <div className="chatbox-reference-preview" data-reference-preview>
-      <button type="button" className="reference-preview-confirm" aria-label={`Add ${preview.length} selected ${preview.length === 1 ? 'object' : 'objects'} to request`} disabled={disabled} onClick={onConfirm}>
-        <span className="reference-preview-thumbs">{preview.slice(0, 3).map(id => { const object = objects.find(value => value.id === id), asset = assets.find(value => value.id === object?.assetId); return <AssetThumb key={id} asset={asset} src={asset ? content(asset.id) : ''}/>; })}</span>
-        <span>{preview.length === 1 ? assets.find(asset => asset.id === objects.find(object => object.id === preview[0])?.assetId)?.name || 'Selected object' : `${preview.length} selected objects`}</span>
-      </button><button type="button" aria-label="Dismiss selected reference preview" disabled={disabled} onClick={onDismiss}><X size={13}/></button>
-    </div>}
-  </div>;
+  const object = objects.find(value => value.id === entry.id) || source?.objects.find(value => value.id === entry.id);
+  const asset = [...assets, ...(source?.assets || [])].find(value => value.id === object?.assetId);
+  const task = tasks.find(value => value.id === entry.id);
+  const name = entry.kind === 'object' ? asset?.name || 'Removed object' : task ? `Request ${task.sequence}` : 'Historical request';
+  return <span className={preview ? 'chatbox-reference-preview' : 'chatbox-reference'} data-reference-preview={preview || undefined} data-reference-kind={entry.kind} data-reference-id={entry.id} data-reference-unavailable={entry.kind === 'object' && !object || undefined}>
+    {preview ? <button type="button" className="reference-preview-confirm" aria-label={`Add selected ${name} to request`} disabled={disabled} onPointerDown={event => { event.preventDefault(); event.stopPropagation(); }} onClick={onConfirm}><AssetThumb asset={asset} src={asset ? content(asset.id) : ''}/><span title={name}>{name}</span></button> : <>{entry.kind === 'object' ? <AssetThumb asset={asset} src={asset ? content(asset.id) : ''}/> : <History size={14}/>}<span title={name}>@{name}</span></>}
+    <button type="button" aria-label={preview ? `Dismiss selected reference preview ${name}` : `Remove reference ${name}`} disabled={disabled} onPointerDown={event => { event.preventDefault(); event.stopPropagation(); }} onClick={onRemove}><X size={13}/></button>
+  </span>;
 }
 
 export type ReferenceCandidate = ReferenceIdentity & { name: string; subtitle: string; asset?: Asset };

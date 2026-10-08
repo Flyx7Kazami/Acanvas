@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { request as rawRequest } from 'node:http';
 import { execFile, spawn, type ChildProcess } from 'node:child_process';
 import { promisify } from 'node:util';
-import type { AnnotationInput, Asset, Claim, Draft, Task } from '../src/shared/types.js';
+import type { AnnotationInput, Asset, Claim, Draft, ResolvedRequestReference, Task } from '../src/shared/types.js';
 import { startServer, type RunningServer } from '../src/server/http.js';
 import { cli } from '../src/cli.js';
 import { generateRequirementText } from '../src/shared/task-message.js';
@@ -568,4 +568,78 @@ test('reference order validates identity sets and legacy ordering keeps historic
   f.running.service.db.prepare('UPDATE tasks SET snapshot_json=? WHERE id=?').run(JSON.stringify(legacy), sent.task.id);
   const read = await cli(['task', 'read', '--project', f.root, '--url', f.running.url, '--session', b.id, '--task', sent.task.id]) as any;
   assert.ok(read.task.requirementText.includes('legacy-ref')); assert.ok(read.task.requirementText.includes(old.id)); assert.equal(read.task.requirementText, read.task.snapshot.requirementText);
+});
+
+test('inline references persist through CLI submission, reload, and queued edits with current positions and saved content', async t => {
+  const f = await fixture(t), session = await f.session('Inline references'), prior = await f.sendTask(session.id, 'Source request.'), asset = await f.upload('shared placements', '', 201, { name: 'Cover\n# source.png', mime: 'image/png' });
+  const objectIds = ['inline-before', 'inline-middle', 'inline-after'];
+  await f.call('/api/board/operations', 'POST', { sessionId: session.id, operations: objectIds.map((id, index) => ({ type: 'create', object: { id, assetId: asset.id, x: index * 100, y: 0, width: 80, height: 60 } })) });
+  const original: Draft = (await f.state(session.id)).draft, bodyText = '前😀中\n后';
+  const order = [{ kind: 'object', id: objectIds[0], textOffset: 0 }, { kind: 'task', id: prior.id, textOffset: 3 }, { kind: 'object', id: objectIds[1], textOffset: 3 }, { kind: 'object', id: objectIds[2], textOffset: bodyText.length }];
+  const draftFile = join(f.root, 'inline-draft.json');
+  await writeFile(draftFile, JSON.stringify({ ...original, text: bodyText, references: { objectIds, taskIds: [prior.id], order: order.map(reference => ({ ...reference, label: 'Supplied label', sourceSessionId: 'supplied-session' })) } }));
+  const runCli = async (args: string[]) => {
+    const { stdout, stderr } = await promisify(execFile)(process.execPath, [join(process.cwd(), 'dist/src/cli.js'), ...args, '--project', f.root, '--url', f.running.url, '--session', session.id]);
+    assert.equal(stderr, ''); return stdout;
+  };
+  const saved: Draft = JSON.parse(await runCli(['draft', 'save', '--input', draftFile]));
+  assert.deepEqual(saved.references.order, order); assert.equal(saved.text, bodyText);
+  await f.restart();
+  const reloaded: Draft = (await f.state(session.id)).draft;
+  assert.deepEqual(reloaded.references.order, order); assert.equal(reloaded.text, bodyText);
+  const submitted: { task: Task; draft: Draft } = JSON.parse(await runCli(['draft', 'send', '--draft', saved.id, '--revision', String(saved.revision)]));
+  const task = submitted.task, resolved = task.snapshot.requestReferences!.order!;
+  assert.deepEqual(resolved.map(({ kind, id, textOffset }) => ({ kind, id, textOffset })), order);
+  assert.equal(task.snapshot.userRequest.source, 'user_instruction'); assert.equal(task.snapshot.userRequest.text, bodyText);
+  assert.equal(resolved[1].sourceSessionId, session.id); assert.equal(resolved[1].sourceTaskId, prior.id);
+  assert.equal(resolved.filter(reference => reference.kind === 'object').length, 3); assert.equal(task.snapshot.referenceContent.assets.length, 1);
+  assert.equal(task.requirementText.includes('Supplied label'), false); assert.equal(task.requirementText.includes('supplied-session'), false);
+  const readable = await runCli(['task', 'read', '--task', task.id, '--format', 'text']);
+  assert.equal(readable, `${task.requirementText}\n`);
+  const body = task.requirementText.split('\n\nReferences (reference_content):')[0];
+  assert.ok(body.startsWith('[@')); assert.ok(body.includes(']前😀[@')); assert.ok(body.includes(']中\n后[@'));
+  assert.ok(body.indexOf(prior.id) < body.indexOf(objectIds[1]));
+  for (const reference of order) { assert.ok(body.includes(reference.id)); }
+  assert.equal(task.requirementText.includes('\n# source.png'), false); assert.ok(task.requirementText.includes('reference_content'));
+
+  await f.call('/api/board/operations', 'POST', { sessionId: session.id, operations: [{ type: 'delete', objectId: objectIds[0], expectedVersion: 1 }] });
+  let edit: Draft = (await f.call(`/api/sessions/${session.id}/tasks/${task.id}/edit`, 'POST', { draftId: submitted.draft.id, expectedRevision: submitted.draft.revision })).draft;
+  assert.deepEqual(edit.references.order, order);
+  const editedText = '改😀\n段', editedOrder = [{ kind: 'task', id: prior.id, textOffset: 0 }, { kind: 'object', id: objectIds[1], textOffset: 0 }, { kind: 'object', id: objectIds[0], textOffset: 3 }, { kind: 'object', id: objectIds[2], textOffset: editedText.length }];
+  edit = await f.call(`/api/sessions/${session.id}/draft`, 'PUT', { ...edit, text: editedText, references: { objectIds, taskIds: [prior.id], order: editedOrder } });
+  const revised = await f.call(`/api/sessions/${session.id}/tasks`, 'POST', { draftId: edit.id, expectedRevision: edit.revision });
+  assert.equal(revised.task.id, task.id); assert.equal(revised.task.sequence, task.sequence); assert.equal(revised.task.snapshot.userRequest.text, editedText);
+  const moved: ResolvedRequestReference[] = revised.task.snapshot.requestReferences.order;
+  assert.deepEqual(moved.map(({ kind, id, textOffset }) => ({ kind, id, textOffset })), editedOrder);
+  for (const reference of moved) {
+    const before = resolved.find(value => value.kind === reference.kind && value.id === reference.id)!;
+    assert.deepEqual({ ...reference, textOffset: before.textOffset }, before);
+  }
+  assert.equal(await runCli(['task', 'read', '--task', task.id, '--format', 'text']), `${revised.task.requirementText}\n`);
+  const reopened = await f.call(`/api/sessions/${session.id}/tasks/${task.id}/edit`, 'POST', { draftId: revised.draft.id, expectedRevision: revised.draft.revision });
+  assert.deepEqual(reopened.draft.references.order, editedOrder); assert.equal(reopened.draft.text, editedText);
+  const cancelled = await f.call(`/api/sessions/${session.id}/tasks/${task.id}/cancel-edit`, 'POST', { draftId: reopened.draft.id, expectedRevision: reopened.draft.revision });
+  assert.deepEqual(cancelled.task.snapshot, revised.task.snapshot);
+});
+
+test('inline reference positions validate UTF-16 boundaries, visual order, identity and session scope atomically', async t => {
+  const f = await fixture(t), a = await f.session('A'), b = await f.session('B'), foreign = await f.sendTask(b.id), asset = await f.upload('two independent references');
+  await f.call('/api/board/operations', 'POST', { sessionId: a.id, operations: ['position-a', 'position-b'].map((id, index) => ({ type: 'create', object: { id, assetId: asset.id, x: index * 100, y: 0, width: 80, height: 60 } })) });
+  let draft: Draft = (await f.state(a.id)).draft;
+  const bodyText = 'A😀B';
+  for (const offset of [-1, 1.5, bodyText.length + 1, Number.MAX_SAFE_INTEGER + 1, null, '1', 2]) {
+    const error = await f.call(`/api/sessions/${a.id}/draft`, 'PUT', { ...draft, text: bodyText, references: { objectIds: ['position-a'], taskIds: [], order: [{ kind: 'object', id: 'position-a', textOffset: offset }] } }, 400);
+    assert.equal(error.error.code, 'invalid_references'); assert.deepEqual((await f.state(a.id)).draft, draft);
+  }
+  for (const order of [[{ kind: 'object', id: 'position-a', textOffset: 3 }, { kind: 'object', id: 'position-b', textOffset: 1 }], [{ kind: 'object', id: 'position-a' }, { kind: 'object', id: 'position-b', textOffset: 1 }], [{ kind: 'object', id: 'position-a', textOffset: 0 }, { kind: 'object', id: 'position-a', textOffset: 0 }], [{ kind: 'object', id: 'position-a', textOffset: 0 }, { kind: 'task', id: 'position-b', textOffset: 0 }]]) {
+    const error = await f.call(`/api/sessions/${a.id}/draft`, 'PUT', { ...draft, text: bodyText, references: { objectIds: ['position-a', 'position-b'], taskIds: [], order } }, 400);
+    assert.equal(error.error.code, 'invalid_references'); assert.deepEqual((await f.state(a.id)).draft, draft);
+  }
+  await f.call(`/api/sessions/${a.id}/draft`, 'PUT', { ...draft, text: bodyText, references: { objectIds: [], taskIds: [foreign.id], order: [{ kind: 'task', id: foreign.id, textOffset: 0 }] } }, 403);
+  await f.call(`/api/sessions/${a.id}/draft`, 'PUT', { ...draft, text: bodyText, references: { objectIds: ['missing-position'], taskIds: [], order: [{ kind: 'object', id: 'missing-position', textOffset: 0 }] } }, 404);
+  assert.deepEqual((await f.state(a.id)).draft, draft);
+  draft = await f.call(`/api/sessions/${a.id}/draft`, 'PUT', { ...draft, text: bodyText, references: { objectIds: ['position-a', 'position-b'], taskIds: [], order: [{ kind: 'object', id: 'position-a', textOffset: 1 }, { kind: 'object', id: 'position-b', textOffset: 1 }] } });
+  assert.equal(draft.text, bodyText); assert.deepEqual(draft.references.order?.map(reference => reference.textOffset), [1, 1]);
+  const shorter = await f.call(`/api/sessions/${a.id}/draft`, 'PUT', { ...draft, text: '' }, 400);
+  assert.equal(shorter.error.code, 'invalid_references'); assert.deepEqual((await f.state(a.id)).draft, draft);
 });

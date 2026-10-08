@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AnnotationInput, BoardOperation, BoardState, Draft, SessionView } from '../shared/types';
+import { referenceOrder } from '../shared/task-message';
 import { annotationTarget } from './annotation-scene';
 import { BoardApi, RequestError } from './api';
 
 type SavingDraft = { value: Draft; editRevision: number; expectedRevision: number };
 type LocalDraft = { value: Draft; serverAnnotations: AnnotationInput[]; editRevision: number; savedEditRevision: number; confirmedRevision: number; epoch: number; failed?: boolean; conflict?: Draft; inflight?: SavingDraft; lastAttempt?: SavingDraft };
 export type SaveState = 'saved' | 'saving' | 'unsaved' | 'failed';
-const draftContent = (value: Draft) => JSON.stringify({ text: value.text, attachments: value.attachments, annotations: value.annotations, references: value.references });
+const comparableReferences = (references: Draft['references']) => ({ objectIds: references.objectIds, taskIds: references.taskIds, order: referenceOrder(references).map(reference => ({ kind: reference.kind, id: reference.id, ...(reference.textOffset === undefined ? {} : { textOffset: reference.textOffset }) })) });
+const draftContent = (value: Draft) => JSON.stringify({ text: value.text, attachments: value.attachments, annotations: value.annotations, references: comparableReferences(value.references) });
 const freshDraft = (value: Draft, epoch = 0): LocalDraft => ({ value, serverAnnotations: value.annotations, editRevision: 0, savedEditRevision: 0, confirmedRevision: value.revision, epoch });
 const sameTarget = (a: AnnotationInput, b: AnnotationInput) => JSON.stringify(annotationTarget(a)) === JSON.stringify(annotationTarget(b));
-const draftIntent = (value: Draft) => JSON.stringify({ ...value, revision: 0, updatedAt: '', annotations: value.annotations.map(({ captureState, capture, ...annotation }) => annotation) });
+const draftIntent = (value: Draft) => JSON.stringify({ id: value.id, sessionId: value.sessionId, editingTaskId: value.editingTaskId, text: value.text, attachments: value.attachments, references: comparableReferences(value.references), annotations: value.annotations.map(({ captureState, capture, ...annotation }) => annotation) });
 const displayAnnotation = (local: AnnotationInput, server?: AnnotationInput): AnnotationInput => {
   if (!server?.captureState) return local;
   return sameTarget(local, server) ? { ...local, captureState: server.captureState, capture: server.capture } : { ...local, captureState: { version: server.captureState.version, status: 'incomplete' }, capture: undefined };

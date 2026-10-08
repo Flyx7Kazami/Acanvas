@@ -2,6 +2,8 @@
 
 日期：2026-10-08（Asia/Shanghai）。依据：[实施设计](CHATBOX_IMPLEMENTATION_DESIGN.md)、[功能计划](CHATBOX_REFERENCES_ANNOTATION_PLAN.md)和[方案审查](CHATBOX_REFERENCES_ANNOTATION_REVIEW.md)。
 
+本文记录完整交互实施轮次。后续正文内独立引用及点击点编号调整见[专项验证](INLINE_REFERENCES_POINT_ANCHOR_VALIDATION.md)。
+
 ## 1. 范围与当前状态
 
 本轮接续捕获基础，实施对象/任务引用、任意位置批注、项目 Chrome 后台截图、任务可读消息和历史现场。acanvas 保持宿主无关，任意 agent 使用相同项目 CLI/API；草稿、队列及证据按明确会话范围处理。
