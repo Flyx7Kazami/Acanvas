@@ -83,6 +83,9 @@ test('capture commit and draft send recover unread responses with one asset and 
   await f.restart();
   const sent = await cli(['draft', 'send', '--project', f.root, '--url', f.running.url, '--session', a.id, '--draft', current.id, '--revision', String(current.revision)]) as { task: Task };
   assert.equal((await f.state(a.id)).tasks.length, 1); assert.deepEqual(sent.task.snapshot.annotations[0].capture, draft.annotations[0].capture);
+  const readable = await cli(['task', 'read', '--project', f.root, '--url', f.running.url, '--session', a.id, '--task', sent.task.id, '--format', 'text']);
+  assert.equal(readable, sent.task.snapshot.requirementText); assert.equal(readable, sent.task.requirementText);
+  assert.ok(sent.task.requirementText.includes('Keep the original view with warmer light.')); assert.ok(sent.task.requirementText.includes(result.capture.screenshotAssetId));
   const out = join(f.root, 'read.png');
   await cli(['asset', 'read', '--project', f.root, '--url', f.running.url, '--session', a.id, '--asset', result.capture.screenshotAssetId, '--out', out]);
   assert.deepEqual(await readFile(out), png);
@@ -161,11 +164,45 @@ test('evidence reads and writes keep session ownership across content, range, me
   const context = await f.call(`/api/sessions/${b.id}/tasks/${otherTask.task.id}/context`);
   assert.equal(context.context.referencedTasks[0].snapshot.annotations.length, 0);
   assert.equal(context.context.referencedTasks[0].snapshot.referenceContent.assets.some((value: Asset) => value.evidence), false);
+  assert.equal(context.context.referencedTasks[0].requirementText.includes(id), false);
+  assert.equal(context.context.referencedTasks[0].snapshot.requirementText.includes(id), false);
+  assert.equal(context.context.referencedTasks[0].requirementText.includes('Keep the quiet light.'), false);
   let edit: Draft = (await f.call(`/api/sessions/${b.id}/tasks/${otherTask.task.id}/edit`, 'POST', { draftId: otherTask.draft.id, expectedRevision: otherTask.draft.revision })).draft;
   edit = await f.save(edit, { text: 'Only the body changed.' }); const revised = await f.send(edit); assert.equal(revised.task.id, otherTask.task.id);
   historical = (await f.call(`/api/sessions/${b.id}/tasks/${otherTask.task.id}/edit`, 'POST', { draftId: revised.draft.id, expectedRevision: revised.draft.revision })).draft;
   historical = await f.save(historical, { references: { objectIds: [], taskIds: [] } });
   await f.call(`/api/sessions/${b.id}/draft`, 'PUT', { ...historical, references: { objectIds: [], taskIds: [sent.task.id] } }, 403);
+});
+
+test('blank and object points plus mixed scene regions send independent evidence without inferred references', async t => {
+  const f = await fixture(t), a = await f.session();
+  const assets = await Promise.all([f.upload('still.png', 'image/png'), f.upload('sound.mp3', 'audio/mpeg'), f.upload('notes.md', 'text/markdown')]);
+  const objects: BoardObject[] = [];
+  for (const [index, asset] of assets.entries()) {
+    const created = await f.call('/api/board/operations', 'POST', { sessionId: a.id, operations: [{ type: 'create', object: { assetId: asset.id, x: 10 + index * 120, y: 20, width: 100, height: 80 } }] });
+    objects.push(created.objects.find((object: BoardObject) => object.assetId === asset.id));
+  }
+  const blank: AnnotationInput = { ...note(undefined, 'blank-point'), geometry: 'point', bounds: { x: 420, y: 350, width: 0, height: 0 }, text: 'Keep this empty point.\nLeave generous space.' };
+  const point: AnnotationInput = { ...note(objects[0], 'object-point'), geometry: 'point', bounds: { x: .25, y: .75, width: 0, height: 0 }, text: 'Focus this image point.' };
+  const mixed: AnnotationInput = { ...note(undefined, 'mixed-region'), bounds: { x: 5, y: 15, width: 340, height: 100 }, text: 'Balance the mixed scene.' };
+  let draft: Draft = await f.save((await f.state(a.id)).draft, { text: '  Preserve my request.\n', annotations: [blank, point, mixed] });
+  for (const id of ['blank-point', 'object-point', 'mixed-region']) {
+    const annotation = draft.annotations.find(value => value.id === id)!, input = metadata(annotation, id === 'object-point' ? objects[0] : undefined, id === 'object-point' ? assets[0] : undefined);
+    if (annotation.geometry === 'point') input.worldBounds = { x: id === 'object-point' ? 35 : 420, y: id === 'object-point' ? 80 : 350, width: 0, height: 0 };
+    if (id === 'mixed-region') input.scene = { objects: objects.map((object, layer) => ({ object, renderedBounds: { x: object.x, y: object.y, width: object.width, height: object.height }, layer, ...(layer === 1 ? { media: { playbackTime: 42 } } : {}), ...(layer === 2 ? { scroll: { x: 0, y: 125 } } : {}) })), assets, omittedCount: 0 };
+    draft = (await f.capture(draft, annotation, input)).draft!;
+  }
+  await f.call('/api/board/operations', 'POST', { sessionId: a.id, operations: [{ type: 'delete', objectId: objects[0].id, expectedVersion: 1 }] });
+  draft = await f.save(draft, { text: '  Preserve my request.\nWith the original scene.\n' });
+  const sent = await f.send(draft), task: Task = sent.task;
+  assert.deepEqual(task.snapshot.requestReferences!.objectIds, []); assert.deepEqual(task.snapshot.requestReferences!.attachmentIds, []); assert.deepEqual(task.snapshot.requestReferences!.order, []);
+  assert.deepEqual(task.snapshot.referenceContent.objects, []); assert.deepEqual(task.snapshot.annotations.map(annotation => annotation.bounds), [blank.bounds, point.bounds, mixed.bounds]);
+  assert.equal(task.snapshot.annotations[2].timeStart, undefined); assert.deepEqual(task.snapshot.annotations[2].objectIds, []);
+  assert.equal(task.snapshot.annotations[2].capture!.scene.objects[1].media!.playbackTime, 42); assert.equal(task.snapshot.annotations[2].capture!.scene.objects[2].scroll!.y, 125);
+  assert.ok(task.requirementText.startsWith(draft.text));
+  for (const annotation of task.snapshot.annotations) { assert.ok(task.requirementText.includes(annotation.text)); assert.ok(task.requirementText.includes(annotation.capture!.screenshotAssetId)); }
+  assert.ok(task.requirementText.includes('Scene evidence (reference_content)')); assert.ok(task.requirementText.includes('"geometry":"point"')); assert.ok(task.requirementText.includes('"playbackTime":42'));
+  assert.equal(task.requirementText.includes('References (reference_content)'), false);
 });
 
 test('capture input rejects unsupported images, resource limits, invalid mappings and file dimension mismatches', async t => {

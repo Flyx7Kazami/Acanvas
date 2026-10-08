@@ -5,7 +5,7 @@ export const HTML_PREVIEW_LIMIT = 4;
 export const HTML_SNAPSHOT_LIMIT = 64;
 export const HTML_SNAPSHOT_BYTES = 64 * 1024 * 1024;
 type Slot = 'hidden' | 'waiting' | 'capturing' | 'live' | 'freezing' | 'frozen' | 'stopped';
-type Entry = { element: HTMLElement; intersecting: boolean; attempted: boolean; requested: boolean; phase?: 'capturing' | 'live' | 'freezing'; width: number; height: number; generation: number; used: number; hovered: boolean; resizeTimer?: number };
+type Entry = { element: HTMLElement; intersecting: boolean; attempted: boolean; requested: boolean; phase?: 'capturing' | 'live' | 'freezing'; width: number; height: number; generation: number; used: number; hovered: boolean; preserved?: boolean; resizeTimer?: number };
 type Cached = { image: HtmlSnapshot; cost: number };
 
 // Both initial screenshot jobs and explicit interactive previews reserve slots,
@@ -49,7 +49,7 @@ class HtmlPreviewPool {
     for (const entry of this.entries.values()) entry.hovered = entry.element.contains(event.target);
   };
   private visible(entry: Entry) {
-    return entry.intersecting && !document.hidden && !entry.element.closest('[inert], [hidden], [aria-hidden="true"]') && entry.element.checkVisibility({ checkVisibilityCSS: true });
+    return entry.intersecting && (!document.hidden || entry.preserved && !!entry.phase) && !entry.element.closest('[inert], [hidden], [aria-hidden="true"]') && entry.element.checkVisibility({ checkVisibilityCSS: true });
   }
   read(id: symbol) {
     const entry = this.entries.get(id), image = this.cache.get(id)?.image;
@@ -69,11 +69,11 @@ class HtmlPreviewPool {
     for (const [id, entry] of [...this.entries].sort((a, b) => b[1].used - a[1].used)) {
       if (!entry.requested || !this.visible(entry) || this.active.has(id)) continue;
       if (this.active.size >= HTML_PREVIEW_LIMIT) {
-        const warming = [...this.active].find(key => this.entries.get(key)?.phase === 'capturing');
+        const warming = [...this.active].find(key => this.entries.get(key)?.phase === 'capturing' && !this.entries.get(key)?.preserved);
         if (warming) this.release(warming);
         else {
           if (![...this.active].some(key => this.entries.get(key)?.phase === 'freezing')) {
-            const candidates = [...this.active].map(key => this.entries.get(key)!);
+            const candidates = [...this.active].map(key => this.entries.get(key)!).filter(candidate => !candidate.preserved);
             const protectedEntry = (candidate: Entry) => candidate.hovered || candidate.element.matches(':focus-within') || candidate.element.contains(document.activeElement);
             candidates.sort((a, b) => Number(protectedEntry(a)) - Number(protectedEntry(b)) || a.used - b.used);
             if (candidates[0]) candidates[0].phase = 'freezing';
@@ -157,6 +157,7 @@ class HtmlPreviewPool {
   setHovered(id: symbol, hovered: boolean) {
     for (const [key, entry] of this.entries) if (key === id || hovered) entry.hovered = key === id && hovered;
   }
+  preserve(id: symbol, value: boolean) { const entry = this.entries.get(id); if (entry && entry.preserved !== value) { entry.preserved = value; this.reconcile(); } }
   request(id: symbol) {
     const entry = this.entries.get(id); if (!entry) return;
     entry.used = ++this.usage; entry.attempted = true;
@@ -175,10 +176,11 @@ export function HtmlPreviewProvider({ children }: { children: ReactNode }) {
   return <PreviewContext.Provider value={pool}>{children}</PreviewContext.Provider>;
 }
 
-export function useHtmlPreviewSlot(element: RefObject<HTMLDivElement | null>) {
+export function useHtmlPreviewSlot(element: RefObject<HTMLDivElement | null>, preserve = false) {
   const pool = useContext(PreviewContext), id = useRef(Symbol('html-preview')).current;
   if (!pool) throw new Error('HTML previews require a board preview provider.');
   useLayoutEffect(() => { if (element.current) return pool.register(id, element.current); }, [pool, id, element]);
+  useLayoutEffect(() => { pool.preserve(id, preserve); }, [pool, id, preserve]);
   useSyncExternalStore(pool.subscribe, pool.snapshot);
   const stop = useCallback(() => pool.stop(id), [pool, id]), request = useCallback(() => pool.request(id), [pool, id]);
   const complete = useCallback((generation: number, image?: HtmlSnapshot) => pool.complete(id, generation, image), [pool, id]);

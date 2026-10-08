@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-08",
+  "node": "24.21.0",
+  "command": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test dist/tests/*.test.js",
+  "buildCommand": "npm run build:server",
+  "buildServer": "PASS",
+  "tests": 95,
+  "passed": 95,
+  "failed": 0,
+  "durationMs": 35648.938084,
+  "exitCode": 0,
+  "browserTestsIncluded": 18,
+  "isolatedTemporaryProjects": true,
+  "userBoardAccessed": false,
+  "existingUserServiceAccessed": false,
+  "log": "node-regression-tests.log",
+  "fullReactUiValidation": "Recorded separately after final UI build"
+}

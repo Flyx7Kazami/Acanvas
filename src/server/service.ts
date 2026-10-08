@@ -3,10 +3,11 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
-import type { Annotation, AnnotationCapture, AnnotationCaptureInput, AnnotationInput, Asset, BoardObject, BoardOperation, BoardState, CaptureResult, CaptureRetryResult, Claim, CompleteInput, Draft, HostBinding, HtmlBundle, Project, Run, RunIdentity, ServiceIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
+import type { Annotation, AnnotationCapture, AnnotationCaptureInput, AnnotationInput, Asset, BoardObject, BoardOperation, BoardState, CaptureResult, CaptureRetryResult, Claim, CompleteInput, Draft, DraftReferences, HostBinding, HtmlBundle, Project, ResolvedRequestReference, Run, RunIdentity, ServiceIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
 import { bundleLimits, bundleMime, validBundlePath } from '../shared/html-bundle.js';
 import { contentCapabilities, resolveContentKind } from '../shared/content-types.js';
 import { annotationTarget, sameAnnotationTarget, rasterDimensions } from './annotation-capture.js';
+import { generateRequirementText, referenceOrder } from '../shared/task-message.js';
 
 type Row = Record<string, any>;
 export class ApiFailure extends Error {
@@ -20,6 +21,21 @@ const text = (value: unknown, label: string, maximum = 100_000) => typeof value 
 const nonempty = (value: unknown, label: string, maximum = 100_000) => { const result = text(value, label, maximum).trim(); return result || fail(400, 'invalid_input', `${label} is required.`); };
 const ids = (value: unknown, label: string): string[] => Array.isArray(value) && value.length <= 1000 && value.every((id) => typeof id === 'string' && id.length < 200) ? [...new Set(value)] : fail(400, 'invalid_input', `${label} must contain IDs.`);
 const finite = (value: unknown, label: string): number => typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1e9 ? value : fail(400, 'invalid_input', `${label} must be a finite number.`);
+const draftReferences = (input: DraftReferences): DraftReferences => {
+  const objectIds = ids(input?.objectIds, 'Object references'), taskIds = ids(input?.taskIds, 'Task references');
+  if (objectIds.length !== input.objectIds.length || taskIds.length !== input.taskIds.length) fail(400, 'invalid_references', 'Each reference identity appears once.');
+  if (input.order !== undefined && (!Array.isArray(input.order) || input.order.length > 2000)) fail(400, 'invalid_references', 'Reference order must be a list.');
+  const order = referenceOrder({ objectIds, taskIds, ...(input.order === undefined ? {} : { order: input.order }) });
+  const seen = new Set<string>();
+  for (const reference of order) {
+    if (!reference || !['object', 'task'].includes(reference.kind) || typeof reference.id !== 'string' || !reference.id || reference.id.length >= 200) fail(400, 'invalid_references', 'References require a kind and stable ID.');
+    const key = `${reference.kind}:${reference.id}`;
+    if (seen.has(key) || !(reference.kind === 'object' ? objectIds : taskIds).includes(reference.id)) fail(400, 'invalid_references', 'Reference order contains each grouped identity once.');
+    seen.add(key);
+  }
+  if (seen.size !== objectIds.length + taskIds.length) fail(400, 'invalid_references', 'Reference order contains every grouped identity.');
+  return { objectIds, taskIds, order: order.map(({ kind, id }) => ({ kind, id })) };
+};
 export const within = (root: string, path: string) => { const rel = relative(root, path); return rel === '' || (!isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`)); };
 
 export class CanvasService {
@@ -129,7 +145,7 @@ export class CanvasService {
   draft(sessionId: string): Draft {
     this.sessionRow(sessionId);
     const row = this.db.prepare('SELECT * FROM drafts WHERE session_id=?').get(sessionId) as Row;
-    return { ...(row.editing_task_id ? { editingTaskId: row.editing_task_id } : {}), id: row.id, sessionId, revision: row.revision, text: row.text, attachments: parse(row.attachments_json), annotations: parse(row.annotations_json), references: parse(row.references_json), updatedAt: row.updated_at };
+    return { ...(row.editing_task_id ? { editingTaskId: row.editing_task_id } : {}), id: row.id, sessionId, revision: row.revision, text: row.text, attachments: parse(row.attachments_json), annotations: parse(row.annotations_json), references: draftReferences(parse(row.references_json)), updatedAt: row.updated_at };
   }
   private assetFrom(row: Row): Asset { const bundle = this.db.prepare('SELECT manifest_json FROM html_bundles WHERE asset_id=?').get(row.id) as Row | undefined; const evidence = this.db.prepare('SELECT * FROM evidence_assets WHERE asset_id=?').get(row.id) as Row | undefined; return { ...(bundle ? { htmlBundle: parse<HtmlBundle>(bundle.manifest_json) } : {}), ...(evidence ? { evidence: { sessionId: evidence.session_id, draftId: evidence.draft_id, captureId: evidence.capture_id } } : {}), id: row.id, name: row.name, mime: row.mime, size: row.size, kind: row.kind, createdAt: row.created_at, ...(row.source_task_id ? { sourceTaskId: row.source_task_id, sourceRunId: row.source_run_id } : {}) }; }
   asset(id: string): Asset { nonempty(id, 'Asset ID', 200); const row = this.db.prepare('SELECT * FROM assets WHERE id=?').get(id) as Row; return row ? this.assetFrom(row) : fail(404, 'asset_missing', 'The referenced asset is unavailable.'); }
@@ -272,8 +288,8 @@ export class CanvasService {
         return managed;
       });
       if (new Set(annotations.map((annotation) => annotation.id)).size !== annotations.length) fail(400, 'invalid_annotation', 'Each annotation needs a distinct ID.');
-      const references = { objectIds: ids(input.references?.objectIds, 'Object references'), taskIds: ids(input.references?.taskIds, 'Task references') };
-      references.objectIds.forEach((id) => { if (!source?.referenceContent.objects.some(object => object.id === id)) this.object(id); });
+      const references = draftReferences(input.references);
+      references.objectIds.forEach((id) => { if (!draft.references.objectIds.includes(id)) this.object(id); });
       references.taskIds.forEach((id) => { const row = this.db.prepare('SELECT session_id FROM tasks WHERE id=?').get(id) as Row | undefined; if (!row) fail(404, 'task_missing', 'The referenced task is unavailable.'); if (row!.session_id !== sessionId && !draft.references.taskIds.includes(id)) fail(403, 'task_reference_scope', 'Add tasks from the current session. Saved historical references remain available.'); });
       const updated = this.db.prepare('UPDATE drafts SET text=?,attachments_json=?,annotations_json=?,references_json=?,updated_at=?,revision=revision+1 WHERE id=? AND revision=?').run(text(input.text, 'Draft text'), json(attachments), json(annotations), json(references), now(), draft.id, input.revision);
       if (updated.changes !== 1) fail(409, 'draft_revision_conflict', 'The saved draft changed. Review both versions before saving.');
@@ -418,7 +434,8 @@ export class CanvasService {
       this.db.prepare('INSERT INTO task_edits VALUES(?,?,?,?,?)').run(id, sessionId, taskId, json(previous), 'active');
       this.db.prepare("UPDATE tasks SET status='editing',updated_at=? WHERE id=? AND status='queued'").run(now(), taskId);
       this.db.prepare('DELETE FROM drafts WHERE id=?').run(previous.id);
-      this.db.prepare('INSERT INTO drafts(id,session_id,revision,text,attachments_json,annotations_json,references_json,updated_at,editing_task_id) VALUES(?,?,1,?,?,?,?,?,?)').run(id, sessionId, snapshot.userRequest.text, json(attachments), json(snapshot.annotations), json({ objectIds, taskIds: snapshot.referenceContent.taskIds }), now(), taskId);
+      const references = draftReferences({ objectIds, taskIds: snapshot.requestReferences?.taskIds ?? snapshot.referenceContent.taskIds, ...(snapshot.requestReferences?.order ? { order: snapshot.requestReferences.order } : {}) });
+      this.db.prepare('INSERT INTO drafts(id,session_id,revision,text,attachments_json,annotations_json,references_json,updated_at,editing_task_id) VALUES(?,?,1,?,?,?,?,?,?)').run(id, sessionId, snapshot.userRequest.text, json(attachments), json(snapshot.annotations), json(references), now(), taskId);
       for (const annotation of snapshot.annotations) if (annotation.captureState) this.db.prepare('INSERT INTO annotation_identities VALUES(?,?,?,?)').run(sessionId, id, annotation.id, json(annotation));
       return { task: this.task(sessionId, taskId), draft: this.draft(sessionId) };
     });
@@ -439,6 +456,28 @@ export class CanvasService {
       this.db.prepare("UPDATE task_edits SET state='cancelled' WHERE draft_id=?").run(edit.draft_id);
       this.restorePreviousDraft(edit);
       return { task: this.task(sessionId, taskId), draft: this.draft(sessionId) };
+    });
+  }
+  private resolveRequestReferences(draft: Draft, source?: TaskSnapshot): ResolvedRequestReference[] {
+    return referenceOrder(draft.references).map(reference => {
+      const saved = source?.requestReferences?.order?.find(value => value.kind === reference.kind && value.id === reference.id);
+      if (saved) return structuredClone(saved);
+      if (reference.kind === 'object') {
+        const sourceIds = source?.requestReferences?.objectIds ?? source?.referenceContent.objects.map(value => value.id) ?? [];
+        let object = sourceIds.includes(reference.id) ? source?.referenceContent.objects.find(value => value.id === reference.id) : undefined;
+        if (!object) {
+          const row = this.db.prepare('SELECT * FROM objects WHERE id=?').get(reference.id) as Row | undefined;
+          if (!row) fail(409, 'object_reference_unavailable', 'Remove or replace the unavailable object reference before sending.', { objectId: reference.id, action: 'remove_or_replace' });
+          object = this.objectFrom(row!);
+        }
+        const asset = source?.referenceContent.assets.find(value => value.id === object!.assetId) ?? this.sharedAsset(object.assetId);
+        const sourceRow = object.sourceTaskId ? this.db.prepare('SELECT session_id FROM tasks WHERE id=?').get(object.sourceTaskId) as Row | undefined : undefined;
+        return { kind: 'object', id: reference.id, label: asset.name, source: 'reference_content', object: structuredClone(object), asset: structuredClone(asset), ...(sourceRow ? { sourceSessionId: sourceRow.session_id } : {}), ...(object.sourceTaskId ? { sourceTaskId: object.sourceTaskId } : {}), ...(object.sourceRunId ? { sourceRunId: object.sourceRunId } : {}) };
+      }
+      const row = this.db.prepare('SELECT session_id,sequence,snapshot_json FROM tasks WHERE id=?').get(reference.id) as Row | undefined;
+      if (!row) fail(404, 'task_missing', 'The referenced task is unavailable.');
+      const snapshot = parse<TaskSnapshot>(row!.snapshot_json);
+      return { kind: 'task', id: reference.id, label: `Request ${row!.sequence}`, source: 'reference_content', task: { sessionId: row!.session_id, sequence: row!.sequence, text: snapshot.userRequest.text }, sourceSessionId: row!.session_id, sourceTaskId: reference.id };
     });
   }
   sendDraft(sessionId: string, draftId: string, expectedRevision: number): { task: Task; draft: Draft } {
@@ -465,11 +504,13 @@ export class CanvasService {
         this.readableAsset(capture.screenshotAssetId, sessionId); this.assetPath(capture.screenshotAssetId);
         for (const asset of capture.scene.assets) { this.sharedAsset(asset.id); this.assetPath(asset.id); }
       }
+      const order = this.resolveRequestReferences(draft, source?.snapshot);
       const legacyAnnotations = draft.annotations.filter(annotation => !annotation.captureState);
       const objectIds = [...new Set([...draft.references.objectIds, ...legacyAnnotations.flatMap((annotation) => [...annotation.objectIds, ...(annotation.objectId ? [annotation.objectId] : [])])])];
-      const objects = objectIds.map((id) => source?.snapshot.referenceContent.objects.find(object => object.id === id) || this.object(id));
+      const objects = objectIds.map((id) => order.find((value): value is Extract<ResolvedRequestReference, { kind: 'object' }> => value.kind === 'object' && value.id === id)?.object ?? source?.snapshot.referenceContent.objects.find(object => object.id === id) ?? this.object(id));
       const assetIds = this.expandAssetIds([...new Set([...draft.attachments, ...objects.map((object) => object.assetId), ...legacyAnnotations.flatMap((annotation) => [annotation.assetId, annotation.snapshotAssetId].filter((id): id is string => !!id)), ...draft.annotations.flatMap(annotation => annotation.capture ? [annotation.capture.screenshotAssetId, ...annotation.capture.scene.assets.map(asset => asset.id)] : [])])]);
-      const snapshot: TaskSnapshot = { userRequest: { source: 'user_instruction', text: draft.text }, requestReferences: { attachmentIds: [...draft.attachments], objectIds: [...draft.references.objectIds] }, annotations: structuredClone(draft.annotations), referenceContent: { source: 'reference_content', assets: assetIds.map((id) => { this.assetPath(id); return source?.snapshot.referenceContent.assets.find(asset => asset.id === id) || this.asset(id); }), objects, taskIds: draft.references.taskIds } };
+      const snapshot: TaskSnapshot = { userRequest: { source: 'user_instruction', text: draft.text }, requestReferences: { attachmentIds: [...draft.attachments], objectIds: [...draft.references.objectIds], taskIds: [...draft.references.taskIds], order }, annotations: structuredClone(draft.annotations), referenceContent: { source: 'reference_content', assets: assetIds.map((id) => { this.assetPath(id); return source?.snapshot.referenceContent.assets.find(asset => asset.id === id) || this.asset(id); }), objects, taskIds: [...draft.references.taskIds] } };
+      snapshot.requirementText = generateRequirementText(snapshot);
       const id = source?.id || randomUUID(), time = now();
       if (source) {
         this.db.prepare("UPDATE tasks SET status='queued',snapshot_json=?,updated_at=? WHERE id=? AND status='editing'").run(json(snapshot), time, id);
@@ -494,7 +535,9 @@ export class CanvasService {
   task(sessionId: string, id: string): Task {
     const row = this.taskRow(sessionId, id);
     const lastEdit = this.db.prepare("SELECT draft_id FROM task_edits WHERE task_id=? AND state='submitted' ORDER BY rowid DESC LIMIT 1").get(id) as Row | undefined;
-    return { ...(lastEdit ? { lastEditDraftId: lastEdit.draft_id } : {}), id: row.id, sessionId, draftId: row.draft_id, sequence: row.sequence, status: row.status, snapshot: parse(row.snapshot_json), createdAt: row.created_at, updatedAt: row.updated_at, currentRunId: row.current_run_id, reason: row.reason, receipt: row.receipt_json ? parse(row.receipt_json) : null, replies: parse(row.replies_json), runs: (this.db.prepare('SELECT * FROM runs WHERE task_id=? ORDER BY created_at,rowid').all(id) as Row[]).map((run) => this.runFrom(run)), lateResults: (this.db.prepare('SELECT * FROM late_results WHERE task_id=? ORDER BY rowid').all(id) as Row[]).map((late) => ({ runId: late.run_id, consumerId: late.consumer_id, receivedAt: late.received_at, payload: parse(late.payload_json) })) };
+    const snapshot = parse<TaskSnapshot>(row.snapshot_json), requirementText = generateRequirementText(snapshot);
+    snapshot.requirementText = requirementText;
+    return { ...(lastEdit ? { lastEditDraftId: lastEdit.draft_id } : {}), id: row.id, sessionId, draftId: row.draft_id, sequence: row.sequence, status: row.status, snapshot, requirementText, createdAt: row.created_at, updatedAt: row.updated_at, currentRunId: row.current_run_id, reason: row.reason, receipt: row.receipt_json ? parse(row.receipt_json) : null, replies: parse(row.replies_json), runs: (this.db.prepare('SELECT * FROM runs WHERE task_id=? ORDER BY created_at,rowid').all(id) as Row[]).map((run) => this.runFrom(run)), lateResults: (this.db.prepare('SELECT * FROM late_results WHERE task_id=? ORDER BY rowid').all(id) as Row[]).map((late) => ({ runId: late.run_id, consumerId: late.consumer_id, receivedAt: late.received_at, payload: parse(late.payload_json) })) };
   }
   tasks(sessionId: string): Task[] { this.sessionRow(sessionId); return (this.db.prepare('SELECT id FROM tasks WHERE session_id=? ORDER BY sequence').all(sessionId) as Row[]).map((row) => this.task(sessionId, row.id)); }
   context(sessionId: string, taskId: string) {
@@ -503,7 +546,9 @@ export class CanvasService {
       const row = this.db.prepare('SELECT session_id FROM tasks WHERE id=?').get(id) as Row;
       const referenced = this.task(row.session_id, id);
       if (row.session_id === sessionId) return referenced;
-      return { ...referenced, snapshot: { ...referenced.snapshot, annotations: referenced.snapshot.annotations.filter(annotation => !annotation.captureState), referenceContent: { ...referenced.snapshot.referenceContent, assets: referenced.snapshot.referenceContent.assets.filter(asset => !asset.evidence) } } };
+      const snapshot = { ...referenced.snapshot, annotations: referenced.snapshot.annotations.filter(annotation => !annotation.captureState), referenceContent: { ...referenced.snapshot.referenceContent, assets: referenced.snapshot.referenceContent.assets.filter(asset => !asset.evidence) } };
+      const requirementText = generateRequirementText(snapshot);
+      return { ...referenced, snapshot: { ...snapshot, requirementText }, requirementText };
     });
     const recentReceipts = this.tasks(sessionId).filter((prior) => prior.sequence < task.sequence && prior.receipt).slice(-3).map((prior) => ({ taskId: prior.id, receipt: prior.receipt }));
     return { task, context: { referencedTasks, recentReceipts } };

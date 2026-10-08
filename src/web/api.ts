@@ -1,5 +1,6 @@
 import { resolveContentMime } from '../shared/content-types';
 import type { AnnotationCaptureInput, ApiError, Asset, BoardOperation, BoardState, Bootstrap, CaptureResult, CaptureRetryResult, Draft, Session, SessionView, Task } from '../shared/types';
+import type { BrowserPage, BrowserStatus } from '../shared/browser-capture';
 
 const errorMessages: Record<string, string> = {
   authentication_required: 'Your connection has expired. Reconnect to continue.',
@@ -41,6 +42,9 @@ const errorMessages: Record<string, string> = {
   preview_missing: 'This preview has expired. Run it again.',
   preview_unavailable: 'The HTML preview is unavailable. Download the original file.',
   server_error: 'The local service could not complete this action. Try again shortly.',
+  browser_unavailable: 'Install Chrome to open the canvas window.',
+  browser_navigation: 'Close the canvas window and open this board again.',
+  service_conflict: 'Reconnect to the current project service.',
 };
 
 export class RequestError extends Error {
@@ -50,6 +54,7 @@ export class RequestError extends Error {
 export interface HtmlPreviewGrant { id: string; url: string; origin: string; expiresAt: string }
 
 export class BoardApi {
+  private instanceId = '';
   private token = '';
   private project?: Bootstrap['project'];
   projectChanged = false;
@@ -87,12 +92,16 @@ export class BoardApi {
     }
     this.project = result.project;
     this.token = result.token;
+    this.instanceId = result.service.instanceId;
     return result;
   }
 
   state(sessionId?: string) { return this.request<BoardState>(`/api/state${sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : ''}`); }
   sessions() { return this.request<Session[]>('/api/sessions'); }
   createSession(name: string) { return this.request<Session>('/api/sessions', { method: 'POST', body: JSON.stringify({ name }) }); }
+  openBrowser(sessionId: string) { return this.request<BrowserPage>('/api/browser/pages', { method: 'POST', body: JSON.stringify({ sessionId, instanceId: this.instanceId }) }); }
+  browserStatus(sessionId?: string) { return this.request<BrowserStatus>(`/api/browser/pages${sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : ''}`); }
+  closeBrowser(sessionId: string) { return this.request<BrowserStatus>(`/api/browser/pages/${encodeURIComponent(sessionId)}`, { method: 'DELETE', body: JSON.stringify({ instanceId: this.instanceId }) }); }
   saveDraft(draft: Draft) { return this.request<Draft>(`/api/sessions/${encodeURIComponent(draft.sessionId)}/draft`, { method: 'PUT', body: JSON.stringify(draft) }); }
   send(sessionId: string, draftId: string, expectedRevision: number) { return this.request<{ task: Task; draft: Draft }>(`/api/sessions/${encodeURIComponent(sessionId)}/tasks`, { method: 'POST', body: JSON.stringify({ draftId, expectedRevision }) }); }
   editTask(sessionId: string, taskId: string, draftId: string, expectedRevision: number, cancel = false) { return this.request<{ task: Task; draft: Draft }>(`/api/sessions/${encodeURIComponent(sessionId)}/tasks/${encodeURIComponent(taskId)}/${cancel ? 'cancel-edit' : 'edit'}`, { method: 'POST', body: JSON.stringify({ draftId, expectedRevision }) }); }

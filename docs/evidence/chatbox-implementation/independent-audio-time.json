@@ -1,0 +1,22 @@
+{
+  "head": 4,
+  "first": {
+    "start": 0.1,
+    "end": 0.3,
+    "version": 1,
+    "frame": null,
+    "actual": {
+      "playbackTime": 4
+    }
+  },
+  "second": {
+    "start": 0.1,
+    "end": 0.4,
+    "version": 2,
+    "frame": null,
+    "actual": {
+      "playbackTime": 4
+    }
+  },
+  "precision": "User interval controls commit seconds rounded to .01; playbackTime is the original browser media property near native screenshot."
+}

@@ -1,18 +1,21 @@
 # acanvas
 
-A local, project-based creative whiteboard for collaborating with agents through a shared Agent Skill.
+A local, project-based creative whiteboard for collaborating with agents through a shared Agent Skill. Agents use the same CLI and local service; host conversation binding is an optional way to resolve a task scope.
 
-Import images, video, audio, and documents, select materials, and add annotations. Send references and instructions to a request queue bound to your current host conversation. Agents process requests through the CLI, use their existing creative tools, and publish results back to the shared canvas.
+Import images, video, audio, and documents, select materials, and add annotations. Send references and instructions to a request queue in an explicit session. Agents process requests through the CLI, use their existing creative tools, and publish results back to the shared canvas.
 
 ## Status
 
 The runnable P0 prototype includes a full-screen canvas, floating controls, an adaptive composer, an expandable request queue, material imports and annotations, host conversation binding, and a persistent local service. The latest multimodal interactions support direct document interaction, eight-point resizing, embedded audio artwork, and a compact player with a complete audio waveform.
+
+Chatbox references use one-time previews and object/task search. Point and region annotations capture the current scene in the background through the project's managed Chrome, and task history reads the saved scene.
 
 - [Project plan](docs/PLAN.md): requirements, architecture, implementation stages, and acceptance criteria.
 - [Frontend design](docs/FRONTEND.md): visual references, grayscale themes, and interaction rules.
 - [Multimodal canvas design](docs/MULTIMODAL_CANVAS_DESIGN.md): content types, references, and preview boundaries.
 - [Validation record](docs/VALIDATION.md): verified behavior and remaining limitations.
 - [Chatbox capture foundation](docs/chatbox/CAPTURE_FOUNDATION_DESIGN.md): background capture direction, persistent evidence APIs, and [validation](docs/chatbox/CAPTURE_FOUNDATION_VALIDATION.md).
+- [Chatbox implementation](docs/chatbox/CHATBOX_IMPLEMENTATION_DESIGN.md): references, annotations, task messages, history and the project-managed browser; [validation](docs/chatbox/CHATBOX_IMPLEMENTATION_VALIDATION.md).
 - [Agent Skill](skill/acanvas/SKILL.md): task processing and recovery.
 
 ## Install and run
@@ -33,7 +36,20 @@ npm run cli -- project status --project "$PWD"
 npm run cli -- project stop --project "$PWD"
 ```
 
-Use the bound URL returned by `project open` to keep requests associated with the current host conversation. For a foreground service, use `npm start`; Ctrl+C shuts it down normally.
+Use an explicit session ID or its URL to keep requests in the intended task scope. An agent can also use its host binding when available. For a foreground service, use `npm start`; Ctrl+C shuts it down normally.
+
+`project open --session SESSION_ID` opens that scope directly. Explicit session selection takes priority over automatic environment binding; use `--host` and `--thread` when an association is intended.
+
+Background annotation capture uses the installed Google Chrome in a project-managed window with an independent profile. Obtain a session ID from the current URL, `session list`, or `session create`, and replace `SESSION_ID` below:
+
+```sh
+npm run cli -- session list --project "$PWD"
+npm run cli -- browser open --project "$PWD" --session SESSION_ID
+npm run cli -- browser status --project "$PWD" --session SESSION_ID
+npm run cli -- browser close --project "$PWD" --session SESSION_ID
+```
+
+The page remains open after the launcher exits. `project stop` closes the project's browser and service. A regular web page can use **Open capture window** to open the same session in the managed browser.
 
 For UI development, first stop the project's existing background service with `npm run cli -- project stop --project "$PWD"`. Then run these commands in separate terminals:
 
@@ -46,11 +62,12 @@ A production service rejects duplicate instances and unapproved development orig
 
 ## Workflow
 
-1. Open the project whiteboard using the bound link from your agent. Materials and layout belong to the project; requests belong to the current host conversation.
-2. Import, drop, or paste materials onto the canvas. Select materials and choose **Annotate** to add a comment, or attach them to a request. Dragging snaps to other materials. Use Shift for multiple selection, **Align** for alignment, and Alt to temporarily bypass snapping. The composer grows with its content; Enter sends and Shift+Enter adds a line.
-3. Add instructions and send. Requests are saved in the queue with their status and completion receipts.
-4. The agent reads the repository Skill and processes requests within the explicit project and task scope. The UI can copy a resume prompt containing the current whiteboard link.
-5. The agent registers outputs, publishes canvas changes, completes the task, and proceeds to the next request. Processing stops when the queue is empty or user input is needed.
+1. Open the project whiteboard in the intended session. Materials and layout belong to the project; requests belong to that session. Use the managed Chrome window for background capture.
+2. Import, drop, or paste materials onto the canvas. Selecting objects previews references at the end of the composer; entering the composer confirms them. Type `@` to select objects or tasks from the current session. Confirmed references retain their order and can be removed individually.
+3. Use **Annotate** to mark a point or region, including blank canvas and areas crossing materials. Enter a comment and choose **Done**; the managed browser saves a screenshot in the background. Annotation summaries keep their thumbnails above the composer. Failed captures retain the comment and offer **Retry**.
+4. Add instructions and send. Text, formal references and complete annotations become one task. Task history displays the saved scene, and current-object location is a separate action. Dragging, multi-selection, alignment and Alt snapping bypass retain their canvas controls. The composer supports Enter to send and Shift+Enter for a new line.
+5. The agent reads the repository Skill and processes requests within the explicit project and task scope. The UI can copy a resume prompt containing the current whiteboard link.
+6. The agent registers outputs, publishes canvas changes, completes the task, and proceeds to the next request. Processing stops when the queue is empty or user input is needed.
 
 CLI and Skill entry points:
 
@@ -60,6 +77,12 @@ node skill/acanvas/scripts/acanvas.mjs --help
 ```
 
 When called directly from Codex, the CLI can use the trusted `CODEX_THREAD_ID` to bind the host conversation. When delegating, pass the parent conversation's host/thread identity or its bound whiteboard link. A browser opened without a bound link receives a tab-local task scope, retained in the URL across refreshes. Existing links and tasks remain available.
+
+Other agents use the same project and session commands. A task exposes the same readable requirement in its JSON context and plain text:
+
+```sh
+npm run cli -- task read --project "$PWD" --session SESSION_ID --task TASK_ID --format text
+```
 
 Each queue activation uses a new consumer ID, kept stable throughout that processing loop. Completed or transferred execution identities remain in task history. See CLI help and the Skill for claim, resume, and output publication parameters.
 
@@ -118,7 +141,7 @@ The isolated background capture prototype uses the project runtime and a managed
 .runtime/node_modules/node/bin/node scripts/chatbox-capture-prototype.mjs background
 ```
 
-The prototype verifies same-page media capture and the service submission lifecycle. The production chatbox UI and its host screenshot connection follow the capture foundation's recorded integration scope.
+The prototype preserves the initial capture experiments. Production capture uses the project browser commands and the chatbox UI; its scope and joint validation follow the chatbox implementation records.
 
 Tests use isolated temporary projects. Localhost services and Chrome may require execution permissions in restricted environments. Validation records distinguish environment restrictions from product failures.
 

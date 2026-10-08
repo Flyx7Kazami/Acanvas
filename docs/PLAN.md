@@ -6,6 +6,12 @@
 - 适用范围：本地项目创作白板、通用 Agent Skill、同一用户的多个 agent 会话。
 - 计划变更通过 Git 记录；本文件的进度区记录实际执行与验收情况。
 
+## Chatbox 完整交互实施（2026-10-08）
+
+剩余 implementation 已完成，范围见[实施设计](chatbox/CHATBOX_IMPLEMENTATION_DESIGN.md)与[验证记录](chatbox/CHATBOX_IMPLEMENTATION_VALIDATION.md)。acanvas 保持宿主无关，项目本地服务提供独立 Chrome 页面与后台截图，任何 agent 通过统一 CLI/API 和明确会话使用；显式会话优先于环境默认，host/thread 绑定按明确参数处理。对象/任务引用的一次性预览、统一顺序与可读消息、任意位置批注、后台捕获、历史现场和队列编辑已接通。Chrome OS renderer sandbox 保持启用，实际采样隐藏固定浮层，所有异步结果按完整身份处理。最终默认 Node 111/111、真实 React UI 13/13、Chrome 20/20、既有相关浏览器 8/8、类型检查和构建通过；独立源码及精准增量验收 PASS。已验证点/区域、媒体局部/时点、DPR2、320px 触屏、刷新/丢图/迟到响应及同版本完成时序。自动宿主消息投递继续按独立范围推进，测试使用隔离资源。
+
+源码验收后正式服务在原端口 4317 更新，项目 Chrome 画板已打开并保持运行。受控更新前活动执行与编辑为零；重启及打开窗口后两次业务字段比较均一致，4 会话、25 任务、25 素材、12 对象与原草稿保持。新浏览器接口及任务文本可用，系统 renderer sandbox 原生参数核对通过，用户内容及认证值继续保留在本地运行渠道。
+
 ## Chatbox 截图环境与捕获基础验证（2026-10-08）
 
 按[方案审查](chatbox/CHATBOX_REFERENCES_ANNOTATION_REVIEW.md)的第 1、2 项完成隔离基础验证，范围见[基础设计](chatbox/CAPTURE_FOUNDATION_DESIGN.md)，结果见[专项记录](chatbox/CAPTURE_FOUNDATION_VALIDATION.md)。直接核对当前 Codex 安装源码，正式方向采用受信宿主在后台截取原页面、关闭编辑浮层并保留标记；Chrome 原型覆盖七类媒体、坐标映射及完整捕获提交链。后台 20/20、Node 72/72、类型检查和构建通过，独立代码、原型、证据与文档总验收 PASS；预备和上传期间取消的版本失效已完成真实延迟复验。持久批注版本、每条现场快照、PNG 提交/查询/重拍、会话证据归属、CLI 和发送事务基础已实现。生产 chatbox UI、实际宿主截图接线、引用交互和宿主消息投递按后续阶段推进。测试使用独立临时项目，用户白板及现有服务保持原样。

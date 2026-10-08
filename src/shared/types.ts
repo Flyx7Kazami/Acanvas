@@ -20,14 +20,19 @@ export interface Session { id: string; name: string; createdAt: string; view: Se
 export interface HostBinding { host: string; threadId: string; sessionId: string }
 export interface ServiceIdentity { pid: number; instanceId: string }
 export interface ServiceRuntime extends ServiceIdentity { project: Project; url: string }
-export interface Draft { editingTaskId?: string; id: string; sessionId: string; revision: number; text: string; attachments: string[]; annotations: AnnotationInput[]; references: { objectIds: string[]; taskIds: string[] }; updatedAt: string }
-export interface TaskSnapshot { userRequest: { source: 'user_instruction'; text: string }; requestReferences?: { attachmentIds: string[]; objectIds: string[] }; annotations: AnnotationInput[]; referenceContent: { source: 'reference_content'; assets: Asset[]; objects: BoardObject[]; taskIds: string[] } }
+export interface RequestReference { kind: 'object' | 'task'; id: string }
+export interface DraftReferences { objectIds: string[]; taskIds: string[]; order?: RequestReference[] }
+export type ResolvedRequestReference =
+  | { kind: 'object'; id: string; label: string; source: 'reference_content'; object: BoardObject; asset: Asset; sourceSessionId?: string; sourceTaskId?: string; sourceRunId?: string }
+  | { kind: 'task'; id: string; label: string; source: 'reference_content'; task: { sessionId: string; sequence: number; text: string }; sourceSessionId: string; sourceTaskId: string };
+export interface Draft { editingTaskId?: string; id: string; sessionId: string; revision: number; text: string; attachments: string[]; annotations: AnnotationInput[]; references: DraftReferences; updatedAt: string }
+export interface TaskSnapshot { userRequest: { source: 'user_instruction'; text: string }; requestReferences?: { attachmentIds: string[]; objectIds: string[]; taskIds?: string[]; order?: ResolvedRequestReference[] }; annotations: AnnotationInput[]; referenceContent: { source: 'reference_content'; assets: Asset[]; objects: BoardObject[]; taskIds: string[] }; requirementText?: string }
 export interface Progress { message: string; externalJobId?: string; assetIds?: string[]; createdAt: string }
 export interface Receipt { summary: string; assetIds: string[]; objectIds: string[]; validation: string[]; createdAt: string }
 export interface TaskReply { text: string; source: 'user_instruction'; createdAt: string }
 export interface Run { id: string; taskId: string; consumerId: string; status: 'running' | 'blocked' | 'interrupted' | 'completed'; createdAt: string; updatedAt: string; progress: Progress[]; outputAssetIds: string[]; recoveryResolution?: string }
 export interface LateResult { runId: string; consumerId: string; receivedAt: string; payload: unknown }
-export interface Task { lastEditDraftId?: string; id: string; sessionId: string; draftId: string; sequence: number; status: TaskStatus; snapshot: TaskSnapshot; createdAt: string; updatedAt: string; currentRunId: string | null; reason: string | null; receipt: Receipt | null; replies: TaskReply[]; runs: Run[]; lateResults: LateResult[] }
+export interface Task { lastEditDraftId?: string; id: string; sessionId: string; draftId: string; sequence: number; status: TaskStatus; snapshot: TaskSnapshot; requirementText: string; createdAt: string; updatedAt: string; currentRunId: string | null; reason: string | null; receipt: Receipt | null; replies: TaskReply[]; runs: Run[]; lateResults: LateResult[] }
 export type BoardOperation =
   | { type: 'create'; object: { id?: string; assetId: string; x: number; y: number; width: number; height: number } }
   | { type: 'update'; objectId: string; expectedVersion: number; changes: Partial<Bounds> }

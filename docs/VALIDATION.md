@@ -1,6 +1,10 @@
 # acanvas 验证记录
 
-本文保留各轮实际验证结果；早期 P0 记录可从 Git 提交 `d62e8ad` 查询。最新专项为 Chatbox 后台截图与捕获基础，记录见下文。
+本文保留各轮实际验证结果；早期 P0 记录可从 Git 提交 `d62e8ad` 查询。最新专项为 Chatbox 完整交互，记录见下文。
+
+## 2026-10-08 · Chatbox 完整交互与项目 Chrome
+
+一次性引用预览、对象/任务统一顺序、任意点/区域批注、后台同 Page 现场捕获、任务可读消息、历史及队列编辑已实施。CLI/API 保持宿主无关，明确 session 优先，项目 Chrome 使用独立 profile 与系统 renderer sandbox。默认 Node 111/111、真实 React UI 13/13、Chrome 20/20、相关既有浏览器 8/8、类型检查和构建通过，独立源码及精准增量验收 PASS。实际媒体、原文/滚动、原 iframe 表单、时间选择与播放头、DPR/窄屏输入、异步响应恢复及误命中修正见[完整交互验证](chatbox/CHATBOX_IMPLEMENTATION_VALIDATION.md)。
 
 ## 2026-10-08 · Chatbox 后台截图与捕获基础
 

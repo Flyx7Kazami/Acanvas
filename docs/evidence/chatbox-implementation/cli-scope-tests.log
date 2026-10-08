@@ -1,0 +1,11 @@
+✔ host conversations bind distinct task scopes and explicitly retain saved contexts (56.321917ms)
+✔ explicit CLI session selects its scope while environment binding remains optional (585.574083ms)
+✔ detached service survives launcher exit, reuses its instance and preserves assets and tasks across stop (1544.758916ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2291.473292

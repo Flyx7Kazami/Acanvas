@@ -1,0 +1,25 @@
+{
+  "candidate": "sampling protocol before Chromium sandbox and letterbox target changes",
+  "command": "TMPDIR=/private/tmp npm test",
+  "scheduling": "default Node test file scheduling",
+  "exitCode": 1,
+  "tests": 109,
+  "passed": 108,
+  "failed": 1,
+  "durationMs": 74327.072333,
+  "uiCases": { "passed": 12, "failed": 0 },
+  "failure": {
+    "test": "sampling preparation cancellation and native failure restore controls and invalidate the version",
+    "stage": "managed Chrome startup",
+    "code": "browser_unavailable",
+    "reason": "browserType.launchPersistentContext: Timeout 15000ms exceeded.",
+    "browserPid": 83820,
+    "profile": "/private/tmp/acanvas-browser-capture-oD6vMr/.acanvas/runtime/browser-profile",
+    "stderr": [
+      "Trying to load the allocator multiple times. This is *not* supported.",
+      "[83826:36554223:1008/135436.491739:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670",
+      "[83826:36554307:1008/135436.492624:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670"
+    ],
+    "observation": "The startup timed out with repeated display-link messages. This record does not establish which message caused the timeout."
+  }
+}

@@ -1,0 +1,233 @@
+{
+  "root": "/private/tmp/acanvas-independent-review-project-jfsndb",
+  "evidence": "/private/tmp/acanvas-independent-review-evidence-7A9os7",
+  "checks": [
+    {
+      "name": "One-shot preview / program focus / remove / reference-only Send",
+      "passed": true
+    },
+    {
+      "name": "Blank point production managed-Page capture",
+      "passed": true,
+      "capture": {
+        "capturedAt": "2026-10-08T06:12:23.745Z",
+        "target": {
+          "scope": "region",
+          "coordinateSpace": "world",
+          "objectIds": [],
+          "bounds": {
+            "x": 180,
+            "y": 250,
+            "width": 0,
+            "height": 0
+          },
+          "geometry": "point"
+        },
+        "worldBounds": {
+          "x": 180,
+          "y": 250,
+          "width": 0,
+          "height": 0
+        },
+        "viewport": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1,
+          "width": 1440,
+          "height": 1000,
+          "devicePixelRatio": 1
+        },
+        "mapping": {
+          "crop": {
+            "x": 84,
+            "y": 154,
+            "width": 192,
+            "height": 192
+          },
+          "pixelWidth": 192,
+          "pixelHeight": 192,
+          "scaleX": 1,
+          "scaleY": 1
+        },
+        "scene": {
+          "objects": [],
+          "assets": [],
+          "omittedCount": 0
+        },
+        "image": {
+          "mime": "image/png",
+          "width": 192,
+          "height": 192,
+          "bytes": 2352
+        },
+        "id": "1a31cd67-0f8b-4826-9f05-009c86c91b3e",
+        "sessionId": "4321a398-f0bd-46a9-86c3-ab8864b30c0c",
+        "draftId": "dee9c7ef-e412-426a-b8df-ecbd1e8dc088",
+        "annotationId": "85366abb-9f4d-40e5-931a-afb974695f39",
+        "version": 1,
+        "screenshotAssetId": "251da3a2-5344-4bba-bb4a-884299537b21",
+        "source": "reference_content"
+      }
+    },
+    {
+      "name": "Complete capture PNG loss, refresh and Done recovery",
+      "captureBefore": {
+        "version": 1,
+        "status": "complete",
+        "captureId": "1a31cd67-0f8b-4826-9f05-009c86c91b3e"
+      },
+      "captureAfter": {
+        "version": 1,
+        "status": "complete",
+        "captureId": "1a31cd67-0f8b-4826-9f05-009c86c91b3e"
+      },
+      "retryButtons": 1,
+      "retryAfterDone": 1,
+      "sendDisabledAfterDone": true,
+      "textPreserved": true
+    },
+    {
+      "name": "Lost image explicit recapture after open-Done",
+      "passed": true,
+      "version": 2
+    },
+    {
+      "name": "Transparent overlay visibility evidence",
+      "sceneObjects": [
+        "transparent-frame"
+      ],
+      "sceneAssets": [
+        "Transparent frame.png"
+      ],
+      "target": "transparent-frame"
+    },
+    {
+      "name": "Production React live HTML original-frame capture after another owned Page is brought to front",
+      "passed": true,
+      "actualBackground": {
+        "hidden": false,
+        "before": {
+          "id": 0.11123189070793293,
+          "value": "Review preserved live field"
+        },
+        "after": {
+          "id": 0.11123189070793293,
+          "value": "Review preserved live field"
+        },
+        "note": "Other owned Page brought to front; Playwright focus emulation keeps the captured document visible."
+      }
+    },
+    {
+      "name": "Native Chrome touch, 320px light/dark, reduced motion, DPR1 and partial visibility mapping",
+      "passed": true,
+      "capture": {
+        "capturedAt": "2026-10-08T06:12:27.356Z",
+        "target": {
+          "scope": "object",
+          "coordinateSpace": "normalized",
+          "objectIds": [
+            "transparent-frame"
+          ],
+          "objectId": "transparent-frame",
+          "assetId": "e4d9e02d-d251-4742-a344-0d1ee6c1e261",
+          "bounds": {
+            "x": 0.5,
+            "y": 0.5,
+            "width": 0,
+            "height": 0
+          },
+          "geometry": "point"
+        },
+        "worldBounds": {
+          "x": 550,
+          "y": 320,
+          "width": 0,
+          "height": 0
+        },
+        "viewport": {
+          "x": -205,
+          "y": 60,
+          "zoom": 0.5,
+          "width": 320,
+          "height": 700,
+          "devicePixelRatio": 1
+        },
+        "mapping": {
+          "crop": {
+            "x": 0,
+            "y": 124,
+            "width": 166,
+            "height": 192
+          },
+          "pixelWidth": 166,
+          "pixelHeight": 192,
+          "scaleX": 1,
+          "scaleY": 1
+        },
+        "scene": {
+          "objects": [
+            {
+              "object": {
+                "id": "transparent-frame",
+                "assetId": "e4d9e02d-d251-4742-a344-0d1ee6c1e261",
+                "type": "image",
+                "x": 350,
+                "y": 220,
+                "width": 400,
+                "height": 200,
+                "version": 1,
+                "createdAt": "2026-10-08T06:12:25.894Z",
+                "updatedAt": "2026-10-08T06:12:25.894Z"
+              },
+              "renderedBounds": {
+                "x": 350,
+                "y": 220,
+                "width": 400,
+                "height": 200
+              },
+              "layer": 1,
+              "visibleBounds": {
+                "x": 410,
+                "y": 220,
+                "width": 332,
+                "height": 200
+              }
+            }
+          ],
+          "assets": [
+            {
+              "id": "e4d9e02d-d251-4742-a344-0d1ee6c1e261",
+              "name": "Transparent frame.png",
+              "mime": "image/png",
+              "size": 2483,
+              "kind": "image",
+              "createdAt": "2026-10-08T06:12:25.892Z"
+            }
+          ],
+          "omittedCount": 0
+        },
+        "image": {
+          "mime": "image/png",
+          "width": 166,
+          "height": 192,
+          "bytes": 2920
+        },
+        "id": "d2605ccf-33fd-4d0e-b707-669e8b2faf86",
+        "sessionId": "4321a398-f0bd-46a9-86c3-ab8864b30c0c",
+        "draftId": "dee9c7ef-e412-426a-b8df-ecbd1e8dc088",
+        "annotationId": "41343e99-15e8-4c0a-9071-5bddbaaef8bc",
+        "version": 1,
+        "screenshotAssetId": "5612e413-1ad2-4955-969b-335a1d09b144",
+        "source": "reference_content"
+      }
+    },
+    {
+      "name": "Simulated IME lifecycle and populated text ClipboardEvent; real Unicode/newline keyboard editing",
+      "passed": true,
+      "text": "输入测试\nPasted plain @text\nSecond line",
+      "textPaste": {
+        "defaultPrevented": false
+      }
+    }
+  ]
+}

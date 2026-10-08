@@ -1,0 +1,40 @@
+{
+  "producer": "Independent acceptance agent /root/implementation_acceptance",
+  "artifactRole": "Selected independent acceptance evidence from isolated temporary projects and their original managed Chrome pages",
+  "reports": [
+    {
+      "file": "independent-old-query.json",
+      "original": "/private/tmp/acanvas-review-old-query-evidence-wRfcsr/results.json",
+      "method": "Hold a real missing-PNG capture-result response through Page.route, complete version 2 with the production provider, then release the old response and inspect UI and service status.",
+      "observed": "Version 2 remains committed and complete; Send remains enabled before and after the version 1 error."
+    },
+    {
+      "file": "independent-commit-sse.json",
+      "original": "/private/tmp/acanvas-review-commit-evidence-4fixQi/results.json",
+      "method": "Delay the original host upload API return until the real UI observes the service commit; inspect controller.read before letting the original provider finish its checks.",
+      "observed": "Controller frame remains readable when UI is complete and the job is active; the original provider returns complete after one attempt."
+    },
+    {
+      "file": "independent-ui-review.json",
+      "original": "/private/tmp/acanvas-independent-review-evidence-7A9os7/results.json",
+      "method": "Real managed-Page reference, native screenshot, recapture, original iframe identity, native touch and layout checks; browser composition and ClipboardEvent input checks.",
+      "observed": "One-use references, original-page capture, unavailable-image recovery, current opaque background visibility, preserved live form state, narrow themes and editing behavior.",
+      "precision": "The other owned Page was brought to front, while Playwright focus emulation kept the captured document visible; this report does not claim document.hidden coverage."
+    },
+    {
+      "file": "independent-native-dpr2.json",
+      "image": "independent-native-dpr2.png",
+      "original": "/private/tmp/acanvas-review-corner-evidence-HSlYMG/capture.json",
+      "method": "Independent native Chrome DPR2 capture through the production provider; inspect the saved viewport, crop, mapping and PNG dimensions.",
+      "observed": "A 1200x695 CSS viewport with DPR2 and 192x192 CSS crop produces the recorded 384x384 PNG with scaleX and scaleY equal to 2."
+    },
+    {
+      "file": "independent-audio-time.json",
+      "images": ["independent-audio-partial.png", "independent-audio-time-edit.png"],
+      "original": "/private/tmp/acanvas-review-audio-time-evidence-DMxUbN/results.json",
+      "method": "Native keyboard audio timeline and annotation range controls select 0.1-0.3s, then edit only the end to 0.4s and complete both through the original managed Page provider.",
+      "observed": "Original playback head stays at 4s; capture version advances from 1 to 2; each scene image is separate and no video-frame asset is assigned.",
+      "precision": "Chosen times commit at 0.01s resolution; playbackTime is the original browser media property near native screenshot."
+    }
+  ]
+}

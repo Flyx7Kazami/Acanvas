@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-08",
+  "node": "24.21.0",
+  "command": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test dist/tests/host-runtime.test.js",
+  "tests": 3,
+  "passed": 3,
+  "failed": 0,
+  "durationMs": 2291.473292,
+  "exitCode": 0,
+  "explicitSession": "A real CLI process inherits an existing foreign CODEX_THREAD_ID binding, selects the explicit session ID, returns no binding, and preserves two sessions and one host binding",
+  "explicitHostBinding": "Explicit host/thread with a conflicting session keeps the binding conflict and preserves saved rows",
+  "environmentConvenience": "Omitting session and host/thread resolves the existing environment binding",
+  "hostIndependentEntry": "Omitting host/thread and environment returns the plain project URL without creating a scope or binding",
+  "emptySession": "Empty and whitespace session values fail before service startup; the isolated empty project retains no runtime or data directory",
+  "fixtures": "New temporary projects and ephemeral localhost services; binding counts read through the fixture service's database handle",
+  "chromeOpened": false,
+  "userBoardAccessed": false,
+  "existingUserServiceAccessed": false,
+  "log": "cli-scope-tests.log"
+}

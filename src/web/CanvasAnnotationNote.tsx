@@ -26,7 +26,9 @@ export function CanvasAnnotationNote({ canvas, bounds, view, annotationId, numbe
       const anchor = screenBounds(bounds, view), height = target.height;
       const offset = previous.filter(value => Number(value.dataset.anchorX) === bounds.x && Number(value.dataset.anchorY) === bounds.y).reduce((sum, value) => sum + value.offsetHeight + 8, 0);
       const viewport = board.getBoundingClientRect(), rect = node.getBoundingClientRect(), transform = new DOMMatrix(getComputedStyle(node).transform);
-      const top = anchor.y - 8 - height - offset, left = anchor.x;
+      const anchoredTop = anchor.y - 8 - height - offset;
+      const top = expanded ? Math.max(64, Math.min(anchoredTop, viewport.height - height - 80)) : anchoredTop;
+      const left = expanded ? Math.max(8, Math.min(anchor.x, viewport.width - node.offsetWidth - 8)) : anchor.x;
       node.dataset.anchorX = String(bounds.x); node.dataset.anchorY = String(bounds.y);
       node.style.left = `${left}px`; node.style.top = `${top}px`; node.style.height = `${height}px`;
       node.dataset.positioned = 'true';

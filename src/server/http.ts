@@ -10,9 +10,10 @@ import { ApiFailure, CanvasService, within } from './service.js';
 import { AudioArtworkReader } from './audio-artwork.js';
 import { clearRuntime, publishRuntime } from './runtime.js';
 import { startHtmlPreview } from './html-preview.js';
+import { ProjectBrowser, type ProjectBrowserOptions } from './browser-capture.js';
 
-export interface ServerOptions { root: string; port?: number; maxUploadBytes?: number; webRoot?: string; allowedOrigins?: string[] }
-export interface RunningServer { service: CanvasService; url: string; close: () => Promise<void> }
+export interface ServerOptions { root: string; port?: number; maxUploadBytes?: number; webRoot?: string; allowedOrigins?: string[]; browser?: ProjectBrowserOptions }
+export interface RunningServer { service: CanvasService; browser: ProjectBrowser; url: string; close: () => Promise<void> }
 const mimeTypes: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.png': 'image/png', '.ico': 'image/x-icon' };
 const send = (response: ServerResponse, status: number, value: unknown) => { response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); response.end(JSON.stringify(value)); };
 const sameToken = (received: string | undefined, token: string): boolean => !!received && Buffer.byteLength(received) === Buffer.byteLength(token) && timingSafeEqual(Buffer.from(received), Buffer.from(token));
@@ -35,6 +36,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   const handlers = new Set<Promise<void>>();
   const captureUploads = new Set<string>();
   let stopService: () => Promise<void>;
+  let browser: ProjectBrowser;
   let closing = false;
   let port = options.port ?? 4317;
   const authenticationCookieName = () => `acanvas_auth_${port}`;
@@ -81,6 +83,18 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
           send(response, 202, { project: service.project, service: service.identity(), status: 'stopping' }); return;
         }
         if (path === '/api/host-bindings' && method === 'POST') { send(response, 200, service.bindHost(await payload(request))); return; }
+        if (path === '/api/browser/pages' && method === 'GET') { send(response, 200, browser.status(url.searchParams.get('sessionId') ?? undefined)); return; }
+        if (path === '/api/browser/pages' && method === 'POST') {
+          const input = await payload(request);
+          if (input.instanceId !== service.identity().instanceId) throw new ApiFailure(409, 'service_conflict', 'Reconnect to the current project service.');
+          send(response, 200, await browser.open(input.sessionId)); return;
+        }
+        const browserPageMatch = path.match(/^\/api\/browser\/pages\/([^/]+)$/);
+        if (browserPageMatch && method === 'DELETE') {
+          const input = await payload(request);
+          if (input.instanceId !== service.identity().instanceId) throw new ApiFailure(409, 'service_conflict', 'Reconnect to the current project service.');
+          send(response, 200, await browser.closePage(decodeURIComponent(browserPageMatch[1]))); return;
+        }
         if (path === '/api/events' && method === 'GET') {
           response.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
           response.write('event: ready\ndata: {}\n\n'); events.add(response);
@@ -273,10 +287,13 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch(async error => { clearInterval(heartbeat); await preview.close(); service.close(); throw error; });
   let shutdown: Promise<void> | undefined;
   const runtime: ServiceRuntime = { project: service.project, ...service.identity(), url: `http://127.0.0.1:${port}` };
+  browser = new ProjectBrowser(service, runtime.url, token, options.browser);
   stopService = () => {
     if (shutdown) return shutdown;
     shutdown = (async () => {
       closing = true; clearInterval(heartbeat);
+      // Cancel captures while the business service can still invalidate versions.
+      await browser.close();
       const stopped = new Promise<void>((resolvePromise, reject) => server.close((error) => error ? reject(error) : resolvePromise()));
       const streams = new Set(events);
       for (const response of streams) response.end(); events.clear();
@@ -292,5 +309,5 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   };
   try { await publishRuntime(runtime); }
   catch (error) { await stopService(); throw error; }
-  return { service, url: runtime.url, close: stopService };
+  return { service, browser, url: runtime.url, close: stopService };
 }

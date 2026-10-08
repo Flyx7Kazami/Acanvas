@@ -12,13 +12,14 @@ export type AnnotationCommentControlProps = {
   regionLabel?: string;
   disabled?: boolean;
   onBack?: () => void;
+  onDone?: () => void;
   onChange?: (text: string) => void;
   onOpen?: () => void;
   mediaControl?: ReactNode;
   children?: ReactNode;
 };
 
-export function AnnotationCommentControl({ text, mode, inputLabel, className = '', controlRef, inputRef, compositionRef, annotationId, regionLabel, disabled, onBack, onChange, onOpen, mediaControl, children }: AnnotationCommentControlProps) {
+export function AnnotationCommentControl({ text, mode, inputLabel, className = '', controlRef, inputRef, compositionRef, annotationId, regionLabel, disabled, onBack, onDone, onChange, onOpen, mediaControl, children }: AnnotationCommentControlProps) {
   const ownInput = useRef<HTMLTextAreaElement>(null), ownComposition = useRef(false);
   const composing = compositionRef || ownComposition;
   const input = inputRef || ownInput;
@@ -28,11 +29,12 @@ export function AnnotationCommentControl({ text, mode, inputLabel, className = '
   return <div ref={controlRef} className={`canvas-annotation-note annotation-full inline-annotation-reader ${className}`} role="region" aria-label={regionLabel || 'Annotation'} data-canvas-control data-annotation-id={annotationId} data-comment-mode={mode} onPointerDown={event => event.stopPropagation()} onKeyDown={event => {
     event.stopPropagation();
     if (composing.current || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
-    if (event.key === 'Escape' || event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); onBack?.(); }
+    if (event.key === 'Escape') { event.preventDefault(); onBack?.(); }
+    else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); (onDone || onBack)?.(); }
   }}>
     <div className="annotation-full-body">{mode === 'edit' ? <textarea ref={input} className="annotation-fulltext" data-canvas-wheel="content" rows={4} aria-label={inputLabel} placeholder="Add a comment…" value={text} disabled={disabled} onChange={event => onChange?.(event.target.value)} onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }}/>
       : <div className="annotation-fulltext" data-canvas-wheel="content" tabIndex={0} aria-label={inputLabel}>{text}</div>}
     {mediaControl}
-    <div className="annotation-footer"><div className="annotation-context">{children}</div><button type="button" className="annotation-done" aria-label={mode === 'edit' ? 'Done' : 'Close annotation'} disabled={disabled} onClick={onBack}>{mode === 'edit' ? 'Done' : 'Close'}</button></div></div>
+    <div className="annotation-footer"><div className="annotation-context">{children}</div><button type="button" className="annotation-done" aria-label={mode === 'edit' ? 'Done' : 'Close annotation'} disabled={disabled} onClick={onDone || onBack}>{mode === 'edit' ? 'Done' : 'Close'}</button></div></div>
   </div>;
 }

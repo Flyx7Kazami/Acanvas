@@ -1,0 +1,168 @@
+{
+  "date": "2026-10-08",
+  "node": "v24.21.0",
+  "root": "/private/tmp/acanvas-headed-sandbox-smoke-YL26Np",
+  "transport": "Production project open detached main and headed installed Chrome",
+  "agentBindingUsed": false,
+  "scope": "Sandbox and lifecycle smoke; full React chatbox behavior is validated separately",
+  "chromiumSandboxConfigured": true,
+  "commands": [
+    {
+      "args": [
+        "project",
+        "open",
+        "--port",
+        "0",
+        "--project",
+        "/private/tmp/acanvas-headed-sandbox-smoke-YL26Np"
+      ],
+      "exitCode": 0,
+      "elapsedMs": 262.982458
+    },
+    {
+      "args": [
+        "session",
+        "create",
+        "--name",
+        "Canvas lifecycle smoke",
+        "--project",
+        "/private/tmp/acanvas-headed-sandbox-smoke-YL26Np"
+      ],
+      "exitCode": 0,
+      "elapsedMs": 93.750583
+    },
+    {
+      "args": [
+        "asset",
+        "import",
+        "--file",
+        "/private/tmp/acanvas-headed-sandbox-smoke-YL26Np/reference.md",
+        "--project",
+        "/private/tmp/acanvas-headed-sandbox-smoke-YL26Np"
+      ],
+      "exitCode": 0,
+      "elapsedMs": 93.01545800000002
+    },
+    {
+      "args": [
+        "browser",
+        "open",
+        "--session",
+        "06040738-8797-4340-9acb-c6943381dd80",
+        "--project",
+        "/private/tmp/acanvas-headed-sandbox-smoke-YL26Np"
+      ],
+      "exitCode": 0,
+      "elapsedMs": 1420.886
+    },
+    {
+      "args": [
+        "project",
+        "status",
+        "--project",
+        "/private/tmp/acanvas-headed-sandbox-smoke-YL26Np"
+      ],
+      "exitCode": 0,
+      "elapsedMs": 95.79437499999995
+    },
+    {
+      "args": [
+        "browser",
+        "status",
+        "--session",
+        "06040738-8797-4340-9acb-c6943381dd80",
+        "--project",
+        "/private/tmp/acanvas-headed-sandbox-smoke-YL26Np"
+      ],
+      "exitCode": 0,
+      "elapsedMs": 98.97924999999987
+    },
+    {
+      "args": [
+        "browser",
+        "close",
+        "--session",
+        "06040738-8797-4340-9acb-c6943381dd80",
+        "--project",
+        "/private/tmp/acanvas-headed-sandbox-smoke-YL26Np"
+      ],
+      "exitCode": 0,
+      "elapsedMs": 97.16870800000015
+    },
+    {
+      "args": [
+        "project",
+        "stop",
+        "--project",
+        "/private/tmp/acanvas-headed-sandbox-smoke-YL26Np"
+      ],
+      "exitCode": 0,
+      "elapsedMs": 175.31500000000005
+    },
+    {
+      "args": [
+        "project",
+        "status",
+        "--project",
+        "/private/tmp/acanvas-headed-sandbox-smoke-YL26Np"
+      ],
+      "exitCode": 0,
+      "elapsedMs": 44.58179199999995
+    }
+  ],
+  "service": {
+    "instanceId": "b84da33c-d579-466a-868f-f896dafb07cd",
+    "pid": 85799,
+    "url": "http://127.0.0.1:53014"
+  },
+  "sessionId": "06040738-8797-4340-9acb-c6943381dd80",
+  "assetId": "a5468231-b815-4df1-8c74-068fd8e10aaf",
+  "page": {
+    "pageId": "e4662cc3-8449-48d8-b78c-d67abd77cfea",
+    "sessionId": "06040738-8797-4340-9acb-c6943381dd80",
+    "url": "http://127.0.0.1:53014/?session=06040738-8797-4340-9acb-c6943381dd80"
+  },
+  "chromePid": 85803,
+  "sandbox": {
+    "browserNoSandboxFlag": false,
+    "rendererCount": 3,
+    "renderers": [
+      {
+        "pid": 85813,
+        "noSandboxFlag": false,
+        "aliveAfterStop": false
+      },
+      {
+        "pid": 85814,
+        "noSandboxFlag": false,
+        "aliveAfterStop": false
+      },
+      {
+        "pid": 85815,
+        "noSandboxFlag": false,
+        "aliveAfterStop": false
+      }
+    ],
+    "defaultChromeRendererSandboxPreserved": true
+  },
+  "afterCliExit": {
+    "sameService": true,
+    "samePage": true,
+    "serviceAlive": true,
+    "chromeAlive": true
+  },
+  "browserClose": {
+    "ownedPageClosed": true
+  },
+  "stop": {
+    "runtimeRemoved": true,
+    "browserLockRemoved": true,
+    "serviceExited": true,
+    "chromeExited": true,
+    "rendererWorkersExited": true,
+    "rendererExitCheckedAt": "2026-10-08T06:07:31.180Z"
+  },
+  "ownedTemporaryProjectRemoved": true,
+  "durationMs": 3479.9459580000002,
+  "passed": true
+}

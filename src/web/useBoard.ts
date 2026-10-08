@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { BoardOperation, BoardState, Draft, SessionView } from '../shared/types';
+import type { AnnotationInput, BoardOperation, BoardState, Draft, SessionView } from '../shared/types';
+import { annotationTarget } from './annotation-scene';
 import { BoardApi, RequestError } from './api';
 
 type SavingDraft = { value: Draft; editRevision: number; expectedRevision: number };
-type LocalDraft = { value: Draft; editRevision: number; savedEditRevision: number; confirmedRevision: number; epoch: number; failed?: boolean; conflict?: Draft; inflight?: SavingDraft; lastAttempt?: SavingDraft };
+type LocalDraft = { value: Draft; serverAnnotations: AnnotationInput[]; editRevision: number; savedEditRevision: number; confirmedRevision: number; epoch: number; failed?: boolean; conflict?: Draft; inflight?: SavingDraft; lastAttempt?: SavingDraft };
 export type SaveState = 'saved' | 'saving' | 'unsaved' | 'failed';
 const draftContent = (value: Draft) => JSON.stringify({ text: value.text, attachments: value.attachments, annotations: value.annotations, references: value.references });
-const freshDraft = (value: Draft, epoch = 0): LocalDraft => ({ value, editRevision: 0, savedEditRevision: 0, confirmedRevision: value.revision, epoch });
+const freshDraft = (value: Draft, epoch = 0): LocalDraft => ({ value, serverAnnotations: value.annotations, editRevision: 0, savedEditRevision: 0, confirmedRevision: value.revision, epoch });
+const sameTarget = (a: AnnotationInput, b: AnnotationInput) => JSON.stringify(annotationTarget(a)) === JSON.stringify(annotationTarget(b));
+const draftIntent = (value: Draft) => JSON.stringify({ ...value, revision: 0, updatedAt: '', annotations: value.annotations.map(({ captureState, capture, ...annotation }) => annotation) });
+const displayAnnotation = (local: AnnotationInput, server?: AnnotationInput): AnnotationInput => {
+  if (!server?.captureState) return local;
+  return sameTarget(local, server) ? { ...local, captureState: server.captureState, capture: server.capture } : { ...local, captureState: { version: server.captureState.version, status: 'incomplete' }, capture: undefined };
+};
 
 export function useBoard() {
   const api = useMemo(() => new BoardApi(), []);
@@ -56,10 +63,11 @@ export function useBoard() {
       else local = freshDraft(remote, local.epoch + 1);
     } else if (remote.revision > local.confirmedRevision) {
       const inflight = local.inflight || local.lastAttempt;
-      if (inflight && remote.revision >= inflight.expectedRevision + 1 && draftContent(remote) === draftContent(inflight.value)) {
+      if (inflight && remote.revision >= inflight.expectedRevision + 1 && draftIntent(remote) === draftIntent(inflight.value)) {
         local.failed = false;
         local.confirmedRevision = remote.revision;
-        local.value = { ...local.value, revision: remote.revision };
+        local.value = local.editRevision === inflight.editRevision ? remote : { ...local.value, revision: remote.revision, annotations: local.value.annotations.map(annotation => displayAnnotation(annotation, remote.annotations.find(value => value.id === annotation.id))) };
+        local.serverAnnotations = remote.annotations;
         local.savedEditRevision = Math.max(local.savedEditRevision, inflight.editRevision);
       } else if (draftContent(remote) === draftContent(local.value) && !local.conflict) {
         local.failed = false; local.confirmedRevision = remote.revision; local.value = remote; local.savedEditRevision = local.editRevision;
@@ -128,7 +136,10 @@ export function useBoard() {
       const current = drafts.current.get(sessionId);
       if (!current || current.value.id !== draftId || current.epoch !== snapshot.epoch || snapshot.editRevision <= current.savedEditRevision) return;
       if (current.conflict) throw new RequestError('Your draft was updated elsewhere. Compare both versions to continue.', 409, 'draft_revision_conflict');
-      const saving = { value: { ...snapshot.value, revision: current.confirmedRevision }, editRevision: snapshot.editRevision, expectedRevision: current.confirmedRevision };
+      const saving = { value: { ...snapshot.value, revision: current.confirmedRevision, annotations: snapshot.value.annotations.map(annotation => {
+        const server = current.serverAnnotations.find(value => value.id === annotation.id);
+        return server?.captureState ? { ...annotation, captureState: server.captureState, capture: server.capture } : annotation;
+      }) }, editRevision: snapshot.editRevision, expectedRevision: current.confirmedRevision };
       current.inflight = saving; current.lastAttempt = saving; current.failed = false;
       if (sessionRef.current === sessionId) setSaveState('saving');
       try {
@@ -137,7 +148,14 @@ export function useBoard() {
         if (latest?.value.id === draftId && latest.epoch === snapshot.epoch) {
           latest.failed = false;
           latest.confirmedRevision = Math.max(latest.confirmedRevision, response.revision);
-          latest.value = { ...latest.value, revision: latest.confirmedRevision };
+          latest.value = latest.editRevision === snapshot.editRevision ? response : {
+            ...latest.value, revision: latest.confirmedRevision,
+            annotations: latest.value.annotations.map(annotation => {
+              const saved = response.annotations.find(value => value.id === annotation.id);
+              return displayAnnotation(annotation, saved);
+            }),
+          };
+          latest.serverAnnotations = response.annotations;
           latest.savedEditRevision = Math.max(latest.savedEditRevision, snapshot.editRevision);
           if (sessionRef.current === sessionId) reflectDraft(latest);
         }
@@ -146,9 +164,10 @@ export function useBoard() {
         if (latest?.value.id === draftId && latest.epoch === snapshot.epoch) {
           if (!latest.conflict && latest.savedEditRevision >= snapshot.editRevision && latest.confirmedRevision > saving.expectedRevision) { latest.failed = false; if (sessionRef.current === sessionId) reflectDraft(latest); return; }
           const remote = await api.state(sessionId).catch(() => undefined);
-          if (remote?.draft.id === draftId && remote.draft.revision >= saving.expectedRevision && draftContent(remote.draft) === draftContent(saving.value)) {
+          if (remote?.draft.id === draftId && remote.draft.revision >= saving.expectedRevision && draftIntent(remote.draft) === draftIntent(saving.value)) {
             latest.failed = false; latest.confirmedRevision = remote.draft.revision;
-            latest.value = { ...latest.value, revision: remote.draft.revision };
+            latest.value = latest.editRevision === snapshot.editRevision ? remote.draft : { ...latest.value, revision: remote.draft.revision, annotations: latest.value.annotations.map(annotation => displayAnnotation(annotation, remote.draft.annotations.find(value => value.id === annotation.id))) };
+            latest.serverAnnotations = remote.draft.annotations;
             latest.savedEditRevision = Math.max(latest.savedEditRevision, snapshot.editRevision);
             if (sessionRef.current === sessionId) reflectDraft(latest);
             return;
@@ -170,7 +189,8 @@ export function useBoard() {
   const changeDraftFor = useCallback((sessionId: string, draftId: string, change: (value: Draft) => Draft) => {
     const current = drafts.current.get(sessionId);
     if (api.projectChanged || !current || current.value.id !== draftId) return false;
-    const next: LocalDraft = { ...current, value: change(current.value), editRevision: current.editRevision + 1, failed: false };
+    const changed = change(current.value);
+    const next: LocalDraft = { ...current, value: { ...changed, annotations: changed.annotations.map(annotation => displayAnnotation(annotation, current.serverAnnotations.find(value => value.id === annotation.id))) }, editRevision: current.editRevision + 1, failed: false };
     drafts.current.set(sessionId, next);
     if (sessionRef.current === sessionId) reflectDraft(next);
     window.clearTimeout(draftTimers.current.get(sessionId));
@@ -182,6 +202,16 @@ export function useBoard() {
     const current = drafts.current.get(sessionId)?.value;
     return current && (!draftId || current.id === draftId) ? current : undefined;
   }, []);
+
+  const acceptSavedDraft = useCallback((saved: Draft) => {
+    const local = drafts.current.get(saved.sessionId);
+    if (!local || local.value.id !== saved.id || saved.revision < local.confirmedRevision) return false;
+    if (local.conflict) return false;
+    const next = local.editRevision !== local.savedEditRevision ? { ...local, confirmedRevision: saved.revision, serverAnnotations: saved.annotations, value: { ...local.value, revision: saved.revision, annotations: local.value.annotations.map(annotation => displayAnnotation(annotation, saved.annotations.find(value => value.id === annotation.id))) } } : freshDraft(saved, local.epoch + 1);
+    drafts.current.set(saved.sessionId, next);
+    if (sessionRef.current === saved.sessionId) reflectDraft(next);
+    return true;
+  }, [reflectDraft]);
 
   const changeDraft = useCallback((change: (value: Draft) => Draft) => {
     const current = drafts.current.get(sessionRef.current)?.value;
@@ -284,5 +314,5 @@ export function useBoard() {
     const handler = (event: BeforeUnloadEvent) => { if ([...drafts.current.values()].some(value => value.editRevision !== value.savedEditRevision)) event.preventDefault(); };
     window.addEventListener('beforeunload', handler); return () => window.removeEventListener('beforeunload', handler);
   }, []);
-  return { api, state, draft, draftConflict, view, error, errorRevision: failure.revision, connection, saveState, switching, sending, projectChanged, setError, showError, refresh, changeDraft, changeDraftFor, getDraftFor, updateView, switchSession, createSession, send, editTask, operations, flushDraft, resolveDraftConflict };
+  return { api, state, draft, draftConflict, view, error, errorRevision: failure.revision, connection, saveState, switching, sending, projectChanged, setError, showError, refresh, changeDraft, changeDraftFor, getDraftFor, acceptSavedDraft, updateView, switchSession, createSession, send, editTask, operations, flushDraft, resolveDraftConflict };
 }

@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-08",
+  "candidate": "Required sampling phases and explicit chromiumSandbox:true",
+  "command": "DEBUG=pw:browser TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test dist/tests/browser-capture.test.js",
+  "debugNamespace": "pw:browser",
+  "protocolLoggingEnabled": false,
+  "tests": 20,
+  "passed": 20,
+  "failed": 0,
+  "observedLaunchCommands": 20,
+  "observedLaunchCommandsOmitNoSandbox": true,
+  "allocatorWarningCount": 20,
+  "invalidDisplayWarningCount": 204,
+  "allocatorExample": "2026-10-08T06:02:33.239Z pw:browser [pid=85196][err] Trying to load the allocator multiple times. This is *not* supported.",
+  "invalidDisplayExample": "2026-10-08T06:02:33.313Z pw:browser [pid=85196][err] [85203:36567251:1008/140233.312808:ERROR:ui/display/mac/cv_display_link_mac.mm:188] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670",
+  "localSdkDefinition": {
+    "path": "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreVideo.framework/Versions/A/Headers/CVReturn.h",
+    "line": 71,
+    "name": "kCVReturnInvalidDisplay",
+    "value": -6670,
+    "meaning": "A CVDisplayLink cannot be created for the given DisplayRef."
+  },
+  "inference": "The same stderr messages occur during successful launches. They alone do not establish the cause of the earlier 15000ms Chrome startup timeout.",
+  "rawBrowserDiagnosticLog": "/private/tmp/acanvas-browser-capture-sandbox-final.log"
+}

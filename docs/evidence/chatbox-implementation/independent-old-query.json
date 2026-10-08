@@ -1,0 +1,13 @@
+{
+  "oldError": "asset_file_missing",
+  "before": {
+    "row": "complete",
+    "sendDisabled": false
+  },
+  "after": {
+    "row": "complete",
+    "sendDisabled": false
+  },
+  "currentVersion": 2,
+  "currentResult": "committed"
+}

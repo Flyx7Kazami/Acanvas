@@ -7,8 +7,8 @@ import { rasterizeHtmlSnapshot } from './html-preview-snapshot';
 
 import type { CanvasWheelInput } from './canvas-wheel';
 
-export function HtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFrameWheel }: { asset: Asset; api: BoardApi; onFrameWheel?: (event: CanvasWheelInput) => void; onReloadBoard?: () => Promise<void>; onFrameDrag?: (frame: HTMLIFrameElement, start: { x: number; y: number }, event: PointerEvent<HTMLElement>) => void }) {
-  const container = useRef<HTMLDivElement>(null), preview = useHtmlPreviewSlot(container);
+export function HtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFrameWheel, preserveScene = false }: { asset: Asset; api: BoardApi; preserveScene?: boolean; onFrameWheel?: (event: CanvasWheelInput) => void; onReloadBoard?: () => Promise<void>; onFrameDrag?: (frame: HTMLIFrameElement, start: { x: number; y: number }, event: PointerEvent<HTMLElement>) => void }) {
+  const container = useRef<HTMLDivElement>(null), preview = useHtmlPreviewSlot(container, preserveScene);
   const stoppedWhileHovered = useRef(false), hoverAttempted = useRef(false);
   const [attempt, setAttempt] = useState(0), [pendingDrag, setPendingDrag] = useState<{ pointerId: number; x: number; y: number }>();
   const [grant, setGrant] = useState<HtmlPreviewGrant>();

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { startServer } from '../src/server/http.js';
@@ -36,6 +36,29 @@ test('host conversations bind distinct task scopes and explicitly retain saved c
   assert.equal(server.service.state(first.sessionId).tasks.length, 0);
   assert.equal(server.service.state(second.sessionId).tasks.length, 0);
   assert.equal(server.service.state(old.id).tasks[0].id, task.id);
+});
+
+test('explicit CLI session selects its scope while environment binding remains optional', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'acanvas-cli-explicit-scope-'));
+  const emptyRoot = await mkdtemp(join(tmpdir(), 'acanvas-cli-empty-scope-'));
+  const server = await startServer({ root, port: 0 });
+  t.after(async () => { await server.close(); await rm(root, { recursive: true, force: true }); await rm(emptyRoot, { recursive: true, force: true }); });
+  const foreign = server.service.createSession('Foreign conversation scope'), selected = server.service.createSession('Explicit task scope');
+  const env: NodeJS.ProcessEnv = { ...process.env, CODEX_THREAD_ID: 'existing-foreign-conversation' };
+  const noEnvironment: NodeJS.ProcessEnv = { ...process.env }; delete noEnvironment.CODEX_THREAD_ID;
+  const run = async (args: string[], environment = env) => JSON.parse((await execute(process.execPath, [resolve('dist/src/cli.js'), ...args, '--project', root], { timeout: 15_000, env: environment })).stdout);
+  const original = await run(['project', 'open', '--host', 'codex', '--thread', env.CODEX_THREAD_ID!, '--session', foreign.id]);
+  assert.equal(original.sessionId, foreign.id);
+  const counts = () => ({ sessions: server.service.sessions().length, bindings: (server.service.db.prepare('SELECT COUNT(*) AS count FROM host_bindings').get() as { count: number }).count });
+  const before = counts(); assert.deepEqual(before, { sessions: 2, bindings: 1 });
+  const result = await run(['project', 'open', '--session', selected.id]);
+  assert.equal(result.sessionId, selected.id); assert.equal(new URL(result.openUrl).searchParams.get('session'), selected.id); assert.equal(result.binding, undefined); assert.deepEqual(counts(), before);
+  assert.equal((server.service.db.prepare('SELECT session_id FROM host_bindings WHERE host=? AND thread_id=?').get('codex', env.CODEX_THREAD_ID) as { session_id: string }).session_id, foreign.id);
+  await assert.rejects(run(['project', 'open', '--host', 'codex', '--thread', env.CODEX_THREAD_ID!, '--session', selected.id]), /host_binding_conflict/); assert.deepEqual(counts(), before);
+  const convenience = await run(['project', 'open']); assert.equal(convenience.sessionId, foreign.id); assert.equal(convenience.binding.sessionId, foreign.id); assert.deepEqual(counts(), before);
+  const plain = await run(['project', 'open'], noEnvironment); assert.equal(plain.sessionId, undefined); assert.equal(plain.binding, undefined); assert.deepEqual(counts(), before);
+  for (const empty of ['', '   ']) await assert.rejects(execute(process.execPath, [resolve('dist/src/cli.js'), 'project', 'open', '--session', empty, '--project', emptyRoot], { timeout: 15_000, env }), /--session is required/);
+  assert.equal(await readRuntime(emptyRoot), undefined); assert.deepEqual(await readdir(emptyRoot), []);
 });
 
 test('detached service survives launcher exit, reuses its instance and preserves assets and tasks across stop', async t => {

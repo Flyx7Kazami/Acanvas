@@ -33,6 +33,7 @@
     "lucide-react": "0.468.0",
     "markdown-it": "14.3.2",
     "music-metadata": "12.0.0",
+    "playwright-core": "1.55.1",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "strtok3": "10.3.5"

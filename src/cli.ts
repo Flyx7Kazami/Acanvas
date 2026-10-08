@@ -16,9 +16,12 @@ Use --url http://127.0.0.1:4317 to connect to a selected local service.
 Without --url, calls discover the project's service; project open starts it when needed.
 
 project open [--host NAME --thread ID] [--session ID] [--port NUMBER]
-  CODEX_THREAD_ID automatically binds the current Codex conversation.
-  Returns openUrl and sessionId for the current host conversation.
+  Explicit --session opens that scope; explicit --host/--thread binds it.
+  Without either choice, CODEX_THREAD_ID can resolve the current conversation.
+  Returns openUrl and the selected sessionId when a task scope is supplied.
 project status | project stop
+browser open|status|close --session ID
+  Opens the project-managed canvas window; screenshots run on that live page.
 session create --name NAME | session list | session read --session ID
 session resume --session ID [--consumer ID] --expected-consumer ID|none --resolution TEXT
 draft save --session ID --input draft.json | draft send --session ID --draft ID --revision NUMBER
@@ -34,7 +37,7 @@ asset read --asset ID --out FILE [--session ID]
   Capture evidence requires its original session.
 board operations --session ID --input operations.json
 task next --session ID [--consumer ID]
-task read --session ID --task ID
+task read --session ID --task ID [--format text]
 task progress --session ID --task ID --run ID --consumer ID --message TEXT [--job ID]
 task block|interrupt --session ID --task ID --run ID --consumer ID --reason TEXT
 task reply --session ID --task ID --text TEXT
@@ -55,6 +58,15 @@ export async function cli(args: string[]): Promise<unknown> {
   const options = new Map<string, string>();
   for (let i = 2; i < args.length; i += 2) { if (!args[i]?.startsWith('--') || args[i + 1] === undefined) throw new Error('Options use --name VALUE.'); options.set(args[i].slice(2), args[i + 1]); }
   const required = (key: string) => { const value = options.get(key); if (!value) throw new Error(`--${key} is required.`); return value; };
+  let openSessionId: string | undefined, openHost: string | undefined, openThreadId: string | undefined;
+  if (group === 'project' && action === 'open') {
+    if (options.has('session')) {
+      openSessionId = required('session');
+      if (!openSessionId.trim()) throw new Error('--session is required.');
+    }
+    if (options.has('host') || options.has('thread')) { openHost = required('host'); openThreadId = required('thread'); }
+    else if (!openSessionId && process.env.CODEX_THREAD_ID) { openHost = 'codex'; openThreadId = process.env.CODEX_THREAD_ID; }
+  }
   const projectRoot = await realpath(required('project'));
   const connection = await connectProject(projectRoot, options.get('url'), group === 'project' && action === 'open', options.has('port') ? Number(required('port')) : 0);
   if (!connection) {
@@ -81,11 +93,8 @@ export async function cli(args: string[]): Promise<unknown> {
       return { project: bootstrap.project, status: 'stopped' };
     }
     if (action === 'open') {
-      let host = options.get('host'), threadId = options.get('thread');
-      if (host || threadId) { host = required('host'); threadId = required('thread'); }
-      else if (process.env.CODEX_THREAD_ID) { host = 'codex'; threadId = process.env.CODEX_THREAD_ID; }
-      let binding: HostBinding | undefined, sessionId = options.get('session');
-      if (host && threadId) { binding = await request('/api/host-bindings', 'POST', { host, threadId, ...(sessionId ? { sessionId } : {}) }); sessionId = binding!.sessionId; }
+      let binding: HostBinding | undefined, sessionId = openSessionId;
+      if (openHost && openThreadId) { binding = await request('/api/host-bindings', 'POST', { host: openHost, threadId: openThreadId, ...(sessionId ? { sessionId } : {}) }); sessionId = binding!.sessionId; }
       else if (sessionId) { const session = await request(`/api/state?sessionId=${encodeURIComponent(sessionId)}`); sessionId = session.session.id; }
       const openUrl = new URL(base); if (sessionId) openUrl.searchParams.set('session', sessionId);
       return { project: bootstrap.project, service: bootstrap.service, capabilities: bootstrap.capabilities, ...(binding ? { binding } : {}), ...(sessionId ? { sessionId } : {}), openUrl: openUrl.href };
@@ -99,6 +108,12 @@ export async function cli(args: string[]): Promise<unknown> {
     }
     if (action === 'read') return request(`/api/state?sessionId=${encodeURIComponent(required('session'))}`);
     if (action === 'resume') return request(`${sessionPath()}/resume`, 'POST', { consumerId: options.get('consumer') ?? randomUUID(), expectedConsumerId: required('expected-consumer') === 'none' ? null : required('expected-consumer'), resolution: required('resolution') });
+  }
+  if (group === 'browser') {
+    const sessionId = required('session');
+    if (action === 'status') return request(`/api/browser/pages?sessionId=${encodeURIComponent(sessionId)}`);
+    if (action === 'open') return request('/api/browser/pages', 'POST', { sessionId, instanceId: bootstrap.service.instanceId });
+    if (action === 'close') return request(`/api/browser/pages/${encodeURIComponent(sessionId)}`, 'DELETE', { instanceId: bootstrap.service.instanceId });
   }
   if (group === 'draft') {
     if (action === 'save') return request(`${sessionPath()}/draft`, 'PUT', await input());
@@ -168,7 +183,12 @@ export async function cli(args: string[]): Promise<unknown> {
   }
   if (group === 'task') {
     if (action === 'next') return request(`${sessionPath()}/claim`, 'POST', { consumerId: options.get('consumer') ?? randomUUID() });
-    if (action === 'read') return request(`${taskPath()}/context`);
+    if (action === 'read') {
+      const format = options.get('format');
+      if (format && format !== 'text') throw new Error('Choose --format text or the default JSON task context.');
+      const context = await request(`${taskPath()}/context`);
+      return format === 'text' ? context.task.requirementText : context;
+    }
     if (action === 'progress') return request(`${taskPath()}/progress`, 'POST', { ...identity(), message: required('message'), ...(options.has('job') ? { externalJobId: required('job') } : {}) });
     if (action === 'block' || action === 'interrupt') return request(`${taskPath()}/${action}`, 'POST', { ...identity(), reason: required('reason') });
     if (action === 'reply') return request(`${taskPath()}/reply`, 'POST', { text: required('text') });
@@ -181,6 +201,6 @@ export async function cli(args: string[]): Promise<unknown> {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try { const result = await cli(process.argv.slice(2)); console.log(typeof result === 'object' && result && 'help' in result ? (result as { help: string }).help : JSON.stringify(result, null, 2)); }
+  try { const result = await cli(process.argv.slice(2)); console.log(typeof result === 'string' ? result : typeof result === 'object' && result && 'help' in result ? (result as { help: string }).help : JSON.stringify(result, null, 2)); }
   catch (error) { console.error(error instanceof Error ? error.message : 'The CLI request failed.'); process.exitCode = 1; }
 }

@@ -48,7 +48,7 @@ export function useNotificationLayout(dock: ElementRef, notifications: ElementRe
   }, [dock, notifications, loaded]);
 }
 
-export function useComposerLayout(input: ElementRef<HTMLTextAreaElement>, dock: ElementRef, draft: Draft | null, loaded: boolean) {
+export function useComposerLayout(input: ElementRef<HTMLTextAreaElement>, dock: ElementRef, draft: Draft | null, loaded: boolean, previewCount = 0) {
   useLayoutEffect(() => {
     const textarea = input.current, container = dock.current;
     if (!textarea || !container) return;
@@ -58,13 +58,13 @@ export function useComposerLayout(input: ElementRef<HTMLTextAreaElement>, dock: 
     const layout = () => {
       const containerBounds = container.getBoundingClientRect();
       const otherHeight = container.offsetHeight - form.offsetHeight;
-      const references = form.querySelector<HTMLElement>('.draft-attachments');
+      const blocks = [...form.querySelectorAll<HTMLElement>('.composer-block,.chatbox-references')];
       const editing = form.querySelector<HTMLElement>('.composer-editing');
       const style = getComputedStyle(form), row = form.querySelector<HTMLElement>('.composer-input-row')!;
-      const textStyle = getComputedStyle(textarea), referenceStyle = references && getComputedStyle(references);
+      const textStyle = getComputedStyle(textarea);
       const textChrome = parseFloat(textStyle.marginTop) + parseFloat(textStyle.marginBottom);
       const rowChrome = Math.max(textChrome, (row.querySelector<HTMLElement>('.send-button')?.offsetHeight || 40) - 24);
-      const internalHeight = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + 2 + rowChrome + (references ? references.offsetHeight + parseFloat(referenceStyle!.marginBottom) : 0) + (editing ? editing.offsetHeight + parseFloat(getComputedStyle(editing).marginBottom) : 0);
+      const internalHeight = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + 2 + rowChrome + blocks.reduce((height, block) => height + block.offsetHeight + parseFloat(getComputedStyle(block).marginTop) + parseFloat(getComputedStyle(block).marginBottom), 0) + (editing ? editing.offsetHeight + parseFloat(getComputedStyle(editing).marginBottom) : 0);
       const bottom = innerHeight - containerBounds.bottom;
       const available = innerHeight - 64 - (toolbar?.offsetHeight || 226) - 12 - bottom - otherHeight - internalHeight;
       const maximum = Math.max(24, Math.min(144, Math.floor(available / 24) * 24));
@@ -90,7 +90,7 @@ export function useComposerLayout(input: ElementRef<HTMLTextAreaElement>, dock: 
     window.addEventListener('resize', resize);
     layout(); positionDock();
     return () => { observer.disconnect(); window.removeEventListener('resize', resize); };
-  }, [input, dock, draft?.id, draft?.text, draft?.attachments.length, draft?.annotations.length, loaded]);
+  }, [input, dock, draft?.id, draft?.text, draft?.attachments.length, draft?.annotations.length, draft?.references.objectIds.length, draft?.references.taskIds.length, loaded, previewCount]);
 }
 
 export function useContextualControls(canvas: ElementRef, actions: ElementRef, playback: ElementRef, selected: Rect[], video: Rect | undefined, view: SessionView) {
