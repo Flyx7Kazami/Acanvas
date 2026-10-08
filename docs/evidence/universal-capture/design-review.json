@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-09",
+  "scope": "independent technical design review",
+  "designOnly": true,
+  "noPrototype": true,
+  "reviewedDocuments": [
+    "docs/chatbox/UNIVERSAL_BACKGROUND_CAPTURE_DESIGN.md",
+    "docs/PLAN.md"
+  ],
+  "implementationTestsRun": false,
+  "runtimeMutation": false,
+  "userDataAccess": false,
+  "sourceModification": false,
+  "gitCommit": false,
+  "finalResult": "PASS for design and source verification only",
+  "remainingFindings": [],
+  "initialResult": "FAIL pending design clarifications",
+  "initialFindings": [
+    {
+      "priority": "P1",
+      "status": "closed by design clarification",
+      "topic": "historical target validation before capture preparation",
+      "requirement": "Bind the service-confirmed base scene to new annotation draft validation so target deletion between Done and saveDraft preserves the historical frame. Keep current annotation version and source ownership checks.",
+      "designLines": "116-132",
+      "source": "src/server/service.ts:224-230,288-290",
+      "closure": "First draft save carries view/baseScene/frame context and validates against the service-confirmed snapshot in the same transaction. Later draft reads, saves, preparation and Send share the stored source. Done-to-first-save deletion and forged history are explicit acceptance scenarios.",
+      "finalDesignLines": "142,155-159,190"
+    },
+    {
+      "priority": "P2",
+      "status": "closed by design clarification",
+      "topic": "worker presentation identity",
+      "requirement": "Publish immutable pixels and ScenePresentation together at the client display boundary. Done copies that accepted pair instead of pairing a placeholder bitmap with newer worker metadata.",
+      "designLines": "50-52,108-110",
+      "source": "HTML Canvas standard: OffscreenCanvas placeholder update during update-the-rendering",
+      "closure": "Worker output remains a candidate pair. Main-thread visible Canvas commit updates presentedFrame with immutable pixels and matching presentation metadata; Done copies this pair. Worker-ahead-of-display is an explicit acceptance scenario.",
+      "finalDesignLines": "71,185"
+    },
+    {
+      "priority": "P2",
+      "status": "closed by design clarification",
+      "topic": "HTML native interaction and audio migration",
+      "requirement": "Define the migration and acceptance boundary for currently allowed native form controls, contenteditable, clipboard and HTML-generated audio. Preserve current denied permissions and media resource policy. Any retained audio reaches the current client under its user gesture rules.",
+      "designLines": "71-79,148-151",
+      "source": "src/server/html-preview.ts:22,79; src/web/HtmlCanvasContent.tsx:144",
+      "closure": "Native controls, contenteditable, file bytes, clipboard and focus have explicit migration rules. Retained HTML audio is streamed to the current client under local gesture rules. Pixel, semantic and audio capabilities are separated; CEF PCM/timestamp support is a candidate interface and P2 remains unverified.",
+      "finalDesignLines": "100-104,176,194"
+    }
+  ],
+  "incrementalSourceReview": {
+    "factFile": "docs/evidence/universal-capture/codex-source-refresh.json",
+    "factFileJson": "PASS",
+    "sourceReferenceEntries": 35,
+    "independentSpotChecks": 6,
+    "installedMetadataRead": {
+      "bundleIdentifier": "com.openai.codex",
+      "version": "26.1002.52244",
+      "build": "13536"
+    },
+    "sourceChecks": [
+      "saved handleOverlaySubmit ordering and existing thread page webContents",
+      "captureBrowserScreenshot zero-argument capturePage call",
+      "captureSavedCommentScreenshot preparation and comment screenshot assignment",
+      "CSS crop to actual image dimension ratios",
+      "page prepare-comment-screenshot state update",
+      "page screenshot-ready after one requestAnimationFrame"
+    ],
+    "optionalCropWording": "PASS after clarification",
+    "noInstalledCodeExecuted": true,
+    "noRuntimeScreenshotOrMessageTest": true,
+    "hiddenMinimizedAndMediaThrottleBehavior": "unverified and explicitly limited in design"
+  },
+  "documentChecks": {
+    "localLinks": 82,
+    "localLinkFailures": 0,
+    "localAnchorsPresent": 0,
+    "externalLinksEnumerated": 20,
+    "newDesignPrimarySourceTopicsVerified": [
+      "screen capture source selection and transient activation",
+      "canvas export origin-clean checks and bitmap copying",
+      "animated image default or first frame rule",
+      "headless browser without visible UI",
+      "OffscreenCanvas export and placeholder publication",
+      "trusted activation triggering input events",
+      "CEF AudioHandler PCM packet and presentation timestamp interface"
+    ],
+    "credentialPatternMatches": 0,
+    "gitDiffCheck": "PASS"
+  },
+  "acceptance": [
+    { "item": "design-only scope and accurate production status", "result": "PASS" },
+    { "item": "host and user-browser independence", "result": "PASS as architecture; implementation unverified" },
+    { "item": "application bitmap versus physical screen boundary", "result": "PASS" },
+    { "item": "video, GIF and HTML same-frame semantics", "result": "PASS as design; media prototypes unverified" },
+    { "item": "worker pixels and presentation metadata pairing", "result": "PASS as design; implementation unverified" },
+    { "item": "historical scene validation through initial draft save", "result": "PASS as design; concurrency tests unverified" },
+    { "item": "native HTML interaction and sound scope", "result": "PASS as design; P2 migration unverified" },
+    { "item": "resource and security boundary awareness", "result": "PASS as design; operating limits unmeasured" },
+    { "item": "phased validation and actual support declarations", "result": "PASS" },
+    { "item": "local links, credential patterns and whitespace", "result": "PASS" },
+    { "item": "current Codex source comparison and source versus runtime boundary", "result": "PASS" }
+  ]
+}
