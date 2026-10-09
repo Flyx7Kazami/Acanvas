@@ -14,7 +14,7 @@ export function paintControlledPanel(root: HTMLElement, options: { pixelRatio?: 
   const area = root.getBoundingClientRect(), scaleX = area.width / width, scaleY = area.height / height;
   if (!scaleX || !scaleY) throw new Error('The content panel is outside the presented layout.');
   const pixels = root.ownerDocument.createElement('canvas'); pixels.width = Math.round(width * ratio); pixels.height = Math.round(height * ratio);
-  const context = pixels.getContext('2d')!; context.setTransform(pixels.width / width, 0, 0, pixels.height / height, 0, 0);
+  const context = pixels.getContext('2d', { willReadFrequently: true })!; context.setTransform(pixels.width / width, 0, 0, pixels.height / height, 0, 0);
   const clip: Bounds = { x: 0, y: 0, width, height }, textRuns: ContentTextRun[] = [];
   const local = (rect: DOMRect): Bounds => ({ x: (rect.x - area.x) / scaleX, y: (rect.y - area.y) / scaleY, width: rect.width / scaleX, height: rect.height / scaleY });
   const round = (bounds: Bounds, radius: number) => { context.beginPath(); context.roundRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(0, Math.min(radius, bounds.width / 2, bounds.height / 2))); };

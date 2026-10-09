@@ -21,7 +21,8 @@ export async function cleanNativeProfiles(directory:string):Promise<void>{
   for(const item of items){
     if(!item.isDirectory()||!/^instance-[A-Za-z0-9]+$/.test(item.name))continue;
     const path=join(directory,item.name),recordPath=join(path,'acanvas-instance.json');
-    if((await lstat(path)).isSymbolicLink()||await realpath(path)!==path)continue;
+    try { if((await lstat(path)).isSymbolicLink()||await realpath(path)!==path)continue; }
+    catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT')continue;throw error;}
     let record:NativeProfileRecord;try{record=JSON.parse(await readFile(recordPath,'utf8'))}catch{continue}
     if(!Number.isSafeInteger(record.controllerPid)||record.controllerPid<1||typeof record.executable!=='string'||!record.executable.startsWith(join(applicationDirectory,'.runtime','cef-'))||!record.executable.endsWith('/acanvas-surface.app/Contents/MacOS/acanvas-surface'))continue;
     if(alive(record.controllerPid))continue;

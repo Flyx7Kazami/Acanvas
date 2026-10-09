@@ -31,7 +31,7 @@ interface SurfaceEntry {
   pending: Promise<unknown>; closed: boolean;
   termination?:'closed'|'renderer';
 }
-export interface HtmlSurfacesOptions { engine?:'chromium'|'cef'; engineDirectory?: string; maxSurfaces?: number; maxRetainedSurfaces?: number; maxFrames?: number; maxFrameBytes?: number; maxRetainedBytes?: number }
+export interface HtmlSurfacesOptions { engine?:'chromium'|'cef'; engineDirectory?: string; maxSurfaces?: number; maxSurfacesPerView?: number; maxRetainedSurfaces?: number; maxFrames?: number; maxFrameBytes?: number; maxRetainedBytes?: number }
 
 function fail(status: number, code: string, message: string): never { throw new ApiFailure(status, code, message); }
 const sameViewport = (a: SurfaceViewport, b: SurfaceViewport) => a?.width === b.width && a?.height === b.height;
@@ -91,7 +91,10 @@ export class ProjectHtmlSurfaces {
       if (!object || object.assetId !== owner.assetId) fail(404, 'surface_object', 'Open the HTML asset belonging to this object.');
       const dimensions = viewport(size), deviceScaleFactor = size.deviceScaleFactor ?? 1;
       if (![1, 2].includes(deviceScaleFactor) || dimensions.width * dimensions.height * deviceScaleFactor ** 2 > 8_000_000) fail(400, 'surface_scale', 'Use a supported HTML surface pixel scale.');
-      if ([...this.entries.values()].filter(entry => !entry.closed).length >= (this.options.maxSurfaces ?? 4)) fail(429, 'surface_limit', 'Close an HTML surface before opening another.');
+      const live = [...this.entries.values()].filter(entry => !entry.closed);
+      if (live.length >= (this.options.maxSurfaces ?? 16)) fail(429, 'surface_limit', 'Close an HTML surface before opening another.');
+      const inView = live.filter(entry => entry.info.sessionId === owner.sessionId && entry.info.documentId === owner.documentId && entry.info.viewId === owner.viewId && entry.info.viewGeneration === owner.viewGeneration);
+      if (inView.length >= (this.options.maxSurfacesPerView ?? 4)) fail(429, 'surface_view_limit', 'Close an HTML surface in this view before opening another.');
       while (this.entries.size >= (this.options.maxRetainedSurfaces ?? 32)) {
         const candidate = [...this.entries.values()].find(entry => entry.closed && !entry.pins.size);
         if (!candidate) fail(429, 'surface_retained_limit', 'Finish preparing evidence before opening another HTML surface.');
@@ -107,6 +110,7 @@ export class ProjectHtmlSurfaces {
           entry.native=new NativeHtmlRuntime();entry.nativeInput=new NativeSurfaceInput(entry.native);
           entry.native.on('closed',()=>{if(!entry.closed)entry.termination='renderer';entry.closed=true;entry.releaseGrant();this.preview.revoke(entry.grant.id);void entry.native?.close()});
           await entry.native.open(`${this.origin}/${info.surfaceId}`,join(await runtimeDirectory(this.service.project.root),'html-surfaces'),{...dimensions,deviceScaleFactor});
+          if (entry.closed) { if (entry.termination === 'renderer') fail(503, 'surface_renderer_exit', 'The HTML renderer is reconnecting.'); fail(410, 'surface_closed', 'Reconnect the HTML surface in this view.'); }
           entry.nativeControls=new NativeSurfaceControls(entry.native,{directory:join(entry.native.directory(),'selected-files')});
           entry.nativeClipboard=new NativeSurfaceClipboard(entry.native,this.origin);
         }else{
@@ -116,7 +120,7 @@ export class ProjectHtmlSurfaces {
           const frame=entry.page.frames().find(frame=>frame.url()===grant.url);if(!frame)fail(503,'surface_document','The HTML instance did not become ready.');
         }
         return this.info(entry);
-      } catch (error) { await this.closeSurface(info.surfaceId); throw error; }
+      } catch (error) { const closed = entry.closed && entry.termination === 'closed'; await this.closeSurface(info.surfaceId); if (closed) fail(410, 'surface_closed', 'Reconnect the HTML surface in this view.'); throw error; }
     });
     this.creating = pending; return pending;
   }

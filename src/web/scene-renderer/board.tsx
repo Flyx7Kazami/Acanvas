@@ -1,29 +1,67 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { AnnotationCaptureInput, AnnotationInput, Asset, BaseSceneSnapshot, BoardObject, CaptureView, Draft, SessionView } from '../../shared/types.js';
-import type { BoardApi } from '../api.js';
+import { RequestError, type BoardApi } from '../api.js';
 import { contentCapabilities, resolveContentKind } from '../../shared/content-types.js';
 import { createProjectCaptureProvider, type ProjectCaptureCoordinator } from '../project-capture-provider.js';
-import { SceneFrame, SceneRenderer, type Immutable, type SceneBounds, type SceneInput, type SceneLayer, type ScenePresentation, type ScenePrimitive } from './index.js';
+import { SceneRenderer, type Immutable, type SceneBounds, type SceneInput, type SceneLayer, type ScenePresentation, type ScenePrimitive } from './index.js';
 import { annotationTarget } from '../annotation-scene.js';
 import { SceneContentRegistry, type SceneContentMetadata } from './content.js';
 
-export interface ProjectSceneSource { provider: ProjectCaptureCoordinator; view?: CaptureView; snapshot?: BaseSceneSnapshot }
+export interface ProjectSceneSource { provider: ProjectCaptureCoordinator; view?: CaptureView; connectingView?: CaptureView; snapshot?: BaseSceneSnapshot }
 export function useProjectScene(api: BoardApi, sessionId: string, objects: BoardObject[], saveDraft: (draft: Draft) => Promise<Draft>, onError: (cause: unknown) => void, serviceInstance: string) {
   const documentId = useRef(crypto.randomUUID()).current;
   const transport = useMemo(() => new Proxy(api, { get(target, key) { if (key === 'saveDraft') return saveDraft; const value = Reflect.get(target, key); return typeof value === 'function' ? value.bind(target) : value; } }), [api, saveDraft]);
   const [source, setSource] = useState<ProjectSceneSource>();
+  const [connectionGeneration, setConnectionGeneration] = useState(0);
+  const currentScope = useRef({ sessionId, serviceInstance }); currentScope.current = { sessionId, serviceInstance };
+  const currentSource = useRef(source); currentSource.current = source;
   const retirement = useRef<Promise<void>>(Promise.resolve());
   const objectVersions = JSON.stringify(objects.map(object => [object.id, object.assetId, object.version]));
   useEffect(() => {
     if (!sessionId) { setSource(undefined); return; }
     const provider = createProjectCaptureProvider(transport, { sessionId, documentId }); let active = true;
+    const pagehide = (event: PageTransitionEvent) => {
+      if (event.persisted) return;
+      active = false;
+      retirement.current = Promise.all([retirement.current, provider.close({ keepalive: true }).catch(() => undefined)]).then(() => undefined);
+    };
+    window.addEventListener('pagehide', pagehide);
     setSource({ provider });
     void retirement.current.then(async () => {
       if (!active) return;
-      const view = await provider.ready(); if (active) setSource({ provider, view });
+      const view = await provider.ready(); if (active) setSource({ provider, connectingView: view });
     }).catch(cause => { if (active) onError(cause); });
-    return () => { active = false; retirement.current = Promise.all([retirement.current, provider.close().catch(() => undefined)]).then(() => undefined); };
-  }, [transport, sessionId, serviceInstance]);
+    return () => { active = false; window.removeEventListener('pagehide', pagehide); retirement.current = Promise.all([retirement.current, provider.close().catch(() => undefined)]).then(() => undefined); };
+  }, [transport, sessionId, serviceInstance, connectionGeneration]);
+  const watchedView = source?.view || source?.connectingView;
+  useEffect(() => {
+    const view = watchedView, provider = source?.provider;
+    if (!view || !provider || view.sessionId !== sessionId) return;
+    let active = true, timer = 0, retryDelay = 500; const controller = new AbortController(), service = serviceInstance;
+    const stop = () => { active = false; controller.abort(); window.clearTimeout(timer); };
+    const ownsView = () => {
+      const current = currentSource.current, identity = current?.view || current?.connectingView;
+      return active && !controller.signal.aborted && currentScope.current.sessionId === view.sessionId && currentScope.current.serviceInstance === service && current?.provider === provider && identity?.viewId === view.viewId && identity.viewGeneration === view.viewGeneration;
+    };
+    const pagehide = (event: PageTransitionEvent) => { if (!event.persisted) stop(); };
+    const connect = async () => {
+      try { await api.watchCaptureView(view, controller.signal, () => { retryDelay = 500; if (ownsView()) setSource(current => current?.provider === provider && current.view !== view ? { provider, view } : current); }); }
+      catch (cause) {
+        if (!ownsView()) return;
+        if (cause instanceof RequestError && ['scene_view_closed', 'scene_view_conflict'].includes(cause.code)) {
+          stop(); setConnectionGeneration(value => value + 1);
+          return;
+        }
+        if (cause instanceof RequestError && cause.status >= 400 && cause.status < 500) {
+          stop(); onError(cause);
+          return;
+        }
+      }
+      if (ownsView()) { timer = window.setTimeout(() => void connect(), retryDelay); retryDelay = Math.min(5000, retryDelay * 2); }
+    };
+    window.addEventListener('pagehide', pagehide); void connect();
+    return () => { stop(); window.removeEventListener('pagehide', pagehide); };
+  }, [api, watchedView, sessionId, serviceInstance]);
   useEffect(() => {
     if (!source?.view) return; let active = true;
     void source.provider.sceneSnapshot().then(snapshot => { if (active) setSource(current => current?.provider === source.provider ? { ...current, snapshot } : current); }).catch(onError);
@@ -67,7 +105,7 @@ export function useBoardScene(input: BoardSceneInput) {
     if (!element || !source?.view) { renderer.current = undefined; presentation.current = undefined; layout.current = undefined; return; }
     const identity = source.view;
     renderer.current = new SceneRenderer(element, { documentId: identity.documentId, viewId: identity.viewId }); seq.current = 0;
-    let active = true, confirming = false, queued: Immutable<ScenePresentation> | undefined;
+    let active = true, confirming = false, queued: Immutable<ScenePresentation> | undefined, renderRequest = 0;
     let markerAnimation = 0, animatedNotes = false, alignMarkers = () => {};
     const confirmLatest = (value: Immutable<ScenePresentation>) => {
       queued = value;
@@ -162,20 +200,26 @@ export function useBoardScene(input: BoardSceneInput) {
           button.style.transform = 'translate(' + (matrix.m41 + (left - rect.left) / cssScale) + 'px,' + (matrix.m42 + (top - rect.top) / cssScale) + 'px)';
         }
       };
-      const animateInputs = () => { markerAnimation = 0; if (!active) return; alignMarkers(); const moving = Array.from(board.querySelectorAll('.canvas-annotation-group,.canvas-annotation-note')).some(group => group.getAnimations().some(animation => animation.playState === 'running')); if (moving || animatedNotes) { animatedNotes = moving; render(); } };
-      try { const frame = SceneFrame.render(document, scene, bitmap); renderer.current!.present(frame); presentation.current = frame.presentation; layout.current = { objects: structuredClone(current.objects), contentBounds, snapshot: base, sources,
+      const animateInputs = () => { markerAnimation = 0; if (!active) return; alignMarkers(); const moving = Array.from(board.querySelectorAll('.canvas-annotation-group,.canvas-annotation-note')).some(group => group.getAnimations().some(animation => animation.playState === 'running')); if (moving || animatedNotes) { animatedNotes = moving; requestRender(); } };
+      try { if (!renderer.current!.renderContent(scene, bitmap)) return; const frame = renderer.current!.presented!; presentation.current = frame; layout.current = { objects: structuredClone(current.objects), contentBounds, snapshot: base, sources,
           markTargets: new Map(drawnMarks.map(mark => [mark.annotation.id, annotationTarget(mark.annotation)])),
-          markerBounds: new Map(drawnMarks.map((mark, index) => { const pin = scene.marks[index], size = pin.size ?? 28; return [mark.annotation.id, { x: cssViewport.x + pin.x * camera.zoom + camera.x - size / 2, y: cssViewport.y + pin.y * camera.zoom + camera.y - size / 2, width: size, height: size }]; })) }; display.dataset.frameSeq = String(frame.presentation.frameSeq); display.dataset.viewId = identity.viewId; display.dataset.viewGeneration = String(identity.viewGeneration); confirmLatest(frame.presentation); }
+          markerBounds: new Map(drawnMarks.map((mark, index) => { const pin = scene.marks[index], size = pin.size ?? 28; return [mark.annotation.id, { x: cssViewport.x + pin.x * camera.zoom + camera.x - size / 2, y: cssViewport.y + pin.y * camera.zoom + camera.y - size / 2, width: size, height: size }]; })) }; display.dataset.frameSeq = String(frame.frameSeq); display.dataset.viewId = identity.viewId; display.dataset.viewGeneration = String(identity.viewGeneration); confirmLatest(frame); }
       catch (cause) { current.onError(cause); }
       alignMarkers(); if (!markerAnimation) markerAnimation = requestAnimationFrame(animateInputs);
     };
-    renderNow.current = render; const unsubscribe = input.registry.subscribe(render);
-    const observer = new ResizeObserver(render); observer.observe(element);
-    const comments = new MutationObserver(() => { for (const note of input.board.current?.querySelectorAll('.canvas-annotation-note') || []) observer.observe(note); render(); });
-    if (input.board.current) comments.observe(input.board.current, { childList: true, subtree: true }); const resize = () => render(); window.addEventListener('resize', resize);
-    input.board.current?.addEventListener('focusin', render); input.board.current?.addEventListener('focusout', render); input.board.current?.addEventListener('pointerover', render); input.board.current?.addEventListener('pointerout', render);
-    render();
-    return () => { active = false; queued = undefined; cancelAnimationFrame(markerAnimation); unsubscribe(); observer.disconnect(); comments.disconnect(); window.removeEventListener('resize', resize); input.board.current?.removeEventListener('focusin', render); input.board.current?.removeEventListener('focusout', render); input.board.current?.removeEventListener('pointerover', render); input.board.current?.removeEventListener('pointerout', render); renderNow.current = () => {}; renderer.current = undefined; presentation.current = undefined; layout.current = undefined; };
+    // Each display frame consumes the latest complete React input and copied producer textures.
+    const requestRender = () => { if (active && !renderRequest) renderRequest = requestAnimationFrame(() => { renderRequest = 0; if (active) render(); }); };
+    renderNow.current = requestRender; const unsubscribe = input.registry.subscribe(requestRender);
+    const observer = new ResizeObserver(requestRender); observer.observe(element);
+    const comments = new MutationObserver(records => {
+      if (!records.some(record => record.target instanceof Element && record.target.closest('.canvas-annotation-group') || [...record.addedNodes, ...record.removedNodes].some(node => node instanceof Element && (node.matches('.canvas-annotation-group') || !!node.querySelector('.canvas-annotation-group'))))) return;
+      for (const note of input.board.current?.querySelectorAll('.canvas-annotation-note') || []) observer.observe(note);
+      requestRender();
+    });
+    if (input.board.current) comments.observe(input.board.current, { childList: true, subtree: true }); const resize = () => requestRender(); window.addEventListener('resize', resize);
+    input.board.current?.addEventListener('focusin', requestRender); input.board.current?.addEventListener('focusout', requestRender); input.board.current?.addEventListener('pointerover', requestRender); input.board.current?.addEventListener('pointerout', requestRender);
+    requestRender();
+    return () => { active = false; queued = undefined; cancelAnimationFrame(renderRequest); cancelAnimationFrame(markerAnimation); unsubscribe(); observer.disconnect(); comments.disconnect(); window.removeEventListener('resize', resize); input.board.current?.removeEventListener('focusin', requestRender); input.board.current?.removeEventListener('focusout', requestRender); input.board.current?.removeEventListener('pointerover', requestRender); input.board.current?.removeEventListener('pointerout', requestRender); renderNow.current = () => {}; renderer.current = undefined; presentation.current = undefined; layout.current = undefined; };
   }, [input.source?.view?.viewId, input.registry]);
   useLayoutEffect(() => { renderNow.current(); }, [input.source?.snapshot, input.objects, input.assets, input.view, input.theme, input.marks, input.selection, input.editingBounds, input.guides]);
   return { renderer, presentation, layout };

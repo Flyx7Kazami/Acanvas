@@ -1,0 +1,298 @@
+{
+  "status": "PASS",
+  "root": "/private/tmp/acanvas-gestures-production-d8HINm",
+  "webRoot": "/private/tmp/acanvas-gesture-final-web-20261009",
+  "browser": "155.0.8059.39",
+  "baseline": {
+    "baseline": "c3856c1",
+    "isolation": {
+      "root": "/private/tmp/acanvas-gesture-baseline-fixture-9P9iE4",
+      "port": "49863",
+      "webRoot": "/private/tmp/acanvas-gesture-baseline-web-20261009"
+    },
+    "browser": "155.0.8059.39",
+    "before": {
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "frame": "2"
+    },
+    "after": {
+      "transform": "matrix(1, 0, 0, 1, 0, 4)",
+      "zoom": 1,
+      "frame": "4"
+    },
+    "expected": 1.6160744021928934,
+    "pass": false,
+    "events": [
+      {
+        "index": 0,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 1,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 2,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 3,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 4,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 5,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 6,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 7,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 8,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 9,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 10,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 11,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 12,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 13,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 14,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 15,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 16,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 17,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 18,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 19,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 20,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 21,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 22,
+        "prevented": true,
+        "frame": "2"
+      },
+      {
+        "index": 23,
+        "prevented": true,
+        "frame": "2"
+      }
+    ],
+    "scope": "Real production App with synthetic DOM wheel burst in one JS task. Physical trackpad not measured."
+  },
+  "samples": [
+    {
+      "input": "ctrlKey",
+      "count": 24,
+      "expected": {
+        "x": -369.64464131573607,
+        "y": -172.50083261401016,
+        "zoom": 1.6160744021928934,
+        "selectedObjectIds": []
+      },
+      "actual": {
+        "x": -369.645,
+        "y": -172.501,
+        "zoom": 1.61607
+      },
+      "event": {
+        "prevented": 24,
+        "inheritedCtrl": true,
+        "startFrame": "2",
+        "endFrame": "2",
+        "viewportScale": 1
+      },
+      "reversal": {
+        "x": 1.02318e-12,
+        "y": 5.11591e-13,
+        "zoom": 1
+      }
+    },
+    {
+      "input": "metaKey",
+      "count": 24,
+      "expected": {
+        "x": -369.64464131573607,
+        "y": -172.50083261401016,
+        "zoom": 1.6160744021928934,
+        "selectedObjectIds": []
+      },
+      "actual": {
+        "x": -369.645,
+        "y": -172.501,
+        "zoom": 1.61607
+      },
+      "event": {
+        "prevented": 24,
+        "inheritedCtrl": true,
+        "startFrame": "3",
+        "endFrame": "3",
+        "viewportScale": 1
+      },
+      "reversal": {
+        "x": 1.02318e-12,
+        "y": 5.11591e-13,
+        "zoom": 1
+      }
+    },
+    {
+      "input": "scaled viewport control target",
+      "actual": {
+        "x": -162.749,
+        "y": -75.9498,
+        "zoom": 1.27125
+      },
+      "expected": {
+        "x": -162.7494901928428,
+        "y": -75.94976208999333,
+        "zoom": 1.2712491503214047,
+        "selectedObjectIds": []
+      }
+    },
+    {
+      "input": "document scroll plus canvas pinch",
+      "scrollTop": 220,
+      "zoom": 1.27125
+    },
+    {
+      "input": "ordinary wheel native units burst",
+      "camera": {
+        "x": -33,
+        "y": -49,
+        "zoom": 1
+      }
+    },
+    {
+      "input": "WebKit capability path",
+      "relativeScale": 1.5,
+      "duplicateWheelSuppressed": true,
+      "afterEndWheel": {
+        "x": -318.181,
+        "y": -148.485,
+        "zoom": 1.5303
+      },
+      "support": "Synthetic GestureEvent capability, not physical Safari input."
+    },
+    {
+      "input": "Chrome CDP touch pointer path",
+      "expected": {
+        "x": -275,
+        "y": -125,
+        "zoom": 1.5,
+        "selectedObjectIds": []
+      },
+      "actual": {
+        "x": -275,
+        "y": -125,
+        "zoom": 1.5
+      },
+      "selectionPreserved": true,
+      "objectsPreserved": true
+    },
+    {
+      "input": "two touches in Mark mode",
+      "annotationsPreserved": true
+    },
+    {
+      "input": "single touch after pinch",
+      "object": {
+        "x": 528,
+        "y": 270,
+        "version": 2
+      },
+      "snappedToDocumentCenter": true
+    },
+    {
+      "input": "touch cancel then wheel",
+      "actual": {
+        "x": -12.1208,
+        "y": -5.65638,
+        "zoom": 1.0202
+      }
+    },
+    {
+      "input": "session change during native gesture",
+      "otherView": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "priorSessionView": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1,
+        "selectedObjectIds": []
+      }
+    }
+  ],
+  "limitations": [
+    "Synthetic DOM Ctrl/Meta wheel and GestureEvent sequences do not measure physical trackpad hardware.",
+    "Chrome CDP touch events exercise native touch-to-PointerEvent routing; physical touchscreen and Safari remain unmeasured."
+  ]
+}

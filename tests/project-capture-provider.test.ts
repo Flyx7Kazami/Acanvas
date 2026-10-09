@@ -20,7 +20,7 @@ async function fixture(t: test.TestContext) {
     sceneSnapshot: async (...args) => { events.push('scene'); return service.sceneSnapshot(...args); },
     confirmScenePresentation: async (...args) => { events.push('presented'); return service.confirmScenePresentation(...args); },
     holdScenePresentation: async (...args) => { events.push('hold'); return service.holdScenePresentation(...args); },
-    closeCaptureView: async (...args) => { events.push('close'); return service.closeCaptureView(...args); },
+    closeCaptureView: async (sessionId, viewId, operation) => { events.push('close'); return service.closeCaptureView(sessionId, viewId, operation); },
     saveDraft: async draft => { events.push('save'); return service.saveDraft(draft.sessionId, draft); },
     state: async id => ({ draft: service.draft(id) }),
     prepareCapture: async (...args) => { events.push('prepare'); return service.prepareCapture(...args); },
@@ -148,4 +148,28 @@ test('closing during delayed view initialization retires the late service-issued
   const provider = createProjectCaptureProvider(f.api, { sessionId: f.session.id, documentId: 'closing-document' }), ready = provider.ready();
   const rejected = assert.rejects(ready, /closed during initialization/); await started; await provider.close(); release(); await rejected;
   assert.throws(() => f.service.captureView(f.session.id, lateView!.viewId), /Register the current document/);
+});
+
+test('document departure dispatches one keepalive close before pending source reconciliation', async t => {
+  const f = await fixture(t), close = f.api.closeCaptureView, save = f.api.saveDraft;
+  let release!: () => void, entered!: () => void, closeOptions: { keepalive?: boolean } | undefined;
+  const held = new Promise<void>(resolve => { release = resolve; }), started = new Promise<void>(resolve => { entered = resolve; });
+  f.api.saveDraft = async (...args) => { const draft = await save(...args); entered(); await held; return draft; };
+  f.api.closeCaptureView = async (sessionId, viewId, operation, options) => { closeOptions = options; return close(sessionId, viewId, operation, options); };
+  const pending = f.provider.freezeAndHold(f.input()), rejected = assert.rejects(pending, /cancelled/); await started;
+  const closing = f.provider.close({ keepalive: true });
+  assert.deepEqual(closeOptions, { keepalive: true });
+  assert.equal(f.provider.close(), closing);
+  await closing; await rejected; release(); await new Promise(resolve => setTimeout(resolve, 10));
+  assert.equal(f.events.filter(event => event === 'close').length, 1);
+  assert.equal(f.service.draft(f.session.id).annotations[0].captureState!.version, 2);
+});
+
+test('owner departure retires its view while the saved frame remains available for capture submission', async t => {
+  const f = await fixture(t), { frame } = await f.provider.freezeAndHold(f.input());
+  const operation = (f.service.db.prepare('SELECT operation_seq FROM capture_views WHERE id=?').get(f.provider.viewId) as { operation_seq: number }).operation_seq;
+  f.service.retireCaptureView(f.session.id, f.provider.viewId, { documentId: frame.sceneSource.documentId, viewGeneration: frame.sceneSource.viewGeneration });
+  assert.equal((f.service.db.prepare('SELECT operation_seq FROM capture_views WHERE id=?').get(f.provider.viewId) as { operation_seq: number }).operation_seq, operation);
+  const result = await f.provider.capture(frame); assert.equal(result.status, 'complete');
+  if (result.status === 'complete') { assert.equal(result.result.capture.sceneSource!.frameSeq, frame.sceneSource.frameSeq); assert.equal(result.result.capture.screenshotAssetId.length > 0, true); }
 });

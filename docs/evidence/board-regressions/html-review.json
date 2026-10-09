@@ -1,0 +1,912 @@
+{
+  "measuredAt": "2026-10-09T04:57:37.274Z",
+  "status": "independent-review-passed",
+  "baseline": "c3856c1",
+  "reviewer": "Independent clean-context agent; production source and primary design documents edited only by execution/root agents",
+  "scope": {
+    "requirements": [
+      "R02",
+      "R04",
+      "R11",
+      "R12",
+      "A02",
+      "A06",
+      "A07",
+      "A09",
+      "A13",
+      "A14"
+    ],
+    "files": [
+      "src/server/http.ts",
+      "src/server/service.ts",
+      "src/server/render-surface/html.ts",
+      "src/server/render-surface/cef.ts",
+      "src/web/api.ts",
+      "src/web/project-capture-provider.ts",
+      "src/web/html-surface/SceneHtmlSurface.tsx",
+      "src/web/html-surface/Controls.tsx",
+      "src/web/scene-renderer/board.tsx useProjectScene",
+      "tests/board-html-regression.test.ts",
+      "tests/board-html-presence.test.ts",
+      "tests/project-capture-provider.test.ts",
+      "tests/helpers/native-retirement.ts",
+      "tests/native-profile-cleanup.test.ts"
+    ],
+    "excluded": "Board rendering performance and gesture behavior are separately reviewed. User service port 4317, user project data/assets, existing browser tabs, OS credential stores and OS clipboard were not accessed."
+  },
+  "acceptance": [
+    {
+      "name": "默认多页容量",
+      "result": "passed",
+      "evidence": "Actual normal CEF default App: two simultaneous documents each 3/3 HTML ready; normal sources retain independent input and source seeds. Accounting probe confirms default 16 project / 4 full-view; actual maxSurfaces:1 fixture confirms explicit global semantics."
+    },
+    {
+      "name": "资源及帧字节界限",
+      "result": "passed",
+      "evidence": "Actual compiled accounting probes 6/6: per-view/project limits, retained pinned entries, released-entry eviction, frame byte 413 and total retained-byte 507 preserve old pinned frames/accounting. Default retained count 32 and retained frame budget 32 MiB remain in source. Probe native startup/frame pairing were stubbed only in its private process; sixteen physical CEF instances were not launched."
+    },
+    {
+      "name": "容量错误退避及取消",
+      "result": "passed",
+      "evidence": "Actual App intercepts known 429 surface_limit at 511/1006/2006 ms; source caps delay at 5000 ms. Leaving document cancels timer. Unrelated 429 and 403 HTML errors issue exactly one creation request. Per-view 429 surface_view_limit remains explicit view-limit feedback."
+    },
+    {
+      "name": "认证及完整归属",
+      "result": "passed",
+      "evidence": "Independent endpoints: unauthenticated 401; foreign session 403 scene_scope; different document/old generation 409; unapproved/null Origin and cross-site 403 origin_rejected. Cross-view HTML frame read 403 in real CEF App fixture. CSP and sandbox/grant lifetime tested by six existing html-preview cases."
+    },
+    {
+      "name": "presence连接计数与短重连",
+      "result": "passed",
+      "evidence": "Two simultaneous presence connections keep the source; closing one past 5s does not retire it. 800ms reconnect cancels cleanup and retains script seed and form input."
+    },
+    {
+      "name": "最后断开与原生清理",
+      "result": "passed",
+      "evidence": "Initial complete suite passed; traced rerun failed a 3s profile-removal assertion; subsequent lifecycle tracer passed with profile removal confirmed. Native close was measured at 5581/5780/6120 ms for earlier departures. Final candidate observes actual owned processes plus profile within 18s after logical close; final abrupt close completed in 532/510/532 ms. Presence departure plus production 5s grace completed in 5297 ms. Production grace/TERM/KILL/reaping policy is unchanged; earlier failure remains recorded."
+    },
+    {
+      "name": "正常pagehide与缓存边界",
+      "result": "passed-with-declared-boundary",
+      "evidence": "Real reload/navigation issue keepalive close and preserve peer state; three reloads keep three live source instances. Synthetic persisted pagehide/pageshow retains same source. Hidden pages do not actively close in inspected code. Physical BFCache admission, Safari suspension and physical trackpad are unmeasured."
+    },
+    {
+      "name": "创建期间关闭",
+      "result": "passed",
+      "evidence": "Real normal CEF creation held after open; DELETE removes its private profile; resumed creation returns typed 410 surface_closed; new generation creates a fresh source under maxSurfaces:1."
+    },
+    {
+      "name": "旧generation隔离",
+      "result": "passed",
+      "evidence": "Native presence fixture rejects old generation; expired old connection/timer preserves new generation; normal App explicit owner retirement registers a fresh generation and keeps peer source seed/input."
+    },
+    {
+      "name": "同N及历史证据",
+      "result": "passed",
+      "evidence": "Retained N PNG bytes survive departure; provider capture succeeds after owner retirement without consuming presence operation sequence; persisted captured PNG resumes through a new document/service. retire removes runtime scene tables while bound annotation_sources and saved screenshot assets retain their data."
+    },
+    {
+      "name": "无关presence4xx与注册循环",
+      "result": "passed",
+      "evidence": "Original actual App 403/404 counterexample persisted 12/13 registrations within <=1400ms. Updated owner predicate/type classification: Origin 403, API 404 and scene_scope 403 produce 1 registration/1 presence/0 DELETE; 401 authentication refresh produces 1 registration/2 presence/0 DELETE; 500 reuses the same view with backoff. Current provider/view/session/service/generation must match before typed closed/conflict recovery."
+    },
+    {
+      "name": "profile并行消失语义",
+      "result": "passed",
+      "evidence": "Deterministic directory enumeration vs normal deletion counterexamples throw lstat/realpath ENOENT in original source. Final source skips only ENOENT in these two scan operations. Existing independent scan counterexample and ten protection cases pass; twelve ordinary Node tests include lstat EIO propagation. EACCES, symlink, live controller/browser PID, unknown-record, executable ownership and owned inactive cleanup retain their behavior."
+    },
+    {
+      "name": "服务停止及操作序号",
+      "result": "passed",
+      "evidence": "Independent presence stream reaches EOF during server.close in 6ms; reconnecting presence leaves operation_seq unchanged. Source clears presence timers/streams, destroys incomplete transports, awaits handlers and closes surfaces before SQLite closes."
+    },
+    {
+      "name": "正常CEF安全与声音边界",
+      "result": "passed-with-declared-boundary",
+      "evidence": "Actual default CEF commandline is headless, renderer sandbox remains enabled, UseKeychainKeyProvider disabled; profile permissions are 0700 and normal clipboardTripwire is false. Normal source iframe allow-scripts and private clipboard mechanisms remain; permission/download/dialog denial source preserved. Actual per-instance PCM: 48000 Hz, 2 channels, peak 0.1500-0.1535. No OS Keychain/clipboard access or physical loudspeaker measurement was performed."
+    }
+  ],
+  "findings": [
+    {
+      "id": "presence-unrelated-4xx-loop",
+      "priority": 2,
+      "file": "src/web/scene-renderer/board.tsx",
+      "originalLine": 46,
+      "status": "closed",
+      "reproduction": [
+        {
+          "priority": 2,
+          "file": "src/web/scene-renderer/board.tsx",
+          "line": 46,
+          "scenario": "Presence replies 403 origin_rejected while register/close remain available",
+          "observed": "12 view registrations and 11 view DELETE requests within at most 1400ms",
+          "impact": "Unrelated presence 4xx responses trigger immediate repeated view retirement and registration. Each round persists another generation and leaves the canvas connecting."
+        },
+        {
+          "priority": 2,
+          "file": "src/web/scene-renderer/board.tsx",
+          "line": 46,
+          "scenario": "Presence replies 404 api_missing while register/close remain available",
+          "observed": "13 view registrations and 12 view DELETE requests within at most 1400ms",
+          "impact": "Unrelated presence 4xx responses trigger immediate repeated view retirement and registration. Each round persists another generation and leaves the canvas connecting."
+        }
+      ],
+      "resolution": "Typed scene_view_closed/conflict recovery with current owner predicate. Unrelated 4xx stop and onError; transient failures retain cancellable bounded backoff.",
+      "verifiedBy": [
+        {
+          "name": "client-presence-error-403",
+          "status": 403,
+          "code": "origin_rejected",
+          "registrations": 1,
+          "presences": 1,
+          "deleteRequests": 0,
+          "durationLimitMs": 1400,
+          "passed": true
+        },
+        {
+          "name": "client-presence-error-404",
+          "status": 404,
+          "code": "api_missing",
+          "registrations": 1,
+          "presences": 1,
+          "deleteRequests": 0,
+          "durationLimitMs": 1400,
+          "passed": true
+        },
+        {
+          "name": "client-presence-error-401",
+          "status": 401,
+          "code": "authentication_required",
+          "registrations": 1,
+          "presences": 2,
+          "deleteRequests": 0,
+          "durationLimitMs": 1400,
+          "passed": true
+        },
+        {
+          "name": "client-presence-error-403",
+          "status": 403,
+          "code": "scene_scope",
+          "registrations": 1,
+          "presences": 1,
+          "deleteRequests": 0,
+          "durationLimitMs": 1400,
+          "passed": true
+        },
+        {
+          "name": "client-presence-error-500",
+          "status": 500,
+          "code": "temporary_server_error",
+          "registrations": 1,
+          "presences": 2,
+          "deleteRequests": 0,
+          "durationLimitMs": 1400,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "profile-enumeration-disappearance",
+      "priority": 2,
+      "file": "src/server/render-surface/cef.ts",
+      "originalLine": 25,
+      "status": "closed",
+      "reproduction": {
+        "status": "findings",
+        "removedAfterDirectoryEnumeration": true,
+        "code": "ENOENT",
+        "syscall": "lstat",
+        "path": "/private/tmp/acanvas-html-review-profile-race-SG5szQ/instance-ReviewRace",
+        "message": "ENOENT: no such file or directory, lstat '/private/tmp/acanvas-html-review-profile-race-SG5szQ/instance-ReviewRace'",
+        "stack": "Error: ENOENT: no such file or directory, lstat '/private/tmp/acanvas-html-review-profile-race-SG5szQ/instance-ReviewRace'\n    at async lstat (node:internal/fs/promises:1734:18)\n    at async cleanNativeProfiles (file:///private/tmp/acanvas-html-independent-review-2o8AvazT/dist/src/server/render-surface/cef.js:31:14)\n    at async file:///private/tmp/acanvas-html-independent-review-2o8AvazT/profile-scan-race.mjs:9:5"
+      },
+      "originalProtectionResults": {
+        "status": "failed",
+        "method": "Deterministic private filesystem interleavings and record ownership. No native process or user profile is opened.",
+        "checks": [
+          {
+            "name": "readdir-disappear",
+            "passed": false,
+            "code": "ENOENT",
+            "message": "ENOENT: no such file or directory, lstat '/private/tmp/acanvas-html-review-profile-protection-q6Drcu/instance-Review'",
+            "stack": "Error: ENOENT: no such file or directory, lstat '/private/tmp/acanvas-html-review-profile-protection-q6Drcu/instance-Review'\n    at async lstat (node:internal/fs/promises:1734:18)\n    at async cleanNativeProfiles (file:///private/tmp/acanvas-html-independent-review-2o8AvazT/dist/src/server/render-surface/cef.js:31:14)\n    at async file:///private/tmp/acanvas-html-independent-review-2o8AvazT/profile-protections.mjs:22:99"
+          },
+          {
+            "name": "realpath-disappear",
+            "passed": false,
+            "code": "ENOENT",
+            "message": "ENOENT: no such file or directory, realpath '/private/tmp/acanvas-html-review-profile-protection-rGWvqi/instance-Review'",
+            "stack": "Error: ENOENT: no such file or directory, realpath '/private/tmp/acanvas-html-review-profile-protection-rGWvqi/instance-Review'\n    at async realpath (node:internal/fs/promises:1889:10)\n    at async cleanNativeProfiles (file:///private/tmp/acanvas-html-independent-review-2o8AvazT/dist/src/server/render-surface/cef.js:31:53)\n    at async file:///private/tmp/acanvas-html-independent-review-2o8AvazT/profile-protections.mjs:22:99"
+          },
+          {
+            "name": "lstat-EACCES",
+            "passed": true
+          },
+          {
+            "name": "realpath-EACCES",
+            "passed": true
+          },
+          {
+            "name": "replace-symlink",
+            "passed": true
+          },
+          {
+            "name": "live-controller",
+            "passed": true
+          },
+          {
+            "name": "live-browser",
+            "passed": true
+          },
+          {
+            "name": "unknown-record",
+            "passed": true
+          },
+          {
+            "name": "foreign-executable",
+            "passed": true
+          },
+          {
+            "name": "inactive-owned",
+            "passed": true
+          }
+        ]
+      },
+      "resolution": "Concurrent absent path is skipped during lstat/realpath; other I/O errors and ownership safeguards retain their semantics.",
+      "finalProtectionResults": {
+        "status": "passed",
+        "method": "Deterministic private filesystem interleavings and record ownership. No native process or user profile is opened.",
+        "checks": [
+          {
+            "name": "readdir-disappear",
+            "passed": true
+          },
+          {
+            "name": "realpath-disappear",
+            "passed": true
+          },
+          {
+            "name": "lstat-EACCES",
+            "passed": true
+          },
+          {
+            "name": "realpath-EACCES",
+            "passed": true
+          },
+          {
+            "name": "replace-symlink",
+            "passed": true
+          },
+          {
+            "name": "live-controller",
+            "passed": true
+          },
+          {
+            "name": "live-browser",
+            "passed": true
+          },
+          {
+            "name": "unknown-record",
+            "passed": true
+          },
+          {
+            "name": "foreign-executable",
+            "passed": true
+          },
+          {
+            "name": "inactive-owned",
+            "passed": true
+          }
+        ]
+      },
+      "finalRace": {
+        "status": "passed",
+        "removedAfterDirectoryEnumeration": true
+      }
+    },
+    {
+      "id": "fixture-close-horizon-and-status",
+      "priority": 2,
+      "file": "tests/board-html-regression.test.ts",
+      "originalLine": 135,
+      "status": "closed",
+      "reproduction": "Actual traced case exited 1 on Missing expected rejection at compiled line 202 after a 3s profile wait. JSON status passed was set before this assertion.",
+      "resolution": "Validate profile removal within the existing native bounded shutdown/reaping horizon, set passed only after all final assertions, keep original failure evidence.",
+      "measuredCloseMs": [
+        {
+          "elapsedMs": 5581,
+          "profileExists": false
+        },
+        {
+          "elapsedMs": 5780,
+          "profileExists": false
+        },
+        {
+          "elapsedMs": 6120,
+          "profileExists": false
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "privateBuildRoot": "/private/tmp/acanvas-html-independent-review-2o8AvazT",
+    "finalBuildRoot": "/private/tmp/acanvas-html-review-final-WSK2PSjV",
+    "initialCompileAndClientTypecheck": "passed",
+    "initialNormalSuite": {
+      "passed": 22,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "log": "/private/tmp/acanvas-html-independent-review-2o8AvazT/independent-tests-permitted.log"
+    },
+    "initialNormal": {
+      "sourceBytes": 175690,
+      "viewport": {
+        "width": 740,
+        "height": 248,
+        "deviceScaleFactor": 2
+      },
+      "secondDocumentReady": 3,
+      "secondDocumentErrors": [],
+      "perViewLimit": 4,
+      "persistedPagehidePreservedSource": true,
+      "invalidViewReRegistered": true,
+      "peerSourcePreservedAcrossRegistration": true,
+      "normalReloads": 3,
+      "liveNativeAfterEachReload": 3,
+      "status": "passed",
+      "productionCef": true,
+      "independentSources": true,
+      "inputAndSnapshotSameN": true,
+      "departedProfileRemoved": true,
+      "remainingSourceStatePreserved": true,
+      "crossViewRead": 403,
+      "pcm": {
+        "packets": 2,
+        "sampleRate": 48000,
+        "channels": 2,
+        "peak": 0.1535106599330902
+      },
+      "browserCloseWithoutPagehide": true,
+      "abruptClientCloseNativeAfterGrace": 0,
+      "created": 19,
+      "createErrors": [
+        {
+          "status": 429,
+          "code": "surface_view_limit"
+        },
+        {
+          "code": "ENOENT"
+        }
+      ],
+      "elapsedMs": 29462
+    },
+    "initialPresence": {
+      "status": "passed",
+      "multipleConnections": true,
+      "shortDisconnectMs": 800,
+      "originalSourceSeedAndValuePreserved": true,
+      "presenceConsumesOperationSeq": false,
+      "staleGenerationRejected": true,
+      "oldDisconnectKeptNewGeneration": true,
+      "retainedNBytesAfterDeparture": true,
+      "departureCleanupMs": 5502,
+      "graceMs": 5000,
+      "replacementInstance": true,
+      "elapsedMs": 23989
+    },
+    "initialNegative": {
+      "measuredAt": "2026-10-09T04:28:10.328Z",
+      "checks": [
+        {
+          "name": "foreign-session",
+          "status": 403,
+          "code": "scene_scope",
+          "passed": true
+        },
+        {
+          "name": "foreign-document",
+          "status": 409,
+          "code": "scene_view_conflict",
+          "passed": true
+        },
+        {
+          "name": "old-generation",
+          "status": 409,
+          "code": "scene_view_conflict",
+          "passed": true
+        },
+        {
+          "name": "unapproved-origin",
+          "status": 403,
+          "code": "origin_rejected",
+          "passed": true
+        },
+        {
+          "name": "opaque-origin",
+          "status": 403,
+          "code": "origin_rejected",
+          "passed": true
+        },
+        {
+          "name": "cross-site",
+          "status": 403,
+          "code": "origin_rejected",
+          "passed": true
+        },
+        {
+          "name": "unauthenticated-presence",
+          "status": 401,
+          "passed": true
+        },
+        {
+          "name": "presence-reconnect-keeps-operation-sequence",
+          "operationSeq": 0,
+          "passed": true
+        },
+        {
+          "name": "client-presence-error-403",
+          "status": 403,
+          "code": "origin_rejected",
+          "registrations": 12,
+          "presences": 11,
+          "deleteRequests": 11,
+          "durationLimitMs": 1400,
+          "passed": false
+        },
+        {
+          "name": "client-presence-error-404",
+          "status": 404,
+          "code": "api_missing",
+          "registrations": 13,
+          "presences": 12,
+          "deleteRequests": 12,
+          "durationLimitMs": 1400,
+          "passed": false
+        },
+        {
+          "name": "client-presence-error-500",
+          "status": 500,
+          "code": "temporary_server_error",
+          "registrations": 1,
+          "presences": 3,
+          "deleteRequests": 0,
+          "durationLimitMs": 1400,
+          "passed": true
+        },
+        {
+          "name": "surface-create-429-unrelated_limit",
+          "status": 429,
+          "code": "unrelated_limit",
+          "cancel": false,
+          "requests": 1,
+          "delaysMs": [],
+          "passed": true
+        },
+        {
+          "name": "surface-create-403-surface_frame_scope",
+          "status": 403,
+          "code": "surface_frame_scope",
+          "cancel": false,
+          "requests": 1,
+          "delaysMs": [],
+          "passed": true
+        },
+        {
+          "name": "surface-create-429-surface_limit-cancel",
+          "status": 429,
+          "code": "surface_limit",
+          "cancel": true,
+          "requests": 1,
+          "delaysMs": [],
+          "passed": true
+        },
+        {
+          "name": "surface-create-429-surface_limit",
+          "status": 429,
+          "code": "surface_limit",
+          "cancel": false,
+          "requests": 4,
+          "delaysMs": [
+            514,
+            1005,
+            2004
+          ],
+          "passed": true
+        },
+        {
+          "name": "server-stop-presence-eof",
+          "passed": true,
+          "elapsedMs": 8
+        }
+      ],
+      "findings": [
+        {
+          "priority": 2,
+          "file": "src/web/scene-renderer/board.tsx",
+          "line": 46,
+          "scenario": "Presence replies 403 origin_rejected while register/close remain available",
+          "observed": "12 view registrations and 11 view DELETE requests within at most 1400ms",
+          "impact": "Unrelated presence 4xx responses trigger immediate repeated view retirement and registration. Each round persists another generation and leaves the canvas connecting."
+        },
+        {
+          "priority": 2,
+          "file": "src/web/scene-renderer/board.tsx",
+          "line": 46,
+          "scenario": "Presence replies 404 api_missing while register/close remain available",
+          "observed": "13 view registrations and 12 view DELETE requests within at most 1400ms",
+          "impact": "Unrelated presence 4xx responses trigger immediate repeated view retirement and registration. Each round persists another generation and leaves the canvas connecting."
+        }
+      ],
+      "status": "findings"
+    },
+    "finalNegative": {
+      "measuredAt": "2026-10-09T04:35:18.965Z",
+      "checks": [
+        {
+          "name": "foreign-session",
+          "status": 403,
+          "code": "scene_scope",
+          "passed": true
+        },
+        {
+          "name": "foreign-document",
+          "status": 409,
+          "code": "scene_view_conflict",
+          "passed": true
+        },
+        {
+          "name": "old-generation",
+          "status": 409,
+          "code": "scene_view_conflict",
+          "passed": true
+        },
+        {
+          "name": "unapproved-origin",
+          "status": 403,
+          "code": "origin_rejected",
+          "passed": true
+        },
+        {
+          "name": "opaque-origin",
+          "status": 403,
+          "code": "origin_rejected",
+          "passed": true
+        },
+        {
+          "name": "cross-site",
+          "status": 403,
+          "code": "origin_rejected",
+          "passed": true
+        },
+        {
+          "name": "unauthenticated-presence",
+          "status": 401,
+          "passed": true
+        },
+        {
+          "name": "presence-reconnect-keeps-operation-sequence",
+          "operationSeq": 0,
+          "passed": true
+        },
+        {
+          "name": "client-presence-error-403",
+          "status": 403,
+          "code": "origin_rejected",
+          "registrations": 1,
+          "presences": 1,
+          "deleteRequests": 0,
+          "durationLimitMs": 1400,
+          "passed": true
+        },
+        {
+          "name": "client-presence-error-404",
+          "status": 404,
+          "code": "api_missing",
+          "registrations": 1,
+          "presences": 1,
+          "deleteRequests": 0,
+          "durationLimitMs": 1400,
+          "passed": true
+        },
+        {
+          "name": "client-presence-error-401",
+          "status": 401,
+          "code": "authentication_required",
+          "registrations": 1,
+          "presences": 2,
+          "deleteRequests": 0,
+          "durationLimitMs": 1400,
+          "passed": true
+        },
+        {
+          "name": "client-presence-error-403",
+          "status": 403,
+          "code": "scene_scope",
+          "registrations": 1,
+          "presences": 1,
+          "deleteRequests": 0,
+          "durationLimitMs": 1400,
+          "passed": true
+        },
+        {
+          "name": "client-presence-error-500",
+          "status": 500,
+          "code": "temporary_server_error",
+          "registrations": 1,
+          "presences": 2,
+          "deleteRequests": 0,
+          "durationLimitMs": 1400,
+          "passed": true
+        },
+        {
+          "name": "surface-create-429-unrelated_limit",
+          "status": 429,
+          "code": "unrelated_limit",
+          "cancel": false,
+          "requests": 1,
+          "delaysMs": [],
+          "passed": true
+        },
+        {
+          "name": "surface-create-403-surface_frame_scope",
+          "status": 403,
+          "code": "surface_frame_scope",
+          "cancel": false,
+          "requests": 1,
+          "delaysMs": [],
+          "passed": true
+        },
+        {
+          "name": "surface-create-429-surface_limit-cancel",
+          "status": 429,
+          "code": "surface_limit",
+          "cancel": true,
+          "requests": 1,
+          "delaysMs": [],
+          "passed": true
+        },
+        {
+          "name": "surface-create-429-surface_limit",
+          "status": 429,
+          "code": "surface_limit",
+          "cancel": false,
+          "requests": 4,
+          "delaysMs": [
+            511,
+            1006,
+            2006
+          ],
+          "passed": true
+        },
+        {
+          "name": "server-stop-presence-eof",
+          "passed": true,
+          "elapsedMs": 6
+        }
+      ],
+      "findings": [],
+      "status": "passed"
+    },
+    "budgets": {
+      "status": "passed",
+      "method": "Actual compiled resource accounting; native startup and samplePair replaced only in this private Node process. This is not physical sixteen-CEF-process validation.",
+      "checks": [
+        {
+          "name": "default-project-capacity",
+          "limit": 16,
+          "passed": true,
+          "level": "accounting with stubbed native startup"
+        },
+        {
+          "name": "default-view-capacity",
+          "limit": 4,
+          "passed": true
+        },
+        {
+          "name": "explicit-project-capacity-across-views",
+          "limit": 1,
+          "passed": true
+        },
+        {
+          "name": "retained-count-pins-and-eviction",
+          "passed": true
+        },
+        {
+          "name": "frame-byte-limit",
+          "pngBytes": 68,
+          "limit": 67,
+          "passed": true
+        },
+        {
+          "name": "retained-byte-budget-pins-failure-and-release",
+          "pngBytes": 68,
+          "totalBytes": 136,
+          "passed": true
+        }
+      ]
+    },
+    "lifecycleTraceSuccess": {
+      "sourceBytes": 175690,
+      "viewport": {
+        "width": 740,
+        "height": 248,
+        "deviceScaleFactor": 2
+      },
+      "secondDocumentReady": 3,
+      "secondDocumentErrors": [],
+      "perViewLimit": 4,
+      "persistedPagehidePreservedSource": true,
+      "invalidViewReRegistered": true,
+      "peerSourcePreservedAcrossRegistration": true,
+      "normalReloads": 3,
+      "liveNativeAfterEachReload": 3,
+      "status": "passed",
+      "productionCef": true,
+      "independentSources": true,
+      "inputAndSnapshotSameN": true,
+      "departedProfileRemoved": true,
+      "remainingSourceStatePreserved": true,
+      "crossViewRead": 403,
+      "pcm": {
+        "packets": 2,
+        "sampleRate": 48000,
+        "channels": 2,
+        "peak": 0.15000692009925842
+      },
+      "browserCloseWithoutPagehide": true,
+      "abruptClientCloseNativeAfterGrace": 0,
+      "created": 19,
+      "createErrors": [
+        {
+          "status": 429,
+          "code": "surface_view_limit"
+        }
+      ],
+      "elapsedMs": 28798
+    },
+    "finalNormal": {
+      "status": "passed",
+      "sourceBytes": 175690,
+      "viewport": {
+        "width": 740,
+        "height": 248,
+        "deviceScaleFactor": 2
+      },
+      "secondDocumentReady": 3,
+      "secondDocumentErrors": [],
+      "perViewLimit": 4,
+      "persistedPagehidePreservedSource": true,
+      "invalidViewReRegistered": true,
+      "peerSourcePreservedAcrossRegistration": true,
+      "normalReloads": 3,
+      "liveNativeAfterEachReload": 3,
+      "productionCef": true,
+      "independentSources": true,
+      "inputAndSnapshotSameN": true,
+      "departedProfileRemoved": true,
+      "remainingSourceStatePreserved": true,
+      "crossViewRead": 403,
+      "pcm": {
+        "packets": 2,
+        "sampleRate": 48000,
+        "channels": 2,
+        "peak": 0.1535106599330902
+      },
+      "browserCloseWithoutPagehide": true,
+      "abruptClientCloseNativeAfterGrace": 0,
+      "actualNativeProcessesGone": true,
+      "nativeCompletionAfterLogicalCloseMs": [
+        532,
+        510,
+        532
+      ],
+      "nativeCompletionBudgetMs": 18000,
+      "created": 19,
+      "createErrors": [
+        {
+          "status": 429,
+          "code": "surface_view_limit"
+        }
+      ],
+      "elapsedMs": 26249
+    },
+    "finalPresence": {
+      "status": "passed",
+      "multipleConnections": true,
+      "shortDisconnectMs": 800,
+      "originalSourceSeedAndValuePreserved": true,
+      "presenceConsumesOperationSeq": false,
+      "staleGenerationRejected": true,
+      "oldDisconnectKeptNewGeneration": true,
+      "retainedNBytesAfterDeparture": true,
+      "departureCleanupMs": 5297,
+      "graceMs": 5000,
+      "replacementInstance": true,
+      "elapsedMs": 23485
+    },
+    "finalDeltaValidation": {
+      "compileAndClientTypecheck": "passed",
+      "build": "passed",
+      "ordinaryProfileTests": {
+        "passed": 12,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "log": "/private/tmp/acanvas-html-review-final-WSK2PSjV/native-profile-tests.log"
+      },
+      "actualCefLifecycle": {
+        "passed": 2,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "log": "/private/tmp/acanvas-html-review-final-WSK2PSjV/runtime-delta.log"
+      },
+      "runtimeExitCode": 0,
+      "profileChecks": 10,
+      "diffCheck": "passed",
+      "sourceDelta": [
+        "src/server/render-surface/cef.ts lstat/realpath ENOENT semantics",
+        "tests/helpers/native-retirement.ts owned process/profile observer",
+        "tests/native-profile-cleanup.test.ts deterministic scan/ownership/I-O cases",
+        "tests/board-html-regression.test.ts final actual retirement assertions before passed",
+        "tests/board-html-presence.test.ts actual retirement observer"
+      ]
+    }
+  },
+  "retainedFailures": [
+    {
+      "stage": "restricted execution",
+      "result": "environment failure",
+      "tests": 22,
+      "passed": 12,
+      "failed": 10,
+      "cause": "listen EPERM on owned loopback servers",
+      "log": "/private/tmp/acanvas-html-independent-review-2o8AvazT/independent-tests.log",
+      "followup": "Same scoped suite rerun in permitted environment: 22/22 passed."
+    },
+    {
+      "stage": "actual normal CEF trace",
+      "result": "test failure",
+      "passed": 0,
+      "failed": 1,
+      "exitCode": 1,
+      "cause": "Missing expected rejection for profile removal after 3-second wait",
+      "log": "/private/tmp/acanvas-html-independent-review-2o8AvazT/traced-create.log",
+      "data": "/private/tmp/acanvas-html-independent-review-2o8AvazT/normal-app-traced.json",
+      "followup": "Passed field in this JSON is not evidence of test success. Subsequent detailed lifecycle run passed; final candidate profile horizon is separately checked."
+    },
+    {
+      "stage": "initial normal App create trace",
+      "result": "unexplained error subsequently matched by deterministic source counterexample",
+      "code": "ENOENT",
+      "cause": "Original complete suite captured one later createError without stack; exact occurrence is not conclusively matched. Deterministic scan vs normal directory deletion reproduces ENOENT at lstat and realpath.",
+      "data": "/private/tmp/acanvas-html-independent-review-2o8AvazT/normal-app.json"
+    },
+    {
+      "stage": "review accounting fixture",
+      "result": "review fixture construction errors",
+      "attempts": [
+        "service.importAsset missing API",
+        "stub native runtime lacked cache directory"
+      ],
+      "logs": [
+        "/private/tmp/acanvas-html-independent-review-2o8AvazT/budgets-probe.log",
+        "/private/tmp/acanvas-html-independent-review-2o8AvazT/budgets-probe-corrected.log"
+      ],
+      "followup": "Corrected to public registerAsset and private stub directory; all six compiled accounting cases passed."
+    },
+    {
+      "stage": "original negative cases",
+      "result": "source failures",
+      "details": "Unrelated presence 403/404 caused registration loops; lstat/realpath race caused ENOENT. Original results are embedded and retained."
+    }
+  ],
+  "limitations": [
+    "Actual user legacy bundle/tab diagnosis comes from execution evidence; this reviewer did not inspect or reload user browser tabs. Acceptance is the new default SceneHtmlSurface pipeline.",
+    "Headless project Chromium drives actual default App and normal CEF sources; physical Safari/BFCache suspension was not tested.",
+    "Sixteen-instance capacity was verified by compiled accounting with stub native startup, separately from real CEF six-source App coverage.",
+    "Performance timing and gesture matrix are separately owned. Source clipboard/CSP/Keychain protections are preserved with actual startup flags and selected endpoint tests; no new full OS/native security matrix was run.",
+    "Private evidence directories and failing logs were retained; no Git commit was made."
+  ]
+}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { renderMarkdown } from './markdown';
 import { useControlledScenePanel } from './scene-renderer/media/use-controlled-panel.js';
 import { readMarkdownContentAnchor } from './scene-renderer/media/markdown-anchor.js';
@@ -33,7 +33,8 @@ export function MarkdownCanvasContent({ src, title }: { src: string; title: stri
     void load(); return () => controller.abort();
   }, [src]);
   const current = content?.src === src ? content : undefined;
+  const markup = useMemo(() => current?.html === undefined ? undefined : { __html: current.html }, [current?.html]);
   return <div ref={root} className="markdown-content" data-canvas-wheel="content" role="document" aria-label={title} tabIndex={0}>
-    {current?.error ? <p className="content-message">{current.error}</p> : current?.html !== undefined ? <div className="markdown-body" dangerouslySetInnerHTML={{ __html: current.html }}/> : <p className="content-message">Loading document…</p>}
+    {current?.error ? <p className="content-message">{current.error}</p> : markup ? <div className="markdown-body" dangerouslySetInnerHTML={markup}/> : <p className="content-message">Loading document…</p>}
   </div>;
 }

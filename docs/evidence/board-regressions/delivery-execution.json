@@ -1,0 +1,1167 @@
+{
+  "measuredAt": "2026-10-09T05:21:15.895Z",
+  "status": "controlled-update-and-two-public-business-comparisons-passed",
+  "scope": "HTML preview capacity/presence, accumulated native gestures and board renderer performance regression delivery.",
+  "baselineCommit": "c3856c1",
+  "requirements": [
+    "R02",
+    "R04",
+    "R11",
+    "R12",
+    "A02",
+    "A06",
+    "A07",
+    "A09",
+    "A13",
+    "A14"
+  ],
+  "projectRuntime": {
+    "node": "24.21.0",
+    "tmpdir": "/private/tmp"
+  },
+  "preflight": {
+    "measuredAt": "2026-10-09T04:50:30.752Z",
+    "directory": "/private/tmp/acanvas-regression-delivery-mp2GyH",
+    "projectNode": "24.21.0",
+    "protectedSnapshot": {
+      "path": "/private/tmp/acanvas-regression-delivery-mp2GyH/snapshot-preflight.json",
+      "directoryMode": "0700",
+      "fileMode": "0600",
+      "tokensIncluded": false,
+      "businessTextPrinted": false
+    },
+    "status": {
+      "project": {
+        "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+        "name": "acanvas",
+        "root": "/Users/yingbowu/Documents/Projects/acanvas"
+      },
+      "service": {
+        "pid": 51288,
+        "instanceId": "eabcfcf3-5c9c-400f-9743-f9e5b1556b90"
+      },
+      "status": "running"
+    },
+    "origin": "http://127.0.0.1:4317",
+    "url": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+    "counts": {
+      "sessions": 4,
+      "tasks": 31,
+      "assets": 40,
+      "sharedAssets": 28,
+      "evidenceAssets": 12,
+      "objects": 12,
+      "annotations": 15
+    },
+    "activity": [
+      {
+        "sessionId": "f7f0a6f8-f792-4236-83bd-b4faf825057d",
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDraft": false,
+        "draft": {
+          "id": "6f4cf496-ac22-45c3-ad9b-195f1d988768",
+          "revision": 67,
+          "textLength": 0,
+          "attachments": 0,
+          "annotations": 0
+        },
+        "tasks": 24
+      },
+      {
+        "sessionId": "3937b619-22e8-4699-8c95-5981c6df26a0",
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDraft": false,
+        "draft": {
+          "id": "28a153a6-adb4-432a-82fc-9dfb3c053ba5",
+          "revision": 1,
+          "textLength": 0,
+          "attachments": 0,
+          "annotations": 0
+        },
+        "tasks": 0
+      },
+      {
+        "sessionId": "fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDraft": false,
+        "draft": {
+          "id": "484da2f1-0268-448b-9d03-96568c53ca36",
+          "revision": 35,
+          "textLength": 0,
+          "attachments": 0,
+          "annotations": 0
+        },
+        "tasks": 7
+      },
+      {
+        "sessionId": "b28b8381-c657-4e44-812f-cd713d39b1dc",
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDraft": false,
+        "draft": {
+          "id": "160b2494-28c7-41a8-b601-7e94bcdc122c",
+          "revision": 45,
+          "textLength": 0,
+          "attachments": 0,
+          "annotations": 0
+        },
+        "tasks": 0
+      }
+    ],
+    "managedBrowser": {
+      "running": false,
+      "pageCount": 0
+    },
+    "runtimeActivityBoundary": "Public status/state/browser interfaces expose session task/run/editing activity and managed browser pages. They do not enumerate current imported-HTML source pipelines/native runtime sampling activity; no pipeline idle claim or user-page inspection is made.",
+    "hostPublicScope": "All public session/view/consumer/task fields retained in protected controlled-interface snapshot; internal host_bindings rows lack controlled GET and stay outside direct inspection."
+  },
+  "preparedCommands": {
+    "isolatedBuild": ".runtime/node_modules/node/bin/node /private/tmp/acanvas-regression-delivery-mp2GyH/compile-final.mjs",
+    "latestDefault": ".runtime/node_modules/node/bin/node /private/tmp/acanvas-regression-delivery-mp2GyH/run-default.mjs",
+    "sameServiceAndSession": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node dist/src/cli.js project open --project /Users/yingbowu/Documents/Projects/acanvas --port 4317 --session fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+    "fixtureAndCwdRule": "Each private candidate owns dist/package, with node_modules and read-only-use tests fixture links. Default tests execute from candidate cwd with ACANVAS_TEST_OUT_DIR/ACANVAS_TEST_WEB_ROOT set to candidate dist."
+  },
+  "isolatedChecks": {
+    "status": "PASS",
+    "candidateDirectory": "/private/tmp/acanvas-regression-candidate-I8JaqX",
+    "build": {
+      "measuredAt": "2026-10-09T04:59:26.764Z",
+      "directory": "/private/tmp/acanvas-regression-candidate-I8JaqX",
+      "node": "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+      "tmpdir": "/private/tmp",
+      "fixtureLink": {
+        "path": "/private/tmp/acanvas-regression-candidate-I8JaqX/tests",
+        "target": "/Users/yingbowu/Documents/Projects/acanvas/tests",
+        "use": "Read existing fixtures; generated projects/evidence remain in private tmp."
+      },
+      "sharedDistWritten": false,
+      "results": [
+        {
+          "name": "server",
+          "measuredAt": "2026-10-09T04:59:19.350Z",
+          "status": 0
+        },
+        {
+          "name": "client",
+          "measuredAt": "2026-10-09T04:59:22.775Z",
+          "status": 0
+        },
+        {
+          "name": "web",
+          "measuredAt": "2026-10-09T04:59:24.899Z",
+          "status": 0
+        }
+      ]
+    },
+    "default": {
+      "measuredAt": "2026-10-09T05:00:00.285Z",
+      "finishedAt": "2026-10-09T05:01:33.513Z",
+      "node": "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+      "tmpdir": "/private/tmp",
+      "executionCwd": "/private/tmp/acanvas-regression-candidate-I8JaqX",
+      "harnessEnvironment": {
+        "ACANVAS_TEST_OUT_DIR": "/private/tmp/acanvas-regression-candidate-I8JaqX/dist",
+        "ACANVAS_TEST_WEB_ROOT": "/private/tmp/acanvas-regression-candidate-I8JaqX/dist/web"
+      },
+      "defaultSelection": "Current runtime.mjs test selection: every compiled dist/tests/*.test.js, with opt-in browser/native variables absent.",
+      "files": [
+        "annotation-capture.test.js",
+        "audio-artwork.test.js",
+        "board-html-presence.test.js",
+        "board-html-regression.test.js",
+        "browser-capture.test.js",
+        "canvas-gestures-production.test.js",
+        "canvas-gestures.test.js",
+        "chatbox-ui.test.js",
+        "content-types.test.js",
+        "cookie-isolation.test.js",
+        "element-capture-crop.test.js",
+        "element-capture-production.test.js",
+        "frontend-geometry.test.js",
+        "gif-decoder.test.js",
+        "host-runtime.test.js",
+        "html-bundle.test.js",
+        "html-preview.test.js",
+        "mark-hit-test.test.js",
+        "markdown-anchor.test.js",
+        "native-controls.test.js",
+        "native-gc.test.js",
+        "native-profile-cleanup.test.js",
+        "point-anchor.test.js",
+        "project-capture-provider.test.js",
+        "reference-occurrences-ui.test.js",
+        "reference-occurrences.test.js",
+        "scene-source.test.js",
+        "server.test.js",
+        "task-message.test.js",
+        "universal-html-audio.test.js",
+        "universal-html-client-controls.test.js",
+        "universal-html-native.test.js",
+        "universal-html-pairing.test.js",
+        "universal-html-popup.test.js",
+        "universal-html-prototype.test.js",
+        "universal-html-recovery.test.js",
+        "universal-markdown-anchor.test.js",
+        "universal-media.test.js",
+        "universal-scene-geometry.test.js",
+        "universal-scene-production.test.js",
+        "universal-scene-prototype.test.js",
+        "universal-scene-types.test.js",
+        "universal-target-edit.test.js"
+      ],
+      "fileCount": 43,
+      "logPath": "/private/tmp/acanvas-regression-candidate-I8JaqX/final-default.log",
+      "code": 0,
+      "signal": null,
+      "metrics": {
+        "tests": 232,
+        "suites": 0,
+        "pass": 202,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 30,
+        "todo": 0,
+        "duration_ms": 93175.552625
+      },
+      "boundaries": {
+        "sharedDistWritten": false,
+        "userBoardWritten": false,
+        "formalServiceAccessed": false,
+        "sourceTestsChanged": false,
+        "nativeScope": "Existing default actual-App fixtures may initialize the installed normal CEF only in test-owned temporary projects; this run does not repeat opt-in CEF, Safari or Edge matrices."
+      },
+      "applicableResults": [
+        {
+          "filename": "board-html-presence.test.js",
+          "tests": 1,
+          "pass": 0,
+          "skipped": 1,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "view presence preserves reconnecting native sources, counts owners and retires only the departed generation",
+              "status": "SKIP"
+            }
+          ]
+        },
+        {
+          "filename": "board-html-regression.test.js",
+          "tests": 3,
+          "pass": 0,
+          "skipped": 3,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "default HTML previews retain independent sources across canvas documents and close departed views",
+              "status": "SKIP"
+            },
+            {
+              "name": "a waiting HTML document opens automatically when temporary project capacity is released",
+              "status": "SKIP"
+            },
+            {
+              "name": "closing a capture view during native creation releases its private source and project capacity",
+              "status": "SKIP"
+            }
+          ]
+        },
+        {
+          "filename": "canvas-gestures.test.js",
+          "tests": 2,
+          "pass": 2,
+          "skipped": 0,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "pinch scale and midpoint retain their world anchor across limits",
+              "status": "PASS"
+            },
+            {
+              "name": "wheel supports continuous ctrl and meta zoom, ordinary pan, and line/page units",
+              "status": "PASS"
+            }
+          ]
+        },
+        {
+          "filename": "canvas-gestures-production.test.js",
+          "tests": 1,
+          "pass": 0,
+          "skipped": 1,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "production canvas inherits native wheel fields, accumulates bursts, and owns distinct pinch inputs",
+              "status": "SKIP"
+            }
+          ]
+        },
+        {
+          "filename": "native-profile-cleanup.test.js",
+          "tests": 1,
+          "pass": 1,
+          "skipped": 0,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "native profile scanning accepts recovered paths and preserves ownership and filesystem errors",
+              "status": "PASS"
+            }
+          ]
+        },
+        {
+          "filename": "project-capture-provider.test.js",
+          "tests": 12,
+          "pass": 12,
+          "skipped": 0,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "project provider copies synchronously then holds and saves source before capture preparation",
+              "status": "PASS"
+            },
+            {
+              "name": "lost hold, draft, prepare and upload responses recover the same copied frame and service identities",
+              "status": "PASS"
+            },
+            {
+              "name": "bounded encoding recovery uses copied pixels and preserves metadata while the current scene changes",
+              "status": "PASS"
+            },
+            {
+              "name": "cancelled upload advances the version and its delayed completion keeps the annotation incomplete",
+              "status": "PASS"
+            },
+            {
+              "name": "a new document resumes persisted pixels using the durable source after the original view closes and service restarts",
+              "status": "PASS"
+            },
+            {
+              "name": "pending capture limit bounds synchronous pixel copies before queued service saves",
+              "status": "PASS"
+            },
+            {
+              "name": "pending freeze cancellation while Done hold response is delayed releases the stage and saves no annotation",
+              "status": "PASS"
+            },
+            {
+              "name": "pending cancellation invalidates a committed draft whose save response is delayed and preserves its latest comment",
+              "status": "PASS"
+            },
+            {
+              "name": "close cancels a pending source before identity creation and late persistence cannot reactivate its job",
+              "status": "PASS"
+            },
+            {
+              "name": "closing during delayed view initialization retires the late service-issued view",
+              "status": "PASS"
+            },
+            {
+              "name": "document departure dispatches one keepalive close before pending source reconciliation",
+              "status": "PASS"
+            },
+            {
+              "name": "owner departure retires its view while the saved frame remains available for capture submission",
+              "status": "PASS"
+            }
+          ]
+        },
+        {
+          "filename": "chatbox-ui.test.js",
+          "tests": 26,
+          "pass": 26,
+          "skipped": 0,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "chatbox selection previews are consumed by real input focus, Escape and direct reference-only Send",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox @ search orders object and task identities and keeps IME, paste and attachment semantics",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox inline previews insert two independent objects at the last caret and restore send, refresh and queue edit positions",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox inline atoms support native caret movement, both delete keys, cross selection, Unicode, IME and plaintext paste",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox native composition, backward keyboard selection and delayed rerenders keep the caret and independent atoms",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox independent inline previews and formal atoms wrap within 320px light and dark themes",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox legacy grouped draft and snapshot references use the shared body-tail fallback",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox nonempty inline references reconcile held saves and SSE by business fields independently of JSON key order",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox native text replacement preserves two atoms, exact multiline text and empty-body offsets through refresh and Send",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React Done captures blank points, cross-object regions and historical scenes with separate current locate",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React target edits require a new capture while text edits preserve the original image",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React delayed saves retain the newer target and capture cancellation invalidates late uploads",
+              "status": "PASS"
+            },
+            {
+              "name": "ordinary pages complete Done and Send through the project API on the same page",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React refresh exposes a lost captured image and explicitly recaptures a new version",
+              "status": "PASS"
+            },
+            {
+              "name": "visible Canvas evidence excludes native controls while capture cancellation stays usable",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React records Markdown intent and displayed anchors and keeps the native HTML source instance and form",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React saves independent video/audio selections and actual playback positions",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React captures GIF, file cards, mixed scenes and the actual overlapping target",
+              "status": "PASS"
+            },
+            {
+              "name": "managed marks use the top painted media owner and keep letterbox points and crossing regions in world space",
+              "status": "PASS"
+            },
+            {
+              "name": "CSS zoom keeps edge annotation controls visible and copies only the presented pixels within the page",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React 320px themes, keyboard point marking and reduced motion retain usable composer",
+              "status": "PASS"
+            },
+            {
+              "name": "refinement Mark hover and clicks share displayed content ownership and clear their guides",
+              "status": "PASS"
+            },
+            {
+              "name": "refinement collapsed comment surfaces use one Canvas visual and preserve their pixels in PNG",
+              "status": "PASS"
+            },
+            {
+              "name": "refinement media editors separate text media and footer across narrow themes and zoom",
+              "status": "PASS"
+            },
+            {
+              "name": "refinement an open editor measures its visible size again across resize and CSS zoom",
+              "status": "PASS"
+            },
+            {
+              "name": "refinement collapsed region text keeps its padding inside a narrow scaled surface",
+              "status": "PASS"
+            }
+          ]
+        },
+        {
+          "filename": "point-anchor.test.js",
+          "tests": 2,
+          "pass": 2,
+          "skipped": 0,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "point pins and captured rings share actual blank and normalized clicks across pan zoom DPR themes and touch",
+              "status": "PASS"
+            },
+            {
+              "name": "same and neighboring point comments move independently during expansion while region and legacy notes retain anchors",
+              "status": "PASS"
+            }
+          ]
+        }
+      ]
+    },
+    "scope": "One final default run for the board-regression cutoff, private fixtures; full CEF/Safari/Edge matrices and performance measurement are not repeated here.",
+    "applicableResults": [
+      {
+        "filename": "board-html-presence.test.js",
+        "tests": 1,
+        "pass": 0,
+        "skipped": 1,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "board-html-regression.test.js",
+        "tests": 3,
+        "pass": 0,
+        "skipped": 3,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "canvas-gestures.test.js",
+        "tests": 2,
+        "pass": 2,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "canvas-gestures-production.test.js",
+        "tests": 1,
+        "pass": 0,
+        "skipped": 1,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "native-profile-cleanup.test.js",
+        "tests": 1,
+        "pass": 1,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "project-capture-provider.test.js",
+        "tests": 12,
+        "pass": 12,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "chatbox-ui.test.js",
+        "tests": 26,
+        "pass": 26,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "point-anchor.test.js",
+        "tests": 2,
+        "pass": 2,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      }
+    ],
+    "applicableResultExtraction": "Per-file summaries count top-level literal test calls matched against TAP. Full default232/202/30 result includes nested tests and is authoritative.",
+    "environmentFailures": [],
+    "productFailures": []
+  },
+  "controlledUpdate": {
+    "status": "PASS",
+    "authorizedAfter": "Three regression source/topic reviews, generic renderer/Pattern/Pan criteria, gesture/HTML closure, final default232/202pass/30skip/0fail/0cancelled and candidate-document review accepted by root.",
+    "freshReference": {
+      "measuredAt": "2026-10-09T05:15:28.801Z",
+      "label": "fresh-reference",
+      "protectedSnapshot": {
+        "path": "/private/tmp/acanvas-regression-delivery-mp2GyH/snapshot-fresh-reference.json",
+        "directoryMode": "0700",
+        "fileMode": "0600",
+        "tokensIncluded": false,
+        "businessTextPrinted": false
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "status": {
+        "project": {
+          "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+          "name": "acanvas",
+          "root": "/Users/yingbowu/Documents/Projects/acanvas"
+        },
+        "service": {
+          "pid": 51288,
+          "instanceId": "eabcfcf3-5c9c-400f-9743-f9e5b1556b90"
+        },
+        "status": "running"
+      },
+      "counts": {
+        "sessions": 4,
+        "tasks": 31,
+        "assets": 40,
+        "sharedAssets": 28,
+        "evidenceAssets": 12,
+        "objects": 12,
+        "annotations": 15
+      },
+      "activity": {
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0,
+        "nonemptyDrafts": 0
+      },
+      "browser": {
+        "running": false,
+        "pageCount": 0
+      },
+      "comparisons": [
+        {
+          "reference": "/private/tmp/acanvas-regression-delivery-mp2GyH/snapshot-preflight.json",
+          "businessFieldsEqual": false
+        }
+      ]
+    },
+    "immediateBefore": {
+      "measuredAt": "2026-10-09T05:16:08.016Z",
+      "label": "immediate-before",
+      "protectedSnapshot": {
+        "path": "/private/tmp/acanvas-regression-delivery-mp2GyH/snapshot-immediate-before.json",
+        "directoryMode": "0700",
+        "fileMode": "0600",
+        "tokensIncluded": false,
+        "businessTextPrinted": false
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "status": {
+        "project": {
+          "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+          "name": "acanvas",
+          "root": "/Users/yingbowu/Documents/Projects/acanvas"
+        },
+        "service": {
+          "pid": 51288,
+          "instanceId": "eabcfcf3-5c9c-400f-9743-f9e5b1556b90"
+        },
+        "status": "running"
+      },
+      "counts": {
+        "sessions": 4,
+        "tasks": 31,
+        "assets": 40,
+        "sharedAssets": 28,
+        "evidenceAssets": 12,
+        "objects": 12,
+        "annotations": 15
+      },
+      "activity": {
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0,
+        "nonemptyDrafts": 0
+      },
+      "browser": {
+        "running": false,
+        "pageCount": 0
+      },
+      "comparisons": [
+        {
+          "reference": "/private/tmp/acanvas-regression-delivery-mp2GyH/snapshot-fresh-reference.json",
+          "businessFieldsEqual": true
+        }
+      ]
+    },
+    "earlyPreflightDifference": {
+      "scope": "Target public view.x/y changed before current fresh reference. Fresh latest view is the comparison authority, and both post-update comparisons retain it.",
+      "changedFieldCount": 12,
+      "valuesPrinted": false,
+      "fieldPathEvidence": "/private/tmp/acanvas-regression-delivery-mp2GyH/intervening-public-fields.json"
+    },
+    "productStop": {
+      "measuredAt": "2026-10-09T05:16:50.691Z",
+      "productRoute": "POST /api/project/stop",
+      "boundProjectId": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+      "boundService": {
+        "pid": 51288,
+        "instanceId": "eabcfcf3-5c9c-400f-9743-f9e5b1556b90"
+      },
+      "responseStatus": 202,
+      "status": "stopped",
+      "normalLifecycle": true
+    },
+    "formalBuild": {
+      "measuredAt": "2026-10-09T05:17:25.672Z",
+      "finishedAt": "2026-10-09T05:17:33.905Z",
+      "projectNode": "24.21.0",
+      "tmpdir": "/private/tmp",
+      "helper": {
+        "status": "confirmed-existing-normal-build",
+        "cppSourceChanged": false,
+        "path": "/Users/yingbowu/Documents/Projects/acanvas/.runtime/cef-build/Release/acanvas-surface.app/Contents/MacOS/acanvas-surface",
+        "bytes": 750192,
+        "modifiedAt": "2026-10-09T00:55:05.503Z",
+        "testMacros": {
+          "ACANVAS_TEST_CLIPBOARD_FAKE_HANDLE": "OFF",
+          "ACANVAS_TEST_CLIPBOARD_TRIPWIRE": "OFF"
+        },
+        "policy": {
+          "headless": "new",
+          "innerRendererSandbox": true,
+          "keychainProvider": "UseKeychainKeyProvider disabled",
+          "externalCommandLineArguments": false
+        },
+        "reinstalled": false
+      },
+      "application": {
+        "status": 0,
+        "log": "/private/tmp/acanvas-regression-delivery-mp2GyH/formal-application.log"
+      },
+      "sharedDistWritten": true,
+      "serviceKeptStoppedDuringBuild": true
+    },
+    "formalServerMatchesCutoff": {
+      "measuredAt": "2026-10-09T05:21:15.745Z",
+      "scope": "Formal server modules used by the launched CLI service compared with the independently accepted cutoff candidate; no user HTML sampling.",
+      "result": "PASS",
+      "checks": [
+        {
+          "file": "src/server/main.js",
+          "bytes": 1094,
+          "equalToIsolatedCutoff": true
+        },
+        {
+          "file": "src/server/http.js",
+          "bytes": 45482,
+          "equalToIsolatedCutoff": true
+        },
+        {
+          "file": "src/server/service.js",
+          "bytes": 114773,
+          "equalToIsolatedCutoff": true
+        },
+        {
+          "file": "src/server/render-surface/html.js",
+          "bytes": 24511,
+          "equalToIsolatedCutoff": true
+        },
+        {
+          "file": "src/server/render-surface/cef.js",
+          "bytes": 22234,
+          "equalToIsolatedCutoff": true
+        }
+      ]
+    },
+    "start": {
+      "command": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node dist/src/cli.js project open --project /Users/yingbowu/Documents/Projects/acanvas --port 4317 --session fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "mode": "detached-background-service-only",
+      "projectId": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+      "service": {
+        "pid": 88172,
+        "instanceId": "0b0f8a38-2ceb-4193-917a-44d69e7697d3"
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sessionId": "fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "openUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171"
+    },
+    "http": {
+      "measuredAt": "2026-10-09T05:19:51.361Z",
+      "scope": "Read-only controlled project HTTP/API routes and exact served formal build resources; no user page reload or business mutation.",
+      "origin": "http://127.0.0.1:4317",
+      "sessionId": "fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "service": {
+        "pid": 88172,
+        "instanceId": "0b0f8a38-2ceb-4193-917a-44d69e7697d3"
+      },
+      "checks": [
+        {
+          "name": "project-status",
+          "status": 200,
+          "pass": true
+        },
+        {
+          "name": "session-list",
+          "status": 200,
+          "pass": true
+        },
+        {
+          "name": "original-session-state",
+          "status": 200,
+          "pass": true
+        },
+        {
+          "name": "unauthenticated-state",
+          "status": 401,
+          "code": "authentication_required",
+          "pass": true
+        },
+        {
+          "name": "invalid-cookie-state",
+          "status": 401,
+          "code": "authentication_required",
+          "pass": true
+        },
+        {
+          "name": "foreign-origin-state",
+          "status": 403,
+          "code": "origin_rejected",
+          "pass": true
+        },
+        {
+          "name": "original-url-homepage",
+          "status": 200,
+          "contentType": "text/html",
+          "cacheControl": "no-cache",
+          "cspPresent": true,
+          "originalSessionQuery": true,
+          "references": [
+            "/assets/main-DwxRTWV-.js",
+            "/assets/content-types-BZfI4KZT.js",
+            "/assets/content-types-BsJH9bFb.css",
+            "/assets/main-Cq2qNYuH.css"
+          ],
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/audioReview-0lSp8zzS.js",
+          "status": 200,
+          "bytes": 1669,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/audioReview-Da5NcPoK.css",
+          "status": 200,
+          "bytes": 965,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/content-types-BZfI4KZT.js",
+          "status": 200,
+          "bytes": 215049,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/content-types-BsJH9bFb.css",
+          "status": 200,
+          "bytes": 4751,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/google-sans-latin-CLLqw55C.woff2",
+          "status": 200,
+          "bytes": 35852,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/google-sans-latin-ext-D9SFGpAd.woff2",
+          "status": 200,
+          "bytes": 21320,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/main-Cq2qNYuH.css",
+          "status": 200,
+          "bytes": 52991,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/main-DwxRTWV-.js",
+          "status": 200,
+          "bytes": 369477,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        }
+      ],
+      "assetsChecked": 8,
+      "servedBytes": 702074,
+      "failures": [],
+      "credentialHandling": "Bootstrap token only in the process; response content and user bodies omitted from evidence.",
+      "result": "PASS"
+    }
+  },
+  "businessComparisons": {
+    "status": "PASS",
+    "completed": 2,
+    "scope": "All public project/session/view/consumer/draft/assets/objects/annotations/task/run/snapshot fields exposed by controlled CLI/API, and exact original asset bytes. Normal runtime identity/schema/lifecycle metadata may change.",
+    "countsBefore": {
+      "sessions": 4,
+      "tasks": 31,
+      "assets": 40,
+      "sharedAssets": 28,
+      "evidenceAssets": 12,
+      "objects": 12,
+      "annotations": 15
+    },
+    "countsAfterFirst": {
+      "sessions": 4,
+      "tasks": 31,
+      "assets": 40,
+      "sharedAssets": 28,
+      "evidenceAssets": 12,
+      "objects": 12,
+      "annotations": 15
+    },
+    "countsAfterSecond": {
+      "sessions": 4,
+      "tasks": 31,
+      "assets": 40,
+      "sharedAssets": 28,
+      "evidenceAssets": 12,
+      "objects": 12,
+      "annotations": 15
+    },
+    "first": {
+      "measuredAt": "2026-10-09T05:18:34.676Z",
+      "label": "after-first",
+      "protectedSnapshot": {
+        "path": "/private/tmp/acanvas-regression-delivery-mp2GyH/snapshot-after-first.json",
+        "directoryMode": "0700",
+        "fileMode": "0600",
+        "tokensIncluded": false,
+        "businessTextPrinted": false
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "status": {
+        "project": {
+          "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+          "name": "acanvas",
+          "root": "/Users/yingbowu/Documents/Projects/acanvas"
+        },
+        "service": {
+          "pid": 88172,
+          "instanceId": "0b0f8a38-2ceb-4193-917a-44d69e7697d3"
+        },
+        "status": "running"
+      },
+      "counts": {
+        "sessions": 4,
+        "tasks": 31,
+        "assets": 40,
+        "sharedAssets": 28,
+        "evidenceAssets": 12,
+        "objects": 12,
+        "annotations": 15
+      },
+      "activity": {
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0,
+        "nonemptyDrafts": 0
+      },
+      "browser": {
+        "running": false,
+        "pageCount": 0
+      },
+      "comparisons": [
+        {
+          "reference": "/private/tmp/acanvas-regression-delivery-mp2GyH/snapshot-immediate-before.json",
+          "businessFieldsEqual": true
+        }
+      ]
+    },
+    "second": {
+      "measuredAt": "2026-10-09T05:19:53.115Z",
+      "label": "after-second",
+      "protectedSnapshot": {
+        "path": "/private/tmp/acanvas-regression-delivery-mp2GyH/snapshot-after-second.json",
+        "directoryMode": "0700",
+        "fileMode": "0600",
+        "tokensIncluded": false,
+        "businessTextPrinted": false
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "status": {
+        "project": {
+          "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+          "name": "acanvas",
+          "root": "/Users/yingbowu/Documents/Projects/acanvas"
+        },
+        "service": {
+          "pid": 88172,
+          "instanceId": "0b0f8a38-2ceb-4193-917a-44d69e7697d3"
+        },
+        "status": "running"
+      },
+      "counts": {
+        "sessions": 4,
+        "tasks": 31,
+        "assets": 40,
+        "sharedAssets": 28,
+        "evidenceAssets": 12,
+        "objects": 12,
+        "annotations": 15
+      },
+      "activity": {
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0,
+        "nonemptyDrafts": 0
+      },
+      "browser": {
+        "running": false,
+        "pageCount": 0
+      },
+      "comparisons": [
+        {
+          "reference": "/private/tmp/acanvas-regression-delivery-mp2GyH/snapshot-immediate-before.json",
+          "businessFieldsEqual": true
+        },
+        {
+          "reference": "/private/tmp/acanvas-regression-delivery-mp2GyH/snapshot-after-first.json",
+          "businessFieldsEqual": true
+        }
+      ]
+    },
+    "assetBytes": {
+      "reference": {
+        "measuredAt": "2026-10-09T05:16:06.053Z",
+        "phase": "before",
+        "assetCount": 40,
+        "bytesCompared": 0,
+        "savedOriginalBytes": 93176317,
+        "comparison": "protected-reference-read",
+        "failures": [],
+        "result": "PASS",
+        "controlledInterface": "Already-built asset read CLI, authenticated content GET; evidence uses its owning session.",
+        "protectedCopies": {
+          "directory": "/private/tmp/acanvas-regression-delivery-mp2GyH/assets-before",
+          "directoryMode": "0700",
+          "fileMode": "0600",
+          "bodyPrinted": false,
+          "credentialsIncluded": false
+        }
+      },
+      "first": {
+        "measuredAt": "2026-10-09T05:18:37.318Z",
+        "phase": "after-first",
+        "assetCount": 40,
+        "bytesCompared": 93176317,
+        "comparison": "exact-Buffer.equals-against-before",
+        "failures": [],
+        "result": "PASS",
+        "controlledInterface": "Already-built asset read CLI, authenticated content GET; evidence uses its owning session.",
+        "protectedCopies": {
+          "directory": "/private/tmp/acanvas-regression-delivery-mp2GyH/assets-after-first",
+          "directoryMode": "0700",
+          "fileMode": "0600",
+          "bodyPrinted": false,
+          "credentialsIncluded": false
+        }
+      },
+      "second": {
+        "measuredAt": "2026-10-09T05:19:56.047Z",
+        "phase": "after-second",
+        "assetCount": 40,
+        "bytesCompared": 93176317,
+        "comparison": "exact-Buffer.equals-against-before",
+        "failures": [],
+        "result": "PASS",
+        "controlledInterface": "Already-built asset read CLI, authenticated content GET; evidence uses its owning session.",
+        "protectedCopies": {
+          "directory": "/private/tmp/acanvas-regression-delivery-mp2GyH/assets-after-second",
+          "directoryMode": "0700",
+          "fileMode": "0600",
+          "bodyPrinted": false,
+          "credentialsIncluded": false
+        }
+      }
+    },
+    "hostBindingBoundary": "Internal host_bindings has no controlled GET endpoint and stays outside direct inspection. Explicit --session startup performs no host/thread binding POST; public ownership fields compare equal."
+  },
+  "runtimeBoundary": "Task/run/editing activity was verified through public endpoints. User HTML source pipeline/native sampling idle state is not enumerated by these interfaces and was not claimed. Imported user HTML was not live-tested/sampled; normal restart may rebuild ephemeral native runtime state.",
+  "pageRefresh": {
+    "status": "updated-service-ready-original-page-awaits-normal-user-refresh",
+    "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+    "originalPageReloaded": false,
+    "alternateBrowserTabsTouched": false,
+    "visibleWindowOpenedOrActivated": false,
+    "currentServerAssetReferences": [
+      "/assets/main-DwxRTWV-.js",
+      "/assets/content-types-BZfI4KZT.js",
+      "/assets/content-types-BsJH9bFb.css",
+      "/assets/main-Cq2qNYuH.css"
+    ],
+    "realBoardDoneSendOrFormInput": false,
+    "scope": "This agent keeps existing tabs and original URL. User normal refresh loads the new bundle; no automatic reload, alternate browser substitution or Mac unlock."
+  },
+  "historicalEnvironmentFailures": [],
+  "historicalProductFailures": [],
+  "historyScope": "This delivery runner failure history; source execution and independent review findings retain their separate named records.",
+  "relatedExecutionEvidence": [
+    "docs/evidence/board-regressions/gesture-execution.json",
+    "docs/evidence/board-regressions/gesture-review.json",
+    "docs/evidence/board-regressions/html-execution.json",
+    "docs/evidence/board-regressions/html-review.json",
+    "docs/evidence/board-regressions/performance-execution.json",
+    "docs/evidence/board-regressions/renderer-performance-review.json"
+  ],
+  "boundaries": {
+    "sharedDistWritten": true,
+    "formalServiceStoppedOrRestarted": true,
+    "userBoardWritten": false,
+    "directUserSQLiteAccess": false,
+    "visibleWindowOpenedOrActivated": false,
+    "systemClipboardOrKeychainAccess": false,
+    "userChromeProfileAccess": false,
+    "codexAppModified": false,
+    "topLevelDocumentsEdited": false,
+    "gitCommitted": false,
+    "credentials": "Already-built client process retains bootstrap credentials; snapshots0700/0600 omit tokens and business bodies are not printed.",
+    "realUserBusinessMutation": false
+  },
+  "staticChecks": {
+    "measuredAt": "2026-10-09T05:21:16.223Z",
+    "changedFiles": 43,
+    "textFilesScanned": 43,
+    "credentialPatternCandidates": 0,
+    "jsonFiles": 8,
+    "jsonParseFailures": 0,
+    "documents": [
+      "README.md",
+      "docs/PLAN.md",
+      "docs/BOARD_RUNTIME_REGRESSION_DESIGN.md",
+      "docs/BOARD_RUNTIME_REGRESSION_VALIDATION.md"
+    ],
+    "localFileLinks": 102,
+    "localFileLinkFailures": 0,
+    "gitDiffCheck": "PASS",
+    "result": "/private/tmp/acanvas-regression-delivery-mp2GyH/static-checks.json",
+    "limit": "Runtime execution evidence and root design/validation documents at measurement time; subsequent main-doc/runtime review updates have their own final review."
+  },
+  "performanceEvidenceAuthority": "Performance results and their accepted scope are read from performance-execution.json and renderer-performance-review.json; chat progress numbers do not replace those records."
+}

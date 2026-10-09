@@ -12,10 +12,12 @@ test('ordinary production clients export the actual visible material frames thro
   const { chromium, firefox } = await import('playwright-core');
   const output = process.env.ACANVAS_SCENE_TYPES_OUTPUT || await mkdtemp(join(tmpdir(), 'acanvas-scene-types-output-')); await mkdir(output, { recursive: true });
   const results: object[] = [], performanceResults: object[] = [];
+  const dpr = process.env.ACANVAS_SCENE_TYPES_DPR === '2' ? 2 : 1;
   const htmlEngine = process.env.ACANVAS_SCENE_TYPES_HTML_ENGINE === 'cef' ? 'cef' : 'chromium';
   const percentiles = (values: number[]) => { const sorted = [...values].sort((a, b) => a - b); return { samples: sorted.length, p50: sorted[Math.floor((sorted.length - 1) * .5)], p95: sorted[Math.ceil((sorted.length - 1) * .95)] }; };
-  for (const engine of ['chromium', 'firefox'] as const) {
+  for (const engine of (process.env.ACANVAS_SCENE_BROWSERS === 'chromium' ? ['chromium'] as const : ['chromium', 'firefox'] as const)) {
     const root = await mkdtemp(join(tmpdir(), 'acanvas-scene-types-')), server = await startServer({ root, port: 0, webRoot: resolve(process.env.ACANVAS_SCENE_WEB_ROOT || 'dist/web'), htmlSurfaces: { engine: htmlEngine } });
+    t.after(async () => { await server.close(); await rm(root, { recursive: true, force: true }); });
     const bootstrap = await (await fetch(server.url + '/api/bootstrap')).json();
     const call = async (path: string, method = 'GET', body?: unknown) => { const response = await fetch(server.url + path, { method, headers: { Authorization: 'Bearer ' + bootstrap.token, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }); const result = await response.json(); assert.ok(response.ok, JSON.stringify(result)); return result; };
     const session = await call('/api/sessions', 'POST', { name: 'Material scene validation' });
@@ -33,7 +35,7 @@ test('ordinary production clients export the actual visible material frames thro
       await call('/api/board/operations', 'POST', { sessionId: session.id, operations: [{ type: 'create', object: { assetId: asset.id, ...material.bounds } }] });
     }
     const browser = engine === 'chromium' ? await chromium.launch({ channel: 'chrome', headless: true }) : await firefox.launch({ headless: true, executablePath: process.env.ACANVAS_SCENE_FIREFOX });
-    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 }), page = await context.newPage();
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: dpr }), page = await context.newPage();
     const uploads: number[] = []; page.on('requestfinished', request => { if (request.method() === 'PUT' && /\/captures\/[^/]+\/content$/.test(new URL(request.url()).pathname)) { const elapsed = request.timing().responseEnd; if (elapsed >= 0) uploads.push(elapsed); } });
     const pageCDP = engine === 'chromium' ? await context.newCDPSession(page) : undefined, browserCDP = engine === 'chromium' ? await browser.newBrowserCDPSession() : undefined;
     if (pageCDP) await pageCDP.send('Performance.enable');
@@ -76,10 +78,12 @@ test('ordinary production clients export the actual visible material frames thro
       const asset = state.assets.find(value => value.name === material.name)!, object = state.objects.find(value => value.assetId === asset.id)!;
       if (material.kind === 'gif') await page.waitForFunction(id => document.querySelector<HTMLElement>('[data-object-id="' + id + '"] [data-scene-media="gif"]')?.dataset.frameIndex === '1', object.id);
       if (material.kind === 'video') await page.locator('[data-object-id="' + object.id + '"] video').evaluate(async element => { const video = element as HTMLVideoElement; await new Promise<void>(resolve => { if (video.readyState >= 2) resolve(); else video.addEventListener('loadeddata', () => resolve(), { once: true }); }); video.currentTime = .7; await new Promise<void>(resolve => video.addEventListener('seeked', () => resolve(), { once: true })); });
-      await page.locator('[data-object-id="' + object.id + '"]').focus(); await page.keyboard.press('Enter'); await page.getByRole('button', { name: 'Annotate', exact: true }).click();
+      await page.locator('[data-object-id="' + object.id + '"]').focus(); await page.keyboard.press('Enter'); await page.getByRole('button', { name: 'Mark canvas', exact: true }).click();
+      const box = await page.locator('[data-object-id="' + object.id + '"] .object-media').boundingBox(); assert.ok(box);
+      await page.mouse.click(box.x + box.width * .35, box.y + box.height * .35);
       await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Retain the visible ' + material.kind + ' frame.');
       await page.getByRole('button', { name: 'Done', exact: true }).click();
-      await page.waitForFunction(() => !document.querySelector('.capture-progress'));
+      await page.waitForFunction(() => !document.querySelector('.app-shell')?.hasAttribute('data-capturing'));
       const saved = await call('/api/state?sessionId=' + session.id) as BoardState, annotation = saved.draft.annotations.find(value => value.text === 'Retain the visible ' + material.kind + ' frame.')!;
       assert.equal(annotation.captureState?.status, 'complete', engine + '/' + material.kind + ': ' + await page.locator('.draft-annotations').textContent().catch(() => ''));
       const capture = annotation.capture!, response = await fetch(server.url + '/api/assets/' + capture.screenshotAssetId + '/content?sessionId=' + session.id, { headers: { Authorization: 'Bearer ' + bootstrap.token } }); assert.ok(response.ok); const png = Buffer.from(await response.arrayBuffer()); await writeFile(join(output, engine + '-' + material.kind + '.png'), png);
@@ -95,7 +99,7 @@ test('ordinary production clients export the actual visible material frames thro
     await page.getByRole('combobox', { name: 'Request', exact: true }).fill('Use these saved material scenes.'); await page.getByRole('button', { name: 'Send request', exact: true }).click();
     await page.waitForFunction(() => document.querySelectorAll('.queue-item').length === 1); assert.equal((await call('/api/state?sessionId=' + session.id)).tasks.length, 1); assert.equal(context.pages().length, 1); assert.deepEqual(errors, []);
     const measurements = await page.evaluate(() => (window as any).sceneMeasurements as { copyMs: number[]; encodeMs: number[]; inputToAnimationFrameMs: number[] });
-    performanceResults.push({ engine, viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1, copyMilliseconds: percentiles(measurements.copyMs), pngEncodeMilliseconds: percentiles(measurements.encodeMs), pointerdownToNextAnimationFrameMilliseconds: percentiles(measurements.inputToAnimationFrameMs), captureUploadHTTPMilliseconds: percentiles(uploads), ...(engine === 'chromium' ? { rendererTaskCPUPercent: percentiles(cpuSamples), rendererJSHeapMiB: percentiles(heapSamples), ownedFrontendBrowserProcessRSSMiB: percentiles(rssSamples) } : {}), measurementScope: 'short isolated seven-material production capture run; copy drawImage call duration excludes pixel-oracle readback; CPU is frontend page TaskDuration/wall interval; RSS sums only PIDs reported by its owned Chrome CDP; backend render process and service memory excluded; screenshot tracing and pixel-oracle readback are active, so these are instrumented-run samples rather than steady-state product measurements' });
+    performanceResults.push({ engine, viewport: { width: 1440, height: 1000 }, deviceScaleFactor: dpr, copyMilliseconds: percentiles(measurements.copyMs), pngEncodeMilliseconds: percentiles(measurements.encodeMs), pointerdownToNextAnimationFrameMilliseconds: percentiles(measurements.inputToAnimationFrameMs), captureUploadHTTPMilliseconds: percentiles(uploads), ...(engine === 'chromium' ? { rendererTaskCPUPercent: percentiles(cpuSamples), rendererJSHeapMiB: percentiles(heapSamples), ownedFrontendBrowserProcessRSSMiB: percentiles(rssSamples) } : {}), measurementScope: 'short isolated seven-material production capture run; copy drawImage call duration excludes pixel-oracle readback; CPU is frontend page TaskDuration/wall interval; RSS sums only PIDs reported by its owned Chrome CDP; backend render process and service memory excluded; screenshot tracing and pixel-oracle readback are active, so these are instrumented-run samples rather than steady-state product measurements' });
     await page.screenshot({ path: join(output, engine + '-final.png') }); await context.tracing.stop({ path: join(output, engine + '-trace.zip') }); await browser.close(); await server.close(); await rm(root, { recursive: true, force: true });
   }
   const facts = { measuredAt: new Date().toISOString(), status: 'material-production-flow-passed', engines: ['Chrome channel', 'project Firefox engine'], results, htmlSurfaceEngine: htmlEngine, performance: performanceResults, defaultDoneToThumbnailToSend: true, nativeProvider: false, openedCaptureWindows: 0, output, pending: ['actual Safari/Edge and embedded App matrix', 'native HTML widget/audio/clipboard policy', 'sustained workload and native HTML backend performance'] };

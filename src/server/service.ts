@@ -289,12 +289,23 @@ export class CanvasService {
       const row = this.captureViewRow(sessionId, viewId, false);
       if (!row.active && row.document_id === input.documentId && row.generation === input.viewGeneration && row.operation_seq === input.operationSeq && row.last_operation_json === json({ kind: 'close', input })) return { closed: true as const };
       this.viewOperation(sessionId, viewId, input); this.advanceView(row, input, { kind: 'close', input });
-      const presented = row.presented_json ? parse<ScenePresentation>(row.presented_json) : undefined, snapshot = presented ? this.sceneSnapshotFor(row, presented.baseSceneId) : undefined;
-      for (const layer of presented?.layers ?? []) if (layer.surface) this.releaseSurface({ ...this.captureViewFrom(row), objectId: layer.objectId, assetId: snapshot!.objects.find(object => object.id === layer.objectId)!.assetId }, layer.surface);
-      this.db.prepare('UPDATE capture_views SET active=0,presented_json=NULL,presented_base_id=NULL WHERE id=?').run(viewId);
-      this.db.prepare('DELETE FROM scene_sources WHERE view_id=?').run(viewId); this.db.prepare('DELETE FROM capture_scenes WHERE view_id=?').run(viewId);
+      this.retireCaptureViewRow(row);
       return { closed: true as const };
     }).immediate();
+  }
+  retireCaptureView(sessionId: string, viewId: string, identity: Pick<CaptureView, 'documentId' | 'viewGeneration'>): { closed: true } {
+    return this.db.transaction(() => {
+      const row = this.captureViewRow(sessionId, viewId, false);
+      if (identity.documentId !== row.document_id || identity.viewGeneration !== row.generation) fail(409, 'scene_view_conflict', 'Use the current document and view generation.');
+      if (row.active) this.retireCaptureViewRow(row);
+      return { closed: true as const };
+    }).immediate();
+  }
+  private retireCaptureViewRow(row: Row): void {
+    const presented = row.presented_json ? parse<ScenePresentation>(row.presented_json) : undefined, snapshot = presented ? this.sceneSnapshotFor(row, presented.baseSceneId) : undefined;
+    for (const layer of presented?.layers ?? []) if (layer.surface) this.releaseSurface({ ...this.captureViewFrom(row), objectId: layer.objectId, assetId: snapshot!.objects.find(object => object.id === layer.objectId)!.assetId }, layer.surface);
+    this.db.prepare('UPDATE capture_views SET active=0,presented_json=NULL,presented_base_id=NULL WHERE id=?').run(row.id);
+    this.db.prepare('DELETE FROM scene_sources WHERE view_id=?').run(row.id); this.db.prepare('DELETE FROM capture_scenes WHERE view_id=?').run(row.id);
   }
   private annotationSource(sessionId: string, draftId: string, annotation: AnnotationInput): SceneSourceContext | undefined {
     const row = annotation.captureState ? this.db.prepare('SELECT data_json,state FROM annotation_sources WHERE session_id=? AND draft_id=? AND annotation_id=? AND version=?').get(sessionId, draftId, annotation.id, annotation.captureState.version) as Row | undefined : undefined;

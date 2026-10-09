@@ -1,6 +1,7 @@
 import { drawScene } from './draw.js';
 import { immutableCopy, requireSize, sceneCrop } from './geometry.js';
-import type { Immutable, SceneBounds, SceneCrop, SceneInput, ScenePresentation, SceneSize } from './types.js';
+import { SceneContentFrame } from './texture.js';
+import type { Immutable, SceneBounds, SceneCrop, SceneInput, ScenePresentation, ScenePrimitive, SceneSize } from './types.js';
 
 export type * from './types.js';
 export { drawScene } from './draw.js';
@@ -12,6 +13,30 @@ function canvas2D(owner: Document, size: SceneSize): { canvas: HTMLCanvasElement
   const context = canvas.getContext('2d');
   if (!context) throw new Error('Canvas 2D is unavailable.');
   return { canvas, context };
+}
+
+function contentString(value: unknown): void { if (typeof value !== 'string') throw new TypeError('Board paint and text values must be strings.'); }
+function contentNumber(value: unknown): void { if (typeof value !== 'number' || !Number.isFinite(value)) throw new TypeError('Board drawing coordinates must be finite numbers.'); }
+function contentBounds(bounds: SceneBounds): void { for (const value of [bounds.x, bounds.y, bounds.width, bounds.height]) contentNumber(value); }
+function contentPrimitive(primitive: ScenePrimitive): void {
+  if (primitive.kind === 'rect' || primitive.kind === 'ellipse') {
+    contentBounds(primitive.bounds); contentString(primitive.fill);
+    if (primitive.kind === 'rect') {
+      if (primitive.stroke !== undefined) contentString(primitive.stroke);
+      if (primitive.radius !== undefined) contentNumber(primitive.radius);
+      if (primitive.lineWidth !== undefined) contentNumber(primitive.lineWidth);
+      if (primitive.shadow) { contentString(primitive.shadow.color); contentNumber(primitive.shadow.y); contentNumber(primitive.shadow.blur); }
+    }
+  } else if (primitive.kind === 'line') {
+    contentString(primitive.stroke); contentNumber(primitive.lineWidth);
+    for (const point of primitive.points) { contentNumber(point.x); contentNumber(point.y); }
+  } else if (primitive.kind === 'text') {
+    contentString(primitive.fill); contentString(primitive.font); contentString(primitive.text); contentNumber(primitive.x); contentNumber(primitive.y);
+    if (primitive.maxWidth !== undefined) contentNumber(primitive.maxWidth);
+  } else if (primitive.kind === 'texture') {
+    contentBounds(primitive.bounds); if (primitive.radius !== undefined) contentNumber(primitive.radius);
+    if (!SceneContentFrame.isCopiedTexture(primitive.texture)) throw new TypeError('Board textures must own validated copied pixels.');
+  } else throw new TypeError('Use an independent SceneFrame for image sources.');
 }
 
 /** A candidate owns its copied pixels. Producers retain their own mutable render surfaces. */
@@ -70,28 +95,62 @@ export class SceneEvidence {
 export class SceneRenderer {
   #canvas: HTMLCanvasElement;
   #context: CanvasRenderingContext2D;
-  #presentedFrame?: SceneFrame;
+  #presentation?: Immutable<ScenePresentation>;
+  #scratch?: { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D };
   #identity: { documentId: string; viewId: string };
   constructor(canvas: HTMLCanvasElement, identity: { documentId: string; viewId: string }) {
     const context = canvas.getContext('2d'); if (!context) throw new Error('Canvas 2D is unavailable.');
     this.#canvas = canvas; this.#context = context; this.#identity = { ...identity };
   }
 
-  get presented(): Immutable<ScenePresentation> | undefined { return this.#presentedFrame?.presentation; }
+  get presented(): Immutable<ScenePresentation> | undefined { return this.#presentation; }
+
+  private accepts(metadata: Pick<ScenePresentation, 'documentId' | 'viewId' | 'frameSeq'>): boolean {
+    if (metadata.documentId !== this.#identity.documentId || metadata.viewId !== this.#identity.viewId) throw new Error('Scene frame belongs to another view.');
+    return !this.#presentation || metadata.frameSeq > this.#presentation.frameSeq;
+  }
+
+  private commit(metadata: Immutable<ScenePresentation>, draw: (context: CanvasRenderingContext2D) => void) {
+    if (this.#canvas.width !== metadata.bitmap.width) this.#canvas.width = metadata.bitmap.width;
+    if (this.#canvas.height !== metadata.bitmap.height) this.#canvas.height = metadata.bitmap.height;
+    this.#context.save();
+    try { this.#context.setTransform(1, 0, 0, 1, 0, 0); this.#context.globalCompositeOperation = 'copy'; draw(this.#context); }
+    finally { this.#context.restore(); }
+    this.#presentation = metadata;
+  }
 
   present(frame: SceneFrame): boolean {
     const metadata = frame.presentation;
-    if (metadata.documentId !== this.#identity.documentId || metadata.viewId !== this.#identity.viewId) throw new Error('Scene frame belongs to another view.');
-    if (this.#presentedFrame && metadata.frameSeq <= this.#presentedFrame.presentation.frameSeq) return false;
-    this.#canvas.width = metadata.bitmap.width; this.#canvas.height = metadata.bitmap.height;
-    this.#context.setTransform(1, 0, 0, 1, 0, 0); frame.drawTo(this.#context);
-    this.#presentedFrame = frame; return true;
+    if (!this.accepts(metadata)) return false;
+    this.commit(metadata, context => frame.drawTo(context)); return true;
+  }
+
+  /** Board textures already own an exportable copy; the mutable staging surface stays private. */
+  renderContent(input: SceneInput, bitmap: SceneSize): boolean {
+    try {
+      if (!this.accepts(input)) return false;
+      requireSize(bitmap, true);
+      contentString(input.background);
+      for (const primitive of [...input.layers.flatMap(layer => layer.primitives), ...(input.overlays ?? [])]) contentPrimitive(primitive);
+      for (const mark of input.marks) {
+        contentString(mark.fill); contentString(mark.textFill); contentNumber(mark.x); contentNumber(mark.y); contentNumber(mark.number);
+        if (mark.stroke !== undefined) contentString(mark.stroke);
+        if (mark.focusColor !== undefined) contentString(mark.focusColor);
+        if (mark.size !== undefined) contentNumber(mark.size);
+      }
+      if (!this.#scratch) this.#scratch = canvas2D(this.#canvas.ownerDocument, bitmap);
+      const scratch = this.#scratch;
+      if (scratch.canvas.width !== bitmap.width) scratch.canvas.width = bitmap.width;
+      if (scratch.canvas.height !== bitmap.height) scratch.canvas.height = bitmap.height;
+      const metadata = drawScene(scratch.context, input, bitmap);
+      this.commit(metadata, context => context.drawImage(scratch.canvas, 0, 0)); return true;
+    } catch (error) { this.#scratch = undefined; throw error; }
   }
 
   /** Call synchronously at Done, before draft/network/encoder work yields to the event loop. */
   capture(cropCSS?: SceneBounds, clipCSS?: SceneBounds): SceneEvidence {
-    const frame = this.#presentedFrame; if (!frame) throw new Error('Scene has no presented frame.');
-    const crop = sceneCrop(frame.presentation.cssViewport, frame.presentation.bitmap, cropCSS, clipCSS);
-    return SceneEvidence.copyCanvas(this.#canvas, frame.presentation, crop);
+    const presentation = this.#presentation; if (!presentation) throw new Error('Scene has no presented frame.');
+    const crop = sceneCrop(presentation.cssViewport, presentation.bitmap, cropCSS, clipCSS);
+    return SceneEvidence.copyCanvas(this.#canvas, presentation, crop);
   }
 }

@@ -9,6 +9,7 @@ import { useComposerLayout, useContextualControls, useNotificationLayout } from 
 import { AnnotationBubble } from './AnnotationBubble';
 import type { BoardApi } from './api';
 import { canvasWheelView, routesWheelToCanvas, type CanvasWheelInput } from './canvas-wheel';
+import { attachCanvasGestures, type CanvasPointerInput } from './canvas-gestures';
 import { AssetThumb, ContentRenderer } from './ContentRenderer';
 import { contentCapabilities, resolveContentKind, resolveContentMime } from '../shared/content-types';
 import { CanvasAnnotationNote } from './CanvasAnnotationNote';
@@ -63,7 +64,7 @@ async function fileDimensions(file: File): Promise<{ width: number; height: numb
 type UploadEntry = { id: string; name: string; controller: AbortController };
 type CommentEdit = { value: AnnotationInput; sessionId: string; draftId: string; index: number; selectionKey?: string; snapshot?: Promise<Blob | undefined>; snapshotGeneration: number; fresh?: boolean; preparing?: Promise<void>; preparingGeneration?: number; frameNote?: string; finished?: boolean };
 type AnnotationReader = { annotationId: string; sessionId: string; draftId?: string; taskId?: string };
-type Gesture = { kind: 'move' | 'resize' | 'pan' | 'select' | 'mark'; start: Point; point: Point; moved: boolean; preview?: Record<string, Rect>; view: SessionView; objects: BoardObject[]; sessionId: string; resizeCorner?: ResizeHandle; commentKey?: string; markBounds?: Rect; region?: Rect };
+type Gesture = { kind: 'move' | 'resize' | 'pan' | 'select' | 'mark'; pointerId: number; start: Point; point: Point; moved: boolean; preview?: Record<string, Rect>; view: SessionView; objects: BoardObject[]; sessionId: string; resizeCorner?: ResizeHandle; commentKey?: string; markBounds?: Rect; region?: Rect };
 
 
 function taskReferences(task: Task) {
@@ -299,6 +300,8 @@ export default function App() {
   const wheelState = useRef({ view, sessionId: state?.session.id || '', disabled: false });
   wheelState.current = { view, sessionId: state?.session.id || '', disabled: board.projectChanged || board.switching || board.sending };
   const gesture = useRef<Gesture | null>(null);
+  const gestureController = useRef<ReturnType<typeof attachCanvasGestures> | undefined>(undefined);
+  const pointerHandlers = useRef({ down: (_event: CanvasPointerInput) => {}, move: (_event: CanvasPointerInput) => {}, up: (_event: CanvasPointerInput) => {}, cancel: () => {} });
   const videoRefs = useRef(new Map<string, HTMLVideoElement>());
   const audioRefs = useRef(new Map<string, HTMLAudioElement>());
   const boardInput = useRef<HTMLInputElement>(null);
@@ -363,8 +366,8 @@ export default function App() {
   useContextualControls(canvas, selectionActions, playbackControls, selected, selectedVideo ? mediaContentRect(selectedVideo, mediaSizes[selectedVideo.id]) : undefined, view);
 
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem('acanvas-theme', theme); document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#111111' : '#f5f5f3'); }, [theme]);
-  useEffect(() => { setPreview({}); setSelectionRect(null); gesture.current = null; }, [state?.session.id]);
-  useEffect(() => { setSnapGuides([]); gesture.current = null; setPreview({}); }, [state?.session.id, mode, spacePan]);
+  useEffect(() => { pointerHandlers.current.cancel(); }, [state?.session.id]);
+  useEffect(() => { pointerHandlers.current.cancel(); }, [state?.session.id, mode, spacePan]);
   useEffect(() => { const active = gesture.current; if (!active || active.objects.map(object => object.id).sort().join(',') !== [...selectedIds].sort().join(',')) { setSnapGuides([]); if (active?.kind === 'move') { gesture.current = null; setPreview({}); } } }, [selectedIds.join(',')]);
   useEffect(() => { setAnnotatingKey(''); setAligningKey(''); setMarkPreview(null); if (gesture.current?.kind === 'mark') gesture.current = null; }, [commentKey]);
   useLayoutEffect(() => { if (aligning) selectionActions.current?.querySelector<HTMLButtonElement>('.alignment-actions button')?.focus({ preventScroll: true }); }, [aligning]);
@@ -416,7 +419,7 @@ export default function App() {
     return () => { active = false; };
   }, [projectScene?.view?.viewId, draft?.id]);
   useEffect(() => {
-    const cancel = () => { const job = captureJob.current; captureJob.current = null; if (job) { job.controller.abort(); void job.provider.close(); } };
+    const cancel = (event?: PageTransitionEvent) => { if (event?.persisted) return; const job = captureJob.current; captureJob.current = null; if (job) { job.controller.abort(); void job.provider.close({ keepalive: !!event }); } };
     window.addEventListener('pagehide', cancel); return () => { cancel(); window.removeEventListener('pagehide', cancel); };
   }, []);
   useEffect(() => { if (inspectedTaskId && !inspectableTask) { setInspectedTaskId(''); setAnnotationReader(null); } }, [inspectedTaskId, !!inspectableTask]);
@@ -441,21 +444,29 @@ export default function App() {
     const element = canvas.current, current = wheelState.current;
     if (!element || current.disabled || gesture.current) return;
     fitMotion.interrupt();
-    const rect = element.getBoundingClientRect(), scale = rect.width / Math.max(1, element.clientWidth), presented = renderedScene.current?.presentation.current;
-    const basis = presented ? { ...current.view, x: presented.camera.x / scale, y: presented.camera.y / scale, zoom: presented.camera.zoom / scale } : current.view;
-    const input = { ...event, clientX: (event.clientX - rect.left) / scale, clientY: (event.clientY - rect.top) / scale, deltaX: event.deltaX / (event.deltaMode === 0 && !event.ctrlKey && !event.metaKey ? scale : 1), deltaY: event.deltaY / (event.deltaMode === 0 && !event.ctrlKey && !event.metaKey ? scale : 1) };
-    board.updateView(canvasWheelView(basis, input, { left: 0, top: 0, height: element.clientHeight }), current.sessionId);
+    const rect = element.getBoundingClientRect(), scale = rect.width / Math.max(1, element.clientWidth);
+    const input: CanvasWheelInput = { clientX: (event.clientX - rect.left) / scale, clientY: (event.clientY - rect.top) / scale, deltaX: event.deltaX / (event.deltaMode === 0 && !event.ctrlKey && !event.metaKey ? scale : 1), deltaY: event.deltaY / (event.deltaMode === 0 && !event.ctrlKey && !event.metaKey ? scale : 1), deltaMode: event.deltaMode, ctrlKey: event.ctrlKey, metaKey: event.metaKey };
+    const next = canvasWheelView(current.view, input, { left: 0, top: 0, height: element.clientHeight });
+    wheelState.current = { ...current, view: next }; board.updateView(next, current.sessionId);
   }, [board.updateView, fitMotion.interrupt]);
   useEffect(() => {
     const element = canvas.current;
     if (!element) return;
+    const gestures = attachCanvasGestures(element, {
+      current: () => ({ ...wheelState.current, busy: !!gesture.current }),
+      updateView: (next, owner) => { wheelState.current = { ...wheelState.current, view: next }; board.updateView(next, owner); },
+      interrupt: fitMotion.interrupt, cancelPointer: () => pointerHandlers.current.cancel(),
+      pointerDown: event => pointerHandlers.current.down(event), pointerMove: event => pointerHandlers.current.move(event), pointerUp: event => pointerHandlers.current.up(event),
+    });
+    gestureController.current = gestures;
     const wheel = (event: WheelEvent) => {
       if (!routesWheelToCanvas(element, event)) return;
-      event.preventDefault(); event.stopPropagation(); canvasWheel(event);
+      event.preventDefault(); event.stopPropagation(); if (gestures.acceptsWheel()) canvasWheel(event);
     };
     element.addEventListener('wheel', wheel, { capture: true, passive: false });
-    return () => element.removeEventListener('wheel', wheel, true);
-  }, [!!state, canvasWheel]);
+    return () => { gestures.dispose(); if (gestureController.current === gestures) gestureController.current = undefined; element.removeEventListener('wheel', wheel, true); };
+  }, [!!state, canvasWheel, board.updateView, fitMotion.interrupt]);
+  useEffect(() => { gestureController.current?.reset(); }, [state?.session.id, disabled, mode, spacePan, projectScene?.view?.viewId, projectScene?.view?.viewGeneration, board.serviceInstance]);
   useEffect(() => {
     const singlePlayback = (event: Event) => { const active = event.target; if (!(active instanceof HTMLMediaElement)) return; document.querySelectorAll<HTMLMediaElement>('audio,video').forEach(element => { if (element !== active && !element.paused) element.pause(); }); };
     document.addEventListener('play', singlePlayback, true); return () => document.removeEventListener('play', singlePlayback, true);
@@ -912,7 +923,7 @@ export default function App() {
   }
   updateDrag.current = previewMove;
 
-  function pointerDown(event: ReactPointerEvent<HTMLElement>, contentDrag = false) {
+  function pointerDown(event: ReactPointerEvent<HTMLElement> | CanvasPointerInput, contentDrag = false) {
     if (disabled || layoutBusy.current || !state || (event.button !== 0 && event.button !== 1) || !contentDrag && (event.target as Element).closest('[data-canvas-control]')) return;
     updateMarkHover(null);
     fitMotion.interrupt();
@@ -925,7 +936,7 @@ export default function App() {
     const object = objects.find(value => value.id === objectId);
     if (effectiveMode === 'mark') {
       setSnapGuides([]);
-      gesture.current = { kind: 'mark', start: point, point, moved: false, view: displayedView, objects: [], sessionId: state.session.id, commentKey: annotationEdit?.value.id };
+      gesture.current = { kind: 'mark', pointerId: event.pointerId, start: point, point, moved: false, view: displayedView, objects: [], sessionId: state.session.id, commentKey: annotationEdit?.value.id };
       canvas.current!.setPointerCapture(event.pointerId); event.preventDefault(); return;
     }
     if (effectiveMode === 'select' && !object && !resizeId && !annotating) clearInspection();
@@ -938,7 +949,7 @@ export default function App() {
       selectObjects(ids); kind = 'move'; moving = objects.filter(value => ids.includes(value.id));
     } else if (effectiveMode === 'select' && !event.shiftKey) selectObjects([]);
     setSnapGuides([]);
-    gesture.current = { kind, start: point, point, moved: false, view: displayedView, objects: moving, sessionId: state.session.id, resizeCorner: (event.target as HTMLElement).closest<HTMLElement>('[data-resize-corner]')?.dataset.resizeCorner as ResizeHandle | undefined };
+    gesture.current = { kind, pointerId: event.pointerId, start: point, point, moved: false, view: displayedView, objects: moving, sessionId: state.session.id, resizeCorner: (event.target as HTMLElement).closest<HTMLElement>('[data-resize-corner]')?.dataset.resizeCorner as ResizeHandle | undefined };
     canvas.current!.setPointerCapture(event.pointerId);
     event.preventDefault();
   }
@@ -953,12 +964,12 @@ export default function App() {
     fitMotion.interrupt();
     const pan = mode === 'pan' || spacePan, ids = selectedIds.includes(objectId) ? selectedIds : [objectId];
     if (!pan) selectObjects(ids);
-    gesture.current = { kind: pan ? 'pan' : 'move', start: point, point, moved: false, view, objects: pan ? [] : objects.filter(value => ids.includes(value.id)), sessionId: state.session.id };
+    gesture.current = { kind: pan ? 'pan' : 'move', pointerId: event.pointerId, start: point, point, moved: false, view, objects: pan ? [] : objects.filter(value => ids.includes(value.id)), sessionId: state.session.id };
     pointerMove(event);
     canvas.current!.focus({ preventScroll: true });
   }
 
-  function pointerMove(event: ReactPointerEvent<HTMLElement>) {
+  function pointerMove(event: ReactPointerEvent<HTMLElement> | CanvasPointerInput) {
     const active = gesture.current;
     if (!active) { updateMarkHover((event.target as Element).closest('[data-canvas-control]') ? null : localPoint(event)); return; }
     const point = localPoint(event);
@@ -970,12 +981,12 @@ export default function App() {
     if (active.kind === 'select') setSelectionRect(rectangle(screenToWorld(active.start, active.view), screenToWorld(point, active.view)));
   }
 
-  function pointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+  function pointerUp(event: ReactPointerEvent<HTMLDivElement> | CanvasPointerInput) {
     const active = gesture.current;
     if (!active) return;
     gesture.current = null;
     setSnapGuides([]);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    if (!gestureController.current?.ownsPointer(event.pointerId) && event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     const point = localPoint(event);
     const region = rectangle(screenToWorld(active.start, active.view), screenToWorld(point, active.view));
     if (active.kind === 'mark') {
@@ -1115,6 +1126,7 @@ export default function App() {
   for (const upload of uploads) notificationItems.push({ id: `upload-${upload.id}`, content: <div className="upload-list" aria-live="polite"><div><LoaderCircle size={15} className="spin"/><span>Importing {upload.name}</span><IconButton label={`Cancel import ${upload.name}`} onClick={() => upload.controller.abort()}><X size={15}/></IconButton></div></div> });
   const notificationList = <NotificationStack items={notificationItems} notices={notices} elementRef={notifications}/>;
 
+  pointerHandlers.current = { down: pointerDown, move: pointerMove, up: pointerUp, cancel: () => { const active = gesture.current; gesture.current = null; if (active && !gestureController.current?.ownsPointer(active.pointerId) && canvas.current?.hasPointerCapture(active.pointerId)) canvas.current.releasePointerCapture(active.pointerId); updateMarkHover(null); setPreview({}); setSelectionRect(null); setSnapGuides([]); setMarkPreview(null); } };
   if (!state || !draft) return <><main className="startup"><span className="brand">acanvas<span>●</span></span>{board.error ? <h1>Unable to open the board</h1> : <><LoaderCircle size={24} className="spin"/><p>Opening your board…</p></>}</main>{notificationList}</>;
 
   return <div className="app-shell" data-capturing={!!captureBusyId || undefined} data-sampling={!!samplingIdentity || undefined}><a className="skip-link" href="#whiteboard">Skip to canvas</a>

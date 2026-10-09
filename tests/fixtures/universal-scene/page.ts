@@ -1,4 +1,5 @@
 import { SceneFrame, SceneRenderer, type SceneInput, type ScenePresentation, type SceneSize, type SceneEvidence, type SceneBounds } from '../../../src/web/scene-renderer/index.js';
+import { SceneContentFrame } from '../../../src/web/scene-renderer/texture.js';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#scene')!;
 const renderer = new SceneRenderer(canvas, { documentId: 'laboratory-document', viewId: 'laboratory-view' });
@@ -67,6 +68,32 @@ const api = {
   },
   visiblePixel(x: number, y: number) { return Array.from(canvas.getContext('2d')!.getImageData(x, y, 1, 1).data); },
   currentPixels() { return Array.from(cropPixels()); },
+  boardContent(seq: number, options: Options = {}) {
+    const source = document.createElement('canvas'); source.width = 32; source.height = 32; const context = source.getContext('2d')!;
+    context.fillStyle = '#db3d45'; context.fillRect(0, 0, 32, 32);
+    const texture = new SceneContentFrame(document, { pixels: source, bitmap: { width: 32, height: 32 }, fit: 'fill' });
+    context.fillStyle = '#20b270'; context.fillRect(0, 0, 32, 32);
+    const scene = input(seq, options), bounds = { x: 0, y: 0, width: 32, height: 32 };
+    scene.layers.push({ objectId: 'copied-texture', objectVersion: 1, worldBounds: bounds, layer: 200, primitives: [{ kind: 'texture', bounds, texture }] });
+    const accepted = renderer.renderContent(scene, size(scene, options));
+    scene.camera.x = 999; scene.media[0].presentedTime = 999; scene.layers[0].worldBounds.x = 999;
+    return { accepted, presentation: renderer.presented, frozen: Object.isFrozen(texture), pixel: api.visiblePixel(8 * devicePixelRatio, 8 * devicePixelRatio) };
+  },
+  rejectContent(seq: number, kind: 'texture' | 'image' | 'dimensions' | 'draw') {
+    const scene = input(seq), bounds = { x: 0, y: 0, width: 32, height: 32 }; let callbackCalled = false;
+    if (kind === 'texture') scene.layers[0].primitives = [{ kind: 'texture', bounds, texture: { draw() { callbackCalled = true; } } }];
+    if (kind === 'image') scene.layers[0].primitives = [{ kind: 'image', bounds, source: document.createElement('canvas') }];
+    if (kind === 'draw') scene.layers[0].primitives = [{ kind: 'rect', bounds, fill: 'red', radius: -1 }];
+    try { renderer.renderContent(scene, kind === 'dimensions' ? { width: 0, height: 0 } : size(scene, {})); return { error: 'accepted', callbackCalled }; }
+    catch (error) { return { error: (error as Error).name, callbackCalled, frameSeq: renderer.presented!.frameSeq }; }
+  },
+  async taintedContent(seq: number, url: string) {
+    const image = new Image(); image.src = url; await image.decode();
+    try {
+      const texture = new SceneContentFrame(document, { pixels: image, bitmap: { width: 32, height: 32 } }), scene = input(seq), bounds = { x: 0, y: 0, width: 32, height: 32 };
+      scene.layers[0].primitives = [{ kind: 'texture', bounds, texture }]; renderer.renderContent(scene, size(scene, {})); return 'exported';
+    } catch (error) { return (error as Error).name; }
+  },
   cssZoom(value: number) { document.body.style.zoom = String(value); },
   sourceMutation(seq: number) {
     const source = document.createElement('canvas'); source.width = 32; source.height = 32; const context = source.getContext('2d')!;

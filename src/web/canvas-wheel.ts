@@ -1,5 +1,5 @@
-import type { SessionView } from '../shared/types';
-import { zoomAt } from './geometry';
+import type { SessionView } from '../shared/types.js';
+import { zoomAt } from './geometry.js';
 
 export type CanvasWheelInput = { clientX: number; clientY: number; deltaX: number; deltaY: number; deltaMode: number; ctrlKey: boolean; metaKey: boolean };
 

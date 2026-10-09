@@ -1,0 +1,1587 @@
+{
+  "reviewer": "independent clean-context renderer and performance review",
+  "generatedAt": "2026-10-09T04:46:53.692Z",
+  "status": "PASS",
+  "baseline": "c3856c1fd15ebbb4a7f6001165de7957a05b58f6",
+  "scope": [
+    "src/web/scene-renderer/index.ts",
+    "src/web/scene-renderer/texture.ts",
+    "src/web/scene-renderer/content.tsx",
+    "src/web/scene-renderer/board.tsx",
+    "src/web/scene-renderer/media/controlled-panel.ts",
+    "src/web/App.tsx capture and presented-layout pairing",
+    "scripts/measure-board-performance.mjs",
+    "src/web/MarkdownCanvasContent.tsx"
+  ],
+  "criteria": [
+    {
+      "id": "P1-private-staging-and-copy-ownership",
+      "status": "PASS",
+      "evidence": "Renderer scratch uses instance-private fields, is never exposed as an external SceneFrame, and does not share captured evidence. SceneContentFrame owns copied origin-clean pixels and deeply frozen metadata. Validated runtime branding rejects arbitrary and forged textures."
+    },
+    {
+      "id": "P2-pure-source-runtime-boundary",
+      "status": "PASS",
+      "evidence": "Independent repaired candidate rejects 11 CanvasPattern paint fields before presentation; old pixels, exact metadata object and PNG exportability are preserved."
+    },
+    {
+      "id": "P3-failure-preserves-exportable-N",
+      "status": "PASS",
+      "evidence": "Six independent negative inputs cover overlay texture, forged prototype, metadata cloning after staging draw, primitive draw exception, invalid camera and invalid bitmap dimensions. All retain prior pixels and metadata; subsequent clean render succeeds."
+    },
+    {
+      "id": "P4-quality-complete-layers-and-held-N",
+      "status": "PASS",
+      "evidence": "Four independent DPR1/2 and camera cases compare 72 layers plus copied texture, clipping, alpha, shadow, shapes, text and marks through SceneFrame versus renderContent: 48000 direct compared channels, zero mismatch. Held N20 PNG is identical after six staging reuses and a dimension change to N26; additional N1 retained across N8."
+    },
+    {
+      "id": "P5-RAF-and-same-N-Done",
+      "status": "PASS",
+      "evidence": "Single pending RAF reads latest committed React input and copied registry sources. Dirty annotation DOM records remain scheduled while unrelated child mutations are ignored. Capture synchronously copies displayed Canvas and immutable presentation before source hold, encode, draft/network waits. Layer/mark/source references follow the same committed presentation. Markdown body markup is memoized by its actual HTML string, preserving DOM nodes when board renders reuse the same document. Real content changes still pass through src loading and HTML-dependent memoization."
+    },
+    {
+      "id": "P6-existing-functional-scope",
+      "status": "PASS",
+      "evidence": "Reviewed execution proofs show generic Chromium DPR1/2 old and ahead frame isolation, production same-PNG and recovery/cancel/restart, CSS origin/zoom and seven materials. These are executor results; the new paint and staging equivalence tests above are this independent reviewer."
+    },
+    {
+      "id": "P7-real-performance",
+      "status": "PASS",
+      "evidence": "Independent raw-data recomputation confirms two final focused repetitions with the same 1440x1000 DPR2, 12-object, 4-native-HTML, 5-comment fixture. Each drag and pan has 59/59 exact geometry-matched commits, zero superseded/uncommitted inputs, zero long tasks, zero full scene readbacks, and zero publisher recreation/clear calls. Drag is 1603/1551ms, p95 20.1/21.9ms; pan is 1510/1517ms, p95 20.0/20.8ms. Frontend Chrome CPU falls about 73 percent and Canvas creation about 93 percent versus the retained before sample. Median commit latency increases 3.7 to 4.2ms with RAF coalescing; this tradeoff is recorded below."
+    }
+  ],
+  "findings": [
+    {
+      "id": "R1",
+      "priority": 1,
+      "title": "CanvasPattern crosses the trusted primitive boundary",
+      "status": "CLOSED",
+      "source": "src/web/scene-renderer/index.ts renderContent",
+      "failure": {
+        "accepted": true,
+        "frameSeq": 2,
+        "readError": "SecurityError",
+        "encodeError": "SecurityError",
+        "retained": false,
+        "exportable": false
+      },
+      "resolution": "Runtime string-only paint/text values and finite primitive coordinates are checked before staging; publish-copy and origin cleanliness validation remain in place.",
+      "retest": {
+        "error": "TypeError",
+        "sameMetadata": true,
+        "frameSeq": 1,
+        "retained": true,
+        "exportable": true
+      }
+    },
+    {
+      "id": "R2",
+      "priority": 2,
+      "title": "First optimized pan sample has an unresolved tail",
+      "status": "CLOSED",
+      "failure": {
+        "beforeElapsedMs": 4914,
+        "afterElapsedMs": 7113,
+        "beforeP95Ms": 24.299999952316284,
+        "afterP95Ms": 50.5
+      },
+      "resolution": "Read-friendly producer Canvas contexts remove the retained readback stalls. Stable Markdown HTML removes 63 redundant publications per drag/pan phase. Two independent final measurements restore pan duration to 1510/1517ms with p95 20.0/20.8ms and zero long tasks; the original 7113ms/p95 50.5ms failure remains in history.",
+      "retest": [
+        {
+          "phase": "pan-comments-static-html",
+          "elapsedMs": 1510,
+          "presents": 69,
+          "canvasNew": 30,
+          "canvasSize": 100,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 70.5,
+          "cpuSeconds": 1.290984,
+          "rssBytes": 940097536,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 17.799999952316284,
+            "p95": 20
+          },
+          "recomputedCommitPercentiles": {
+            "count": 59,
+            "p50": 17.799999952316284,
+            "p95": 20
+          },
+          "storedPercentilesMatch": true,
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": [],
+          "registry": {
+            "HTML 0.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 1.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Notes.md": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 2.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 0.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 2.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Motion.gif": {
+              "publish": 10,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 3.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Video.mp4": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Tone.mp3": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 1.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Archive.zip": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            }
+          },
+          "comparisonToBefore": {
+            "actionDurationDecreasePercent": 69.27146927146927,
+            "cpuDecreasePercent": 74.21711733014642,
+            "canvasNewDecreasePercent": 93.86503067484662,
+            "totalReadbackTimeDecreasePercent": 97.47248413813794,
+            "p95DecreasePercent": 17.69547308952323,
+            "p50IncreaseMs": 4.200000047683716
+          }
+        },
+        {
+          "phase": "pan-comments-static-html",
+          "elapsedMs": 1517,
+          "presents": 70,
+          "canvasNew": 30,
+          "canvasSize": 100,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 81.2999997138977,
+          "cpuSeconds": 1.356527,
+          "rssBytes": 924024832,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 17.799999952316284,
+            "p95": 20.800000190734863
+          },
+          "recomputedCommitPercentiles": {
+            "count": 59,
+            "p50": 17.799999952316284,
+            "p95": 20.800000190734863
+          },
+          "storedPercentilesMatch": true,
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": [],
+          "registry": {
+            "Archive.zip": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 0.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 2.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 1.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Tone.mp3": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 3.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 1.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 2.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Notes.md": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Video.mp4": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Motion.gif": {
+              "publish": 10,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 0.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            }
+          },
+          "comparisonToBefore": {
+            "actionDurationDecreasePercent": 69.12901912901913,
+            "cpuDecreasePercent": 72.90812552325322,
+            "canvasNewDecreasePercent": 93.86503067484662,
+            "totalReadbackTimeDecreasePercent": 97.0852902291311,
+            "p95DecreasePercent": 14.40329122818702,
+            "p50IncreaseMs": 4.200000047683716
+          }
+        }
+      ]
+    }
+  ],
+  "independent": {
+    "originalPath": "/private/tmp/acanvas-renderer-review-ftlvAh/negative-results.json",
+    "fixedPath": "/private/tmp/acanvas-renderer-review-ftlvAh/fixed/negative-results.json",
+    "probe": "/private/tmp/acanvas-renderer-review-ftlvAh/probe.mjs",
+    "original": {
+      "measuredAt": "2026-10-09T04:35:27.187Z",
+      "root": "/private/tmp/acanvas-performance-candidate-2kd7Sr",
+      "probes": [
+        {
+          "name": "unknown overlay texture",
+          "error": "TypeError",
+          "retained": true,
+          "sameMetadata": true,
+          "frameSeq": 1,
+          "callbackCalled": false
+        },
+        {
+          "name": "forged copied texture prototype",
+          "error": "TypeError",
+          "retained": true,
+          "sameMetadata": true,
+          "frameSeq": 1
+        },
+        {
+          "name": "metadata clone failure after staging draw",
+          "error": "DataCloneError",
+          "retained": true,
+          "sameMetadata": true,
+          "frameSeq": 1
+        },
+        {
+          "name": "primitive draw failure",
+          "error": "RangeError",
+          "retained": true,
+          "sameMetadata": true,
+          "frameSeq": 1
+        },
+        {
+          "name": "invalid camera",
+          "error": "RangeError",
+          "retained": true,
+          "sameMetadata": true,
+          "frameSeq": 1
+        },
+        {
+          "name": "invalid dimensions",
+          "error": "RangeError",
+          "retained": true,
+          "sameMetadata": true,
+          "frameSeq": 1
+        }
+      ],
+      "heldFacts": {
+        "savedFrame": 1,
+        "currentFrame": 8,
+        "retained": true,
+        "comparedChannels": 19200
+      },
+      "enormous": {
+        "accepted": true,
+        "canvas": {
+          "width": 100000,
+          "height": 1
+        },
+        "sameMetadata": false,
+        "retained": false
+      },
+      "contaminated": {
+        "accepted": true,
+        "sameMetadata": false,
+        "frameSeq": 2,
+        "readError": "SecurityError",
+        "retained": false,
+        "encodeError": "SecurityError",
+        "exportable": false
+      },
+      "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "dpr": 2
+    },
+    "fixed": {
+      "measuredAt": "2026-10-09T04:44:28.170Z",
+      "root": "/private/tmp/acanvas-performance-candidate-2kd7Sr",
+      "probes": [
+        {
+          "name": "unknown overlay texture",
+          "error": "TypeError",
+          "retained": true,
+          "sameMetadata": true,
+          "frameSeq": 1,
+          "callbackCalled": false
+        },
+        {
+          "name": "forged copied texture prototype",
+          "error": "TypeError",
+          "retained": true,
+          "sameMetadata": true,
+          "frameSeq": 1
+        },
+        {
+          "name": "metadata clone failure after staging draw",
+          "error": "DataCloneError",
+          "retained": true,
+          "sameMetadata": true,
+          "frameSeq": 1
+        },
+        {
+          "name": "primitive draw failure",
+          "error": "RangeError",
+          "retained": true,
+          "sameMetadata": true,
+          "frameSeq": 1
+        },
+        {
+          "name": "invalid camera",
+          "error": "RangeError",
+          "retained": true,
+          "sameMetadata": true,
+          "frameSeq": 1
+        },
+        {
+          "name": "invalid dimensions",
+          "error": "RangeError",
+          "retained": true,
+          "sameMetadata": true,
+          "frameSeq": 1
+        }
+      ],
+      "heldFacts": {
+        "savedFrame": 1,
+        "currentFrame": 8,
+        "retained": true,
+        "comparedChannels": 19200
+      },
+      "enormous": {
+        "accepted": true,
+        "canvas": {
+          "width": 100000,
+          "height": 1
+        },
+        "sameMetadata": false,
+        "retained": false
+      },
+      "contaminated": {
+        "error": "TypeError",
+        "sameMetadata": true,
+        "frameSeq": 1,
+        "retained": true,
+        "exportable": true
+      },
+      "patternFields": [
+        {
+          "field": "background",
+          "error": "TypeError",
+          "sameMetadata": true,
+          "retained": true,
+          "exportable": true
+        },
+        {
+          "field": "rect.fill",
+          "error": "TypeError",
+          "sameMetadata": true,
+          "retained": true,
+          "exportable": true
+        },
+        {
+          "field": "rect.stroke",
+          "error": "TypeError",
+          "sameMetadata": true,
+          "retained": true,
+          "exportable": true
+        },
+        {
+          "field": "ellipse.fill",
+          "error": "TypeError",
+          "sameMetadata": true,
+          "retained": true,
+          "exportable": true
+        },
+        {
+          "field": "line.stroke",
+          "error": "TypeError",
+          "sameMetadata": true,
+          "retained": true,
+          "exportable": true
+        },
+        {
+          "field": "text.fill",
+          "error": "TypeError",
+          "sameMetadata": true,
+          "retained": true,
+          "exportable": true
+        },
+        {
+          "field": "mark.fill",
+          "error": "TypeError",
+          "sameMetadata": true,
+          "retained": true,
+          "exportable": true
+        },
+        {
+          "field": "mark.textFill",
+          "error": "TypeError",
+          "sameMetadata": true,
+          "retained": true,
+          "exportable": true
+        },
+        {
+          "field": "mark.stroke",
+          "error": "TypeError",
+          "sameMetadata": true,
+          "retained": true,
+          "exportable": true
+        },
+        {
+          "field": "mark.focusColor",
+          "error": "TypeError",
+          "sameMetadata": true,
+          "retained": true,
+          "exportable": true
+        },
+        {
+          "field": "shadow.color",
+          "error": "TypeError",
+          "sameMetadata": true,
+          "retained": true,
+          "exportable": true
+        }
+      ],
+      "quality": [
+        {
+          "dpr": 1,
+          "initialCamera": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
+          },
+          "completeLayers": 72,
+          "comparedChannels": 4800,
+          "mismatches": 0,
+          "heldFrame": 20,
+          "currentFrame": 26,
+          "heldPNGUnchangedAfterReuseAndResize": true
+        },
+        {
+          "dpr": 1,
+          "initialCamera": {
+            "x": -11,
+            "y": 3,
+            "zoom": 1.25
+          },
+          "completeLayers": 72,
+          "comparedChannels": 4800,
+          "mismatches": 0,
+          "heldFrame": 20,
+          "currentFrame": 26,
+          "heldPNGUnchangedAfterReuseAndResize": true
+        },
+        {
+          "dpr": 2,
+          "initialCamera": {
+            "x": 0,
+            "y": 0,
+            "zoom": 1
+          },
+          "completeLayers": 72,
+          "comparedChannels": 19200,
+          "mismatches": 0,
+          "heldFrame": 20,
+          "currentFrame": 26,
+          "heldPNGUnchangedAfterReuseAndResize": true
+        },
+        {
+          "dpr": 2,
+          "initialCamera": {
+            "x": -11,
+            "y": 3,
+            "zoom": 1.25
+          },
+          "completeLayers": 72,
+          "comparedChannels": 19200,
+          "mismatches": 0,
+          "heldFrame": 20,
+          "currentFrame": 26,
+          "heldPNGUnchangedAfterReuseAndResize": true
+        }
+      ],
+      "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "dpr": 2
+    }
+  },
+  "performanceHistory": [
+    {
+      "label": "first-final-position-matched-pair",
+      "beforePath": "/private/tmp/acanvas-performance-output-3EwAc8/performance.json",
+      "afterPath": "/private/tmp/acanvas-performance-output-w5wqlu/performance.json",
+      "before": [
+        {
+          "phase": "stationary-comments-static-html",
+          "elapsedMs": 2036,
+          "canvasNew": 74,
+          "canvasSize": 272,
+          "fullSceneReadback": {
+            "count": 37,
+            "milliseconds": 325.80000019073486
+          },
+          "readbackMs": 403.0000009536743,
+          "cpuSeconds": 1.141523,
+          "rssBytes": 847937536,
+          "inputCount": 0,
+          "committed": {
+            "count": 0
+          },
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": []
+        },
+        {
+          "phase": "drag-comments-static-html",
+          "elapsedMs": 5687,
+          "canvasNew": 520,
+          "canvasSize": 1744,
+          "fullSceneReadback": {
+            "count": 294,
+            "milliseconds": 2559.8999993801117
+          },
+          "readbackMs": 3029.1000003814697,
+          "cpuSeconds": 5.6383849999999995,
+          "rssBytes": 913375232,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 13.899999856948853,
+            "p95": 29.200000047683716
+          },
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": [
+            76,
+            72
+          ]
+        },
+        {
+          "phase": "pan-comments-static-html",
+          "elapsedMs": 4914,
+          "canvasNew": 489,
+          "canvasSize": 1642,
+          "fullSceneReadback": {
+            "count": 275,
+            "milliseconds": 2386.5000002384186
+          },
+          "readbackMs": 2789.3000025749207,
+          "cpuSeconds": 5.007136000000002,
+          "rssBytes": 970620928,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 13.599999904632568,
+            "p95": 24.299999952316284
+          },
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": []
+        },
+        {
+          "phase": "zoom-comments-static-html",
+          "elapsedMs": 2642,
+          "canvasNew": 297,
+          "canvasSize": 990,
+          "fullSceneReadback": {
+            "count": 168,
+            "milliseconds": 1434.400001525879
+          },
+          "readbackMs": 1675.4000005722046,
+          "cpuSeconds": 2.968516,
+          "rssBytes": 1000046592,
+          "inputCount": 40,
+          "committed": {
+            "count": 1,
+            "p50": 13.300000190734863,
+            "p95": 13.300000190734863
+          },
+          "supersededInputs": 39,
+          "uncommittedInputs": 0,
+          "longTasks": []
+        },
+        {
+          "phase": "media-playing-html-active",
+          "elapsedMs": 2065,
+          "canvasNew": 131,
+          "canvasSize": 442,
+          "fullSceneReadback": {
+            "count": 66,
+            "milliseconds": 623.5000002384186
+          },
+          "readbackMs": 752.8999993801117,
+          "cpuSeconds": 1.6834430000000005,
+          "rssBytes": 889356288,
+          "inputCount": 0,
+          "committed": {
+            "count": 0
+          },
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": []
+        },
+        {
+          "phase": "drag-comments-media-html-active-trace",
+          "elapsedMs": 6011,
+          "canvasNew": 665,
+          "canvasSize": 2180,
+          "fullSceneReadback": {
+            "count": 367,
+            "milliseconds": 3232.1000003814697
+          },
+          "readbackMs": 3773.0999977588654,
+          "cpuSeconds": 6.402051,
+          "rssBytes": 1024262144,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 15.300000190734863,
+            "p95": 33.09999990463257
+          },
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": [
+            51
+          ]
+        }
+      ],
+      "after": [
+        {
+          "phase": "stationary-comments-static-html",
+          "elapsedMs": 2022,
+          "canvasNew": 41,
+          "canvasSize": 138,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 121.29999923706055,
+          "cpuSeconds": 0.8852210000000003,
+          "rssBytes": 882622464,
+          "inputCount": 0,
+          "committed": {
+            "count": 0
+          },
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": []
+        },
+        {
+          "phase": "drag-comments-static-html",
+          "elapsedMs": 2201,
+          "canvasNew": 174,
+          "canvasSize": 404,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 751.900000333786,
+          "cpuSeconds": 2.5993719999999993,
+          "rssBytes": 960774144,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 17.799999952316284,
+            "p95": 34.5
+          },
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": [
+            59
+          ]
+        },
+        {
+          "phase": "pan-comments-static-html",
+          "elapsedMs": 7113,
+          "canvasNew": 218,
+          "canvasSize": 516,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 1493.7000024318695,
+          "cpuSeconds": 3.4687610000000006,
+          "rssBytes": 1018920960,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 17.899999856948853,
+            "p95": 50.5
+          },
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": [
+            56,
+            147,
+            76,
+            53,
+            64,
+            115,
+            168
+          ]
+        },
+        {
+          "phase": "zoom-comments-static-html",
+          "elapsedMs": 1891,
+          "canvasNew": 122,
+          "canvasSize": 294,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 529.8999984264374,
+          "cpuSeconds": 2.0553640000000004,
+          "rssBytes": 991756288,
+          "inputCount": 40,
+          "committed": {
+            "count": 40,
+            "p50": 18.59999990463257,
+            "p95": 21
+          },
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": []
+        },
+        {
+          "phase": "media-playing-html-active",
+          "elapsedMs": 2087,
+          "canvasNew": 68,
+          "canvasSize": 188,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 141.40000081062317,
+          "cpuSeconds": 1.5451320000000008,
+          "rssBytes": 1025081344,
+          "inputCount": 0,
+          "committed": {
+            "count": 0
+          },
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": []
+        },
+        {
+          "phase": "drag-comments-media-html-active-trace",
+          "elapsedMs": 2795,
+          "canvasNew": 216,
+          "canvasSize": 496,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 815.2000000476837,
+          "cpuSeconds": 3.227065000000001,
+          "rssBytes": 1072594944,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 20.299999952316284,
+            "p95": 37.90000009536743
+          },
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": []
+        }
+      ],
+      "result": "partial-performance-improvement-with-pan-regression"
+    },
+    {
+      "label": "producer-context-hint-before-Markdown-stability",
+      "path": "/private/tmp/acanvas-performance-output-CTjWiO/performance.json",
+      "phases": [
+        {
+          "phase": "drag-comments-static-html",
+          "elapsedMs": 1918,
+          "presents": 105,
+          "canvasNew": 166,
+          "canvasSize": 380,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 142.69999861717224,
+          "cpuSeconds": 2.150612,
+          "rssBytes": 941981696,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 17.799999952316284,
+            "p95": 20
+          },
+          "recomputedCommitPercentiles": {
+            "count": 59,
+            "p50": 17.799999952316284,
+            "p95": 20
+          },
+          "storedPercentilesMatch": true,
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": [],
+          "registry": {
+            "HTML 3.html": {
+              "publish": 6,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 1.html": {
+              "publish": 6,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 0.html": {
+              "publish": 6,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 2.html": {
+              "publish": 6,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Video.mp4": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 0.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 2.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 1.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Archive.zip": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Notes.md": {
+              "publish": 63,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Motion.gif": {
+              "publish": 12,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Tone.mp3": {
+              "publish": 2,
+              "clear": 0,
+              "publisher": 0
+            }
+          },
+          "comparisonToBefore": {
+            "actionDurationDecreasePercent": 66.27395815016705,
+            "cpuDecreasePercent": 61.857659595788505,
+            "canvasNewDecreasePercent": 68.07692307692308,
+            "totalReadbackTimeDecreasePercent": 95.28902979105341,
+            "p95DecreasePercent": 31.50684942691808,
+            "p50IncreaseMs": 3.9000000953674316
+          }
+        },
+        {
+          "phase": "pan-comments-static-html",
+          "elapsedMs": 1810,
+          "presents": 101,
+          "canvasNew": 162,
+          "canvasSize": 372,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 93.49999833106995,
+          "cpuSeconds": 2.4401029999999997,
+          "rssBytes": 1001472000,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 17.800000190734863,
+            "p95": 20.59999990463257
+          },
+          "recomputedCommitPercentiles": {
+            "count": 59,
+            "p50": 17.800000190734863,
+            "p95": 20.59999990463257
+          },
+          "storedPercentilesMatch": true,
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": [],
+          "registry": {
+            "HTML 3.html": {
+              "publish": 6,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 1.html": {
+              "publish": 6,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 0.html": {
+              "publish": 6,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 2.html": {
+              "publish": 6,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Video.mp4": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 0.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 2.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 1.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Archive.zip": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Notes.md": {
+              "publish": 63,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Motion.gif": {
+              "publish": 12,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Tone.mp3": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            }
+          },
+          "comparisonToBefore": {
+            "actionDurationDecreasePercent": 63.166463166463174,
+            "cpuDecreasePercent": 51.267491036792315,
+            "canvasNewDecreasePercent": 66.87116564417178,
+            "totalReadbackTimeDecreasePercent": 96.64790455509424,
+            "p95DecreasePercent": 15.226337674667489,
+            "p50IncreaseMs": 4.200000286102295
+          }
+        }
+      ],
+      "result": "tail-stalls-cleared-with-redundant-Markdown-publication-still-present"
+    },
+    {
+      "label": "final-focused-repeat-1",
+      "path": "/private/tmp/acanvas-performance-output-HlYSnx/performance.json",
+      "version": "final-stable-markup-counters-repeat-1",
+      "measuredAt": "2026-10-09T04:51:09.891Z",
+      "fixture": {
+        "browser": "155.0.8059.39",
+        "dpr": 2,
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "objects": 12,
+        "html": 4,
+        "comments": 5
+      },
+      "phases": [
+        {
+          "phase": "drag-comments-static-html",
+          "elapsedMs": 1603,
+          "presents": 74,
+          "canvasNew": 34,
+          "canvasSize": 108,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 102.59999942779541,
+          "cpuSeconds": 1.5474449999999997,
+          "rssBytes": 919076864,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 17.799999952316284,
+            "p95": 20.09999990463257
+          },
+          "recomputedCommitPercentiles": {
+            "count": 59,
+            "p50": 17.799999952316284,
+            "p95": 20.09999990463257
+          },
+          "storedPercentilesMatch": true,
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": [],
+          "registry": {
+            "HTML 0.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 1.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Notes.md": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 2.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 0.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 2.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Motion.gif": {
+              "publish": 10,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 3.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Video.mp4": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Tone.mp3": {
+              "publish": 2,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 1.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Archive.zip": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            }
+          },
+          "comparisonToBefore": {
+            "actionDurationDecreasePercent": 71.8129066291542,
+            "cpuDecreasePercent": 72.55517315685253,
+            "canvasNewDecreasePercent": 93.46153846153847,
+            "totalReadbackTimeDecreasePercent": 96.61285532287232,
+            "p95DecreasePercent": 31.164384000653467,
+            "p50IncreaseMs": 3.9000000953674316
+          }
+        },
+        {
+          "phase": "pan-comments-static-html",
+          "elapsedMs": 1510,
+          "presents": 69,
+          "canvasNew": 30,
+          "canvasSize": 100,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 70.5,
+          "cpuSeconds": 1.290984,
+          "rssBytes": 940097536,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 17.799999952316284,
+            "p95": 20
+          },
+          "recomputedCommitPercentiles": {
+            "count": 59,
+            "p50": 17.799999952316284,
+            "p95": 20
+          },
+          "storedPercentilesMatch": true,
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": [],
+          "registry": {
+            "HTML 0.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 1.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Notes.md": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 2.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 0.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 2.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Motion.gif": {
+              "publish": 10,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 3.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Video.mp4": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Tone.mp3": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 1.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Archive.zip": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            }
+          },
+          "comparisonToBefore": {
+            "actionDurationDecreasePercent": 69.27146927146927,
+            "cpuDecreasePercent": 74.21711733014642,
+            "canvasNewDecreasePercent": 93.86503067484662,
+            "totalReadbackTimeDecreasePercent": 97.47248413813794,
+            "p95DecreasePercent": 17.69547308952323,
+            "p50IncreaseMs": 4.200000047683716
+          }
+        }
+      ],
+      "result": "PASS"
+    },
+    {
+      "label": "final-focused-repeat-2",
+      "path": "/private/tmp/acanvas-performance-output-AkpCCz/performance.json",
+      "version": "final-stable-markup-counters-repeat-2",
+      "measuredAt": "2026-10-09T04:52:53.312Z",
+      "fixture": {
+        "browser": "155.0.8059.39",
+        "dpr": 2,
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "objects": 12,
+        "html": 4,
+        "comments": 5
+      },
+      "phases": [
+        {
+          "phase": "drag-comments-static-html",
+          "elapsedMs": 1551,
+          "presents": 71,
+          "canvasNew": 36,
+          "canvasSize": 116,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 102.29999923706055,
+          "cpuSeconds": 1.4790700000000003,
+          "rssBytes": 909590528,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 17.600000143051147,
+            "p95": 21.90000009536743
+          },
+          "recomputedCommitPercentiles": {
+            "count": 59,
+            "p50": 17.600000143051147,
+            "p95": 21.90000009536743
+          },
+          "storedPercentilesMatch": true,
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": [],
+          "registry": {
+            "Archive.zip": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 0.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 2.html": {
+              "publish": 6,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 1.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Tone.mp3": {
+              "publish": 2,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 3.html": {
+              "publish": 6,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 1.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 2.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Notes.md": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Video.mp4": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Motion.gif": {
+              "publish": 10,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 0.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            }
+          },
+          "comparisonToBefore": {
+            "actionDurationDecreasePercent": 72.72727272727273,
+            "cpuDecreasePercent": 73.76784309691516,
+            "canvasNewDecreasePercent": 93.07692307692308,
+            "totalReadbackTimeDecreasePercent": 96.62275926102878,
+            "p95DecreasePercent": 24.999999795874505,
+            "p50IncreaseMs": 3.700000286102295
+          }
+        },
+        {
+          "phase": "pan-comments-static-html",
+          "elapsedMs": 1517,
+          "presents": 70,
+          "canvasNew": 30,
+          "canvasSize": 100,
+          "fullSceneReadback": {
+            "count": 0,
+            "milliseconds": 0
+          },
+          "readbackMs": 81.2999997138977,
+          "cpuSeconds": 1.356527,
+          "rssBytes": 924024832,
+          "inputCount": 59,
+          "committed": {
+            "count": 59,
+            "p50": 17.799999952316284,
+            "p95": 20.800000190734863
+          },
+          "recomputedCommitPercentiles": {
+            "count": 59,
+            "p50": 17.799999952316284,
+            "p95": 20.800000190734863
+          },
+          "storedPercentilesMatch": true,
+          "supersededInputs": 0,
+          "uncommittedInputs": 0,
+          "longTasks": [],
+          "registry": {
+            "Archive.zip": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 0.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 2.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 1.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Tone.mp3": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 3.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 1.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Image 2.svg": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Notes.md": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Video.mp4": {
+              "publish": 0,
+              "clear": 0,
+              "publisher": 0
+            },
+            "Motion.gif": {
+              "publish": 10,
+              "clear": 0,
+              "publisher": 0
+            },
+            "HTML 0.html": {
+              "publish": 5,
+              "clear": 0,
+              "publisher": 0
+            }
+          },
+          "comparisonToBefore": {
+            "actionDurationDecreasePercent": 69.12901912901913,
+            "cpuDecreasePercent": 72.90812552325322,
+            "canvasNewDecreasePercent": 93.86503067484662,
+            "totalReadbackTimeDecreasePercent": 97.0852902291311,
+            "p95DecreasePercent": 14.40329122818702,
+            "p50IncreaseMs": 4.200000047683716
+          }
+        }
+      ],
+      "result": "PASS"
+    }
+  ],
+  "executorProofs": [
+    "/private/tmp/acanvas-performance-prototype-chromium/scene-prototype-execution.json",
+    "/private/tmp/acanvas-performance-scene-production-final-escape/scene-production-execution.json",
+    "/private/tmp/acanvas-performance-types-chromium-dpr2/scene-types-execution.json",
+    "/private/tmp/acanvas-performance-geometry-chromium/scene-geometry-execution.json"
+  ],
+  "limits": [
+    "Own independent browser probe uses isolated Chrome 155 headless and small canvases; no production service or user board is touched.",
+    "Performance commit timing matches camera and dragged object coordinates to successful visible drawImage. It excludes compositor display delay. Coalesced inputs are separately reported.",
+    "Canvas/bounds wrappers, CDP timings and final-phase Chrome tracing add instrumentation overhead; trace event durations overlap.",
+    "CPU/RSS covers the owned frontend Chrome process tree, excluding service/CEF and other host processes.",
+    "The baseline Ctrl-wheel bug yields one matching terminal zoom pose; its zoom latency is not a valid functioning-zoom comparison.",
+    "Executor seven-material JSON has a Firefox label in its engines list, but actual results are Chrome only. No new Firefox, physical trackpad or Safari pass is claimed.",
+    "The 100000x1 canvas probe succeeded in current Chrome; it is a valid-dimension case and is not counted as a failure-retention negative.",
+    "Median input-to-Canvas commit increases from 13.9ms drag/13.6ms pan to 17.6-17.8ms drag/17.8ms pan. Tail latency, action duration, CPU and Canvas creation improve; the evidence does not show every latency percentile improving.",
+    "Before includes an extra stationary warmup phase; final focused samples measure only drag/pan after the same fixture readiness and 1-second warmup. This limits an exact causal percentage claim across before/final; the within-focused context-hint versus Markdown-stability counters independently account for avoided allocation work.",
+    "The focused final repetitions do not contain a full interaction Chrome trace; their tiny trailing trace does not measure drag/pan. Canvas timings, long tasks, native input/candidate geometry matching and CDP CPU/RSS are the final metrics.",
+    "No final functioning-zoom latency speedup relative to the broken baseline is inferred. Earlier full-run source/zoom observations and separate gesture acceptance remain distinct from the final drag/pan evidence.",
+    "The script instrumentation records canvas calls in finally; these positive renderer samples contain no observed drawing/page errors, and conclusions are scoped to the healthy supplied fixture."
+  ],
+  "updatedAt": "2026-10-09T05:03:33.634Z",
+  "sourceFinalized": true,
+  "rootCauseAttribution": [
+    {
+      "phase": "drag-comments-static-html",
+      "oldCanvasNew": 166,
+      "finalCanvasNew": 34,
+      "measuredAllocationDifference": 132,
+      "avoidedMarkdownPublishes": 63,
+      "avoidedPanelAndPrivateTextureCopyAllocations": 126,
+      "legitimateDynamicPublishDifference": 6,
+      "accountedAllocationDifference": 132,
+      "publisherRecreation": 0,
+      "clearCalls": 0
+    },
+    {
+      "phase": "pan-comments-static-html",
+      "oldCanvasNew": 162,
+      "finalCanvasNew": 30,
+      "measuredAllocationDifference": 132,
+      "avoidedMarkdownPublishes": 63,
+      "avoidedPanelAndPrivateTextureCopyAllocations": 126,
+      "legitimateDynamicPublishDifference": 6,
+      "accountedAllocationDifference": 132,
+      "publisherRecreation": 0,
+      "clearCalls": 0
+    }
+  ],
+  "sourceChangeReview": {
+    "markup": "useMemo depends on current.html; loading/error branches and src fetch retain real-content transitions. The registry/publisher lifetime remains stable; dynamic GIF and native HTML publication remains active.",
+    "contexts": "willReadFrequently is declared for immutable content copies and controlled-panel drawing; the renderer staging context keeps its existing GPU mode and source origin readback stays in publish.",
+    "currentMatchesPrivateCandidate": [
+      {
+        "path": "src/web/scene-renderer/index.ts",
+        "equal": true
+      },
+      {
+        "path": "src/web/scene-renderer/texture.ts",
+        "equal": true
+      },
+      {
+        "path": "src/web/scene-renderer/board.tsx",
+        "equal": true
+      },
+      {
+        "path": "src/web/scene-renderer/media/controlled-panel.ts",
+        "equal": true
+      },
+      {
+        "path": "src/web/MarkdownCanvasContent.tsx",
+        "equal": true
+      }
+    ]
+  },
+  "measurementReview": {
+    "script": "/Users/yingbowu/Documents/Projects/acanvas/scripts/measure-board-performance.mjs",
+    "counterSource": "/private/tmp/acanvas-performance-source-counters-grup6hm9/src/web/scene-renderer/content.tsx",
+    "counters": "Private registry hooks count publisher creation, publish and clear into the currently active sample phase; object IDs are mapped to fixture material names. Production content.tsx contains no counter hooks.",
+    "matcher": "The saved matcher requires current camera x/y/zoom and dragged object left/top to equal each captured input within .01 at the visible scene-canvas drawImage. Monotonic pointer x movement gives distinct input positions; unrelated producer commits cannot satisfy an input before the corresponding geometry is rendered.",
+    "percentileCalculation": "Each 59-entry commitLatencies array was sorted and independently indexed at floor(n*.5) and floor(n*.95); all stored results match.",
+    "independentApproach": "Final performance acceptance uses independent source/counter inspection and raw-data recomputation. The earlier browser source-safety and pixel-equivalence tests were independently executed. No extra GPU sample was needed for this final stage."
+  }
+}

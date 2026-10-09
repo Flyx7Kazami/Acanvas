@@ -10,7 +10,7 @@ test('presented geometry and native keyboard focus share the visible board layou
   const { chromium, firefox } = await import('playwright-core');
   const output = process.env.ACANVAS_SCENE_GEOMETRY_OUTPUT || await mkdtemp(join(tmpdir(), 'acanvas-scene-geometry-output-')); await mkdir(output, { recursive: true });
   const results: object[] = [];
-  for (const engine of ['chromium', 'firefox'] as const) {
+  for (const engine of (process.env.ACANVAS_SCENE_BROWSERS === 'chromium' ? ['chromium'] as const : ['chromium', 'firefox'] as const)) {
     const root = await mkdtemp(join(tmpdir(), 'acanvas-scene-geometry-')), server = await startServer({ root, port: 0, webRoot: resolve(process.env.ACANVAS_SCENE_WEB_ROOT!) });
     const bootstrap = await (await fetch(server.url + '/api/bootstrap')).json();
     const call = async (path: string, method = 'GET', body?: unknown) => { const response = await fetch(server.url + path, { method, headers: { Authorization: 'Bearer ' + bootstrap.token, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }); const value = await response.json(); assert.ok(response.ok, JSON.stringify(value)); return value; };

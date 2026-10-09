@@ -6,7 +6,7 @@ export interface ProjectCaptureTransport {
   sceneSnapshot(sessionId: string, viewId: string, operation: CaptureViewOperation): Promise<BaseSceneSnapshot>;
   confirmScenePresentation(sessionId: string, viewId: string, operation: ScenePresentationOperation): Promise<ScenePresentation>;
   holdScenePresentation(sessionId: string, viewId: string, operation: ScenePresentationOperation): Promise<SceneSource>;
-  closeCaptureView(sessionId: string, viewId: string, operation: CaptureViewOperation): Promise<{ closed: true }>;
+  closeCaptureView(sessionId: string, viewId: string, operation: CaptureViewOperation, options?: { keepalive?: boolean }): Promise<{ closed: true }>;
   saveDraft(draft: Draft): Promise<Draft>;
   state(sessionId: string): Promise<{ draft: Draft }>;
   prepareCapture(sessionId: string, draftId: string, annotationId: string, version: number, input: AnnotationCaptureInput): Promise<CaptureResult>;
@@ -57,6 +57,9 @@ export class ProjectCaptureCoordinator implements CaptureProvider {
   private operations: Promise<unknown> = Promise.resolve();
   private presented?: ScenePresentation;
   private closed = false;
+  private closeOptions: { keepalive?: boolean } = {};
+  private closingView?: Promise<void>;
+  private closeTask?: Promise<void>;
   private pendingFreezes = 0;
   private pending = new Map<string, PendingFreeze>();
   private jobs = new Map<string, { cancelled: boolean; controller: AbortController; frame?: object }>();
@@ -79,8 +82,9 @@ export class ProjectCaptureCoordinator implements CaptureProvider {
     if (this.view) return this.view;
     if (!this.initializing) this.initializing = this.api.registerCaptureView(this.sessionId, this.documentId).then(async view => {
       if (view.documentId !== this.documentId || view.sessionId !== this.sessionId) throw Object.assign(new Error('The capture view belongs to another document.'), { code: 'scene_scope' });
-      if (this.closed) { await this.recover(() => this.api.closeCaptureView(this.sessionId, view.viewId, this.operation(view))); throw Object.assign(new Error('This capture document was closed during initialization.'), { code: 'scene_view_closed' }); }
-      this.view = view; return view;
+      this.view = view;
+      if (this.closed) { await this.retireView(); throw Object.assign(new Error('This capture document was closed during initialization.'), { code: 'scene_view_closed' }); }
+      return view;
     }).finally(() => { this.initializing = undefined; });
     return this.initializing;
   }
@@ -244,10 +248,18 @@ export class ProjectCaptureCoordinator implements CaptureProvider {
       this.restoredFrames.add(frame); return this.capture(frame);
     } catch (error) { return { status: 'incomplete', code: code(error) }; }
   }
-  close(): Promise<void> {
+  close(options: { keepalive?: boolean } = {}): Promise<void> {
+    if (options.keepalive) this.closeOptions.keepalive = true;
+    if (options.keepalive && this.view) void this.retireView().catch(() => undefined);
+    if (this.closeTask) return this.closeTask;
     this.closed = true; for (const job of this.jobs.values()) { job.cancelled = true; job.controller.abort(); }
     for (const stage of this.pending.values()) { stage.cancelled = true; stage.controller.abort(); }
-    return (async () => { await Promise.all([...this.pending.values()].map(stage => this.reconcileCancelled(stage))); if (this.view) { const operation = this.operation(this.view); await this.recover(() => this.api.closeCaptureView(this.sessionId, this.view!.viewId, operation)); } this.jobs.clear(); })();
+    return this.closeTask = (async () => { await Promise.all([...this.pending.values()].map(stage => this.reconcileCancelled(stage))); await this.retireView(); this.jobs.clear(); })();
+  }
+  private retireView(): Promise<void> {
+    if (!this.view) return Promise.resolve();
+    if (!this.closingView) { const view = this.view, operation = this.operation(view); this.closingView = this.recover(() => this.api.closeCaptureView(this.sessionId, view.viewId, operation, this.closeOptions)).then(() => undefined); }
+    return this.closingView;
   }
 }
 

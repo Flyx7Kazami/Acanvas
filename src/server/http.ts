@@ -4,7 +4,7 @@ import { createReadStream } from 'node:fs';
 import { open, mkdir, readFile, realpath, rename, rm, stat } from 'node:fs/promises';
 import { dirname, extname, resolve, relative } from 'node:path';
 import type { AddressInfo } from 'node:net';
-import type { AnnotationCaptureInput, Asset, Bootstrap, CaptureView, CompleteInput, Draft, ServiceRuntime, SessionView } from '../shared/types.js';
+import type { AnnotationCaptureInput, Asset, Bootstrap, CaptureView, CaptureViewOperation, CompleteInput, Draft, ServiceRuntime, SessionView } from '../shared/types.js';
 import { resolveContentKind, resolveContentMime, storageAssetKind } from '../shared/content-types.js';
 import { ApiFailure, CanvasService, within } from './service.js';
 import { AudioArtworkReader } from './audio-artwork.js';
@@ -46,6 +46,15 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   let browser: ProjectBrowser;
   let closing = false;
   let port = options.port ?? 4317;
+  const presences = new Map<string, { view: CaptureView; connections: Set<ServerResponse>; timer?: ReturnType<typeof setTimeout> }>();
+  const sameView = (a: CaptureView, b: CaptureView) => a.projectId === b.projectId && a.sessionId === b.sessionId && a.documentId === b.documentId && a.viewId === b.viewId && a.viewGeneration === b.viewGeneration;
+  const endPresence = (viewId: string) => { const record = presences.get(viewId); if (!record) return; presences.delete(viewId); clearTimeout(record.timer); for (const connection of record.connections) connection.end(); };
+  const retireView = async (view: Pick<CaptureView, 'sessionId' | 'viewId' | 'documentId' | 'viewGeneration'>, operation?: CaptureViewOperation) => {
+    const result = operation ? service.closeCaptureView(view.sessionId, view.viewId, operation) : service.retireCaptureView(view.sessionId, view.viewId, view);
+    endPresence(view.viewId); await surfaces.closeView(view.viewId);
+    for (const [id, owner] of surfaceOwners) if (owner.viewId === view.viewId) surfaceOwners.delete(id);
+    return result;
+  };
   const authenticationCookieName = () => `acanvas_auth_${port}`;
   const guardSource = (request: IncomingMessage) => {
     const hosts = [`127.0.0.1:${port}`, `localhost:${port}`];
@@ -110,14 +119,34 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
         if (path === '/api/state' && method === 'GET') { send(response, 200, service.state(url.searchParams.get('sessionId') ?? '')); return; }
         if (path === '/api/sessions' && method === 'POST') { send(response, 201, service.createSession((await payload(request)).name)); return; }
         if (path === '/api/sessions' && method === 'GET') { send(response, 200, service.sessions()); return; }
-        const captureViewMatch = path.match(/^\/api\/sessions\/([^/]+)\/capture-views(?:\/([^/]+)(?:\/(scenes|presented|presentations))?)?$/);
+        const captureViewMatch = path.match(/^\/api\/sessions\/([^/]+)\/capture-views(?:\/([^/]+)(?:\/(scenes|presented|presentations|presence))?)?$/);
         if (captureViewMatch) {
           const sessionId = decodeURIComponent(captureViewMatch[1]), viewId = captureViewMatch[2] && decodeURIComponent(captureViewMatch[2]);
           if (!viewId && method === 'POST') { send(response, 201, service.registerCaptureView(sessionId, await payload(request))); return; }
+          if (viewId && captureViewMatch[3] === 'presence' && method === 'GET') {
+            const view = service.captureView(sessionId, viewId);
+            if (url.searchParams.get('documentId') !== view.documentId || Number(url.searchParams.get('viewGeneration')) !== view.viewGeneration) throw new ApiFailure(409, 'scene_view_conflict', 'Use the current document and view generation.');
+            let record = presences.get(viewId);
+            if (record && !sameView(record.view, view)) throw new ApiFailure(409, 'scene_view_conflict', 'Use the current document and view generation.');
+            if (!record) { record = { view, connections: new Set() }; presences.set(viewId, record); }
+            const current = record; clearTimeout(current.timer); current.timer = undefined; current.connections.add(response);
+            response.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' }); response.write('event: ready\ndata: {}\n\n');
+            response.on('close', () => {
+              current.connections.delete(response);
+              if (closing || presences.get(viewId) !== current || current.connections.size) return;
+              current.timer = setTimeout(() => {
+                current.timer = undefined;
+                if (closing || presences.get(viewId) !== current || current.connections.size) return;
+                let active: CaptureView; try { active = service.captureView(sessionId, viewId); } catch { endPresence(viewId); return; }
+                if (!sameView(current.view, active)) { endPresence(viewId); return; }
+                void retireView(active).catch(() => { endPresence(viewId); });
+              }, 5000); current.timer.unref();
+            }); return;
+          }
           if (viewId && captureViewMatch[3] === 'scenes' && method === 'POST') { send(response, 200, service.sceneSnapshot(sessionId, viewId, await payload(request))); return; }
           if (viewId && captureViewMatch[3] === 'presented' && method === 'PUT') { send(response, 200, service.confirmScenePresentation(sessionId, viewId, await payload(request))); return; }
           if (viewId && captureViewMatch[3] === 'presentations' && method === 'POST') { send(response, 200, service.holdScenePresentation(sessionId, viewId, await payload(request))); return; }
-          if (viewId && !captureViewMatch[3] && method === 'DELETE') { const result = service.closeCaptureView(sessionId, viewId, await payload(request)); await surfaces.closeView(viewId); for (const [id, owner] of surfaceOwners) if (owner.viewId === viewId) surfaceOwners.delete(id); send(response, 200, result); return; }
+          if (viewId && !captureViewMatch[3] && method === 'DELETE') { const input: CaptureViewOperation = await payload(request); send(response, 200, await retireView({ sessionId, viewId, documentId: input.documentId, viewGeneration: input.viewGeneration }, input)); return; }
         }
         const surfaceMatch = path.match(/^\/api\/sessions\/([^/]+)\/capture-views\/([^/]+)\/html-surfaces(?:\/([^/]+)(?:\/(sample|input|viewport|audio|frames\/(\d+)(\/content)?))?)?$/);
         if (surfaceMatch) {
@@ -326,7 +355,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
     void pending.then(() => handlers.delete(pending), () => handlers.delete(pending));
   });
   service.onChange = () => { for (const response of events) response.write('event: change\ndata: {}\n\n'); };
-  const heartbeat = setInterval(() => { for (const response of events) response.write(': alive\n\n'); }, 15_000); heartbeat.unref();
+  const heartbeat = setInterval(() => { for (const response of events) response.write(': alive\n\n'); for (const record of presences.values()) for (const response of record.connections) response.write(': alive\n\n'); }, 15_000); heartbeat.unref();
   await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch(async error => { clearInterval(heartbeat); await surfaces.close(); await preview.close(); service.close(); throw error; });
   let shutdown: Promise<void> | undefined;
   const runtime: ServiceRuntime = { project: service.project, ...service.identity(), url: `http://127.0.0.1:${port}` };
@@ -338,7 +367,8 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
       // Cancel captures while the business service can still invalidate versions.
       await browser.close();
       const stopped = new Promise<void>((resolvePromise, reject) => server.close((error) => error ? reject(error) : resolvePromise()));
-      const streams = new Set(events);
+      const streams = new Set([...events, ...[...presences.values()].flatMap(record => [...record.connections])]);
+      for (const record of presences.values()) clearTimeout(record.timer); presences.clear();
       for (const response of streams) response.end(); events.clear();
       // Incomplete uploads end through their normal cleanup before SQLite closes.
       for (const request of requests) request.destroy();

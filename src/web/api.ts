@@ -45,6 +45,9 @@ const errorMessages: Record<string, string> = {
   surface_frame_scope: 'Use the HTML frame belonging to this document and view.',
   surface_missing: 'Reconnect the HTML surface in this view.',
   surface_renderer_exit: 'The HTML preview is reconnecting.',
+  surface_limit: 'HTML previews are waiting for project capacity.',
+  surface_view_limit: 'This view has reached its HTML preview limit.',
+  surface_retained_limit: 'HTML previews are waiting for pending screenshots to finish.',
   surface_input_state: 'Use the displayed HTML instance and viewport.',
   invalid_capture: 'Check the screenshot and scene metadata.',
   evidence_scope: 'Read this screenshot in its original task context.',
@@ -76,6 +79,9 @@ export class BoardApi {
   projectChanged = false;
 
   async request<T>(path: string, options: RequestInit = {}, refreshAuthentication = true): Promise<T> {
+    return (await this.response(path, options, refreshAuthentication)).json() as Promise<T>;
+  }
+  private async response(path: string, options: RequestInit = {}, refreshAuthentication = true): Promise<Response> {
     if (this.projectChanged) throw new RequestError('This address now serves another project. Your draft is preserved. Reopen the board to continue.', 409, 'project_changed');
     const headers = new Headers(options.headers);
     if (this.token) headers.set('Authorization', `Bearer ${this.token}`);
@@ -89,14 +95,14 @@ export class BoardApi {
     if (response.status === 401 && refreshAuthentication && path !== '/api/bootstrap') {
       // The service authenticates before entering a mutation handler.
       await this.bootstrap(options.signal || undefined);
-      return this.request<T>(path, options, false);
+      return this.response(path, options, false);
     }
     if (!response.ok) {
       const data = await response.json().catch(() => ({})) as Partial<ApiError>;
       const code = data.error?.code || 'request_failed';
       throw new RequestError(errorMessages[code] || `The action could not be completed (${response.status}). Check the current content and try again.`, response.status, code);
     }
-    return response.json() as Promise<T>;
+    return response;
   }
 
   async bootstrap(signal?: AbortSignal): Promise<Bootstrap> {
@@ -121,10 +127,17 @@ export class BoardApi {
   saveDraft(draft: Draft) { return this.request<Draft>(`/api/sessions/${encodeURIComponent(draft.sessionId)}/draft`, { method: 'PUT', body: JSON.stringify(draft) }); }
   private captureViewPath(sessionId: string, viewId?: string) { return `/api/sessions/${encodeURIComponent(sessionId)}/capture-views${viewId ? `/${encodeURIComponent(viewId)}` : ''}`; }
   registerCaptureView(sessionId: string, documentId: string) { return this.request<CaptureView>(this.captureViewPath(sessionId), { method: 'POST', body: JSON.stringify({ documentId }) }); }
+  async watchCaptureView(view: CaptureView, signal: AbortSignal, onConnected?: () => void): Promise<void> {
+    const response = await this.response(`${this.captureViewPath(view.sessionId, view.viewId)}/presence?${new URLSearchParams({ documentId: view.documentId, viewGeneration: String(view.viewGeneration) })}`, { signal });
+    if (!response.body) throw new RequestError('The local service is disconnected.', 0, 'connection_lost');
+    const reader = response.body.getReader();
+    try { onConnected?.(); while (!signal.aborted && !(await reader.read()).done) { /* The open stream owns this document view. */ } }
+    finally { await reader.cancel().catch(() => undefined); reader.releaseLock(); }
+  }
   sceneSnapshot(sessionId: string, viewId: string, operation: CaptureViewOperation) { return this.request<BaseSceneSnapshot>(`${this.captureViewPath(sessionId, viewId)}/scenes`, { method: 'POST', body: JSON.stringify(operation) }); }
   confirmScenePresentation(sessionId: string, viewId: string, operation: ScenePresentationOperation) { return this.request<ScenePresentation>(`${this.captureViewPath(sessionId, viewId)}/presented`, { method: 'PUT', body: JSON.stringify(operation) }); }
   holdScenePresentation(sessionId: string, viewId: string, operation: ScenePresentationOperation) { return this.request<SceneSource>(`${this.captureViewPath(sessionId, viewId)}/presentations`, { method: 'POST', body: JSON.stringify(operation) }); }
-  closeCaptureView(sessionId: string, viewId: string, operation: CaptureViewOperation) { return this.request<{ closed: true }>(this.captureViewPath(sessionId, viewId), { method: 'DELETE', body: JSON.stringify(operation) }); }
+  closeCaptureView(sessionId: string, viewId: string, operation: CaptureViewOperation, options: { keepalive?: boolean } = {}) { return this.request<{ closed: true }>(this.captureViewPath(sessionId, viewId), { method: 'DELETE', body: JSON.stringify(operation), ...options }); }
   private htmlSurfacePath(view: CaptureView, surfaceId?: string) { return `${this.captureViewPath(view.sessionId, view.viewId)}/html-surfaces${surfaceId ? `/${encodeURIComponent(surfaceId)}` : ''}`; }
   private htmlSurfaceIdentity(view: CaptureView) { return { documentId: view.documentId, viewGeneration: view.viewGeneration }; }
   createHtmlSurface(view: CaptureView, objectId: string, assetId: string, viewport: { width: number; height: number; deviceScaleFactor?: number }) { return this.request<ProjectHtmlSurface>(this.htmlSurfacePath(view), { method: 'POST', body: JSON.stringify({ ...this.htmlSurfaceIdentity(view), objectId, assetId, viewport }) }); }

@@ -25,7 +25,7 @@ test('scene crop rejects unavailable pixels and metadata copies keep their frame
   assert.equal(copied.camera.x, 5); assert.equal(copied.media[0].time, 2); assert.ok(Object.isFrozen(copied.media[0]));
 });
 
-test('scene prototype preserves the visible frame in Chromium and Firefox', { skip: !process.env.ACANVAS_SCENE_BROWSER_TEST, timeout: 180_000 }, async t => {
+test('scene prototype preserves the visible frame in configured browsers', { skip: !process.env.ACANVAS_SCENE_BROWSER_TEST, timeout: 180_000 }, async t => {
   const { createServer } = await import('vite');
   const { chromium, firefox } = await import('playwright-core');
   const { CanvasService } = await import('../src/server/service.js');
@@ -47,7 +47,7 @@ test('scene prototype preserves the visible frame in Chromium and Firefox', { sk
   const htmlPage = (manager as any).entries.get(html.surfaceId).page as import('playwright-core').Page;
   const htmlContent = htmlPage.frames().find(frame => frame.parentFrame())!;
   t.after(async () => { await manager.close(); await preview.close(); service.close(); await rm(htmlRoot, { recursive: true, force: true }); });
-  for (const engine of ['chromium', 'firefox'] as const) {
+  for (const engine of (process.env.ACANVAS_SCENE_BROWSERS === 'chromium' ? ['chromium'] as const : ['chromium', 'firefox'] as const)) {
     const browser = engine === 'chromium' ? await chromium.launch({ channel: 'chrome', headless: true })
       : await firefox.launch({ headless: true, ...(process.env.ACANVAS_SCENE_FIREFOX ? { executablePath: process.env.ACANVAS_SCENE_FIREFOX } : {}) });
     t.after(() => browser.close());
@@ -122,6 +122,24 @@ test('scene prototype preserves the visible frame in Chromium and Firefox', { sk
         const htmlAfter = await htmlContent.evaluate(() => ({ ...(window as any).sceneFixture, form: (document.querySelector('input') as HTMLInputElement).value }));
         assert.equal(htmlAfter.seed, htmlState.seed); assert.equal(htmlAfter.form, htmlState.form); assert.ok(htmlAfter.tick > htmlState.tick);
         await writeFile(join(output, `${engine}-dpr${dpr}-html-surface.png`), Buffer.from(encodedHTML.png));
+        const board = await call<any>('boardContent', 70, { count: 70 });
+        assert.equal(board.accepted, true); assert.equal(board.frozen, true); assert.deepEqual(board.pixel, [219, 61, 69, 255]);
+        assert.equal(board.presentation.layers.length, 72); assert.equal(board.presentation.camera.x, 0); assert.equal(board.presentation.media[0].presentedTime, 7);
+        const boardEvidence = await call<any>('capture'), boardPixels = await call<number[]>('currentPixels');
+        for (const kind of ['texture', 'image', 'dimensions', 'draw']) {
+          const rejected = await call<any>('rejectContent', 71, kind);
+          assert.equal(rejected.callbackCalled, false); assert.equal(rejected.frameSeq, 70); assert.notEqual(rejected.error, 'accepted');
+          assert.deepEqual(await call('currentPixels'), boardPixels);
+        }
+        assert.equal(await call('taintedContent', 71, crossOriginTexture.href), 'SecurityError');
+        assert.equal((await call<any>('presented')).frameSeq, 70); assert.deepEqual(await call('currentPixels'), boardPixels);
+        await call('render', 74, { dark: true });
+        assert.equal((await call<any>('boardContent', 75, { count: 70, changed: true, zoom: 1.25, x: -20 })).accepted, true);
+        assert.equal(await call('present', 74), false); assert.equal((await call<any>('presented')).frameSeq, 75);
+        assert.equal((await call<any>('boardContent', 73)).accepted, false);
+        const encodedBoard = await call<any>('encode', boardEvidence.id);
+        assert.equal(encodedBoard.frameSeq, 70); assert.equal(encodedBoard.mismatchedChannels, 0);
+        await writeFile(join(output, `${engine}-dpr${dpr}-board70.png`), Buffer.from(encodedBoard.png));
         assert.equal(context.pages().length, initialPages); assert.equal(page.url(), initialURL);
         assert.equal(await page.evaluate(() => document.activeElement?.id), 'comment'); assert.deepEqual(errors, []);
         measurements.push({ engine, browserVersion: browser.version(), dpr, displayedFrame: 45, savedFrame: 40, workerAheadFrame: 15, capturedWhileWorkerAhead: 10,
@@ -129,6 +147,7 @@ test('scene prototype preserves the visible frame in Chromium and Firefox', { sk
           comparedChannels: encoded.comparedChannels + encodedAhead.comparedChannels + encodedCrop.comparedChannels + encodedAnimation.comparedChannels + encodedHTML.comparedChannels,
           mismatchedChannels: 0, mutableSourcePixel: [219, 61, 69, 255], taintedCandidate: 'SecurityError', previousExportableFrameRetained: 50,
           htmlSurface: { presentedFrame: htmlFrame.frameSeq, latestFrame: htmlLatest.frameSeq, savedFrame: htmlEvidence.presentation.layers[0].surface.frameSeq, instanceId: htmlFrame.instanceId, mismatchedChannels: encodedHTML.mismatchedChannels, actualBitmap: htmlFrame.bitmap, animationAdvanced: true, randomInstanceRetained: true, formRetained: true, webglDefaultPreserveDrawingBuffer: false },
+          boardContent: { savedFrame: 70, currentFrame: 75, completeLayers: 72, sourceCopyImmutable: true, invalidInputRetainsPixels: ['texture', 'image', 'dimensions', 'draw', 'taint'], mismatchedChannels: encodedBoard.mismatchedChannels, comparedChannels: encodedBoard.comparedChannels },
           encodeMs: [encoded.encodedMs, encodedCrop.encodedMs, encodedAnimation.encodedMs], pageCount: initialPages, focus: 'comment', output });
       } finally {
         await context.tracing.stop({ path: join(output, `${engine}-dpr${dpr}-trace.zip`) }); await context.close();

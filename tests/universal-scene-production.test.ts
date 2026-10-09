@@ -30,6 +30,13 @@ test('production ordinary browser captures the visible SceneCanvas through the p
     { type: 'create', object: { assetId: markdown.id, x: 120, y: 390, width: 340, height: 220 } },
   ] });
   const browser = await chromium.launch({ channel: 'chrome', headless: true }), context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 2 }), page = await context.newPage();
+  let markIndex = 0;
+  const markObject = async (objectId: string) => {
+    await page.getByRole('button', { name: 'Mark canvas', exact: true }).click();
+    const box = await page.locator('[data-object-id="' + objectId + '"] .object-media').boundingBox(); assert.ok(box);
+    const fraction = .2 + markIndex++ % 4 * .12;
+    await page.mouse.click(box.x + box.width * fraction, box.y + box.height * fraction);
+  };
   await context.tracing.start({ screenshots: true, snapshots: true });
   const errors: string[] = [], failedResponses: string[] = [];
   page.on('pageerror', error => errors.push(error.message)); page.on('response', response => { if (response.status() >= 400 && response.url().includes('/api/')) failedResponses.push(response.status() + ' ' + new URL(response.url()).pathname); });
@@ -51,7 +58,7 @@ test('production ordinary browser captures the visible SceneCanvas through the p
   assert.equal(await page.locator('.object-media').first().evaluate(element => getComputedStyle(element).opacity), '0');
   const initial = await call('/api/state?sessionId=' + session.id) as BoardState, object = initial.objects.find(value => value.assetId === image.id)!;
   await page.locator('[data-object-id="' + object.id + '"]').focus(); await page.keyboard.press('Enter');
-  await page.getByRole('button', { name: 'Annotate', exact: true }).click();
+  await markObject(object.id);
   await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Keep this exact view.');
   await page.evaluate(() => new Promise(requestAnimationFrame));
   // Hold the source-save response so the page can continue changing after its synchronous copy.
@@ -86,7 +93,7 @@ test('production ordinary browser captures the visible SceneCanvas through the p
   assert.equal((await call('/api/state?sessionId=' + session.id)).draft.annotations[0].capture.id, capture.id);
   await page.unroute('**/capture-views/*/presentations');
   await page.locator('[data-object-id="' + object.id + '"]').focus(); await page.keyboard.press('Enter');
-  await page.getByRole('button', { name: 'Annotate', exact: true }).click();
+  await markObject(object.id);
   await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Preserve the old scene across reload.');
   await page.evaluate(() => new Promise(requestAnimationFrame));
   let uploadHeld!: () => void, releaseUpload!: () => void;
@@ -119,13 +126,13 @@ test('production ordinary browser captures the visible SceneCanvas through the p
   assert.equal(restoredComparison.mismatches, 0);
   const fileObject = restored.objects.find(value => value.assetId === file.id)!;
   await page.locator('[data-object-id="' + fileObject.id + '"]').focus(); await page.keyboard.press('Enter');
-  await page.getByRole('button', { name: 'Annotate', exact: true }).click(); await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Keep the comment after cancellation.');
+  await markObject(fileObject.id); await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Keep the comment after cancellation.');
   let cancelHeld!: () => void, releaseCancelled!: () => void;
   const cancelIntent = new Promise<void>(resolve => { cancelHeld = resolve; }), cancelledGate = new Promise<void>(resolve => { releaseCancelled = resolve; });
   await page.route('**/capture-views/*/presentations', async route => { cancelHeld(); await cancelledGate; await route.continue().catch(() => undefined); });
   await page.getByRole('button', { name: 'Done', exact: true }).click(); await cancelIntent;
-  await page.getByRole('button', { name: 'Cancel capture', exact: true }).click();
-  await page.getByRole('button', { name: 'Cancel capture', exact: true }).waitFor({ state: 'hidden' });
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => !document.querySelector('.app-shell')?.hasAttribute('data-capturing'));
   await page.unroute('**/capture-views/*/presentations'); releaseCancelled(); await page.evaluate(() => new Promise(requestAnimationFrame));
   await page.getByRole('combobox', { name: 'Request', exact: true }).focus(); await page.keyboard.press('ControlOrMeta+A'); await page.keyboard.press('Backspace');
   await page.keyboard.insertText('A later edit remains after cancelling the capture.');
@@ -134,7 +141,7 @@ test('production ordinary browser captures the visible SceneCanvas through the p
   assert.ok(cancelledAnnotation); assert.equal(cancelledAnnotation.captureState?.status, 'incomplete'); assert.equal(cancelledAnnotation.capture, undefined);
   assert.equal(cancelled.draft.text, 'A later edit remains after cancelling the capture.');
   await page.locator('[data-object-id="' + fileObject.id + '"]').focus(); await page.keyboard.press('Enter');
-  await page.getByRole('button', { name: 'Annotate', exact: true }).click(); await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Keep this source-save cancellation.');
+  await markObject(fileObject.id); await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Keep this source-save cancellation.');
   let sourceSaved!: () => void, releaseSaved!: () => void, savedVersion = 0;
   const saveIntent = new Promise<void>(resolve => { sourceSaved = resolve; }), savedGate = new Promise<void>(resolve => { releaseSaved = resolve; });
   await page.route('**/sessions/*/draft', async route => {
@@ -144,9 +151,9 @@ test('production ordinary browser captures the visible SceneCanvas through the p
     sourceSaved(); await savedGate; await route.fulfill({ response }).catch(() => undefined);
   });
   await page.getByRole('button', { name: 'Done', exact: true }).click(); await saveIntent;
-  await page.getByRole('button', { name: 'Cancel capture', exact: true }).click(); await page.getByRole('button', { name: 'Cancel capture', exact: true }).waitFor({ state: 'hidden' });
+  await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('.app-shell')?.hasAttribute('data-capturing'));
   await page.unroute('**/sessions/*/draft'); releaseSaved();
-  await page.waitForFunction(() => !document.querySelector('.capture-progress'));
+  await page.waitForFunction(() => !document.querySelector('.app-shell')?.hasAttribute('data-capturing'));
   const lateCancelled = await call('/api/state?sessionId=' + session.id) as BoardState, cancelledAfterSave = lateCancelled.draft.annotations.find(value => value.text === 'Keep this source-save cancellation.')!;
   assert.ok(cancelledAfterSave); assert.equal(cancelledAfterSave.captureState?.status, 'incomplete'); assert.equal(cancelledAfterSave.capture, undefined); assert.ok(cancelledAfterSave.captureState!.version > savedVersion);
   const beforeRestart = bootstrap.service.instanceId, port = Number(new URL(server.url).port), currentURL = page.url(), priorGeneration = Number(await page.locator('.scene-canvas').getAttribute('data-view-generation'));
@@ -155,8 +162,8 @@ test('production ordinary browser captures the visible SceneCanvas through the p
   await page.waitForFunction(previous => Number(document.querySelector<HTMLElement>('.scene-canvas')?.dataset.viewGeneration) > previous, priorGeneration);
   const documentObject = (await call('/api/state?sessionId=' + session.id) as BoardState).objects.find(value => value.assetId === markdown.id)!;
   await page.locator('[data-object-id="' + documentObject.id + '"]').focus(); await page.keyboard.press('Enter');
-  await page.getByRole('button', { name: 'Annotate', exact: true }).click(); await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('The same page captures after service restart.');
-  await page.getByRole('button', { name: 'Done', exact: true }).click(); await page.waitForFunction(() => !document.querySelector('.capture-progress'));
+  await markObject(documentObject.id); await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('The same page captures after service restart.');
+  await page.getByRole('button', { name: 'Done', exact: true }).click(); await page.waitForFunction(() => !document.querySelector('.app-shell')?.hasAttribute('data-capturing'));
   const restarted = await call('/api/state?sessionId=' + session.id) as BoardState, restartedAnnotation = restarted.draft.annotations.find(value => value.text === 'The same page captures after service restart.')!;
   assert.equal(restartedAnnotation.captureState?.status, 'complete'); assert.equal(page.url(), currentURL);
   assert.deepEqual(errors, []);
