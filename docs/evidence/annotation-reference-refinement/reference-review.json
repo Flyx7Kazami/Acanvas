@@ -1,0 +1,139 @@
+{
+  "date": "2026-10-09",
+  "reviewer": "independent clean-context reference reviewer",
+  "scope": [
+    3,
+    4
+  ],
+  "baseline": "f9e5f9569d99cd88c4331be3a2a9a832b19a03cf",
+  "result": "PASS",
+  "findings": [],
+  "candidateDirectory": "/private/tmp/acanvas-reference-review-gh33my06",
+  "reviewArtifactDirectory": "reference-review-artifacts",
+  "requirements": [
+    {
+      "id": 3,
+      "result": "PASS",
+      "observations": [
+        "Formal composer and queued references display literal original names with no extra @. Object and task @ search remains functional.",
+        "Computed background and border match the preview in both themes. Formal text equals resolved theme --ink; queue uses the same Ink, background and border.",
+        "320px screenshots inspected independently. Light formal text rgb(32,32,32), preview rgb(112,112,112); dark formal rgb(243,243,243), preview rgb(170,170,170)."
+      ],
+      "source": [
+        "src/web/ChatboxReferences.tsx:15",
+        "src/web/styles.css:172",
+        "src/web/styles.css:177",
+        "src/web/App.tsx:41",
+        "src/web/App.tsx:198"
+      ],
+      "evidence": [
+        "reference-review-artifacts/computed-styles.json",
+        "reference-review-artifacts/light-confirmed.png",
+        "reference-review-artifacts/dark-confirmed.png"
+      ]
+    },
+    {
+      "id": 4,
+      "result": "PASS",
+      "observations": [
+        "Each formal DOM occurrence gets a local host key, survives serialization as its own order entry, and has a targeted removal callback. Persistence contains kind/id/textOffset, with no new occurrence identity field.",
+        "Repeated same-source object and task entries at equal or different UTF-16 offsets preserve array order through API, CLI, restart, browser reload, Send, queued edit/reopen/cancel, and history after original object deletion.",
+        "Button, Backspace, Delete, cross-atom range deletion and native replacement remove only selected occurrences. Unicode and IME retain offsets; source IDs remain present until the final occurrence is removed.",
+        "Each explicit object selection can insert the same source again. SSE and theme rerenders retain the consumed preview without creating further occurrences.",
+        "A delayed first HTTP draft save followed by deletion of one occurrence, new Unicode text and direct Send submits the latest full order.",
+        "objectIds/taskIds and referenceContent object/asset/task source lists remain unique. Same raw ID in object and task kinds is treated as two distinct sources."
+      ],
+      "source": [
+        "src/web/ChatboxEditor.tsx:49",
+        "src/web/ChatboxEditor.tsx:181",
+        "src/web/ChatboxEditor.tsx:218",
+        "src/web/ChatboxEditor.tsx:227",
+        "src/web/ChatboxEditor.tsx:252",
+        "src/web/ChatboxEditor.tsx:327",
+        "src/web/App.tsx:465",
+        "src/web/useBoard.ts:10",
+        "src/server/service.ts:33",
+        "src/server/service.ts:684",
+        "src/server/service.ts:738",
+        "src/shared/task-message.ts:13"
+      ],
+      "evidence": [
+        "reference-review-artifacts/review-regression-permitted.log",
+        "reference-review-artifacts/review-independent.log",
+        "reference-review-artifacts/review-independent-api.log",
+        "reference-review-artifacts/delayed-save-requests.json"
+      ]
+    }
+  ],
+  "preservedConstraints": {
+    "result": "PASS",
+    "checks": [
+      "Source-list uniqueness, complete occurrence coverage, at most 2000 order entries, integer in-range UTF-16 positions and whole Unicode boundaries remain enforced.",
+      "Source membership and foreign-task session permissions remain enforced independently of occurrence count. Repeated forbidden task sources return task_reference_scope and retain the whole draft.",
+      "Stale draft revision returns draft_revision_conflict and retains the whole draft. Save and Send retain existing short-transaction and revision checks.",
+      "Injected local hostKey/occurrenceId metadata is stripped from saved references and never appears in the submitted snapshot.",
+      "Existing live service, user data, OS clipboard, existing browser windows, Keychain, shared dist and Git index were untouched."
+    ]
+  },
+  "validation": {
+    "runtime": "Node v24.21.0; TMPDIR=/private/tmp",
+    "serverTypecheck": "PASS",
+    "webTypecheck": "PASS",
+    "privateProductionBuild": "PASS",
+    "commands": [
+      "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node node_modules/typescript/bin/tsc -p tsconfig.server.json --outDir dist",
+      "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node node_modules/typescript/bin/tsc -p tsconfig.json",
+      "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node node_modules/vite/bin/vite.js build",
+      "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test dist/tests/server.test.js dist/tests/task-message.test.js dist/tests/reference-occurrences.test.js dist/tests/reference-occurrences-ui.test.js",
+      "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test dist/tests/reference-independent-review.test.mjs",
+      "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test dist/tests/reference-independent-api-review.test.mjs"
+    ],
+    "commandCwd": "/private/tmp/acanvas-reference-review-gh33my06",
+    "regression": {
+      "tests": 37,
+      "passed": 37,
+      "failed": 0,
+      "skipped": 0
+    },
+    "additionalIndependentBrowser": {
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    "additionalIndependentApi": {
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    "aggregate": {
+      "tests": 42,
+      "passed": 42,
+      "failed": 0,
+      "skipped": 0
+    },
+    "initialSandboxAttempt": {
+      "result": "ENVIRONMENT_BLOCKED",
+      "cause": "127.0.0.1 listen EPERM even at port 0",
+      "log": "reference-review-artifacts/review-regression.log",
+      "followup": "Same owned temporary fixtures ran successfully in the permitted environment."
+    },
+    "freshBrowserProfiles": "Owned temporary project runtime/browser-profile; headless Chrome, OS renderer sandbox enabled.",
+    "privateUiEvidence": [
+      "/private/tmp/acanvas-reference-evidence-ro9KVD",
+      "/private/tmp/acanvas-reference-evidence-kpn3s0",
+      "/private/tmp/acanvas-reference-evidence-oZs222",
+      "/private/tmp/acanvas-reference-evidence-B6RoNh",
+      "/private/tmp/acanvas-reference-evidence-QRkLRw",
+      "/private/tmp/acanvas-reference-evidence-e3wGAu"
+    ],
+    "sourceCurrency": "After test completion, dedicated reference sources/tests/service/useBoard/task-message were byte-compared with the repository and matched. App requestTitle/task-inline-reference/selectObjects/ChatboxEditor and reference CSS lines matched the tested candidate."
+  },
+  "boundaries": [
+    "This report independently accepts requirements 3 and 4 only. Requirements 1, 2 and 5 through 8 remain under their separate execution and review scopes.",
+    "The complete default suite and CEF/media matrix were not rerun in this reference review. The execution report intermediate default failures retain their original history and are not counted as passes here.",
+    "Review created evidence files only in the repository; production source and main documentation were read only. Git remains uncommitted for the root agent."
+  ],
+  "priorExecutionReport": "reference-execution.json"
+}

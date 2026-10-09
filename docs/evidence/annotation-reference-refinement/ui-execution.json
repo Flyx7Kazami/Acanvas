@@ -1,0 +1,120 @@
+{
+  "date": "2026-10-09",
+  "workspace": "/Users/yingbowu/Documents/Projects/acanvas",
+  "executor": "annotation_ui_execution",
+  "runtime": ".runtime/node_modules/node/bin/node (Node 24)",
+  "buildRoot": "/private/tmp/acanvas-annotation-ui-cutoff",
+  "scope": [
+    1,
+    2,
+    3,
+    5,
+    6,
+    7,
+    "8 App/scene wiring"
+  ],
+  "implementation": {
+    "1": "Capture labels, thumbnail Retry and floating progress are absent. Existing bounded provider recovery, Escape cancellation, evidence completeness and Send checks remain; reopening the comment and Done recovers failed or missing captures.",
+    "2": "Collapsed comments use theme RGBA .84, 4px 8px padding and 7px radius. Their measured DOM geometry/style draw once in the Scene Canvas; transparent semantic buttons remain operable, with Canvas keyboard focus feedback. Summary text shrinks inside the surface content box.",
+    "3": "Preview, formal and task inline references share neutral border/background/shadow. Formal text uses theme ink; task labels and titles display names without an added @. Reference occurrence component changes are owned by the reference executor.",
+    "5": "Selected file actions retain removal and multi-file alignment. Global Mark, selection preview confirmation, @ search and native media playback remain available.",
+    "6": "Hover and pointer lock share presentedMarkTarget over the displayed layer order, object opaque body, contentWorldBounds and audio rounded body. Letterbox and crossing/occluded rectangles form region annotations. Apply Mark selects the fixed target; Redraw re-enters Mark and temporarily clears editor hit areas. Leave, cancellation, pan, zoom and source updates clear or recompute guides.",
+    "7": "Comment text, media and footer are separate layout regions. Actual visible screen measurements limit width and height during initial placement and every resize; region/group layout includes the real pin and gap. Media cards reserve editable text and complete media/footer areas.",
+    "8": "Done uses the sibling capture-crop helper and same-presentation markerBounds/typed markTargets. It awaits up to two display frames for an actual matching target/pin, then copies pixels before draft/network/PNG work."
+  },
+  "verification": {
+    "typecheckWeb": "PASS",
+    "typecheckServerTests": "PASS",
+    "privateViteBuild": "PASS",
+    "diffCheck": "PASS",
+    "fullChatboxPointAndHitSuite": {
+      "result": "27/27 PASS",
+      "seconds": 101.211770292,
+      "log": "/private/tmp/acanvas-annotation-ui-zoomfix/final-ui-tests.log",
+      "note": "Full suite after CSS size fix; the later resize/summary corrections are covered by the final cutoff tests below."
+    },
+    "finalCutoffFocusedUI": {
+      "result": "6/6 PASS",
+      "seconds": 20.184104833,
+      "log": "/private/tmp/acanvas-annotation-ui-cutoff/ui-tests.log",
+      "tests": [
+        "CSS zoom keeps edge annotation controls visible and copies only the presented pixels within the page",
+        "refinement Mark hover and clicks share displayed content ownership and clear their guides",
+        "refinement collapsed comment surfaces use one Canvas visual and preserve their pixels in PNG",
+        "refinement media editors separate text media and footer across narrow themes and zoom",
+        "refinement an open editor measures its visible size again across resize and CSS zoom",
+        "refinement collapsed region text keeps its padding inside a narrow scaled surface"
+      ]
+    },
+    "legacyApplicableEntrances": {
+      "result": "4/4 PASS",
+      "seconds": 21.7,
+      "log": "/private/tmp/acanvas-annotation-ui-cutoff/legacy-ui-tests.log",
+      "tests": [
+        "six inline alignment commands",
+        "alignment keyboard focus after write",
+        "GIF displayed frames and confirmed inline thumbnail",
+        "320 audio range: real pointer/touch/keyboard handles, themes, resize, Done"
+      ]
+    },
+    "pixelFacts": {
+      "lightCommentRGBA": [
+        255,
+        255,
+        254,
+        255
+      ],
+      "darkCommentRGBA": [
+        31,
+        31,
+        31,
+        255
+      ],
+      "copiedPNGChannelsMismatch": 0,
+      "semanticCommentOpacity": 0,
+      "singleVisual": true
+    },
+    "mediaGeometry": "media-editor-geometry.json",
+    "openResizeGeometry": "open-editor-resize-geometry.json",
+    "regionPaddingGeometry": "collapsed-region-csszoom-geometry.json",
+    "captureRelatedEvidence": "capture-execution.json"
+  },
+  "intermediateFindings": [
+    "Retargeting behind the open editor required Redraw to remove editor hit areas until a new target is selected.",
+    "Touch pointerup followed by the generated click on the new pin keeps the same active reader; opening that reader only focuses it.",
+    "Independent review exposed CSS zoom width overflow, an open-editor resize without a parent React render, and long region text exceeding the translucent surface padding. These are covered by the final visible-size/summary fixes and actual geometry checks.",
+    "An earlier parallel full run returned a native HTML input character sequence mismatch. The same native input interaction code passed the focused serial run and the 27-item serial full run; no HTML input production changes were made.",
+    "One earlier alignment focus run reported Reconnecting while its existing focus assertion failed. The final selected four-test run passed with the production alignment logic preserved.",
+    "Legacy selected attachment tests now confirm real selection preview buttons and assert structured object references. GIF verification samples the actual displayed scene-media frame. Resize assertions wait for the measured layout response."
+  ],
+  "boundaries": {
+    "userBoardModified": false,
+    "sharedDistModified": false,
+    "live4317Updated": false,
+    "gitCommitted": false,
+    "hostAppsOrOsStoresUsed": false,
+    "oldFrontendMultimodalFullMatrixRun": false
+  },
+  "artifacts": [
+    "mark-hover-content.png",
+    "collapsed-comment-light.png",
+    "collapsed-comment-dark.png",
+    "media-editor-geometry.json",
+    "open-editor-resize-geometry.json",
+    "open-editor-csszoom-320.png",
+    "collapsed-region-csszoom-320.png",
+    "collapsed-region-csszoom-geometry.json",
+    "editor-audio-light-320.png",
+    "editor-audio-dark-320.png",
+    "editor-video-light-320.png",
+    "editor-video-dark-320.png"
+  ],
+  "temporaryEvidence": {
+    "CSS zoom keeps edge annotation controls visible and copies only the presented pixels within the page": "/private/tmp/acanvas-chatbox-evidence-7GeeOX",
+    "refinement Mark hover and clicks share displayed content ownership and clear their guides": "/private/tmp/acanvas-chatbox-evidence-1QMCX4",
+    "refinement collapsed comment surfaces use one Canvas visual and preserve their pixels in PNG": "/private/tmp/acanvas-chatbox-evidence-usEFhx",
+    "refinement media editors separate text media and footer across narrow themes and zoom": "/private/tmp/acanvas-chatbox-evidence-fq4flW",
+    "refinement an open editor measures its visible size again across resize and CSS zoom": "/private/tmp/acanvas-chatbox-evidence-kqO18C",
+    "refinement collapsed region text keeps its padding inside a narrow scaled surface": "/private/tmp/acanvas-chatbox-evidence-pkEFIa"
+  }
+}

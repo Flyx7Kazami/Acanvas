@@ -10,7 +10,7 @@ import type { BoardState } from '../src/shared/types.js';
 type Fixture = { root: string; url: string; restart: () => Promise<void>; call: (path: string, method?: string, body?: unknown) => Promise<any>; state: () => Promise<BoardState> };
 const test = base.extend<{ app: Fixture }>({ app: async ({ page }, use) => {
   const root = await mkdtemp(join(tmpdir(), 'acanvas-multimodal-'));
-  let child = spawn(resolve('.runtime/node_modules/node/bin/node'), [resolve('dist/src/server/main.js'), '--project', root, '--port', '0'], { stdio: ['ignore', 'pipe', 'pipe'] });
+  let child = spawn(resolve('.runtime/node_modules/node/bin/node'), [resolve(process.env.ACANVAS_TEST_OUT_DIR || 'dist', 'src/server/main.js'), '--project', root, '--port', '0'], { stdio: ['ignore', 'pipe', 'pipe'] });
   let output = '', errors = '';
   child.stderr.on('data', value => { errors += value; });
   const url = await new Promise<string>((accept, reject) => {
@@ -25,10 +25,22 @@ const test = base.extend<{ app: Fixture }>({ app: async ({ page }, use) => {
   };
   await page.goto(url); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   const sessionId = new URL(page.url()).searchParams.get('session')!;
-  const restart = async () => { const exited = once(child, 'exit'); child.kill('SIGTERM'); await exited; child = spawn(resolve('.runtime/node_modules/node/bin/node'), [resolve('dist/src/server/main.js'), '--project', root, '--port', new URL(url).port], { stdio: ['ignore', 'pipe', 'pipe'] }); child.stderr.on('data', value => { errors += value; }); await once(child.stdout, 'data'); bootstrap = await (await fetch(`${url}/api/bootstrap`)).json(); };
+  const restart = async () => { const exited = once(child, 'exit'); child.kill('SIGTERM'); await exited; child = spawn(resolve('.runtime/node_modules/node/bin/node'), [resolve(process.env.ACANVAS_TEST_OUT_DIR || 'dist', 'src/server/main.js'), '--project', root, '--port', new URL(url).port], { stdio: ['ignore', 'pipe', 'pipe'] }); child.stderr.on('data', value => { errors += value; }); await once(child.stdout, 'data'); bootstrap = await (await fetch(`${url}/api/bootstrap`)).json(); };
   try { await use({ root, url, restart, call, state: () => call(`/api/state?sessionId=${sessionId}`) }); }
   finally { if (child.exitCode === null) { const exited = once(child, 'exit'); child.kill('SIGTERM'); await exited; } expect(child.exitCode, errors).toBe(0); await rm(root, { recursive: true, force: true }); }
 } });
+
+async function confirmSelectedReferences(page: import('@playwright/test').Page) {
+  await page.locator('.reference-preview-confirm').first().click();
+  await expect(page.locator('.chatbox-reference-preview')).toHaveCount(0);
+  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+}
+
+async function beginAnnotating(page: import('@playwright/test').Page) {
+  await page.getByRole('button', { name: 'Mark canvas', exact: true }).click();
+  if (!await page.getByLabel('Add a comment', { exact: true }).count()) await page.locator('#whiteboard').press('Enter');
+  await expect(page.getByLabel('Add a comment', { exact: true })).toBeVisible();
+}
 
 function toneWav(seconds = 5): Buffer {
   const samples = 44100 * seconds, result = Buffer.alloc(44 + samples * 2);
@@ -56,7 +68,7 @@ test('Markdown reads safely with direct selection and scrolling and persists who
   }
   await document.focus(); await document.press('Escape');
   const resize = object.getByRole('button', { name: /Resize field-notes.md bottom right/ }); await resize.focus(); await resize.press('ArrowRight'); await expect.poll(async () => (await app.state()).objects[0].width).toBe(original.width + 10); expect((await app.state()).objects[0].height).toBe(original.height);
-  await page.getByRole('button', { name: 'Annotate', exact: true }).click(); await page.getByLabel('Add a comment', { exact: true }).fill('Read this document.'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await page.getByLabel('Add a comment', { exact: true }).press('Escape');
+  await beginAnnotating(page); await page.getByLabel('Add a comment', { exact: true }).fill('Read this document.'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await page.getByLabel('Add a comment', { exact: true }).press('Escape');
   await page.locator('#instruction').fill('Use the notes'); await page.getByRole('button', { name: 'Send request', exact: true }).click();
   await expect.poll(async () => (await app.state()).tasks.length).toBe(1); const saved = await app.state(), annotation = saved.tasks[0].snapshot.annotations[0]; expect(annotation.bounds).toEqual({ x: 0, y: 0, width: 1, height: 1 }); expect(annotation.timeStart).toBeUndefined(); expect(annotation.snapshotAssetId).toBeUndefined(); expect(saved.tasks[0].snapshot.referenceContent.assets[0].id).toBe(originalAsset.id);
   const originalResponse = await page.request.get(`${app.url}/api/assets/${originalAsset.id}/content`); expect(await originalResponse.text()).toBe(source);
@@ -66,11 +78,11 @@ test('Markdown reads safely with direct selection and scrolling and persists who
 test('GIF retains native animation and shared thumbnail rendering', async ({ page, app }, info) => {
   const buffer = await readFile(resolve('tests/fixtures/animated-reference.gif'));
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'motion.gif', mimeType: 'application/octet-stream', buffer });
-  const object = page.locator('.board-object[data-content-kind="gif"]'); await expect(object.locator('img')).toBeVisible();
+  const object = page.locator('.board-object[data-content-kind="gif"]'); await expect(object.locator('[data-scene-media="gif"]')).toBeVisible();
   const frames: Buffer[] = [];
-  for (let index = 0; index < 10; index++) { frames.push(await object.locator('img').screenshot()); await page.waitForTimeout(85); }
+  for (let index = 0; index < 10; index++) { frames.push(await object.locator('[data-scene-media="gif"]').screenshot()); await page.waitForTimeout(85); }
   const different = frames.some(frame => !frame.equals(frames[0]));
-  expect(different).toBeTruthy(); await object.click(); await page.getByRole('button', { name: 'Attach to request' }).click(); await expect(page.locator('.draft-asset .asset-thumb')).toHaveAttribute('data-kind', 'gif');
+  expect(different).toBeTruthy(); await object.click(); await confirmSelectedReferences(page); await expect(page.locator('.chatbox-reference .asset-thumb')).toHaveAttribute('data-kind', 'gif');
   expect((await app.state()).assets[0].kind).toBe('image'); await page.screenshot({ path: info.outputPath('gif-reference.png') });
 });
 
@@ -81,7 +93,7 @@ test('audio plays real media in one row and saves explicit time range without fr
   const original = (await app.state()).objects[0]; expect(original.height).toBe(100);
   await object.getByRole('button', { name: /Play audio/ }).click(); await expect.poll(() => object.locator('audio').evaluate((audio: HTMLAudioElement) => audio.currentTime)).toBeGreaterThan(.1);
   expect((await app.state()).objects[0].version).toBe(original.version);
-  await object.locator('.object-caption').click(); await page.getByRole('button', { name: 'Annotate', exact: true }).click();
+  await object.locator('.object-caption').click(); await beginAnnotating(page);
   const range = page.locator('.annotation-range-timeline'); await expect(page.locator('.annotation-time-range')).toHaveAttribute('data-ready', 'true');
   const input = page.getByLabel('Add a comment', { exact: true }); await input.fill('Use this part of the sound.');
   await expect.poll(async () => (await app.state()).draft.annotations.length).toBe(1);
@@ -183,7 +195,7 @@ test('audio range card keeps both handles and Done visible at 320 pixels', async
   const state = await app.state(), object = state.objects[0];
   await app.call(`/api/sessions/${state.session.id}/view`, 'PUT', { x: 200 - object.x, y: 400 - object.y, zoom: 1, selectedObjectIds: [] });
   await page.reload(); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
-  await page.locator('.board-object[data-content-kind="audio"] .object-caption').click(); await page.getByRole('button', { name: 'Annotate', exact: true }).click();
+  await page.locator('.board-object[data-content-kind="audio"] .object-caption').click(); await beginAnnotating(page);
   await expect(page.locator('.annotation-time-range')).toHaveAttribute('data-ready', 'true');
   const bounds = await page.locator('.annotation-full').boundingBox(); expect(bounds).toBeTruthy(); expect(bounds!.x).toBeGreaterThanOrEqual(0); expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(320);
   const start = await page.getByRole('slider', { name: 'Start point' }).boundingBox(), end = await page.getByRole('slider', { name: 'End point' }).boundingBox(), done = await page.getByRole('button', { name: 'Done' }).boundingBox();
@@ -192,10 +204,11 @@ test('audio range card keeps both handles and Done visible at 320 pixels', async
   await page.getByRole('button', { name: 'Switch to dark theme' }).click(); const darkShot = info.outputPath('audio-range-320-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
   const narrowTimeline = (await page.locator('.annotation-range-timeline').boundingBox())!.width;
   await page.setViewportSize({ width: 390, height: 700 });
+  await expect.poll(async () => (await page.locator('.annotation-range-timeline').boundingBox())!.width).toBeGreaterThan(narrowTimeline);
   const wideTimeline = (await page.locator('.annotation-range-timeline').boundingBox())!.width;
   expect(wideTimeline).toBeGreaterThan(narrowTimeline);
   await page.setViewportSize({ width: 320, height: 700 });
-  expect((await page.locator('.annotation-range-timeline').boundingBox())!.width).toBe(narrowTimeline);
+  await expect.poll(async () => (await page.locator('.annotation-range-timeline').boundingBox())!.width).toBe(narrowTimeline);
   await page.getByRole('textbox', { name: 'Add a comment' }).fill('Touch selected sound.');
   await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   const touch = await page.context().newCDPSession(page); await touch.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
@@ -433,7 +446,7 @@ test('file input, paste, drop and CLI share multimodal fallback without changing
   });
   await expect(page.locator('.board-object[data-content-kind="html"]')).toHaveCount(1);
   const path = join(app.root, 'cli-notes.MD'); await writeFile(path, source);
-  const { stdout } = await promisify(execFile)(resolve('.runtime/node_modules/node/bin/node'), [resolve('dist/src/cli.js'), 'asset', 'import', '--project', app.root, '--url', app.url, '--file', path]);
+  const { stdout } = await promisify(execFile)(resolve('.runtime/node_modules/node/bin/node'), [resolve(process.env.ACANVAS_TEST_OUT_DIR || 'dist', 'src/cli.js'), 'asset', 'import', '--project', app.root, '--url', app.url, '--file', path]);
   const asset = JSON.parse(stdout); expect(asset.mime).toBe('text/markdown'); expect(asset.kind).toBe('file');
   const state = await app.state(); expect(state.assets.find(value => value.name === 'pasted.markdown')?.mime).toBe('text/markdown'); expect(state.assets.find(value => value.name === 'dropped.htm')?.mime).toBe('text/html');
   const imported = await page.request.get(`${app.url}/api/assets/${asset.id}/content`); expect(await imported.text()).toBe(source);
@@ -554,8 +567,8 @@ test('mixed Markdown and HTML group annotation saves one comment and preserves f
   ]);
   await expect(page.locator('.board-object')).toHaveCount(2); const initial = await app.state();
   await app.call('/api/board/operations', 'POST', { sessionId: initial.session.id, operations: initial.objects.map((object, index) => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: 180 + index * 470, y: 180 } })) });
-  const nodes = page.locator('.board-object'); await nodes.nth(0).locator('.object-caption').click(); await nodes.nth(1).locator('.object-caption').click({ modifiers: ['Shift'] }); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: 'Annotate', exact: true }).click(); await page.getByLabel('Add a comment', { exact: true }).fill('Use these two complete references together.'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+  const nodes = page.locator('.board-object'); await nodes.nth(0).locator('.object-caption').click(); await nodes.nth(1).locator('.object-caption').click({ modifiers: ['Shift'] }); await expect(page.getByRole('button', { name: 'Mark canvas', exact: true })).toBeEnabled();
+  await beginAnnotating(page); await page.getByLabel('Add a comment', { exact: true }).fill('Use these two complete references together.'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   const created = await app.state(), annotation = created.draft.annotations[0]; expect(annotation.scope).toBe('group'); expect(annotation.objectIds).toHaveLength(2); expect(annotation.objectId).toBeUndefined(); expect(annotation.assetId).toBeUndefined(); expect(annotation.timeStart).toBeUndefined(); expect(annotation.snapshotAssetId).toBeUndefined(); await expect(page.locator('.annotation-outline')).toHaveCount(0);
   await page.getByLabel('Add a comment', { exact: true }).press('Escape');
   await page.waitForTimeout(320); const pin = page.locator('.canvas-annotation-group .annotation-pin').first(), originalPin = (await pin.boundingBox())!;
@@ -575,16 +588,16 @@ test('real embedded MP3 and M4A covers share stable canvas and thumbnail sources
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles([{ name: 'without-cover.wav', mimeType: 'audio/wav', buffer: toneWav() }, ...await Promise.all(['mp3', 'm4a'].map(async extension => ({ name: `artwork.${extension}`, mimeType: 'application/octet-stream', buffer: await readFile(resolve(`tests/fixtures/amplitude-cover.${extension}`)) })))]);
   const nodes = page.locator('.board-object[data-content-kind="audio"]'); await expect(nodes).toHaveCount(3); const layout = await app.state(); await app.call('/api/board/operations', 'POST', { sessionId: layout.session.id, operations: layout.objects.map((object, index) => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: 140 + (index % 2) * 520, y: 180 + Math.floor(index / 2) * 180 } })) }); await expect(nodes.nth(0).locator('.audio-player-cover')).toHaveCount(0); await expect(nodes.nth(2).locator('.audio-player-cover')).toBeVisible(); await expect(nodes.nth(1).locator('.audio-player-cover')).toBeVisible();
   const first = await nodes.nth(2).locator('.audio-player-cover').getAttribute('src'), second = await nodes.nth(1).locator('.audio-player-cover').getAttribute('src'); expect(first).not.toBe(second);
-  for (let index = 1; index < 3; index++) { await nodes.nth(index).getByRole('button', { name: 'Play audio', exact: true }).click(); await expect.poll(() => nodes.nth(index).locator('audio').evaluate((audio: HTMLAudioElement) => audio.currentTime)).toBeGreaterThan(.1); await nodes.nth(index).getByRole('button', { name: 'Pause audio', exact: true }).click(); await nodes.nth(index).getByRole('slider', { name: 'Audio timeline' }).press('PageUp'); await expect.poll(() => nodes.nth(index).locator('audio').evaluate((audio: HTMLAudioElement) => audio.currentTime)).toBeGreaterThan(11); await nodes.nth(index).locator('.object-caption').click(); await page.getByRole('button', { name: 'Attach to request', exact: true }).click(); }
-  await expect(page.locator('.draft-asset .asset-thumb img')).toHaveCount(2); expect(artworkHeads).toBe(3); // one cached absent source and two real cover identities
-  await expect.poll(async () => (await app.state()).draft.attachments.length).toBe(2); const state = await app.state(); expect(state.draft.attachments).toHaveLength(2); expect(state.assets).toHaveLength(3); expect(state.assets.every(asset => asset.mime.startsWith('audio/'))).toBeTruthy();
+  for (let index = 1; index < 3; index++) { await nodes.nth(index).getByRole('button', { name: 'Play audio', exact: true }).click(); await expect.poll(() => nodes.nth(index).locator('audio').evaluate((audio: HTMLAudioElement) => audio.currentTime)).toBeGreaterThan(.1); await nodes.nth(index).getByRole('button', { name: 'Pause audio', exact: true }).click(); await nodes.nth(index).getByRole('slider', { name: 'Audio timeline' }).press('PageUp'); await expect.poll(() => nodes.nth(index).locator('audio').evaluate((audio: HTMLAudioElement) => audio.currentTime)).toBeGreaterThan(11); await nodes.nth(index).locator('.object-caption').click(); await confirmSelectedReferences(page); }
+  await expect(page.locator('.chatbox-reference .asset-thumb img')).toHaveCount(2); expect(artworkHeads).toBe(3); // one cached absent source and two real cover identities
+  await expect.poll(async () => (await app.state()).draft.references.objectIds.length).toBe(2); const state = await app.state(); expect(state.draft.references.objectIds).toHaveLength(2); expect(state.assets).toHaveLength(3); expect(state.assets.every(asset => asset.mime.startsWith('audio/'))).toBeTruthy();
 });
 
 test('an explicit multi-image region drag previews the area and saves region instead of whole group', async ({ page, app }) => {
   const encoded = await page.evaluate(() => { const canvas = document.createElement('canvas'); canvas.width = 160; canvas.height = 100; const context = canvas.getContext('2d')!; context.fillStyle = '#a2b7b5'; context.fillRect(0, 0, 160, 100); return canvas.toDataURL().split(',')[1]; });
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(['first.png', 'second.png'].map(name => ({ name, mimeType: 'image/png', buffer: Buffer.from(encoded, 'base64') })));
   await expect(page.locator('.board-object')).toHaveCount(2); const state = await app.state(); await app.call('/api/board/operations', 'POST', { sessionId: state.session.id, operations: state.objects.map((object, index) => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: 160 + index * 380, y: 200, width: 300, height: 187.5 } })) });
-  const nodes = page.locator('.board-object'); await nodes.nth(0).locator('.object-caption').click(); await nodes.nth(1).locator('.object-caption').click({ modifiers: ['Shift'] }); await page.getByRole('button', { name: 'Annotate', exact: true }).click(); await page.getByLabel('Add a comment', { exact: true }).fill('Use this shared image area.');
+  const nodes = page.locator('.board-object'); await nodes.nth(0).locator('.object-caption').click(); await nodes.nth(1).locator('.object-caption').click({ modifiers: ['Shift'] }); await beginAnnotating(page); await page.getByLabel('Add a comment', { exact: true }).fill('Use this shared image area.');
   await expect(page.locator('.annotation-outline')).toHaveCount(0); await page.mouse.move(200, 230); await page.mouse.down(); await page.mouse.move(780, 335, { steps: 10 }); await expect(page.locator('.editing-outline')).toBeVisible(); await page.mouse.up();
   await expect.poll(async () => (await app.state()).draft.annotations[0]?.scope).toBe('region'); const annotation = (await app.state()).draft.annotations[0]; expect(annotation.coordinateSpace).toBe('world'); expect(annotation.objectIds).toHaveLength(2); expect(annotation.bounds.width).toBeCloseTo(580, 1); expect(annotation.bounds.height).toBeCloseTo(105, 1);
 });

@@ -554,7 +554,7 @@ test('reference order validates identity sets and legacy ordering keeps historic
   const f = await fixture(t), a = await f.session('A'), b = await f.session('B'), old = await f.sendTask(a.id, 'Historical source.'), asset = await f.upload('sample');
   await f.call('/api/board/operations', 'POST', { sessionId: b.id, operations: [{ type: 'create', object: { id: 'legacy-ref', assetId: asset.id, x: 0, y: 0, width: 100, height: 80 } }] });
   let draft: Draft = (await f.state(b.id)).draft;
-  for (const references of [{ objectIds: ['legacy-ref'], taskIds: [], order: [] }, { objectIds: ['legacy-ref'], taskIds: [], order: [{ kind: 'object', id: 'legacy-ref' }, { kind: 'object', id: 'legacy-ref' }] }, { objectIds: [], taskIds: [], order: [{ kind: 'task', id: old.id }] }]) {
+  for (const references of [{ objectIds: ['legacy-ref'], taskIds: [], order: [] }, { objectIds: ['legacy-ref', 'legacy-ref'], taskIds: [], order: [{ kind: 'object', id: 'legacy-ref' }, { kind: 'object', id: 'legacy-ref' }] }, { objectIds: [], taskIds: [], order: [{ kind: 'task', id: old.id }] }]) {
     const error = await f.call(`/api/sessions/${b.id}/draft`, 'PUT', { ...draft, references }, 400); assert.equal(error.error.code, 'invalid_references');
   }
   await f.call(`/api/sessions/${b.id}/draft`, 'PUT', { ...draft, references: { objectIds: [], taskIds: [old.id] } }, 403);

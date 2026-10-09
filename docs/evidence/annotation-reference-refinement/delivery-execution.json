@@ -1,0 +1,1210 @@
+{
+  "measuredAt": "2026-10-09T03:32:57.841Z",
+  "status": "controlled-update-and-two-public-business-comparisons-passed",
+  "scope": "Eight annotation and reference refinements; final isolated checks and controlled same-port/session update only after independent acceptance.",
+  "baselineCommit": "f9e5f95",
+  "requirements": [
+    "R02",
+    "R04",
+    "R05",
+    "A02",
+    "A06",
+    "A07",
+    "A09"
+  ],
+  "projectRuntime": {
+    "node": "24.21.0",
+    "tmpdir": "/private/tmp"
+  },
+  "preflight": {
+    "measuredAt": "2026-10-09T03:05:47.764Z",
+    "directory": "/private/tmp/acanvas-refinement-delivery-FkiGPW",
+    "protectedSnapshot": {
+      "path": "/private/tmp/acanvas-refinement-delivery-FkiGPW/snapshot-preflight.json",
+      "directoryMode": "0700",
+      "fileMode": "0600",
+      "tokensIncluded": false,
+      "businessTextPrinted": false
+    },
+    "status": {
+      "project": {
+        "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+        "name": "acanvas",
+        "root": "/Users/yingbowu/Documents/Projects/acanvas"
+      },
+      "service": {
+        "pid": 30391,
+        "instanceId": "170f0ac5-4274-4fb8-af75-30ba125eaf89"
+      },
+      "status": "running"
+    },
+    "origin": "http://127.0.0.1:4317",
+    "url": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+    "counts": {
+      "sessions": 4,
+      "tasks": 31,
+      "assets": 39,
+      "sharedAssets": 28,
+      "evidenceAssets": 11,
+      "objects": 12,
+      "annotations": 15
+    },
+    "activity": [
+      {
+        "sessionId": "f7f0a6f8-f792-4236-83bd-b4faf825057d",
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDraft": false,
+        "draft": {
+          "id": "6f4cf496-ac22-45c3-ad9b-195f1d988768",
+          "revision": 67,
+          "textLength": 0,
+          "attachments": 0,
+          "annotations": 0
+        },
+        "tasks": 24
+      },
+      {
+        "sessionId": "3937b619-22e8-4699-8c95-5981c6df26a0",
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDraft": false,
+        "draft": {
+          "id": "28a153a6-adb4-432a-82fc-9dfb3c053ba5",
+          "revision": 1,
+          "textLength": 0,
+          "attachments": 0,
+          "annotations": 0
+        },
+        "tasks": 0
+      },
+      {
+        "sessionId": "fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDraft": false,
+        "draft": {
+          "id": "484da2f1-0268-448b-9d03-96568c53ca36",
+          "revision": 2,
+          "textLength": 0,
+          "attachments": 0,
+          "annotations": 0
+        },
+        "tasks": 7
+      },
+      {
+        "sessionId": "b28b8381-c657-4e44-812f-cd713d39b1dc",
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDraft": false,
+        "draft": {
+          "id": "160b2494-28c7-41a8-b601-7e94bcdc122c",
+          "revision": 45,
+          "textLength": 0,
+          "attachments": 0,
+          "annotations": 0
+        },
+        "tasks": 0
+      }
+    ],
+    "managedBrowser": {
+      "running": false,
+      "pageCount": 0
+    },
+    "hostPublicScope": "All public session/view/consumer/task fields are retained in the protected controlled-interface snapshot; internal host_bindings rows have no GET endpoint and were kept outside direct inspection."
+  },
+  "preparedCommands": {
+    "isolatedBuild": ".runtime/node_modules/node/bin/node /private/tmp/acanvas-refinement-delivery-FkiGPW/compile-final.mjs",
+    "latestDefault": ".runtime/node_modules/node/bin/node /private/tmp/acanvas-refinement-delivery-FkiGPW/run-default.mjs",
+    "sameServiceAndSession": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node dist/src/cli.js project open --project /Users/yingbowu/Documents/Projects/acanvas --port 4317 --session fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+    "fixtureAndCwdRule": "Each candidate has its own dist, package and node_modules link, plus a tests link used to read existing fixtures. Default tests run with candidate cwd so dist/web and child dist/src resolve to the candidate."
+  },
+  "isolatedChecks": {
+    "status": "PASS",
+    "candidateDirectory": "/private/tmp/acanvas-refinement-candidate-fAhpvO",
+    "build": {
+      "measuredAt": "2026-10-09T03:16:43.223Z",
+      "directory": "/private/tmp/acanvas-refinement-candidate-fAhpvO",
+      "node": "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+      "tmpdir": "/private/tmp",
+      "fixtureLink": {
+        "path": "/private/tmp/acanvas-refinement-candidate-fAhpvO/tests",
+        "target": "/Users/yingbowu/Documents/Projects/acanvas/tests",
+        "use": "Read existing fixtures; generated projects/evidence remain in private tmp."
+      },
+      "sharedDistWritten": false,
+      "results": [
+        {
+          "name": "server",
+          "measuredAt": "2026-10-09T03:16:36.102Z",
+          "status": 0
+        },
+        {
+          "name": "client",
+          "measuredAt": "2026-10-09T03:16:39.466Z",
+          "status": 0
+        },
+        {
+          "name": "web",
+          "measuredAt": "2026-10-09T03:16:41.622Z",
+          "status": 0
+        }
+      ]
+    },
+    "default": {
+      "measuredAt": "2026-10-09T03:17:46.236Z",
+      "finishedAt": "2026-10-09T03:19:28.562Z",
+      "node": "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+      "tmpdir": "/private/tmp",
+      "executionCwd": "/private/tmp/acanvas-refinement-candidate-fAhpvO",
+      "harnessEnvironment": {
+        "ACANVAS_TEST_OUT_DIR": "/private/tmp/acanvas-refinement-candidate-fAhpvO/dist",
+        "ACANVAS_TEST_WEB_ROOT": "/private/tmp/acanvas-refinement-candidate-fAhpvO/dist/web"
+      },
+      "defaultSelection": "Current runtime.mjs test selection: every compiled dist/tests/*.test.js, with opt-in browser/native variables absent.",
+      "files": [
+        "annotation-capture.test.js",
+        "audio-artwork.test.js",
+        "browser-capture.test.js",
+        "chatbox-ui.test.js",
+        "content-types.test.js",
+        "cookie-isolation.test.js",
+        "element-capture-crop.test.js",
+        "element-capture-production.test.js",
+        "frontend-geometry.test.js",
+        "gif-decoder.test.js",
+        "host-runtime.test.js",
+        "html-bundle.test.js",
+        "html-preview.test.js",
+        "mark-hit-test.test.js",
+        "markdown-anchor.test.js",
+        "native-controls.test.js",
+        "native-gc.test.js",
+        "native-profile-cleanup.test.js",
+        "point-anchor.test.js",
+        "project-capture-provider.test.js",
+        "reference-occurrences-ui.test.js",
+        "reference-occurrences.test.js",
+        "scene-source.test.js",
+        "server.test.js",
+        "task-message.test.js",
+        "universal-html-audio.test.js",
+        "universal-html-client-controls.test.js",
+        "universal-html-native.test.js",
+        "universal-html-pairing.test.js",
+        "universal-html-popup.test.js",
+        "universal-html-prototype.test.js",
+        "universal-html-recovery.test.js",
+        "universal-markdown-anchor.test.js",
+        "universal-media.test.js",
+        "universal-scene-geometry.test.js",
+        "universal-scene-production.test.js",
+        "universal-scene-prototype.test.js",
+        "universal-scene-types.test.js",
+        "universal-target-edit.test.js"
+      ],
+      "fileCount": 39,
+      "logPath": "/private/tmp/acanvas-refinement-candidate-fAhpvO/final-default.log",
+      "code": 0,
+      "signal": null,
+      "metrics": {
+        "tests": 212,
+        "suites": 0,
+        "pass": 187,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 25,
+        "todo": 0,
+        "duration_ms": 102274.855333
+      },
+      "boundaries": {
+        "sharedDistWritten": false,
+        "userBoardWritten": false,
+        "formalServiceAccessed": false,
+        "sourceTestsChanged": false,
+        "nativeScope": "Existing default actual-App fixtures may initialize the installed normal CEF only in test-owned temporary projects; this run does not repeat opt-in CEF, Safari or Edge matrices."
+      },
+      "applicableResults": [
+        {
+          "filename": "element-capture-crop.test.js",
+          "tests": 7,
+          "pass": 7,
+          "skipped": 0,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "object point and local region use all four complete paint edges with the actual pin",
+              "status": "PASS"
+            },
+            {
+              "name": "stacked region pin outside the object remains inside the complete capture request",
+              "status": "PASS"
+            },
+            {
+              "name": "blank point and cross-object region retain the existing selected-region context",
+              "status": "PASS"
+            },
+            {
+              "name": "complete element geometry follows actual CSS offset, pan and page plus canvas zoom",
+              "status": "PASS"
+            },
+            {
+              "name": "partly offscreen fractional elements copy only page-visible pixels at actual bitmap ratios",
+              "status": "PASS"
+            },
+            {
+              "name": "overlapping higher layers remain in the crop and the held frame determines complete bounds",
+              "status": "PASS"
+            },
+            {
+              "name": "capture bounds reject unavailable numeric geometry",
+              "status": "PASS"
+            }
+          ]
+        },
+        {
+          "filename": "element-capture-production.test.js",
+          "tests": 1,
+          "pass": 0,
+          "skipped": 1,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "production full element captures keep copied image audio GIF video and HTML pixels",
+              "status": "SKIP"
+            }
+          ]
+        },
+        {
+          "filename": "mark-hit-test.test.js",
+          "tests": 1,
+          "pass": 1,
+          "skipped": 0,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "presented Mark ownership respects letterbox opaque bodies rounded corners and every crossing occluder",
+              "status": "PASS"
+            }
+          ]
+        },
+        {
+          "filename": "reference-occurrences.test.js",
+          "tests": 2,
+          "pass": 2,
+          "skipped": 0,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "repeated object and task occurrences keep every CLI position, reload, Send and edit while sharing snapshot sources",
+              "status": "PASS"
+            },
+            {
+              "name": "occurrences admit repeated legacy and equal UTF-16 positions and retain source, Unicode and list limits",
+              "status": "PASS"
+            }
+          ]
+        },
+        {
+          "filename": "reference-occurrences-ui.test.js",
+          "tests": 3,
+          "pass": 3,
+          "skipped": 0,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "reselecting one object creates individual atoms with neutral preview styling and one removable occurrence",
+              "status": "PASS"
+            },
+            {
+              "name": "repeated @ object and task queries retain every Send and queued edit occurrence in body order",
+              "status": "PASS"
+            },
+            {
+              "name": "native IME and atomic keyboard deletion preserve equal-position occurrences of one source",
+              "status": "PASS"
+            }
+          ]
+        },
+        {
+          "filename": "server.test.js",
+          "tests": 29,
+          "pass": 29,
+          "skipped": 0,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "saved drafts are session-specific; duplicate send returns one immutable snapshot",
+              "status": "PASS"
+            },
+            {
+              "name": "one consumer per session and parallel FIFO sessions; empty claim leaves later tasks queued",
+              "status": "PASS"
+            },
+            {
+              "name": "resume reads existing outputs; stale attempts are retained and cannot publish",
+              "status": "PASS"
+            },
+            {
+              "name": "object CAS rolls back a whole board or publication transaction",
+              "status": "PASS"
+            },
+            {
+              "name": "media byte ranges, authentication, origins, hostile attachments and path boundaries",
+              "status": "PASS"
+            },
+            {
+              "name": "overlimit and aborted upload discard partial files; complete uploads survive restart",
+              "status": "PASS"
+            },
+            {
+              "name": "CLI checks project identity and executes read/import/complete against the HTTP service",
+              "status": "PASS"
+            },
+            {
+              "name": "a project has one service owner and persisted views/drafts survive a restart",
+              "status": "PASS"
+            },
+            {
+              "name": "cancelling a later queued task preserves the active consumer",
+              "status": "PASS"
+            },
+            {
+              "name": "empty claim and draft send overlap with a persistent queued or running outcome",
+              "status": "PASS"
+            },
+            {
+              "name": "concurrent draft writes use revisions and stale send preserves the latest saved draft",
+              "status": "PASS"
+            },
+            {
+              "name": "completion derives published assets and rejects cross-task and omitted receipt references atomically",
+              "status": "PASS"
+            },
+            {
+              "name": "session resume transfers a settled queue by expected owner and retains running-attempt ownership",
+              "status": "PASS"
+            },
+            {
+              "name": "idle and transferred consumers stay retired across later enqueue and claim calls",
+              "status": "PASS"
+            },
+            {
+              "name": "importing the CLI from another cli.js process leaves command execution to its caller",
+              "status": "PASS"
+            },
+            {
+              "name": "Node 24 SQLite lifecycle survives repeated open/claim/complete/close and garbage collection",
+              "status": "PASS"
+            },
+            {
+              "name": "service shutdown ends active SSE and incomplete uploads before closing SQLite",
+              "status": "PASS"
+            },
+            {
+              "name": "production Node 24 process recovers after a crash and exits normally with active SSE",
+              "status": "PASS"
+            },
+            {
+              "name": "waiting request editing retains FIFO identity, source references and the previous draft across restart",
+              "status": "PASS"
+            },
+            {
+              "name": "claim and edit share one reservation boundary while the losing action retains its content",
+              "status": "PASS"
+            },
+            {
+              "name": "request edit restores explicit references while annotation dependencies remain in the snapshot",
+              "status": "PASS"
+            },
+            {
+              "name": "earlier reference provenance and active edit additions remain available across restart",
+              "status": "PASS"
+            },
+            {
+              "name": "a user specified annotation-only correction preserves an earlier request and surrounding drafts",
+              "status": "PASS"
+            },
+            {
+              "name": "ordered object and task references keep real provenance and share one readable request with CLI",
+              "status": "PASS"
+            },
+            {
+              "name": "deleted saved references remain editable and return an actionable send error",
+              "status": "PASS"
+            },
+            {
+              "name": "queued reference editing retains previous placements while new references use their current state",
+              "status": "PASS"
+            },
+            {
+              "name": "reference order validates identity sets and legacy ordering keeps historical session provenance",
+              "status": "PASS"
+            },
+            {
+              "name": "inline references persist through CLI submission, reload, and queued edits with current positions and saved content",
+              "status": "PASS"
+            },
+            {
+              "name": "inline reference positions validate UTF-16 boundaries, visual order, identity and session scope atomically",
+              "status": "PASS"
+            }
+          ]
+        },
+        {
+          "filename": "chatbox-ui.test.js",
+          "tests": 26,
+          "pass": 26,
+          "skipped": 0,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "chatbox selection previews are consumed by real input focus, Escape and direct reference-only Send",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox @ search orders object and task identities and keeps IME, paste and attachment semantics",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox inline previews insert two independent objects at the last caret and restore send, refresh and queue edit positions",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox inline atoms support native caret movement, both delete keys, cross selection, Unicode, IME and plaintext paste",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox native composition, backward keyboard selection and delayed rerenders keep the caret and independent atoms",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox independent inline previews and formal atoms wrap within 320px light and dark themes",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox legacy grouped draft and snapshot references use the shared body-tail fallback",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox nonempty inline references reconcile held saves and SSE by business fields independently of JSON key order",
+              "status": "PASS"
+            },
+            {
+              "name": "chatbox native text replacement preserves two atoms, exact multiline text and empty-body offsets through refresh and Send",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React Done captures blank points, cross-object regions and historical scenes with separate current locate",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React target edits require a new capture while text edits preserve the original image",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React delayed saves retain the newer target and capture cancellation invalidates late uploads",
+              "status": "PASS"
+            },
+            {
+              "name": "ordinary pages complete Done and Send through the project API on the same page",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React refresh exposes a lost captured image and explicitly recaptures a new version",
+              "status": "PASS"
+            },
+            {
+              "name": "visible Canvas evidence excludes native controls while capture cancellation stays usable",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React records Markdown intent and displayed anchors and keeps the native HTML source instance and form",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React saves independent video/audio selections and actual playback positions",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React captures GIF, file cards, mixed scenes and the actual overlapping target",
+              "status": "PASS"
+            },
+            {
+              "name": "managed marks use the top painted media owner and keep letterbox points and crossing regions in world space",
+              "status": "PASS"
+            },
+            {
+              "name": "CSS zoom keeps edge annotation controls visible and copies only the presented pixels within the page",
+              "status": "PASS"
+            },
+            {
+              "name": "managed React 320px themes, keyboard point marking and reduced motion retain usable composer",
+              "status": "PASS"
+            },
+            {
+              "name": "refinement Mark hover and clicks share displayed content ownership and clear their guides",
+              "status": "PASS"
+            },
+            {
+              "name": "refinement collapsed comment surfaces use one Canvas visual and preserve their pixels in PNG",
+              "status": "PASS"
+            },
+            {
+              "name": "refinement media editors separate text media and footer across narrow themes and zoom",
+              "status": "PASS"
+            },
+            {
+              "name": "refinement an open editor measures its visible size again across resize and CSS zoom",
+              "status": "PASS"
+            },
+            {
+              "name": "refinement collapsed region text keeps its padding inside a narrow scaled surface",
+              "status": "PASS"
+            }
+          ]
+        },
+        {
+          "filename": "point-anchor.test.js",
+          "tests": 2,
+          "pass": 2,
+          "skipped": 0,
+          "fail": 0,
+          "unmatched": 0,
+          "checks": [
+            {
+              "name": "point pins and captured rings share actual blank and normalized clicks across pan zoom DPR themes and touch",
+              "status": "PASS"
+            },
+            {
+              "name": "same and neighboring point comments move independently during expansion while region and legacy notes retain anchors",
+              "status": "PASS"
+            }
+          ]
+        }
+      ]
+    },
+    "scope": "This delivery uses the final eight-item source cutoff; existing default fixtures run in private temp and no opt-in CEF/Safari/Edge matrix is repeated.",
+    "applicableResults": [
+      {
+        "filename": "element-capture-crop.test.js",
+        "tests": 7,
+        "pass": 7,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "element-capture-production.test.js",
+        "tests": 1,
+        "pass": 0,
+        "skipped": 1,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "mark-hit-test.test.js",
+        "tests": 1,
+        "pass": 1,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "reference-occurrences.test.js",
+        "tests": 2,
+        "pass": 2,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "reference-occurrences-ui.test.js",
+        "tests": 3,
+        "pass": 3,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "server.test.js",
+        "tests": 29,
+        "pass": 29,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "chatbox-ui.test.js",
+        "tests": 26,
+        "pass": 26,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "point-anchor.test.js",
+        "tests": 2,
+        "pass": 2,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      }
+    ],
+    "environmentFailures": [],
+    "productFailures": [],
+    "applicableResultExtraction": "Per-file summary counts top-level literal test calls matched against TAP. Full default212/187/25 result is authoritative including nested tests."
+  },
+  "controlledUpdate": {
+    "status": "PASS",
+    "authorizedAfter": "Eight-item implementation, clean reference/UI/capture and candidate-document reviews all accepted; final default212/187pass/25skip/0fail/0cancelled.",
+    "freshReference": {
+      "measuredAt": "2026-10-09T03:28:43.870Z",
+      "label": "fresh-reference",
+      "protectedSnapshot": {
+        "path": "/private/tmp/acanvas-refinement-delivery-FkiGPW/snapshot-fresh-reference.json",
+        "directoryMode": "0700",
+        "fileMode": "0600",
+        "tokensIncluded": false,
+        "businessTextPrinted": false
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "status": {
+        "project": {
+          "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+          "name": "acanvas",
+          "root": "/Users/yingbowu/Documents/Projects/acanvas"
+        },
+        "service": {
+          "pid": 30391,
+          "instanceId": "170f0ac5-4274-4fb8-af75-30ba125eaf89"
+        },
+        "status": "running"
+      },
+      "counts": {
+        "sessions": 4,
+        "tasks": 31,
+        "assets": 39,
+        "sharedAssets": 28,
+        "evidenceAssets": 11,
+        "objects": 12,
+        "annotations": 15
+      },
+      "activity": {
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0,
+        "nonemptyDrafts": 0
+      },
+      "browser": {
+        "running": false,
+        "pageCount": 0
+      },
+      "comparisons": [
+        {
+          "reference": "/private/tmp/acanvas-refinement-delivery-FkiGPW/snapshot-preflight.json",
+          "businessFieldsEqual": false
+        }
+      ]
+    },
+    "immediateBefore": {
+      "measuredAt": "2026-10-09T03:29:17.678Z",
+      "label": "immediate-before",
+      "protectedSnapshot": {
+        "path": "/private/tmp/acanvas-refinement-delivery-FkiGPW/snapshot-immediate-before.json",
+        "directoryMode": "0700",
+        "fileMode": "0600",
+        "tokensIncluded": false,
+        "businessTextPrinted": false
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "status": {
+        "project": {
+          "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+          "name": "acanvas",
+          "root": "/Users/yingbowu/Documents/Projects/acanvas"
+        },
+        "service": {
+          "pid": 30391,
+          "instanceId": "170f0ac5-4274-4fb8-af75-30ba125eaf89"
+        },
+        "status": "running"
+      },
+      "counts": {
+        "sessions": 4,
+        "tasks": 31,
+        "assets": 39,
+        "sharedAssets": 28,
+        "evidenceAssets": 11,
+        "objects": 12,
+        "annotations": 15
+      },
+      "activity": {
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0,
+        "nonemptyDrafts": 0
+      },
+      "browser": {
+        "running": false,
+        "pageCount": 0
+      },
+      "comparisons": [
+        {
+          "reference": "/private/tmp/acanvas-refinement-delivery-FkiGPW/snapshot-fresh-reference.json",
+          "businessFieldsEqual": true
+        }
+      ]
+    },
+    "earlyPreflightDifference": {
+      "scope": "Target session public view.x/y changed between early preflight and current fresh reference; current view was retained in fresh reference and both update comparisons.",
+      "changedFieldCount": 12,
+      "valuesPrinted": false,
+      "fieldPathEvidence": "/private/tmp/acanvas-refinement-delivery-FkiGPW/intervening-public-fields.json"
+    },
+    "productStop": {
+      "measuredAt": "2026-10-09T03:30:08.700Z",
+      "productRoute": "POST /api/project/stop",
+      "boundProjectId": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+      "boundService": {
+        "pid": 30391,
+        "instanceId": "170f0ac5-4274-4fb8-af75-30ba125eaf89"
+      },
+      "responseStatus": 202,
+      "status": "stopped",
+      "normalLifecycle": true
+    },
+    "formalBuild": {
+      "measuredAt": "2026-10-09T03:30:08.821Z",
+      "finishedAt": "2026-10-09T03:30:16.920Z",
+      "projectNode": "24.21.0",
+      "tmpdir": "/private/tmp",
+      "helper": {
+        "status": "confirmed-existing-normal-build",
+        "sourceChanged": false,
+        "path": "/Users/yingbowu/Documents/Projects/acanvas/.runtime/cef-build/Release/acanvas-surface.app/Contents/MacOS/acanvas-surface",
+        "bytes": 750192,
+        "modifiedAt": "2026-10-09T00:55:05.503Z",
+        "testMacros": {
+          "ACANVAS_TEST_CLIPBOARD_FAKE_HANDLE": "OFF",
+          "ACANVAS_TEST_CLIPBOARD_TRIPWIRE": "OFF"
+        },
+        "reinstalled": false
+      },
+      "application": {
+        "status": 0,
+        "log": "/private/tmp/acanvas-refinement-delivery-FkiGPW/formal-application.log"
+      },
+      "sharedDistWritten": true,
+      "serviceKeptStoppedDuringBuild": true
+    },
+    "start": {
+      "command": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node dist/src/cli.js project open --project /Users/yingbowu/Documents/Projects/acanvas --port 4317 --session fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "mode": "detached-background-service-only",
+      "projectId": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+      "service": {
+        "pid": 51288,
+        "instanceId": "eabcfcf3-5c9c-400f-9743-f9e5b1556b90"
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sessionId": "fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "openUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171"
+    },
+    "http": {
+      "measuredAt": "2026-10-09T03:31:39.235Z",
+      "scope": "Read-only controlled project HTTP/API routes and exact served formal build resources; no user page reload or business mutation.",
+      "origin": "http://127.0.0.1:4317",
+      "sessionId": "fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "service": {
+        "pid": 51288,
+        "instanceId": "eabcfcf3-5c9c-400f-9743-f9e5b1556b90"
+      },
+      "checks": [
+        {
+          "name": "project-status",
+          "status": 200,
+          "pass": true
+        },
+        {
+          "name": "session-list",
+          "status": 200,
+          "pass": true
+        },
+        {
+          "name": "original-session-state",
+          "status": 200,
+          "pass": true
+        },
+        {
+          "name": "unauthenticated-state",
+          "status": 401,
+          "code": "authentication_required",
+          "pass": true
+        },
+        {
+          "name": "invalid-cookie-state",
+          "status": 401,
+          "code": "authentication_required",
+          "pass": true
+        },
+        {
+          "name": "foreign-origin-state",
+          "status": 403,
+          "code": "origin_rejected",
+          "pass": true
+        },
+        {
+          "name": "original-url-homepage",
+          "status": 200,
+          "contentType": "text/html",
+          "cacheControl": "no-cache",
+          "cspPresent": true,
+          "originalSessionQuery": true,
+          "references": [
+            "/assets/main-BXtHRaZD.js",
+            "/assets/content-types-GP_APozu.js",
+            "/assets/content-types-BsJH9bFb.css",
+            "/assets/main-Cq2qNYuH.css"
+          ],
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/audioReview-Da5NcPoK.css",
+          "status": 200,
+          "bytes": 965,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/audioReview-F6hujoPI.js",
+          "status": 200,
+          "bytes": 1669,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/content-types-BsJH9bFb.css",
+          "status": 200,
+          "bytes": 4751,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/content-types-GP_APozu.js",
+          "status": 200,
+          "bytes": 214881,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/google-sans-latin-CLLqw55C.woff2",
+          "status": 200,
+          "bytes": 35852,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/google-sans-latin-ext-D9SFGpAd.woff2",
+          "status": 200,
+          "bytes": 21320,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/main-BXtHRaZD.js",
+          "status": 200,
+          "bytes": 361133,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/main-Cq2qNYuH.css",
+          "status": 200,
+          "bytes": 52991,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        }
+      ],
+      "assetsChecked": 8,
+      "servedBytes": 693562,
+      "failures": [],
+      "credentialHandling": "Bootstrap token only in the process; response content and user bodies omitted from evidence.",
+      "result": "PASS"
+    }
+  },
+  "businessComparisons": {
+    "status": "PASS",
+    "completed": 2,
+    "scope": "Complete public project/session/view/consumer/draft/assets/objects/annotations/task/run/snapshot business fields returned by controlled CLI/API, plus exact original asset bytes. Runtime identity and schema/lifecycle metadata may change normally.",
+    "countsBefore": {
+      "sessions": 4,
+      "tasks": 31,
+      "assets": 39,
+      "sharedAssets": 28,
+      "evidenceAssets": 11,
+      "objects": 12,
+      "annotations": 15
+    },
+    "countsAfterFirst": {
+      "sessions": 4,
+      "tasks": 31,
+      "assets": 39,
+      "sharedAssets": 28,
+      "evidenceAssets": 11,
+      "objects": 12,
+      "annotations": 15
+    },
+    "countsAfterSecond": {
+      "sessions": 4,
+      "tasks": 31,
+      "assets": 39,
+      "sharedAssets": 28,
+      "evidenceAssets": 11,
+      "objects": 12,
+      "annotations": 15
+    },
+    "first": {
+      "measuredAt": "2026-10-09T03:30:55.721Z",
+      "label": "after-first",
+      "protectedSnapshot": {
+        "path": "/private/tmp/acanvas-refinement-delivery-FkiGPW/snapshot-after-first.json",
+        "directoryMode": "0700",
+        "fileMode": "0600",
+        "tokensIncluded": false,
+        "businessTextPrinted": false
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "status": {
+        "project": {
+          "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+          "name": "acanvas",
+          "root": "/Users/yingbowu/Documents/Projects/acanvas"
+        },
+        "service": {
+          "pid": 51288,
+          "instanceId": "eabcfcf3-5c9c-400f-9743-f9e5b1556b90"
+        },
+        "status": "running"
+      },
+      "counts": {
+        "sessions": 4,
+        "tasks": 31,
+        "assets": 39,
+        "sharedAssets": 28,
+        "evidenceAssets": 11,
+        "objects": 12,
+        "annotations": 15
+      },
+      "activity": {
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0,
+        "nonemptyDrafts": 0
+      },
+      "browser": {
+        "running": false,
+        "pageCount": 0
+      },
+      "comparisons": [
+        {
+          "reference": "/private/tmp/acanvas-refinement-delivery-FkiGPW/snapshot-immediate-before.json",
+          "businessFieldsEqual": true
+        }
+      ]
+    },
+    "second": {
+      "measuredAt": "2026-10-09T03:31:41.172Z",
+      "label": "after-second",
+      "protectedSnapshot": {
+        "path": "/private/tmp/acanvas-refinement-delivery-FkiGPW/snapshot-after-second.json",
+        "directoryMode": "0700",
+        "fileMode": "0600",
+        "tokensIncluded": false,
+        "businessTextPrinted": false
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "status": {
+        "project": {
+          "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+          "name": "acanvas",
+          "root": "/Users/yingbowu/Documents/Projects/acanvas"
+        },
+        "service": {
+          "pid": 51288,
+          "instanceId": "eabcfcf3-5c9c-400f-9743-f9e5b1556b90"
+        },
+        "status": "running"
+      },
+      "counts": {
+        "sessions": 4,
+        "tasks": 31,
+        "assets": 39,
+        "sharedAssets": 28,
+        "evidenceAssets": 11,
+        "objects": 12,
+        "annotations": 15
+      },
+      "activity": {
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0,
+        "nonemptyDrafts": 0
+      },
+      "browser": {
+        "running": false,
+        "pageCount": 0
+      },
+      "comparisons": [
+        {
+          "reference": "/private/tmp/acanvas-refinement-delivery-FkiGPW/snapshot-immediate-before.json",
+          "businessFieldsEqual": true
+        },
+        {
+          "reference": "/private/tmp/acanvas-refinement-delivery-FkiGPW/snapshot-after-first.json",
+          "businessFieldsEqual": true
+        }
+      ]
+    },
+    "assetBytes": {
+      "reference": {
+        "measuredAt": "2026-10-09T03:29:15.631Z",
+        "phase": "before",
+        "assetCount": 39,
+        "bytesCompared": 0,
+        "savedOriginalBytes": 93123378,
+        "comparison": "protected-reference-read",
+        "failures": [],
+        "result": "PASS",
+        "controlledInterface": "Already-built asset read CLI, authenticated content GET; evidence uses its owning session.",
+        "protectedCopies": {
+          "directory": "/private/tmp/acanvas-refinement-delivery-FkiGPW/assets-before",
+          "directoryMode": "0700",
+          "fileMode": "0600",
+          "bodyPrinted": false,
+          "credentialsIncluded": false
+        }
+      },
+      "first": {
+        "measuredAt": "2026-10-09T03:30:57.880Z",
+        "phase": "after-first",
+        "assetCount": 39,
+        "bytesCompared": 93123378,
+        "comparison": "exact-Buffer.equals-against-before",
+        "failures": [],
+        "result": "PASS",
+        "controlledInterface": "Already-built asset read CLI, authenticated content GET; evidence uses its owning session.",
+        "protectedCopies": {
+          "directory": "/private/tmp/acanvas-refinement-delivery-FkiGPW/assets-after-first",
+          "directoryMode": "0700",
+          "fileMode": "0600",
+          "bodyPrinted": false,
+          "credentialsIncluded": false
+        }
+      },
+      "second": {
+        "measuredAt": "2026-10-09T03:31:44.511Z",
+        "phase": "after-second",
+        "assetCount": 39,
+        "bytesCompared": 93123378,
+        "comparison": "exact-Buffer.equals-against-before",
+        "failures": [],
+        "result": "PASS",
+        "controlledInterface": "Already-built asset read CLI, authenticated content GET; evidence uses its owning session.",
+        "protectedCopies": {
+          "directory": "/private/tmp/acanvas-refinement-delivery-FkiGPW/assets-after-second",
+          "directoryMode": "0700",
+          "fileMode": "0600",
+          "bodyPrinted": false,
+          "credentialsIncluded": false
+        }
+      }
+    },
+    "hostBindingBoundary": "Internal host_bindings rows have no controlled GET endpoint and were kept outside direct inspection. Explicit --session startup issues no host/thread binding POST; all public session and task ownership fields compare equal."
+  },
+  "pageRefresh": {
+    "status": "updated-service-ready-original-page-awaits-normal-user-refresh",
+    "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+    "originalPageReloaded": false,
+    "priorTurnBoundary": "Prior CUA IAB binding was unavailable and the Mac was locked; no alternative browser tab or system unlock was used. Current capability will be described from actual final-phase evidence.",
+    "alternateBrowserTabsTouched": false,
+    "visibleWindowOpenedOrActivated": false,
+    "realBoardDoneSendOrFormInput": false,
+    "currentServerAssetReferences": [
+      "/assets/main-BXtHRaZD.js",
+      "/assets/content-types-GP_APozu.js",
+      "/assets/content-types-BsJH9bFb.css",
+      "/assets/main-Cq2qNYuH.css"
+    ],
+    "scope": "This agent kept existing pages and original URL. No automatic user-page reload or current Mac-unlock/browser substitution was attempted; user refresh loads the new bundle."
+  },
+  "historicalEnvironmentFailures": [],
+  "historicalProductFailures": [],
+  "boundaries": {
+    "sharedDistWritten": true,
+    "formalServiceStoppedOrRestarted": true,
+    "userBoardWritten": false,
+    "directUserSQLiteAccess": false,
+    "visibleWindowOpenedOrActivated": false,
+    "systemClipboardOrKeychainAccess": false,
+    "userChromeProfileAccess": false,
+    "codexAppModified": false,
+    "topLevelDocumentsEdited": false,
+    "gitCommitted": false,
+    "credentials": "Bootstrap credentials remain in the already-built client process; protected snapshots omit tokens and no business bodies are printed.",
+    "realUserBusinessMutation": false
+  },
+  "staticChecks": {
+    "measuredAt": "2026-10-09T03:32:58.027Z",
+    "changedFiles": 92,
+    "textFilesScanned": 56,
+    "credentialPatternCandidates": 0,
+    "jsonFiles": 23,
+    "jsonParseFailures": 0,
+    "documents": [
+      "README.md",
+      "docs/PLAN.md",
+      "docs/chatbox/ANNOTATION_REFERENCE_REFINEMENT_DESIGN.md",
+      "docs/chatbox/ANNOTATION_REFERENCE_REFINEMENT_VALIDATION.md"
+    ],
+    "localFileLinks": 98,
+    "localFileLinkFailures": 0,
+    "gitDiffCheck": "PASS",
+    "result": "/private/tmp/acanvas-refinement-delivery-FkiGPW/static-checks.json",
+    "limit": "Current runtime execution evidence and root validation document at measurement time. Later main-document/runtime-review updates retain their separate final review."
+  },
+  "relatedExecutionEvidence": [
+    "docs/evidence/annotation-reference-refinement/reference-execution.json",
+    "docs/evidence/annotation-reference-refinement/reference-review.json",
+    "docs/evidence/annotation-reference-refinement/capture-execution.json",
+    "docs/evidence/annotation-reference-refinement/ui-execution.json",
+    "docs/evidence/annotation-reference-refinement/ui-capture-review.json"
+  ],
+  "historyScope": "Historical failure arrays in this file describe this delivery runner; source execution and independent review findings remain in their named evidence files."
+}

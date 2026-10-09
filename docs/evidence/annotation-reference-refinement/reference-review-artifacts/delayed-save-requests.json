@@ -1,0 +1,75 @@
+[
+  {
+    "id": "43a83148-49c1-4d0b-8ae3-0f748a1fc621",
+    "sessionId": "f81df8f6-c6ef-4cb9-bc42-e280df318a9c",
+    "revision": 2,
+    "text": "前AB😀CD",
+    "attachments": [],
+    "annotations": [],
+    "references": {
+      "objectIds": [
+        "aadb0493-6489-4862-8fdd-885dc19baacf"
+      ],
+      "taskIds": [
+        "283815d4-750b-468f-bf6d-72a10786e28d"
+      ],
+      "order": [
+        {
+          "kind": "object",
+          "id": "aadb0493-6489-4862-8fdd-885dc19baacf",
+          "textOffset": 2
+        },
+        {
+          "kind": "object",
+          "id": "aadb0493-6489-4862-8fdd-885dc19baacf",
+          "textOffset": 5
+        },
+        {
+          "kind": "object",
+          "id": "aadb0493-6489-4862-8fdd-885dc19baacf",
+          "textOffset": 5
+        },
+        {
+          "kind": "task",
+          "id": "283815d4-750b-468f-bf6d-72a10786e28d",
+          "textOffset": 7
+        }
+      ]
+    },
+    "updatedAt": "2026-10-09T02:58:03.183Z"
+  },
+  {
+    "id": "43a83148-49c1-4d0b-8ae3-0f748a1fc621",
+    "sessionId": "f81df8f6-c6ef-4cb9-bc42-e280df318a9c",
+    "revision": 3,
+    "text": "前AB😀CD尾😀",
+    "attachments": [],
+    "annotations": [],
+    "references": {
+      "objectIds": [
+        "aadb0493-6489-4862-8fdd-885dc19baacf"
+      ],
+      "taskIds": [
+        "283815d4-750b-468f-bf6d-72a10786e28d"
+      ],
+      "order": [
+        {
+          "kind": "object",
+          "id": "aadb0493-6489-4862-8fdd-885dc19baacf",
+          "textOffset": 2
+        },
+        {
+          "kind": "object",
+          "id": "aadb0493-6489-4862-8fdd-885dc19baacf",
+          "textOffset": 5
+        },
+        {
+          "kind": "task",
+          "id": "283815d4-750b-468f-bf6d-72a10786e28d",
+          "textOffset": 7
+        }
+      ]
+    },
+    "updatedAt": "2026-10-09T02:58:03.183Z"
+  }
+]

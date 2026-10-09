@@ -1,0 +1,126 @@
+[
+  {
+    "point": {
+      "x": 950,
+      "y": 830
+    },
+    "done": {
+      "x": 1125.765625,
+      "y": 727,
+      "width": 51.234375,
+      "height": 28
+    },
+    "mapped": {
+      "x": 950,
+      "y": 830
+    },
+    "crop": {
+      "x": 854,
+      "y": 733.3451035781544,
+      "width": 192,
+      "height": 116.05461393596987
+    },
+    "bitmap": {
+      "width": 1200,
+      "height": 1062
+    },
+    "cssViewport": {
+      "x": 0,
+      "y": 0,
+      "width": 1200,
+      "height": 1062.5
+    },
+    "png": {
+      "mime": "image/png",
+      "width": 192,
+      "height": 116,
+      "bytes": 1526
+    }
+  },
+  {
+    "point": {
+      "x": 8,
+      "y": 8
+    },
+    "done": {
+      "x": 419.265625,
+      "y": 272,
+      "width": 51.234375,
+      "height": 28
+    },
+    "mapped": {
+      "x": 8,
+      "y": 8
+    },
+    "crop": {
+      "x": 0,
+      "y": 0,
+      "width": 104,
+      "height": 104.04896421845574
+    },
+    "bitmap": {
+      "width": 1200,
+      "height": 1062
+    },
+    "cssViewport": {
+      "x": 0,
+      "y": 0,
+      "width": 1200,
+      "height": 1062.5
+    },
+    "png": {
+      "mime": "image/png",
+      "width": 104,
+      "height": 104,
+      "bytes": 1109
+    }
+  },
+  {
+    "keyboardPoint": {
+      "x": 20,
+      "y": 800
+    },
+    "keyboardMapped": {
+      "x": 20,
+      "y": 800
+    },
+    "crop": {
+      "x": 0.1340386195562857,
+      "y": 703.4386649580615,
+      "width": 116.04765817584223,
+      "height": 146.10205032618825
+    },
+    "bitmap": {
+      "width": 1217,
+      "height": 1073
+    },
+    "cssViewport": {
+      "x": -21.875,
+      "y": -14.0625,
+      "width": 1217.5,
+      "height": 1073.75
+    }
+  },
+  {
+    "narrowViewport": {
+      "width": 320,
+      "height": 740
+    },
+    "crop": {
+      "x": 64,
+      "y": 604,
+      "width": 192,
+      "height": 136
+    },
+    "bitmap": {
+      "width": 320,
+      "height": 925
+    },
+    "cssViewport": {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 925
+    }
+  }
+]

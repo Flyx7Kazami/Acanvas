@@ -12,7 +12,7 @@ async function fixture(t: test.TestContext, dpr = 1, touch = false) {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'acanvas-point-project-')));
   const evidence = await realpath(await mkdtemp(join(tmpdir(), 'acanvas-point-evidence-')));
   t.diagnostic(`Evidence: ${evidence}`);
-  const running = await startServer({ root, port: 0, webRoot: resolve('dist/web'), browser: { headless: true } });
+  const running = await startServer({ root, port: 0, webRoot: resolve(process.env.ACANVAS_TEST_WEB_ROOT || 'dist/web'), browser: { headless: true } });
   const session = running.service.createSession('Point annotation acceptance');
   const launch = chromium.launchPersistentContext;
   // Each isolated context keeps its native pixel ratio throughout capture.
@@ -60,7 +60,7 @@ async function fixture(t: test.TestContext, dpr = 1, touch = false) {
     assert.equal(rect.width, 28); assert.equal(rect.height, 28); return rect;
   };
   let closed = false;
-  const close = async () => { if (closed) return; closed = true; await writeFile(join(evidence, 'final-draft.json'), JSON.stringify(running.service.draft(session.id), null, 2)); await running.close(); await rm(root, { recursive: true, force: true }); };
+  const close = async () => { if (closed) return; closed = true; await page.screenshot({ path: join(evidence, 'final-ui.png') }); await writeFile(join(evidence, 'final-draft.json'), JSON.stringify(running.service.draft(session.id), null, 2)); await running.close(); await rm(root, { recursive: true, force: true }); };
   t.after(close);
   return { evidence, running, session, page, call, object, saved, mark, done, pinAt, close };
 }

@@ -1,0 +1,424 @@
+{
+  "measuredAt": "2026-10-09T02:56:04.413Z",
+  "requirement": "Annotation/reference refinement item 8; R04/R05, A06/A07/A09",
+  "status": "passed",
+  "implementation": {
+    "helper": "src/web/scene-renderer/capture-crop.ts",
+    "objectContext": "Same presented layer.renderedBounds and target CSS bounds plus the actual same-frame marker CSS bounds, with 16 CSS px padding.",
+    "regionContext": "Existing selected point or region plus 96 CSS px context.",
+    "clipping": "Existing sceneCrop maps the actual presented bitmap and CSS viewport and clips to Canvas and page-visible pixel edges.",
+    "integration": "App copies the presented pixels synchronously before draft, encoding and network work. board layout pairs markerBounds and markTargets with the successful presentation."
+  },
+  "checks": {
+    "serverTypecheck": {
+      "status": "passed",
+      "command": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node node_modules/typescript/bin/tsc -p tsconfig.server.json --outDir /private/tmp/acanvas-element-capture-build"
+    },
+    "webTypecheck": {
+      "status": "passed",
+      "command": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node node_modules/typescript/bin/tsc -p tsconfig.json"
+    },
+    "privateProductionBuild": {
+      "status": "passed",
+      "output": "/private/tmp/acanvas-element-capture-web",
+      "command": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node node_modules/vite/bin/vite.js build --outDir /private/tmp/acanvas-element-capture-web --emptyOutDir"
+    },
+    "cropUnits": {
+      "status": "passed",
+      "passed": 7,
+      "failed": 0,
+      "file": "tests/element-capture-crop.test.ts",
+      "covered": [
+        "complete paint four edges and marker",
+        "point and object subregion use complete object context",
+        "stacked region pin",
+        "blank and cross-object original ROI",
+        "actual CSS offsets and camera/page zoom",
+        "DPR1/2 and independent bitmap ratios",
+        "fractional partly offscreen page clip",
+        "overlap remains in original display",
+        "held N bounds survive N+5 movement/deletion",
+        "unavailable geometry rejected"
+      ]
+    },
+    "production": {
+      "status": "passed",
+      "passed": 1,
+      "failed": 0,
+      "scenarios": 6,
+      "file": "tests/element-capture-production.test.ts",
+      "command": "TMPDIR=/private/tmp ACANVAS_ELEMENT_CAPTURE_TEST=1 ACANVAS_ELEMENT_CAPTURE_WEB_ROOT=/private/tmp/acanvas-element-capture-web ACANVAS_ELEMENT_CAPTURE_OUTPUT=/private/tmp/acanvas-element-capture-output .runtime/node_modules/node/bin/node --test /private/tmp/acanvas-element-capture-build/tests/element-capture-production.test.js"
+    },
+    "whitespace": {
+      "status": "passed",
+      "command": "git diff --check -- src/web/scene-renderer/capture-crop.ts tests/element-capture-crop.test.ts tests/element-capture-production.test.ts"
+    }
+  },
+  "production": {
+    "measuredAt": "2026-10-09T02:55:15.533Z",
+    "result": "passed",
+    "node": "v24.21.0",
+    "browser": "155.0.8059.39",
+    "source": "production SceneRenderer synchronous display copy",
+    "samples": [
+      {
+        "kind": "image",
+        "dpr": 1,
+        "camera": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        },
+        "cssViewport": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 1000
+        },
+        "bitmap": {
+          "width": 1440,
+          "height": 1000
+        },
+        "crop": {
+          "x": 124,
+          "y": 54,
+          "width": 612,
+          "height": 424
+        },
+        "paintBounds": {
+          "x": 140,
+          "y": 70,
+          "width": 580,
+          "height": 392
+        },
+        "point": {
+          "x": 340,
+          "y": 305
+        },
+        "copiedFrame": 36,
+        "finalFrame": 96,
+        "comparison": {
+          "mismatches": 0,
+          "pinPixels": 413,
+          "occluderPixels": 13924,
+          "channels": 1037952,
+          "width": 612,
+          "height": 424
+        },
+        "originalMovedAndDeleted": true,
+        "editorClosedDuringUpload": true,
+        "media": []
+      },
+      {
+        "kind": "audio",
+        "dpr": 2,
+        "camera": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        },
+        "cssViewport": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 1000
+        },
+        "bitmap": {
+          "width": 2880,
+          "height": 2000
+        },
+        "crop": {
+          "x": 124,
+          "y": 54,
+          "width": 612,
+          "height": 424
+        },
+        "paintBounds": {
+          "x": 140,
+          "y": 70,
+          "width": 580,
+          "height": 392
+        },
+        "point": {
+          "x": 340,
+          "y": 305
+        },
+        "copiedFrame": 61,
+        "finalFrame": 117,
+        "comparison": {
+          "mismatches": 0,
+          "pinPixels": 1698,
+          "occluderPixels": 56644,
+          "channels": 4151808,
+          "width": 1224,
+          "height": 848
+        },
+        "originalMovedAndDeleted": false,
+        "editorClosedDuringUpload": true,
+        "media": [
+          {
+            "objectId": "1dc5a703-5f45-46ae-bf96-9a9a146527f7",
+            "playbackTime": 0,
+            "presentedTime": 0,
+            "timePrecision": "playback-sampled",
+            "selectedRange": {
+              "start": 0.1,
+              "end": 4
+            }
+          }
+        ]
+      },
+      {
+        "kind": "gif",
+        "dpr": 2,
+        "camera": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        },
+        "cssViewport": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 1000
+        },
+        "bitmap": {
+          "width": 2880,
+          "height": 2000
+        },
+        "crop": {
+          "x": 124,
+          "y": 54,
+          "width": 612,
+          "height": 424
+        },
+        "paintBounds": {
+          "x": 140,
+          "y": 70,
+          "width": 580,
+          "height": 392
+        },
+        "point": {
+          "x": 340,
+          "y": 305
+        },
+        "copiedFrame": 63,
+        "finalFrame": 126,
+        "comparison": {
+          "mismatches": 0,
+          "pinPixels": 1557,
+          "occluderPixels": 56644,
+          "channels": 4151808,
+          "width": 1224,
+          "height": 848
+        },
+        "originalMovedAndDeleted": false,
+        "editorClosedDuringUpload": true,
+        "media": [
+          {
+            "objectId": "9e34e40d-9578-40ee-8d91-7c8a473c201f",
+            "presentedTime": 0,
+            "playbackTime": 0.6629000000953674,
+            "timePrecision": "decoded-pts",
+            "frameIndex": 0
+          }
+        ]
+      },
+      {
+        "kind": "video",
+        "dpr": 1,
+        "camera": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        },
+        "cssViewport": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 1000
+        },
+        "bitmap": {
+          "width": 1440,
+          "height": 1000
+        },
+        "crop": {
+          "x": 124,
+          "y": 54,
+          "width": 612,
+          "height": 424
+        },
+        "paintBounds": {
+          "x": 140,
+          "y": 70,
+          "width": 580,
+          "height": 392
+        },
+        "point": {
+          "x": 340,
+          "y": 305
+        },
+        "copiedFrame": 77,
+        "finalFrame": 144,
+        "comparison": {
+          "mismatches": 0,
+          "pinPixels": 380,
+          "occluderPixels": 29331,
+          "channels": 1037952,
+          "width": 612,
+          "height": 424
+        },
+        "originalMovedAndDeleted": false,
+        "editorClosedDuringUpload": true,
+        "media": [
+          {
+            "objectId": "043a53e3-0322-4e4a-8b64-6c5fd8eac474",
+            "playbackTime": 0,
+            "presentedTime": 0,
+            "timePrecision": "playback-sampled",
+            "selectedRange": {
+              "start": 0.1,
+              "end": 2
+            },
+            "representativeTime": 0.1
+          }
+        ]
+      },
+      {
+        "kind": "html",
+        "dpr": 2,
+        "camera": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        },
+        "cssViewport": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 1000
+        },
+        "bitmap": {
+          "width": 2880,
+          "height": 2000
+        },
+        "crop": {
+          "x": 124,
+          "y": 54,
+          "width": 612,
+          "height": 424
+        },
+        "paintBounds": {
+          "x": 140,
+          "y": 70,
+          "width": 580,
+          "height": 392
+        },
+        "point": {
+          "x": 340,
+          "y": 305
+        },
+        "copiedFrame": 77,
+        "finalFrame": 139,
+        "comparison": {
+          "mismatches": 0,
+          "pinPixels": 3136,
+          "occluderPixels": 56644,
+          "channels": 4151808,
+          "width": 1224,
+          "height": 848
+        },
+        "originalMovedAndDeleted": false,
+        "editorClosedDuringUpload": true,
+        "surface": {
+          "surfaceId": "0747d7a3-3766-4c9d-8176-5b167cb225c1",
+          "instanceId": "b7464046-12e7-4935-bc37-d9b997db7c1f",
+          "frameSeq": 2,
+          "inputSeq": 0,
+          "viewport": {
+            "width": 500,
+            "height": 300
+          }
+        },
+        "media": []
+      },
+      {
+        "kind": "image-partial",
+        "dpr": 2,
+        "camera": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1.5625
+        },
+        "cssViewport": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 1250
+        },
+        "bitmap": {
+          "width": 2880,
+          "height": 2500
+        },
+        "crop": {
+          "x": 0,
+          "y": 78,
+          "width": 656,
+          "height": 645
+        },
+        "paintBounds": {
+          "x": -266.40625,
+          "y": 94.140625,
+          "width": 906.25,
+          "height": 612.5
+        },
+        "point": {
+          "x": 80,
+          "y": 461.328125
+        },
+        "copiedFrame": 74,
+        "finalFrame": 133,
+        "comparison": {
+          "mismatches": 0,
+          "pinPixels": 2543,
+          "occluderPixels": 0,
+          "channels": 6769920,
+          "width": 1312,
+          "height": 1290
+        },
+        "originalMovedAndDeleted": false,
+        "editorClosedDuringUpload": true,
+        "media": []
+      }
+    ],
+    "output": "/private/tmp/acanvas-element-capture-output/run-VNaqh1",
+    "validationScope": [
+      "complete element paint context",
+      "actual point marker",
+      "image and audio complete application capture",
+      "overlap kept in original display copy",
+      "GIF video HTML actual presented producers",
+      "DPR1/2 and page/canvas zoom",
+      "partly offscreen clipping",
+      "PNG equals copied N while presented frame advances N+5",
+      "source move and deletion after Done"
+    ],
+    "limitations": [
+      "one isolated Chromium application; existing cross-browser engine matrix was not repeated",
+      "HTML uses explicit isolated Chromium surface engine; CEF matrix remains covered by existing capture validation"
+    ]
+  },
+  "isolation": {
+    "project": "Fresh private temporary project, random loopback port and fresh browser contexts; removed by owned test cleanup.",
+    "build": "Private temporary output only.",
+    "actualUserBoard": "Untouched",
+    "actualPort4317": "Untouched",
+    "userBrowsers": "Untouched",
+    "operatingSystemClipboard": "Untouched",
+    "keychain": "No keychain operation performed"
+  },
+  "limitations": [
+    "one isolated Chromium application; existing cross-browser engine matrix was not repeated",
+    "HTML uses explicit isolated Chromium surface engine; CEF matrix remains covered by existing capture validation"
+  ]
+}

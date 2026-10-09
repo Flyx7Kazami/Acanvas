@@ -5,7 +5,7 @@ import { referenceOrder, referenceParts } from '../shared/task-message';
 import { ChatboxReference } from './ChatboxReferences';
 
 type TextPart = { kind: 'text'; text: string };
-type ReferencePart = { kind: 'reference'; reference: RequestReference; preview?: boolean };
+type ReferencePart = { kind: 'reference'; reference: RequestReference; preview?: boolean; hostKey?: string };
 type Part = TextPart | ReferencePart;
 type EditorSelection = { start: number; end: number; backward?: boolean };
 type EditorValue = { text: string; references: DraftReferences };
@@ -14,7 +14,6 @@ export type ChatboxEditorHandle = { confirmPreview: () => void; insertReference:
 
 const partLength = (part: Part) => part.kind === 'text' ? part.text.length : 1;
 const documentLength = (parts: Part[]) => parts.reduce((length, part) => length + partLength(part), 0);
-const identity = (entry: RequestReference) => `${entry.kind}:${entry.id}`;
 const valueKey = (value: EditorValue) => JSON.stringify({ text: value.text, order: referenceOrder(value.references, value.text) });
 const isBlock = (node: Node) => node instanceof HTMLElement && ['DIV', 'P'].includes(node.tagName);
 const firstContentNode = (root: Node) => Array.from(root.childNodes).find(node => node.nodeType === Node.TEXT_NODE ? !!node.textContent : !(node instanceof HTMLElement && node.dataset.editorTail));
@@ -52,9 +51,9 @@ function serialize(parts: Part[]): EditorValue {
   const order: RequestReference[] = [];
   for (const part of parts) {
     if (part.kind === 'text') text += part.text;
-    else if (!part.preview && !order.some(entry => identity(entry) === identity(part.reference))) order.push({ kind: part.reference.kind, id: part.reference.id, textOffset: text.length });
+    else if (!part.preview) order.push({ kind: part.reference.kind, id: part.reference.id, textOffset: text.length });
   }
-  return { text, references: { objectIds: order.filter(entry => entry.kind === 'object').map(entry => entry.id), taskIds: order.filter(entry => entry.kind === 'task').map(entry => entry.id), order } };
+  return { text, references: { objectIds: [...new Set(order.filter(entry => entry.kind === 'object').map(entry => entry.id))], taskIds: [...new Set(order.filter(entry => entry.kind === 'task').map(entry => entry.id))], order } };
 }
 
 /** Browser text and immutable reference hosts share one editable document. */
@@ -79,7 +78,7 @@ function readParts(root: Node, leadingReferenceLine = referenceLeadingLine(root)
       const block = isBlock(node), visible = block || node instanceof HTMLElement && !!node.dataset.editorReference || !!node.textContent || node instanceof HTMLBRElement;
       if (visible && previousLine && (block || previousBlock && !(node instanceof HTMLElement && node.dataset.editorReference))) append('\n');
       if (node.nodeType === Node.TEXT_NODE) append(node.textContent || '');
-      else if (node instanceof HTMLElement && node.dataset.editorReference) parts.push({ kind: 'reference', reference: { kind: node.dataset.editorKind as 'object' | 'task', id: node.dataset.editorReference }, preview: node.dataset.editorPreview === 'true' });
+      else if (node instanceof HTMLElement && node.dataset.editorReference) parts.push({ kind: 'reference', reference: { kind: node.dataset.editorKind as 'object' | 'task', id: node.dataset.editorReference }, preview: node.dataset.editorPreview === 'true', hostKey: node.dataset.editorHost });
       else if (node instanceof HTMLBRElement) append('\n');
       else visit(node);
       if (visible) { previousLine = true; previousBlock = block; }
@@ -158,6 +157,7 @@ export function ChatboxEditor({ draft, preview, objects, assets, tasks, content,
   const normalizeFrame = useRef(0);
   const nativeEdit = useRef<{ draftId: string; parts: Part[]; selection: EditorSelection; applied: boolean } | null>(null);
   const hosts = useRef(new Map<string, HTMLSpanElement>());
+  const hostSequence = useRef(0);
   const [slots, setSlots] = useState<{ key: string; host: HTMLSpanElement; part: ReferencePart }[]>([]);
 
   function readSelection() {
@@ -178,10 +178,11 @@ export function ChatboxEditor({ draft, preview, objects, assets, tasks, content,
       if (part.kind === 'text') nodes.push(document.createTextNode(part.text));
       else {
         if (nodes.at(-1)?.nodeType === Node.TEXT_NODE && nodes.at(-1)?.textContent?.endsWith('\n')) caretLine();
-        const key = `${part.preview ? 'preview' : 'reference'}:${identity(part.reference)}`;
+        const key = part.hostKey ??= `reference-${++hostSequence.current}`;
         const host = hosts.current.get(key) || document.createElement('span'); hosts.current.set(key, host);
         host.className = 'inline-reference-node'; host.contentEditable = 'false';
         host.dataset.editorReference = part.reference.id; host.dataset.editorKind = part.reference.kind; host.dataset.editorPreview = String(!!part.preview);
+        host.dataset.editorHost = key;
         nodes.push(host, document.createTextNode('')); nextSlots.push({ key, host, part });
       }
     }
@@ -191,13 +192,15 @@ export function ChatboxEditor({ draft, preview, objects, assets, tasks, content,
     }
     if (nodes.at(-1)?.nodeType !== Node.TEXT_NODE) nodes.push(document.createTextNode(''));
     root.replaceChildren(...nodes);
+    const activeHosts = new Set(nextSlots.map(slot => slot.key));
+    for (const key of hosts.current.keys()) if (!activeHosts.has(key)) hosts.current.delete(key);
     root.dataset.empty = String(!parts.current.length);
     setSlots(nextSlots);
     if (selection) { savedSelection.current = selection; placeSelection(root, selection); }
   }
 
   function emit(next: Part[], selection: EditorSelection, normalize = true) {
-    const removedPreviews = parts.current.filter((part): part is ReferencePart => part.kind === 'reference' && !!part.preview && !next.some(value => value.kind === 'reference' && value.preview && identity(value.reference) === identity(part.reference)));
+    const removedPreviews = parts.current.filter((part): part is ReferencePart => part.kind === 'reference' && !!part.preview && !next.some(value => value.kind === 'reference' && value.preview && value.hostKey === part.hostKey));
     parts.current = next; savedSelection.current = selection;
     if (inputRef.current) inputRef.current.dataset.empty = String(!next.length);
     if (normalize) render(next, document.activeElement === inputRef.current ? selection : undefined);
@@ -215,17 +218,9 @@ export function ChatboxEditor({ draft, preview, objects, assets, tasks, content,
   function confirmPreview() {
     settleNative();
     if (props.current.disabled || !parts.current.some(part => part.kind === 'reference' && part.preview)) return;
-    const selection = readSelection(), seen = new Set(parts.current.filter((part): part is ReferencePart => part.kind === 'reference' && !part.preview).map(part => identity(part.reference)));
-    let cursor = 0, removedBeforeStart = 0, removedBeforeEnd = 0;
-    const next: Part[] = [];
-    for (const part of parts.current) {
-      if (part.kind === 'reference' && part.preview) {
-        if (seen.has(identity(part.reference))) { if (cursor < selection.start) removedBeforeStart++; if (cursor < selection.end) removedBeforeEnd++; }
-        else { seen.add(identity(part.reference)); next.push({ ...part, preview: false }); }
-      } else next.push(part);
-      cursor += partLength(part);
-    }
-    emit(next, { start: selection.start - removedBeforeStart, end: selection.end - removedBeforeEnd });
+    const selection = readSelection();
+    const next = parts.current.map(part => part.kind === 'reference' && part.preview ? { ...part, preview: false } : part);
+    emit(next, selection);
     props.current.onConsumePreview();
   }
 
@@ -235,7 +230,7 @@ export function ChatboxEditor({ draft, preview, objects, assets, tasks, content,
     const selection = readSelection();
     let cursor = 0, beforeStart = 0, beforeEnd = 0;
     const next = parts.current.filter(part => {
-      const removed = part.kind === 'reference' && !!part.preview === !!entry.preview && identity(part.reference) === identity(entry.reference);
+      const removed = part.kind === 'reference' && part.hostKey === entry.hostKey;
       if (removed) { if (cursor < selection.start) beforeStart++; if (cursor < selection.end) beforeEnd++; }
       cursor += partLength(part); return !removed;
     });
@@ -247,9 +242,8 @@ export function ChatboxEditor({ draft, preview, objects, assets, tasks, content,
     if (props.current.disabled) return;
     const base = withoutPreview(parts.current, readSelection());
     const end = Math.min(documentLength(base.parts), base.selection.end), start = query ? Math.max(0, end - (query.end - query.start)) : base.selection.start;
-    const exists = base.parts.some(part => part.kind === 'reference' && identity(part.reference) === identity(entry));
-    const next = splice(base.parts, start, end, exists ? [] : [{ kind: 'reference', reference: entry }]);
-    const caret = start + (exists ? 0 : 1);
+    const next = splice(base.parts, start, end, [{ kind: 'reference', reference: entry }]);
+    const caret = start + 1;
     inputRef.current?.focus({ preventScroll: true });
     emit(next, { start: caret, end: caret }); props.current.onConsumePreview();
   }
@@ -263,7 +257,8 @@ export function ChatboxEditor({ draft, preview, objects, assets, tasks, content,
       const selected = changedDraft ? undefined : document.activeElement === root ? readSelection() : undefined;
       const next = referenceParts(draft.text, referenceOrder(draft.references, draft.text));
       const length = documentLength(next);
-      currentDraft.current = draft.id; previewProp.current = [];
+      currentDraft.current = draft.id;
+      if (changedDraft) previewProp.current = [];
       savedSelection.current = selected ? { start: Math.min(length, selected.start), end: Math.min(length, selected.end) } : { start: length, end: length };
       render(next, selected ? savedSelection.current : undefined);
     }

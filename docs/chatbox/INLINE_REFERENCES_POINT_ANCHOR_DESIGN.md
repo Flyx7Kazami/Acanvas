@@ -1,6 +1,6 @@
 # 正文引用与点位标记调整
 
-日期：2026-10-08（Asia/Shanghai）。状态：实施与源码验收完成，结果见[专项验证](INLINE_REFERENCES_POINT_ANCHOR_VALIDATION.md)。依据用户本轮两项调整，关联 R02、R04、R05 / A02、A06、A07、A09。原[完整交互设计](CHATBOX_IMPLEMENTATION_DESIGN.md)及[功能计划](CHATBOX_REFERENCES_ANNOTATION_PLAN.md)中的引用尾部布局由本方案更新。
+日期：2026-10-08（Asia/Shanghai）。状态：实施与源码验收完成，结果见[专项验证](INLINE_REFERENCES_POINT_ANCHOR_VALIDATION.md)。依据用户本轮两项调整，关联 R02、R04、R05 / A02、A06、A07、A09。原[完整交互设计](CHATBOX_IMPLEMENTATION_DESIGN.md)及[功能计划](CHATBOX_REFERENCES_ANNOTATION_PLAN.md)中的引用尾部布局由本方案更新。2026-10-09 的重复出现、正式外观与批注交互规则见[当前调整](ANNOTATION_REFERENCE_REFINEMENT_DESIGN.md)。
 
 ## 1. 正文中的独立引用
 
@@ -12,7 +12,7 @@
 
 空态沿用现有紧凑输入栏尺寸与外边距。多行、引用及附件状态按真实内容自适应高度，正文、每个引用与控件完整可见，输入栏和工具栏保持可操作的独立空间；内容态的高度依据排版几何验收。
 
-`Draft.text` 与 `TaskSnapshot.userRequest.text` 保留原始纯正文，引用位置使用 `RequestReference.textOffset?: number`，以正文 UTF-16 索引定位插入点。服务在同一草稿 revision 事务校验身份、范围、顺序和位置：索引为安全整数、位于 0…text.length、满足 code-point 边界，引用按正文次序保存，同位置按数组顺序展开。同一对象/任务延续现有身份去重，同资产不同对象各自呈现。
+`Draft.text` 与 `TaskSnapshot.userRequest.text` 保留原始纯正文，引用位置使用 `RequestReference.textOffset?: number`，以正文 UTF-16 索引定位插入点。服务在同一草稿 revision 事务校验身份、范围、顺序和位置：索引为安全整数、位于 0…text.length、满足 code-point 边界，引用按正文次序保存，同位置按数组顺序展开。当前规则允许同一对象／任务多次出现，来源集合继续去重，同资产不同对象各自呈现。
 
 UI 内部以文本字符和引用原子表达完整编辑位置，序列化时计算纯正文偏移。文本插入/删除同步移动引用；删除原子保留周围正文，选择范围跨原子时一起删除选中的文字与引用。引用缺少位置的旧记录按正文尾部呈现，字段形状继续按既有记录读取；用户编辑后可保存明确位置。
 

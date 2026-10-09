@@ -32,7 +32,7 @@ const validContentAnchor = (anchor: ContentAnchor, code: string) => {
 };
 const draftReferences = (input: DraftReferences, requestText: string): DraftReferences => {
   const objectIds = ids(input?.objectIds, 'Object references'), taskIds = ids(input?.taskIds, 'Task references');
-  if (objectIds.length !== input.objectIds.length || taskIds.length !== input.taskIds.length) fail(400, 'invalid_references', 'Each reference identity appears once.');
+  if (objectIds.length !== input.objectIds.length || taskIds.length !== input.taskIds.length) fail(400, 'invalid_references', 'Each reference source appears once in its source list.');
   if (input.order !== undefined && (!Array.isArray(input.order) || input.order.length > 2000)) fail(400, 'invalid_references', 'Reference order must be a list.');
   const order = referenceOrder({ objectIds, taskIds, ...(input.order === undefined ? {} : { order: input.order }) });
   const seen = new Set<string>();
@@ -40,7 +40,7 @@ const draftReferences = (input: DraftReferences, requestText: string): DraftRefe
   for (const reference of order) {
     if (!reference || !['object', 'task'].includes(reference.kind) || typeof reference.id !== 'string' || !reference.id || reference.id.length >= 200) fail(400, 'invalid_references', 'References require a kind and stable ID.');
     const key = `${reference.kind}:${reference.id}`;
-    if (seen.has(key) || !(reference.kind === 'object' ? objectIds : taskIds).includes(reference.id)) fail(400, 'invalid_references', 'Reference order contains each grouped identity once.');
+    if (!(reference.kind === 'object' ? objectIds : taskIds).includes(reference.id)) fail(400, 'invalid_references', 'Each reference occurrence points to a listed source.');
     const offset = reference.textOffset ?? requestText.length;
     if (reference.textOffset !== undefined && (!Number.isSafeInteger(reference.textOffset) || reference.textOffset < 0 || reference.textOffset > requestText.length)) fail(400, 'invalid_references', 'Reference positions use integer UTF-16 offsets within the request text.');
     if (offset > 0 && offset < requestText.length && requestText.charCodeAt(offset - 1) >= 0xD800 && requestText.charCodeAt(offset - 1) <= 0xDBFF && requestText.charCodeAt(offset) >= 0xDC00 && requestText.charCodeAt(offset) <= 0xDFFF) fail(400, 'invalid_references', 'Reference positions use complete Unicode code points.');

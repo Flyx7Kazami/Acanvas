@@ -1,0 +1,477 @@
+✖ reselecting one object creates individual atoms with neutral preview styling and one removable occurrence (17.943292ms)
+ℹ Evidence: /private/tmp/acanvas-reference-evidence-uRqajI
+✖ repeated @ object and task queries retain every Send and queued edit occurrence in body order (12.251291ms)
+ℹ Evidence: /private/tmp/acanvas-reference-evidence-BFMQob
+✖ native IME and atomic keyboard deletion preserve equal-position occurrences of one source (11.358ms)
+ℹ Evidence: /private/tmp/acanvas-reference-evidence-6tOF26
+✖ repeated object and task occurrences keep every CLI position, reload, Send and edit while sharing snapshot sources (22.463709ms)
+✖ occurrences admit repeated legacy and equal UTF-16 positions and retain source, Unicode and list limits (12.718875ms)
+✖ saved drafts are session-specific; duplicate send returns one immutable snapshot (25.160167ms)
+✖ one consumer per session and parallel FIFO sessions; empty claim leaves later tasks queued (18.593375ms)
+✖ resume reads existing outputs; stale attempts are retained and cannot publish (11.814416ms)
+✖ object CAS rolls back a whole board or publication transaction (6.421958ms)
+✖ media byte ranges, authentication, origins, hostile attachments and path boundaries (5.772916ms)
+✖ overlimit and aborted upload discard partial files; complete uploads survive restart (9.164042ms)
+✖ CLI checks project identity and executes read/import/complete against the HTTP service (6.392041ms)
+✖ a project has one service owner and persisted views/drafts survive a restart (7.466ms)
+✖ cancelling a later queued task preserves the active consumer (8.882667ms)
+✖ empty claim and draft send overlap with a persistent queued or running outcome (9.315208ms)
+✖ concurrent draft writes use revisions and stale send preserves the latest saved draft (8.661666ms)
+✖ completion derives published assets and rejects cross-task and omitted receipt references atomically (10.490667ms)
+✖ session resume transfers a settled queue by expected owner and retains running-attempt ownership (6.981584ms)
+✖ idle and transferred consumers stay retired across later enqueue and claim calls (6.659334ms)
+✔ importing the CLI from another cli.js process leaves command execution to its caller (62.603292ms)
+✔ Node 24 SQLite lifecycle survives repeated open/claim/complete/close and garbage collection (273.143584ms)
+✖ service shutdown ends active SSE and incomplete uploads before closing SQLite (5.86625ms)
+✖ production Node 24 process recovers after a crash and exits normally with active SSE (252.971375ms)
+✖ waiting request editing retains FIFO identity, source references and the previous draft across restart (5.51725ms)
+✖ claim and edit share one reservation boundary while the losing action retains its content (4.861875ms)
+✖ request edit restores explicit references while annotation dependencies remain in the snapshot (5.128792ms)
+✖ earlier reference provenance and active edit additions remain available across restart (5.6635ms)
+✖ a user specified annotation-only correction preserves an earlier request and surrounding drafts (5.701917ms)
+✖ ordered object and task references keep real provenance and share one readable request with CLI (5.256667ms)
+✖ deleted saved references remain editable and return an actionable send error (5.166625ms)
+✖ queued reference editing retains previous placements while new references use their current state (6.028666ms)
+✖ reference order validates identity sets and legacy ordering keeps historical session provenance (5.128042ms)
+✖ inline references persist through CLI submission, reload, and queued edits with current positions and saved content (5.14875ms)
+✖ inline reference positions validate UTF-16 boundaries, visual order, identity and session scope atomically (4.919042ms)
+✔ reference parts place independent tokens around exact UTF-16 text and retain equal-position order (0.918833ms)
+✔ legacy reference positions render at the text end while stored entries retain their shape (0.473625ms)
+✔ readable messages embed resolved references between body text and keep provenance details separate (0.344209ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 5
+ℹ fail 32
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1151.658209
+
+✖ failing tests:
+
+test at dist/tests/reference-occurrences-ui.test.js:73:1
+✖ reselecting one object creates individual atoms with neutral preview styling and one removable occurrence (17.943292ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/reference-occurrences-ui.test.js:113:1
+✖ repeated @ object and task queries retain every Send and queued edit occurrence in body order (12.251291ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/reference-occurrences-ui.test.js:166:1
+✖ native IME and atomic keyboard deletion preserve equal-position occurrences of one source (11.358ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/reference-occurrences.test.js:34:1
+✖ repeated object and task occurrences keep every CLI position, reload, Send and edit while sharing snapshot sources (22.463709ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/reference-occurrences.test.js:79:1
+✖ occurrences admit repeated legacy and equal UTF-16 positions and retain source, Unicode and list limits (12.718875ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:38:1
+✖ saved drafts are session-specific; duplicate send returns one immutable snapshot (25.160167ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:62:1
+✖ one consumer per session and parallel FIFO sessions; empty claim leaves later tasks queued (18.593375ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:84:1
+✖ resume reads existing outputs; stale attempts are retained and cannot publish (11.814416ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:107:1
+✖ object CAS rolls back a whole board or publication transaction (6.421958ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:122:1
+✖ media byte ranges, authentication, origins, hostile attachments and path boundaries (5.772916ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:160:1
+✖ overlimit and aborted upload discard partial files; complete uploads survive restart (9.164042ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:188:1
+✖ CLI checks project identity and executes read/import/complete against the HTTP service (6.392041ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:220:1
+✖ a project has one service owner and persisted views/drafts survive a restart (7.466ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:242:1
+✖ cancelling a later queued task preserves the active consumer (8.882667ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:251:1
+✖ empty claim and draft send overlap with a persistent queued or running outcome (9.315208ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:271:1
+✖ concurrent draft writes use revisions and stale send preserves the latest saved draft (8.661666ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:286:1
+✖ completion derives published assets and rejects cross-task and omitted receipt references atomically (10.490667ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:318:1
+✖ session resume transfers a settled queue by expected owner and retains running-attempt ownership (6.981584ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:336:1
+✖ idle and transferred consumers stay retired across later enqueue and claim calls (6.659334ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:370:1
+✖ service shutdown ends active SSE and incomplete uploads before closing SQLite (5.86625ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:392:1
+✖ production Node 24 process recovers after a crash and exits normally with active SSE (252.971375ms)
+  Error: Production service ended during startup: node:net:2306
+        const error = new UVExceptionWithHostPort(rval, 'listen', address, port);
+                      ^
+
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+  Node.js v24.21.0
+
+      at ChildProcess.<anonymous> (file:///private/tmp/acanvas-reference-review-gh33my06/dist/tests/server.test.js:406:70)
+      at ChildProcess.wrapper (node:events:639:12)
+      at ChildProcess.emit (node:events:514:28)
+      at ChildProcess._handle.onexit (node:internal/child_process:295:12)
+
+test at dist/tests/server.test.js:460:1
+✖ waiting request editing retains FIFO identity, source references and the previous draft across restart (5.51725ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:511:1
+✖ claim and edit share one reservation boundary while the losing action retains its content (4.861875ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:529:1
+✖ request edit restores explicit references while annotation dependencies remain in the snapshot (5.128792ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:566:1
+✖ earlier reference provenance and active edit additions remain available across restart (5.6635ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:585:1
+✖ a user specified annotation-only correction preserves an earlier request and surrounding drafts (5.701917ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:638:1
+✖ ordered object and task references keep real provenance and share one readable request with CLI (5.256667ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:680:1
+✖ deleted saved references remain editable and return an actionable send error (5.166625ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:696:1
+✖ queued reference editing retains previous placements while new references use their current state (6.028666ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:710:1
+✖ reference order validates identity sets and legacy ordering keeps historical session provenance (5.128042ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:735:1
+✖ inline references persist through CLI submission, reload, and queued edits with current positions and saved content (5.14875ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at dist/tests/server.test.js:800:1
+✖ inline reference positions validate UTF-16 boundaries, visual order, identity and session scope atomically (4.919042ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }

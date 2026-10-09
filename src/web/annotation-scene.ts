@@ -1,6 +1,8 @@
-import type { AnnotationInput, AnnotationTarget, Asset, BoardObject, ContentAnchor, SessionView } from '../shared/types';
-import type { BrowserCaptureFrame, BrowserCaptureIdentity } from '../shared/browser-capture';
-import { intersects, normalizedRegion, objectRegion, screenBounds, unionBounds, type Rect } from './geometry';
+import type { AnnotationInput, AnnotationTarget, Asset, BoardObject, ContentAnchor, SessionView, ScenePresentation } from '../shared/types.js';
+import type { BrowserCaptureFrame, BrowserCaptureIdentity } from '../shared/browser-capture.js';
+import { intersects, normalizedRegion, objectRegion, screenBounds, unionBounds, type Rect } from './geometry.js';
+import type { Immutable } from './scene-renderer/types.js';
+import { resolveContentKind } from '../shared/content-types.js';
 import { readMarkdownContentAnchor } from './scene-renderer/media/markdown-anchor.js';
 
 export const annotationTarget = (annotation: AnnotationInput): AnnotationTarget => {
@@ -14,6 +16,43 @@ export function markTarget(world: Rect, geometry: 'point' | 'rect', objects: Boa
   const candidates = [...objects].reverse().filter(object => contains(contentBounds(object), world));
   const object = chosenId ? candidates.find(value => value.id === chosenId) : candidates[0];
   return object ? { scope: 'object', objectId: object.id, objectIds: [object.id], assetId: object.assetId, bounds: normalizedRegion(world, contentBounds(object)), coordinateSpace: 'normalized', geometry } : { scope: 'region', objectId: undefined, objectIds: [], assetId: undefined, bounds: world, coordinateSpace: 'world', geometry, timeStart: undefined, timeEnd: undefined, snapshotAssetId: undefined, contentAnchor: undefined };
+}
+
+function inRoundedBody(point: { x: number; y: number }, body: Rect, radius: number): boolean {
+  if (!contains(body, { ...point, width: 0, height: 0 })) return false;
+  const x = Math.max(body.x + radius, Math.min(body.x + body.width - radius, point.x));
+  const y = Math.max(body.y + radius, Math.min(body.y + body.height - radius, point.y));
+  return Math.hypot(point.x - x, point.y - y) <= radius;
+}
+
+/** Selects content from the displayed frame, with opaque bodies shielding lower layers. */
+export function presentedMarkTarget(world: Rect, geometry: 'point' | 'rect', presentation: Immutable<ScenePresentation> | undefined, objects: BoardObject[], assets: Asset[]): Partial<AnnotationInput> {
+  const layers = [...(presentation?.layers || [])].sort((a, b) => b.layer - a.layer);
+  const body = (id: string) => objects.find(object => object.id === id);
+  const radius = (id: string) => {
+    const object = body(id);
+    return object && resolveContentKind(assets.find(asset => asset.id === object.assetId)) === 'audio' ? Math.min(22, object.width / 2, object.height / 2) : 0;
+  };
+  const topAt = (point: { x: number; y: number }) => layers.find(layer => {
+    const object = body(layer.objectId); return !!object && inRoundedBody(point, object, radius(object.id));
+  });
+  const fallback = () => markTarget(world, geometry, [], () => world);
+  const center = { x: world.x + world.width / 2, y: world.y + world.height / 2 };
+  const layer = topAt(center), object = layer && body(layer.objectId), content = layer?.contentWorldBounds;
+  if (!object || !content || !contains(content, world)) return fallback();
+  const corners = [world, { x: world.x + world.width, y: world.y }, { x: world.x, y: world.y + world.height }, { x: world.x + world.width, y: world.y + world.height }];
+  if (corners.some(point => topAt(point)?.objectId !== object.id)) return fallback();
+  if (geometry === 'rect') {
+    // The nearest point to a rounded body's center tests exact rounded-rectangle overlap.
+    const occluded = layers.filter(value => value.layer > layer!.layer).some(value => {
+      const cover = body(value.objectId); if (!cover || !intersects(world, cover)) return false;
+      const x = Math.max(world.x, Math.min(world.x + world.width, cover.x + cover.width / 2));
+      const y = Math.max(world.y, Math.min(world.y + world.height, cover.y + cover.height / 2));
+      return inRoundedBody({ x, y }, cover, radius(cover.id));
+    });
+    if (occluded) return fallback();
+  }
+  return markTarget(world, geometry, [object], () => content);
 }
 
 export function requestedMarkdownAnchor(objectId: string): ContentAnchor | undefined {

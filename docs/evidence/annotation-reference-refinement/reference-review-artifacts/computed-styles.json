@@ -1,0 +1,41 @@
+{
+  "light": {
+    "preview": {
+      "color": "rgb(112, 112, 112)",
+      "background": "color(srgb 0.989128 0.994482 1 / 0.868235)",
+      "border": "color(srgb 0.870588 0.870588 0.870588 / 0.65)",
+      "ink": "#202020",
+      "muted": "#707070"
+    },
+    "formal": {
+      "color": "rgb(32, 32, 32)",
+      "background": "color(srgb 0.989128 0.994482 1 / 0.868235)",
+      "border": "color(srgb 0.870588 0.870588 0.870588 / 0.65)",
+      "ink": "#202020",
+      "muted": "#707070"
+    }
+  },
+  "dark": {
+    "preview": {
+      "color": "rgb(170, 170, 170)",
+      "background": "color(srgb 0.145154 0.14992 0.1544 / 0.871176)",
+      "border": "color(srgb 0.227451 0.227451 0.227451 / 0.65)",
+      "ink": "#f3f3f3",
+      "muted": "#aaa"
+    },
+    "formal": {
+      "color": "rgb(243, 243, 243)",
+      "background": "color(srgb 0.145154 0.14992 0.1544 / 0.871176)",
+      "border": "color(srgb 0.227451 0.227451 0.227451 / 0.65)",
+      "ink": "#f3f3f3",
+      "muted": "#aaa"
+    }
+  },
+  "queue": {
+    "color": "rgb(243, 243, 243)",
+    "background": "color(srgb 0.145154 0.14992 0.1544 / 0.871176)",
+    "border": "color(srgb 0.227451 0.227451 0.227451 / 0.65)",
+    "ink": "#f3f3f3",
+    "muted": "#aaa"
+  }
+}

@@ -4,6 +4,7 @@ import type { BoardApi } from '../api.js';
 import { contentCapabilities, resolveContentKind } from '../../shared/content-types.js';
 import { createProjectCaptureProvider, type ProjectCaptureCoordinator } from '../project-capture-provider.js';
 import { SceneFrame, SceneRenderer, type Immutable, type SceneBounds, type SceneInput, type SceneLayer, type ScenePresentation, type ScenePrimitive } from './index.js';
+import { annotationTarget } from '../annotation-scene.js';
 import { SceneContentRegistry, type SceneContentMetadata } from './content.js';
 
 export interface ProjectSceneSource { provider: ProjectCaptureCoordinator; view?: CaptureView; snapshot?: BaseSceneSnapshot }
@@ -60,14 +61,14 @@ export function useBoardScene(input: BoardSceneInput) {
   useLayoutEffect(() => { latest.current = input; });
   const seq = useRef(0), renderNow = useRef<() => void>(() => {});
   const presentation = useRef<Immutable<ScenePresentation> | undefined>(undefined);
-  const layout = useRef<{ objects: BoardObject[]; contentBounds: Map<string, SceneBounds>; snapshot: BaseSceneSnapshot; sources: Map<string, Immutable<SceneContentMetadata>> } | undefined>(undefined);
+  const layout = useRef<{ objects: BoardObject[]; contentBounds: Map<string, SceneBounds>; snapshot: BaseSceneSnapshot; sources: Map<string, Immutable<SceneContentMetadata>>; markerBounds: Map<string, SceneBounds>; markTargets: Map<string, ReturnType<typeof annotationTarget>> } | undefined>(undefined);
   useLayoutEffect(() => {
     const element = input.canvas.current, source = input.source;
     if (!element || !source?.view) { renderer.current = undefined; presentation.current = undefined; layout.current = undefined; return; }
     const identity = source.view;
     renderer.current = new SceneRenderer(element, { documentId: identity.documentId, viewId: identity.viewId }); seq.current = 0;
     let active = true, confirming = false, queued: Immutable<ScenePresentation> | undefined;
-    let markerAnimation = 0, alignMarkers = () => {};
+    let markerAnimation = 0, animatedNotes = false, alignMarkers = () => {};
     const confirmLatest = (value: Immutable<ScenePresentation>) => {
       queued = value;
       const send = () => {
@@ -130,6 +131,22 @@ export function useBoardScene(input: BoardSceneInput) {
       }
       for (const bounds of [current.selection, current.editingBounds].filter((value): value is SceneBounds => !!value && value.width > 0 && value.height > 0 && !drawnMarks.some(mark => mark.bounds.x === value.x && mark.bounds.y === value.y && mark.bounds.width === value.width && mark.bounds.height === value.height))) overlays.push({ kind: 'rect', bounds, fill: palette.annotationFill, stroke: palette.annotation, lineWidth: 1 / current.view.zoom });
       for (const guide of current.guides) overlays.push({ kind: 'line', points: guide.axis === 'x' ? [{ x: guide.position, y: guide.start }, { x: guide.position, y: guide.end }] : [{ x: guide.start, y: guide.position }, { x: guide.end, y: guide.position }], stroke: palette.muted, lineWidth: 1 / current.view.zoom });
+      for (const note of board.querySelectorAll<HTMLElement>('.canvas-annotation-comment[data-comment-mode="display"]')) {
+        const button = note.querySelector<HTMLElement>('.canvas-annotation-summary');
+        if (!button || getComputedStyle(note).visibility !== 'visible') continue;
+        const rect = note.getBoundingClientRect(), textRect = button.getBoundingClientRect(), style = getComputedStyle(note), textStyle = getComputedStyle(button);
+        if (rect.width <= 0 || rect.height <= 0) continue;
+        const toWorld = (x: number, y: number) => ({ x: (x - cssViewport.x - camera.x) / camera.zoom, y: (y - cssViewport.y - camera.y) / camera.zoom });
+        const position = toWorld(rect.x, rect.y), textPosition = toWorld(textRect.x, textRect.y);
+        const font = `${textStyle.fontWeight} ${textStyle.fontSize} ${textStyle.fontFamily}`;
+        const context = display.getContext('2d')!; context.save(); context.font = font;
+        const metrics = context.measureText(button.textContent || ''), lineHeight = Number.parseFloat(textStyle.lineHeight), fontSize = Number.parseFloat(textStyle.fontSize);
+        const ascent = metrics.fontBoundingBoxAscent || fontSize * .8, descent = metrics.fontBoundingBoxDescent || fontSize * .2; context.restore();
+        overlays.push({ kind: 'rect', bounds: { ...position, width: rect.width / camera.zoom, height: rect.height / camera.zoom }, fill: style.backgroundColor, radius: Number.parseFloat(style.borderRadius) * cssScale / camera.zoom },
+          { kind: 'text', x: textPosition.x, y: textPosition.y + (lineHeight * cssScale / 2 + (ascent - descent) * cssScale / 2) / camera.zoom, text: button.textContent || '', font: `${textStyle.fontWeight} ${fontSize * cssScale / camera.zoom}px ${textStyle.fontFamily}`, fill: textStyle.color, maxWidth: textRect.width / camera.zoom, ellipsis: true });
+        if (button === document.activeElement && button.matches(':focus-visible')) overlays.push({ kind: 'rect', bounds: { x: position.x - 3 / camera.zoom, y: position.y - 3 / camera.zoom, width: (rect.width + 6) / camera.zoom, height: (rect.height + 6) / camera.zoom }, fill: 'transparent', stroke: palette.ink, radius: 10 / camera.zoom, lineWidth: 2 / camera.zoom });
+        note.dataset.sceneDrawn = 'true';
+      }
       const scene: SceneInput = { documentId: identity.documentId, viewId: identity.viewId, baseSceneId: base.id, frameSeq: ++seq.current, camera, cssViewport, background: palette.canvas, layers, media,
         overlays,
         marks: drawnMarks.map((mark, index) => {
@@ -145,16 +162,20 @@ export function useBoardScene(input: BoardSceneInput) {
           button.style.transform = 'translate(' + (matrix.m41 + (left - rect.left) / cssScale) + 'px,' + (matrix.m42 + (top - rect.top) / cssScale) + 'px)';
         }
       };
-      const animateInputs = () => { markerAnimation = 0; if (!active) return; alignMarkers(); if (Array.from(board.querySelectorAll('.canvas-annotation-group')).some(group => group.getAnimations().length > 0)) markerAnimation = requestAnimationFrame(animateInputs); };
-      try { const frame = SceneFrame.render(document, scene, bitmap); renderer.current!.present(frame); presentation.current = frame.presentation; layout.current = { objects: structuredClone(current.objects), contentBounds, snapshot: base, sources }; display.dataset.frameSeq = String(frame.presentation.frameSeq); display.dataset.viewId = identity.viewId; display.dataset.viewGeneration = String(identity.viewGeneration); confirmLatest(frame.presentation); }
+      const animateInputs = () => { markerAnimation = 0; if (!active) return; alignMarkers(); const moving = Array.from(board.querySelectorAll('.canvas-annotation-group,.canvas-annotation-note')).some(group => group.getAnimations().some(animation => animation.playState === 'running')); if (moving || animatedNotes) { animatedNotes = moving; render(); } };
+      try { const frame = SceneFrame.render(document, scene, bitmap); renderer.current!.present(frame); presentation.current = frame.presentation; layout.current = { objects: structuredClone(current.objects), contentBounds, snapshot: base, sources,
+          markTargets: new Map(drawnMarks.map(mark => [mark.annotation.id, annotationTarget(mark.annotation)])),
+          markerBounds: new Map(drawnMarks.map((mark, index) => { const pin = scene.marks[index], size = pin.size ?? 28; return [mark.annotation.id, { x: cssViewport.x + pin.x * camera.zoom + camera.x - size / 2, y: cssViewport.y + pin.y * camera.zoom + camera.y - size / 2, width: size, height: size }]; })) }; display.dataset.frameSeq = String(frame.presentation.frameSeq); display.dataset.viewId = identity.viewId; display.dataset.viewGeneration = String(identity.viewGeneration); confirmLatest(frame.presentation); }
       catch (cause) { current.onError(cause); }
       alignMarkers(); if (!markerAnimation) markerAnimation = requestAnimationFrame(animateInputs);
     };
     renderNow.current = render; const unsubscribe = input.registry.subscribe(render);
-    const observer = new ResizeObserver(render); observer.observe(element); const resize = () => render(); window.addEventListener('resize', resize);
-    input.board.current?.addEventListener('focusin', render); input.board.current?.addEventListener('focusout', render);
+    const observer = new ResizeObserver(render); observer.observe(element);
+    const comments = new MutationObserver(() => { for (const note of input.board.current?.querySelectorAll('.canvas-annotation-note') || []) observer.observe(note); render(); });
+    if (input.board.current) comments.observe(input.board.current, { childList: true, subtree: true }); const resize = () => render(); window.addEventListener('resize', resize);
+    input.board.current?.addEventListener('focusin', render); input.board.current?.addEventListener('focusout', render); input.board.current?.addEventListener('pointerover', render); input.board.current?.addEventListener('pointerout', render);
     render();
-    return () => { active = false; queued = undefined; cancelAnimationFrame(markerAnimation); unsubscribe(); observer.disconnect(); window.removeEventListener('resize', resize); input.board.current?.removeEventListener('focusin', render); input.board.current?.removeEventListener('focusout', render); renderNow.current = () => {}; renderer.current = undefined; presentation.current = undefined; layout.current = undefined; };
+    return () => { active = false; queued = undefined; cancelAnimationFrame(markerAnimation); unsubscribe(); observer.disconnect(); comments.disconnect(); window.removeEventListener('resize', resize); input.board.current?.removeEventListener('focusin', render); input.board.current?.removeEventListener('focusout', render); input.board.current?.removeEventListener('pointerover', render); input.board.current?.removeEventListener('pointerout', render); renderNow.current = () => {}; renderer.current = undefined; presentation.current = undefined; layout.current = undefined; };
   }, [input.source?.view?.viewId, input.registry]);
   useLayoutEffect(() => { renderNow.current(); }, [input.source?.snapshot, input.objects, input.assets, input.view, input.theme, input.marks, input.selection, input.editingBounds, input.guides]);
   return { renderer, presentation, layout };

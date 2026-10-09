@@ -7,7 +7,7 @@ import { AnnotationCommentControl, type AnnotationCommentControlProps } from './
 
 type NoteLayout = { expanded: boolean; point: boolean; width: number; height: number; padding: string; backgroundColor: string; borderRadius: string; boxShadow: string };
 
-export function CanvasAnnotationNote({ canvas, bounds, markBounds, geometry, view, annotationId, number, active, control, onOpen }: { canvas: RefObject<HTMLDivElement | null>; bounds: Rect; markBounds?: Rect; geometry?: 'point' | 'rect'; view: SessionView; annotationId: string; number: number; active: boolean; control: AnnotationCommentControlProps; onOpen: () => void }) {
+export function CanvasAnnotationNote({ canvas, bounds, markBounds, geometry, view, annotationId, number, active, redrawing, control, onOpen }: { canvas: RefObject<HTMLDivElement | null>; bounds: Rect; markBounds?: Rect; geometry?: 'point' | 'rect'; view: SessionView; annotationId: string; number: number; active: boolean; redrawing?: boolean; control: AnnotationCommentControlProps; onOpen: () => void }) {
   const group = useRef<HTMLDivElement>(null), element = useRef<HTMLDivElement>(null);
   const remembered = useRef<NoteLayout | null>(null), animations = useRef<Animation[]>([]);
   const expanded = control.mode !== 'display';
@@ -15,8 +15,13 @@ export function CanvasAnnotationNote({ canvas, bounds, markBounds, geometry, vie
   useLayoutEffect(() => {
     const board = canvas.current, node = group.current, note = element.current;
     if (!board || !node || !note) return;
-    const page = board.getBoundingClientRect(), scale = page.width / Math.max(1, board.clientWidth);
+    let scale = board.getBoundingClientRect().width / Math.max(1, board.clientWidth);
     const visible = () => { const rect = board.getBoundingClientRect(), x = Math.max(0, rect.x), y = Math.max(64, rect.y), right = Math.min(innerWidth, rect.right), bottom = Math.min(innerHeight - 80, rect.bottom); return { x: (x + 8 - rect.x) / scale, y: (y - rect.y) / scale, width: Math.max(0, (right - x - 16) / scale), height: Math.max(0, (bottom - y) / scale) }; };
+    const availableSize = visible();
+    const pin = node.querySelector<HTMLElement>('.annotation-pin');
+    const leadingWidth = point ? 0 : (pin?.offsetWidth || 28) + (Number.parseFloat(getComputedStyle(node).columnGap) || 8);
+    note.style.maxWidth = `${Math.max(0, availableSize.width - leadingWidth)}px`;
+    note.style.maxHeight = expanded ? `${availableSize.height}px` : '';
     const prior = remembered.current, before = prior?.point === point ? prior : null, changing = before && before.expanded !== expanded;
     if (prior && prior.point !== point) { animations.current.forEach(animation => animation.cancel()); animations.current = []; }
     const moving = animations.current.some(animation => animation.playState === 'running' || animation.playState === 'paused');
@@ -26,12 +31,23 @@ export function CanvasAnnotationNote({ canvas, bounds, markBounds, geometry, vie
     const style = getComputedStyle(note);
     const target: NoteLayout = changing || !moving ? { expanded, point, width: note.offsetWidth, height: Math.max(28, note.offsetHeight), padding: style.padding, backgroundColor: style.backgroundColor, borderRadius: style.borderRadius, boxShadow: style.boxShadow } : { ...before!, expanded };
     remembered.current = target;
+    const fitVisibleSize = () => {
+      scale = board.getBoundingClientRect().width / Math.max(1, board.clientWidth);
+      const available = visible(), width = `${Math.max(0, available.width - leadingWidth)}px`, height = expanded ? `${available.height}px` : '';
+      if (note.style.maxWidth !== width || note.style.maxHeight !== height) {
+        animations.current.forEach(animation => animation.cancel()); animations.current = [];
+        note.style.maxWidth = width; note.style.maxHeight = height;
+        target.width = note.offsetWidth; target.height = Math.max(28, note.offsetHeight);
+      }
+      return available;
+    };
     const previous = [...board.querySelectorAll<HTMLElement>('.canvas-annotation-group')].filter(value => !!(node.compareDocumentPosition(value) & Node.DOCUMENT_POSITION_PRECEDING));
     if (point) {
       const precedingNotes = previous.map(value => value.querySelector<HTMLElement>('.canvas-annotation-note')).filter((value): value is HTMLElement => !!value);
       const pins = [...board.querySelectorAll<HTMLElement>('.canvas-annotation-group[data-geometry="point"]>.annotation-pin')].filter(value => value.parentElement !== node);
       const controls = [...(board.closest('.app-shell')?.querySelectorAll<HTMLElement>('.creation-dock,.canvas-toolbar,.project-identity,.canvas-actions,.notification-stack') || [])];
       const layout = () => {
+        fitVisibleSize();
         const anchor = screenBounds(markBounds!, view), viewport = board.getBoundingClientRect();
         node.style.left = `${anchor.x}px`; node.style.top = `${anchor.y}px`; node.style.height = '';
         node.dataset.anchorX = String(markBounds!.x); node.dataset.anchorY = String(markBounds!.y);
@@ -55,6 +71,7 @@ export function CanvasAnnotationNote({ canvas, bounds, markBounds, geometry, vie
     }
     note.style.left = ''; note.style.top = ''; delete node.dataset.anchorVisible;
     const layout = () => {
+      fitVisibleSize();
       const anchor = screenBounds(bounds, view), height = target.height;
       const offset = previous.filter(value => value.dataset.geometry !== 'point' && Number(value.dataset.anchorX) === bounds.x && Number(value.dataset.anchorY) === bounds.y).reduce((sum, value) => sum + value.offsetHeight + 8, 0);
       const viewport = board.getBoundingClientRect(), rect = node.getBoundingClientRect(), transform = new DOMMatrix(getComputedStyle(node).transform);
@@ -88,7 +105,7 @@ export function CanvasAnnotationNote({ canvas, bounds, markBounds, geometry, vie
     reduced.addEventListener('change', stop);
     return () => { reduced.removeEventListener('change', stop); animations.current.forEach(animation => animation.cancel()); };
   }, []);
-  return <div ref={group} className="canvas-annotation-group" data-annotation-id={annotationId} data-active={active || undefined} data-geometry={point ? 'point' : undefined} data-canvas-control style={point ? { left: screenBounds(markBounds!, view).x, top: screenBounds(markBounds!, view).y } : undefined}>
+  return <div ref={group} className="canvas-annotation-group" data-annotation-id={annotationId} data-active={active || undefined} data-redrawing={redrawing || undefined} data-geometry={point ? 'point' : undefined} data-canvas-control style={point ? { left: screenBounds(markBounds!, view).x, top: screenBounds(markBounds!, view).y } : undefined}>
     <button type="button" className="annotation-pin" title={control.text} aria-label={`Annotation ${number}: ${control.text || 'Add a comment'}`} onPointerDown={event => event.stopPropagation()} onClick={onOpen}><AnnotationBubble number={number} size={28}/></button>
     <AnnotationCommentControl {...control} controlRef={element} annotationId={annotationId}/>
   </div>;

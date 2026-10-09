@@ -39,7 +39,7 @@ async function assertSceneCopy(page: Page, annotation: AnnotationInput) {
 async function fixture(t: test.TestContext, narrow = false) {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'acanvas-chatbox-ui-')));
   const evidence = await realpath(await mkdtemp(join(tmpdir(), 'acanvas-chatbox-evidence-'))); t.diagnostic(`Evidence: ${evidence}`);
-  const running = await startServer({ root, port: 0, webRoot: resolve('dist/web'), browser: { headless: true } });
+  const running = await startServer({ root, port: 0, webRoot: resolve(process.env.ACANVAS_TEST_WEB_ROOT || 'dist/web'), browser: { headless: true } });
   const session = running.service.createSession('Chatbox acceptance');
   await running.browser.open(session.id);
   const page = running.browser.page(session.id)!;
@@ -366,6 +366,12 @@ test('managed React Done captures blank points, cross-object regions and histori
   assert.equal(app.state().tasks[0].snapshot.annotations[2].capture?.id, target.capture?.id);
 });
 
+async function redrawAt(page: Page, x: number, y: number) {
+  await page.getByRole('button', { name: 'Redraw mark', exact: true }).click();
+  await page.mouse.click(x, y);
+  await expect(page.getByRole('button', { name: 'Mark canvas', exact: true })).toHaveAttribute('aria-pressed', 'false');
+}
+
 test('managed React target edits require a new capture while text edits preserve the original image', async t => {
   const app = await fixture(t), { page } = app;
   const object = await app.object(await app.image()); await app.mark({ x: 520, y: 360 }); const original = await app.done('Original comment');
@@ -373,7 +379,7 @@ test('managed React target edits require a new capture while text edits preserve
   await page.getByRole('button', { name: 'Done', exact: true }).click();
   const textOnly = (await app.saved()).annotations[0]; assert.equal(textOnly.capture?.id, original.capture?.id); assert.equal(textOnly.captureState?.version, 1);
   await page.locator('.draft-annotation .annotation-content').click();
-  await page.getByRole('combobox', { name: 'Annotation target', exact: true }).selectOption('');
+  await redrawAt(page, 730, 360);
   await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'incomplete'); await expect(page.getByRole('button', { name: 'Send request', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'complete');
   const retargeted = (await app.saved()).annotations[0]; assert.equal(retargeted.captureState?.version, 2); assert.notEqual(retargeted.capture?.id, original.capture?.id); assert.equal(retargeted.scope, 'region'); assert.deepEqual(retargeted.objectIds, []);
@@ -383,7 +389,7 @@ test('managed React target edits require a new capture while text edits preserve
 
 test('managed React delayed saves retain the newer target and capture cancellation invalidates late uploads', { timeout: 90_000 }, async t => {
   const app = await fixture(t), { page } = app;
-  const asset = await app.image(); const first = await app.object(asset), second = await app.object(asset);
+  const asset = await app.image(); const first = await app.object(asset), second = await app.object(asset, { x: 760, y: 300, width: 300, height: 180 });
   await app.mark({ x: 520, y: 360 }); await app.done('Stable words');
   let releaseSave!: () => void, enteredSave!: () => void;
   const held = new Promise<void>(resolve => releaseSave = resolve), entered = new Promise<void>(resolve => enteredSave = resolve);
@@ -392,8 +398,8 @@ test('managed React delayed saves retain the newer target and capture cancellati
     if (route.request().method() === 'PUT' && !delayed) { delayed = true; const response = await route.fetch(); enteredSave(); await held; await route.fulfill({ response }); }
     else await route.continue();
   });
-  await page.locator('.draft-annotation .annotation-content').click(); await page.getByRole('combobox', { name: 'Annotation target', exact: true }).selectOption(''); await enteredStage(entered);
-  await page.getByRole('combobox', { name: 'Annotation target', exact: true }).selectOption(first.id);
+  await page.locator('.draft-annotation .annotation-content').click(); await redrawAt(page, 730, 360); await enteredStage(entered);
+  await redrawAt(page, 520, 360);
   await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'incomplete'); releaseSave();
   const changed = (await app.saved()).annotations[0]; assert.equal(changed.objectId, first.id); assert.equal(changed.captureState?.status, 'incomplete'); assert.equal(changed.capture, undefined); assert(changed.captureState!.version >= 2);
   await page.unroute('**/api/sessions/*/draft');
@@ -401,12 +407,12 @@ test('managed React delayed saves retain the newer target and capture cancellati
   const heldCapture = new Promise<void>(resolve => releaseCapture = resolve), enteredCapturePromise = new Promise<void>(resolve => enteredCapture = resolve);
   await page.route('**/captures/*/content', async route => { if (route.request().method() !== 'PUT') return route.continue(); enteredCapture(); await heldCapture; await route.continue().catch(() => undefined); });
   await page.getByRole('button', { name: 'Done', exact: true }).click(); await enteredStage(enteredCapturePromise);
-  await expect(page.getByRole('button', { name: 'Cancel capture', exact: true })).toBeVisible();
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-capturing', 'true'); await expect(page.getByText(/Capturing|Capture required|Retry/, { exact: false })).toHaveCount(0);
   await page.getByRole('combobox', { name: 'Request', exact: true }).focus(); await page.keyboard.press('ControlOrMeta+A'); await page.keyboard.press('Backspace'); await page.keyboard.insertText('The newer request survives capture cancellation.');
   await page.keyboard.press('Escape'); releaseCapture(); await page.unroute('**/captures/*/content');
   await expect(page.locator('.capture-progress')).toHaveCount(0);
   const cancelled = (await app.saved()).annotations[0]; assert.equal(cancelled.text, 'Stable words'); assert.equal(cancelled.captureState?.status, 'incomplete'); assert(cancelled.captureState!.version > changed.captureState!.version); assert.equal((await app.saved()).text, 'The newer request survives capture cancellation.');
-  await page.locator('.draft-annotation .annotation-content').click(); await page.getByRole('combobox', { name: 'Annotation target', exact: true }).selectOption(second.id);
+  await page.locator('.draft-annotation .annotation-content').click(); await redrawAt(page, 820, 360);
   await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'complete');
   assert.equal((await app.saved()).annotations[0].objectId, second.id);
 });
@@ -439,8 +445,6 @@ test('managed React refresh exposes a lost captured image and explicitly recaptu
   await queryEntered;
   await expect(page.getByRole('button', { name: 'Send request', exact: true })).toBeDisabled();
   await page.locator('.draft-annotation .annotation-content').click(); await page.getByRole('button', { name: 'Done', exact: true }).click();
-  await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'unavailable'); await expect(page.getByRole('button', { name: 'Send request', exact: true })).toBeDisabled();
-  await page.getByRole('button', { name: 'Retry annotation 1 capture', exact: true }).click();
   await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'complete');
   const replacement = (await app.saved()).annotations[0]; assert.equal(replacement.text, 'Preserve this comment'); assert.equal(replacement.captureState?.version, 2); assert.notEqual(replacement.capture?.screenshotAssetId, original.capture?.screenshotAssetId);
   await expect(page.getByRole('button', { name: 'Send request', exact: true })).toBeEnabled();
@@ -459,7 +463,7 @@ test('visible Canvas evidence excludes native controls while capture cancellatio
   const gate = new Promise<void>(resolve => release = resolve), captureEntered = new Promise<void>(resolve => entered = resolve);
   await page.route('**/captures/*/content', async route => { if (route.request().method() !== 'PUT') return route.continue(); entered(); await gate; await route.continue(); });
   await app.mark({ x: 1415, y: 970 }); await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Bottom-right point'); await page.getByRole('button', { name: 'Done', exact: true }).click(); await enteredStage(captureEntered);
-  await expect(page.getByRole('button', { name: 'Cancel capture', exact: true })).toBeVisible(); await expect(page.locator('.project-identity')).toBeVisible(); await expect(page.getByRole('button', { name: 'Zoom in', exact: true })).toBeEnabled();
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-capturing', 'true'); await expect(page.getByText(/Capturing|Capture required|Retry/, { exact: false })).toHaveCount(0); await expect(page.locator('.project-identity')).toBeVisible(); await expect(page.getByRole('button', { name: 'Zoom in', exact: true })).toBeEnabled();
   assert.equal(await page.locator('.app-shell').getAttribute('data-sampling'), null);
   const uploaded = page.waitForResponse(response => response.request().method() === 'PUT' && /\/captures\/[^/]+\/content$/.test(new URL(response.url()).pathname) && response.ok()); release(); await (await uploaded).finished(); await page.unroute('**/captures/*/content'); await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'complete'); const corner = (await app.saved()).annotations[0]; await assertSceneCopy(page, corner);
   const stats = await page.evaluate(async capture => {
@@ -601,9 +605,14 @@ test('managed React captures GIF, file cards, mixed scenes and the actual overla
   const back = await app.object(await app.image('Overlapping image.png'), { x: 350, y: 290, width: 300, height: 180 });
   await page.locator(`[data-object-id="${gifObject.id}"]`).evaluate(element => (element as HTMLElement).style.zIndex = '5');
   await app.mark({ x: 560, y: 430 }); const top = await app.done('Top painted target'); assert.equal(top.objectId, back.id);
-  await page.locator('.draft-annotation .annotation-content').last().click(); await page.getByRole('combobox', { name: 'Annotation target', exact: true }).selectOption(gifObject.id);
+  await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: back.id, expectedVersion: back.version, changes: { x: 1200 } }] });
+  await expect(page.locator(`[data-object-id="${back.id}"]`)).toHaveCSS('left', '1200px');
+  await page.locator('.draft-annotation .annotation-content').last().click(); await redrawAt(page, 520, 360);
   await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.draft-annotation').last()).toHaveAttribute('data-capture-state', 'complete');
   assert.equal((await app.saved()).annotations.at(-1)?.objectId, gifObject.id);
+  const movedBack = app.running.service.objects().find(value => value.id === back.id)!;
+  await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: back.id, expectedVersion: movedBack.version, changes: { x: 350 } }] });
+  await expect(page.locator(`[data-object-id="${back.id}"]`)).toHaveCSS('left', '350px');
   await page.locator(`[data-object-id="${gifObject.id}"]`).evaluate(element => { const object = element as HTMLElement; object.style.borderRadius = '32px'; const media = object.querySelector<HTMLElement>('.object-media')!; media.style.backgroundColor = 'transparent'; });
   await app.mark({ x: 380, y: 350 }); const rounded = await app.done('Visible lower corners');
   assert(rounded.capture?.scene.objects.some(value => value.object.id === back.id)); assert.deepEqual((await app.saved()).references.objectIds, []);
@@ -678,4 +687,111 @@ test('managed React 320px themes, keyboard point marking and reduced motion reta
     await expect(page.getByRole('button', { name: 'Send request', exact: true })).toBeVisible();
     const marker = await page.locator('.annotation-outline.point-annotation').last().boundingBox(); assert(marker && Math.abs(marker.width - 20) < 1);
   }
+});
+
+test('refinement Mark hover and clicks share displayed content ownership and clear their guides', async t => {
+  const app = await fixture(t), { page } = app;
+  const bottom = await app.object(await app.image('Bottom.png'), { x: 350, y: 240, width: 400, height: 400 });
+  const top = await app.object(await app.image('Letterbox.png'), { x: 400, y: 280, width: 320, height: 320 });
+  await expect.poll(() => page.locator(`[data-object-id="${top.id}"] img`).evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(400);
+  await app.select(top);
+  await expect(page.getByRole('button', { name: 'Attach to request', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Remove selected files from canvas', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Mark canvas', exact: true }).click();
+  await page.mouse.move(550, 440); await expect(page.locator('.canvas-mark-guide')).toHaveAttribute('data-mark-target', top.id);
+  await page.screenshot({ path: join(app.evidence, 'mark-hover-content.png') });
+  const guide = await page.locator('.canvas-mark-guide').boundingBox(); assert(guide); assert(Math.abs(guide.y - 344) < .5); assert(Math.abs(guide.height - 192) < .5);
+  await page.mouse.move(550, 300); await expect(page.locator('.canvas-mark-guide')).toHaveCount(0);
+  await page.mouse.move(360, 450); await expect(page.locator('.canvas-mark-guide')).toHaveAttribute('data-mark-target', bottom.id);
+  await page.mouse.move(550, 440); await page.mouse.click(550, 440);
+  await expect(page.locator('.canvas-mark-guide')).toHaveCount(0); await expect(page.getByRole('combobox', { name: 'Annotation target', exact: true })).toHaveCount(0);
+  assert.equal((await app.saved()).annotations.length, 0);
+  const locked = await app.done('Top visible content'); assert.equal(locked.objectId, top.id);
+  await page.locator('.draft-annotation .annotation-content').click(); await redrawAt(page, 550, 300);
+  await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'complete'); assert.equal((await app.saved()).annotations[0].scope, 'region');
+  await page.getByRole('button', { name: 'Mark canvas', exact: true }).click(); await page.mouse.move(550, 440); await expect(page.locator('.canvas-mark-guide')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click(); await page.mouse.move(15, 70); await expect(page.locator('.canvas-mark-guide')).toHaveCount(0);
+  await page.locator('#whiteboard').focus(); await page.mouse.move(550, 440); await page.keyboard.down('Space'); await expect(page.locator('.canvas-mark-guide')).toHaveCount(0); await page.keyboard.up('Space');
+  await page.mouse.move(550, 440); await page.mouse.move(-5, -5); await expect(page.locator('.canvas-mark-guide')).toHaveCount(0);
+  const shown = await page.locator(`[data-object-id="${top.id}"]`).boundingBox(); assert(shown); await page.mouse.move(shown.x + shown.width / 2, shown.y + shown.height / 2); await expect(page.locator('.canvas-mark-guide')).toHaveAttribute('data-mark-target', top.id);
+  await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'delete', objectId: top.id, expectedVersion: top.version }] });
+  await expect(page.locator(`[data-object-id="${top.id}"]`)).toHaveCount(0); await expect(page.locator('.canvas-mark-guide')).toHaveAttribute('data-mark-target', bottom.id);
+  await page.screenshot({ path: join(app.evidence, 'mark-letterbox-ownership.png') });
+});
+
+test('refinement collapsed comment surfaces use one Canvas visual and preserve their pixels in PNG', async t => {
+  const app = await fixture(t), { page } = app;
+  for (const theme of ['light', 'dark']) {
+    if (theme === 'dark') await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+    await app.mark({ x: 900, y: theme === 'light' ? 350 : 550 }); const first = await app.done(`${theme} short comment`);
+    const note = page.locator(`.canvas-annotation-comment[data-annotation-id="${first.id}"]`);
+    await expect(note).toHaveAttribute('data-scene-drawn', 'true'); await expect(note).toHaveCSS('opacity', '0');
+    await note.evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    const surface = await note.evaluate(element => { const rect = element.getBoundingClientRect(), style = getComputedStyle(element); return { x: rect.x, y: rect.y, width: rect.width, height: rect.height, padding: style.padding, radius: style.borderRadius, background: style.backgroundColor }; });
+    assert.equal(surface.padding, '4px 8px'); assert.equal(surface.radius, '7px'); assert(surface.background.endsWith('0.84)'));
+    const sample = { x: surface.x + 10, y: surface.y + 2 };
+    const canvasPixel = await page.locator('.scene-canvas').evaluate((element, sample) => { const canvas = element as HTMLCanvasElement, rect = canvas.getBoundingClientRect(); return [...canvas.getContext('2d')!.getImageData(Math.floor((sample.x - rect.x) * canvas.width / rect.width), Math.floor((sample.y - rect.y) * canvas.height / rect.height), 1, 1).data]; }, sample);
+    assert.deepEqual(canvasPixel.slice(0, 3), theme === 'light' ? [255, 255, 254] : [31, 31, 31]);
+    await app.mark({ x: 930, y: theme === 'light' ? 410 : 610 }); const next = await app.done(`${theme} saved surface`);
+    const captured = await page.evaluate(async ({ capture, sample }) => { const image = await createImageBitmap(await (await fetch(`/api/assets/${capture.screenshotAssetId}/content?sessionId=${capture.sessionId}`)).blob()); const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; canvas.getContext('2d')!.drawImage(image, 0, 0); return [...canvas.getContext('2d')!.getImageData(Math.floor((sample.x - capture.mapping.crop.x) * capture.mapping.scaleX), Math.floor((sample.y - capture.mapping.crop.y) * capture.mapping.scaleY), 1, 1).data]; }, { capture: next.capture!, sample });
+    assert.deepEqual(captured, canvasPixel);
+    await note.locator('button').focus(); await expect(page.getByRole('button', { name: `Comment ${theme === 'light' ? 1 : 3}: ${theme} short comment`, exact: true })).toBeFocused();
+    await page.keyboard.press('Enter'); await expect(page.getByRole('textbox', { name: 'Annotation text', exact: true })).toBeVisible(); await page.keyboard.press('Escape');
+    await page.screenshot({ path: join(app.evidence, `collapsed-comment-${theme}.png`) });
+  }
+});
+
+test('refinement media editors separate text media and footer across narrow themes and zoom', { timeout: 90_000 }, async t => {
+  const app = await fixture(t, true), { page } = app;
+  const media = [await app.importAsset('Audio.mp3', 'audio/mpeg', await readFile(resolve('tests/fixtures/reference-tone.mp3'))), await app.importAsset('Video.mp4', 'video/mp4', await readFile(resolve('tests/fixtures/frontend-video.mp4')))];
+  const geometry: unknown[] = [];
+  for (const [index, asset] of media.entries()) {
+    const object = await app.object(asset, { x: 35, y: 350, width: 250, height: index === 0 ? 190 : 160 });
+    await page.locator(`[data-object-id="${object.id}"] ${index === 0 ? 'audio' : 'video'}`).evaluate(async element => { const media = element as HTMLMediaElement; if (!Number.isFinite(media.duration)) await new Promise<void>(resolve => media.addEventListener('loadedmetadata', () => resolve(), { once: true })); });
+    for (const theme of ['light', 'dark']) {
+      const current = await page.locator('html').getAttribute('data-theme'); if (current !== theme) await page.getByRole('button', { name: theme === 'dark' ? 'Switch to dark theme' : 'Switch to light theme', exact: true }).click();
+      await app.mark({ x: 160, y: 430 }); const input = page.getByRole('textbox', { name: 'Add a comment', exact: true }); await input.fill('Readable editable text.\n'.repeat(24));
+      await expect(page.locator('.annotation-time-range')).toHaveAttribute('data-ready', 'true');
+      await page.locator('.annotation-full').evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
+      const layout = await page.locator('.annotation-full').evaluate(element => { const rect = (selector: string) => { const r = element.querySelector(selector)!.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height, bottom: r.bottom, right: r.right }; }; const text = rect('.annotation-fulltext'), media = rect('.annotation-media-control'), footer = rect('.annotation-footer'), done = rect('.annotation-done'); return { text, media, footer, done, doneHit: document.elementFromPoint(done.x + done.width / 2, done.y + done.height / 2)?.closest('button') === element.querySelector('.annotation-done') }; });
+      assert(layout.text.height >= 64); assert(layout.text.bottom <= layout.media.y); assert(layout.media.bottom <= layout.footer.y); assert(layout.footer.bottom <= 700); assert(layout.done.right <= 320); assert(layout.doneHit);
+      const start = page.getByRole('slider', { name: 'Start point', exact: true }); await start.press('ArrowRight'); await page.getByRole('slider', { name: 'End point', exact: true }).press('ArrowLeft');
+      await input.press('End'); await page.screenshot({ path: join(app.evidence, `editor-${index === 0 ? 'audio' : 'video'}-${theme}-320.png`) });
+      geometry.push({ kind: index === 0 ? 'audio' : 'video', theme, width: 320, ...layout });
+      await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.draft-annotation').last()).toHaveAttribute('data-capture-state', 'complete');
+      await page.getByRole('button', { name: 'Zoom out', exact: true }).click(); await page.getByRole('button', { name: 'Reset zoom to 100%', exact: true }).click();
+    }
+    await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'delete', objectId: object.id, expectedVersion: object.version }] });
+  }
+  await writeFile(join(app.evidence, 'media-editor-geometry.json'), JSON.stringify(geometry, null, 2));
+});
+
+test('refinement an open editor measures its visible size again across resize and CSS zoom', async t => {
+  const app = await fixture(t), { page } = app;
+  await page.setViewportSize({ width: 1200, height: 740 }); await app.mark({ x: 200, y: 300 });
+  await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Keep this editor reachable.\n'.repeat(18));
+  const facts = [];
+  for (const [width, height, cssZoom] of [[320, 700, 1], [320, 700, 1.25], [320, 480, .8], [1200, 740, 1]]) {
+    await page.setViewportSize({ width, height }); await page.locator('.app-shell').evaluate((element, zoom) => { (element as HTMLElement).style.zoom = String(zoom); }, cssZoom);
+    await expect.poll(async () => page.getByRole('button', { name: 'Done', exact: true }).evaluate(element => { const rect = element.getBoundingClientRect(); return rect.right <= innerWidth + .1 && rect.bottom <= innerHeight + .1 && document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('button') === element; })).toBeTruthy();
+    const geometry = await page.locator('.annotation-full').evaluate(element => { const note = element.getBoundingClientRect(), text = element.querySelector('.annotation-fulltext')!.getBoundingClientRect(); return { note: { x: note.x, y: note.y, width: note.width, height: note.height, right: note.right }, textHeight: text.height }; });
+    assert(geometry.textHeight >= 64 * cssZoom - .1); facts.push({ width, height, cssZoom, ...geometry });
+    await page.screenshot({ path: join(app.evidence, `open-editor-${width}-${height}-${cssZoom}.png`) });
+  }
+  await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'complete');
+  await writeFile(join(app.evidence, 'open-editor-resize-geometry.json'), JSON.stringify(facts, null, 2));
+});
+
+test('refinement collapsed region text keeps its padding inside a narrow scaled surface', async t => {
+  const app = await fixture(t, true), { page } = app;
+  await page.locator('.app-shell').evaluate(element => { (element as HTMLElement).style.zoom = '1.25'; });
+  await app.mark({ x: 2, y: 200 }, { x: 90, y: 240 }); const annotation = await app.done('A long region comment stays inside its own translucent surface and preserves a readable edge.');
+  const note = page.locator(`.canvas-annotation-comment[data-annotation-id="${annotation.id}"]`);
+  await note.evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
+  const facts = await note.evaluate(element => { const note = element.getBoundingClientRect(), summary = element.querySelector('.canvas-annotation-summary')!.getBoundingClientRect(), style = getComputedStyle(element); return { note: { x: note.x, width: note.width, right: note.right }, summary: { x: summary.x, width: summary.width, right: summary.right }, padding: { left: Number.parseFloat(style.paddingLeft) * 1.25, right: Number.parseFloat(style.paddingRight) * 1.25 } }; });
+  assert(facts.summary.x >= facts.note.x + facts.padding.left - .1); assert(facts.summary.right <= facts.note.right - facts.padding.right + .1); assert(facts.note.right <= 320);
+  await page.screenshot({ path: join(app.evidence, 'collapsed-region-csszoom-320.png') });
+  await writeFile(join(app.evidence, 'collapsed-region-csszoom-geometry.json'), JSON.stringify(facts, null, 2));
 });
