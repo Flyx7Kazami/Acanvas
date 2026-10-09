@@ -1,0 +1,21 @@
+{
+  "measuredAt": "2026-10-08T20:29:05.002Z",
+  "case": "50001 one-pixel GIF descriptors",
+  "bytes": 1150049,
+  "error": "GIF playback supports one to 10000 frames.",
+  "milliseconds": 3.8308329999999984,
+  "heapBytes": 223968,
+  "rssBytes": 573440,
+  "limits": {
+    "bytes": 20971520,
+    "pixels": 4000000,
+    "frames": 10000,
+    "records": 20000,
+    "stepsPerTick": 16
+  },
+  "tests": {
+    "passed": 5
+  },
+  "scanner": "cursor-only before parseGIF object allocation",
+  "extensionRecords": "bounded to 20000 parser records including extensions"
+}

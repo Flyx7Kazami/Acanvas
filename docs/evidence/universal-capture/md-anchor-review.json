@@ -1,0 +1,135 @@
+{
+  "review": "independent-markdown-actual-anchor-increment",
+  "measuredAt": "2026-10-08T22:41:50.635960+00:00",
+  "status": "PASS",
+  "overallCoreScopedStatus": "PASS",
+  "previousCoreReview": "scene-final-review-retest.json",
+  "scope": "Optional actual presented content anchor on immutable Markdown frames, rendered layers and capture scene objects, preserving requested annotation intent.",
+  "acceptance": [
+    {
+      "criterion": "Original same-task scroll and selection counterexample",
+      "status": "PASS",
+      "facts": {
+        "browser": "140.0.7339.186",
+        "engine": "project Chromium 1193",
+        "nativePointerSelection": "Frame",
+        "requestedNativeAnchor": {
+          "kind": "text",
+          "scroll": {
+            "x": 0,
+            "y": 220
+          },
+          "quote": "paragrap",
+          "context": "🌊 Frame context\nA paragraph with selected text and a link.\nParagraph 0 gives another viewport line.\nParagraph 1 gives another ",
+          "path": "rendered-dom:p[0]",
+          "start": 19,
+          "end": 27
+        },
+        "copiedActualAnchor": {
+          "kind": "text",
+          "scroll": {
+            "x": 0,
+            "y": 0
+          },
+          "quote": "Frame",
+          "context": "🌊 Frame context\nA paragraph with selected text and a link.\nParagraph 0 gives another viewport line.\nParagra",
+          "path": "rendered-dom:h1[0]",
+          "start": 3,
+          "end": 8
+        },
+        "laterPresentedAnchor": {
+          "kind": "text",
+          "scroll": {
+            "x": 0,
+            "y": 220
+          },
+          "quote": "paragrap",
+          "context": "🌊 Frame context\nA paragraph with selected text and a link.\nParagraph 0 gives another viewport line.\nParagraph 1 gives another ",
+          "path": "rendered-dom:p[0]",
+          "start": 19,
+          "end": 27
+        },
+        "copiedPNGChannels": 307200,
+        "mismatchedChannels": 0,
+        "immutableSourceRunsPreserved": true,
+        "oldCopiedActualAnchorPreserved": true
+      }
+    },
+    {
+      "criterion": "Ordinary UTF-16 requested intent and actual context retain separate roles",
+      "status": "PASS",
+      "facts": "Native selection after a surrogate-pair emoji records actual offsets 3..8 for Frame. The same-task native paragraph selection and scroll 220 remain on AnnotationTarget.contentAnchor. Saved scene object and held layer retain actual Frame at scroll 0."
+    },
+    {
+      "criterion": "Producer, immutable frame, presented layer and scene converter source review",
+      "status": "PASS",
+      "facts": "The controlled panel paints and reads its actual DOM anchor synchronously in one publication task. SceneContentFrame copies both pixels and metadata. Drawing copies layer.contentAnchor into the presentation. The capture scene converter reads the held layer anchor and scroll; requestedMarkdownAnchor reads complete native input intent."
+    },
+    {
+      "criterion": "Actual anchor parse and held-source integrity negative cases",
+      "status": "PASS",
+      "facts": {
+        "invalidPresentationCasesRejected": 7,
+        "invalidCases": [
+          "unsupported kind",
+          "non-string quote",
+          "context over 10000 characters",
+          "fractional start",
+          "negative start",
+          "end before start",
+          "non-numeric scroll"
+        ],
+        "wrongRequested220AnchorInOldFrame": "scene_source_conflict",
+        "wrongScroll220WithActual0Anchor": "scene_source_conflict",
+        "missingAnchorWhenHeldLayerHasAnchor": "scene_source_conflict",
+        "invalidCaptureOffset": "invalid_capture"
+      }
+    },
+    {
+      "criterion": "Later N+1 presentation and persistence preserve held N",
+      "status": "PASS",
+      "facts": "An independent service test confirms frame 2 with the newer requested anchor before committing frame 1. Send plus service restart retain the held frame-1 anchor and scroll, alongside the newer requested target intent."
+    },
+    {
+      "criterion": "Old records with absent actual anchor remain absent",
+      "status": "PASS",
+      "facts": "Independent old-source capture, Send and restart checks find no contentAnchor key on the saved scene object or presentation layer. The absent presented-anchor getter returns undefined; no anchor is synthesized."
+    },
+    {
+      "criterion": "Affected ordinary source/provider/capture and CLI regression",
+      "status": "PASS",
+      "facts": {
+        "existingAffectedTestsPassed": 38,
+        "failed": 0,
+        "separateHtmlTransportSkipped": 1,
+        "additionalReviewerBoundaryTestsPassed": 2
+      }
+    },
+    {
+      "criterion": "Independent compile and client type check",
+      "status": "PASS",
+      "facts": "Server compilation used this review temporary outDir; web tsc --noEmit passed. The browser fixture used current stable sources through an isolated Vite server."
+    }
+  ],
+  "validationLimits": [
+    "The actual same-task case uses the real controlled Markdown publisher and immutable displayed bitmap fixture with the local service persistence path; a new full seven-material matrix was not run for this narrow field change.",
+    "This reviewer did not start CEF, native HTML controls/audio, OS clipboard or Keychain.",
+    "Actual Safari, Edge and IAB coverage remains with the separately coordinated browser evidence."
+  ],
+  "fixtureNotes": [
+    "A reviewer-only malformed-offset probe initially mutated a shared object alias, which also changed its presentation and therefore reached the earlier source mismatch check. The probe was corrected to replace only the scene-object anchor; the intended ordinary invalid_capture parse check then passed."
+  ],
+  "unresolvedFindings": [],
+  "isolation": {
+    "temporaryEvidenceDirectory": "/private/tmp/acanvas-md-anchor-review-R1TcZw",
+    "actualBrowserOutput": "/private/tmp/acanvas-markdown-anchor-BZkwy7",
+    "productionSourcesModified": false,
+    "sharedDistModified": false,
+    "formalServiceAccessed": false,
+    "userBoardAccessed": false,
+    "nativeHelperStarted": false,
+    "OSClipboardOrKeychainAccessed": false,
+    "committed": false,
+    "chromiumSandbox": true
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "measuredAt": "2026-10-08T22:15:41.246Z",
+  "status": "native-pcm-prototype-passed",
+  "engine": {
+    "name": "CEF",
+    "version": "154.0.34",
+    "chromium": "154.0.8037.98",
+    "osr": true,
+    "sandbox": true,
+    "transport": "private-stdio-pipes",
+    "debuggingTcpPort": false
+  },
+  "original": {
+    "sandbox": "allow-scripts",
+    "opaqueOrigin": true,
+    "userGesture": "native-pointer",
+    "webAudioSemantics": "original AudioContext and oscillator"
+  },
+  "audio": {
+    "packets": 113,
+    "sampleRate": 48000,
+    "channels": 2,
+    "rms": 0.17684359414253145,
+    "peak": 0.25,
+    "measuredHz": 438.28125,
+    "ptsMonotonic": true,
+    "captureHandlerOwnsOutput": true
+  },
+  "client": {
+    "trusted": true,
+    "state": "running",
+    "rms": 0.1775159737091287,
+    "elapsed": 0.15466666666666667
+  },
+  "window": {
+    "foregroundAppStable": true
+  },
+  "limitations": [
+    "server audio suppression follows the native CefAudioHandler capture sink; host acoustic loopback was not measured",
+    "client playback and oscillator PCM measured in project Chromium; actual user browser listening and all-browser audio clock synchronization require product validation",
+    "native helper currently targets macOS arm64"
+  ]
+}

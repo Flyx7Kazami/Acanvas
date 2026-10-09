@@ -1,0 +1,64 @@
+{
+  "measuredAt": "2026-10-08T20:46:57.755Z",
+  "status": "private-fake-handle-clipboard-trial-passed",
+  "instrumentation": {
+    "clipboardTripwire": true,
+    "factoryBacktraces": [
+      "0   acanvas-surface                     0x000000010274d4fc _Z21DenyGeneralPasteboardP11objc_objectP13objc_selector + 72\n1   AppKit                              0x00000001a0960304 _NSPasteboardSetPasteVerificationTelemetry + 32\n2   AppKit                              0x00000001a0bf80c4 _NS_SetBasicPasteTelemetry + 860\n3   AppKit                              0x00000001a0057450 +[NSApplication initialize] + 220\n4   libobjc.A.dylib                     0x000000019bf62b9c CALLING_SOME_+initialize_METHOD + 24\n5   libobjc.A.dylib                     0x000000019bf6283c initializeNonMetaClass + 728\n6   libobjc.A.dylib                     0x000000019bf62600 initializeNonMetaClass + 156\n7   libobjc.A.dylib                     0x000000019bf7ea04 _ZL24initializeAndMaybeRelockP10objc_classP11objc_objectR12locker_mixinIN9lockdebug10lock_mixinI16objc_lock_base_tEEEb + 176\n8   libobjc.A.dylib                     0x000000019bf61f8c lookUpImpOrForward + 292\n9   libobjc.A.dylib                     0x000000019bf61b84 _objc_msgSend_uncached + 68\n10  acanvas-surface                     0x000000010274e3b8 main + 100\n11  dyld                                0x000000019bfb2b4c start + 6000\n",
+      "0   acanvas-surface                     0x000000010274d4fc _Z21DenyGeneralPasteboardP11objc_objectP13objc_selector + 72\n1   AppKit                              0x00000001a095f744 ___NSPasteboardInstallPrevalidationCallbacks_block_invoke + 36\n2   libdispatch.dylib                   0x000000019c1b385c _dispatch_client_callout + 16\n3   libdispatch.dylib                   0x000000019c19ca28 _dispatch_once_callout + 32\n4   AppKit                              0x00000001a0057558 +[NSApplication initialize] + 484\n5   libobjc.A.dylib                     0x000000019bf62b9c CALLING_SOME_+initialize_METHOD + 24\n6   libobjc.A.dylib                     0x000000019bf6283c initializeNonMetaClass + 728\n7   libobjc.A.dylib                     0x000000019bf62600 initializeNonMetaClass + 156\n8   libobjc.A.dylib                     0x000000019bf7ea04 _ZL24initializeAndMaybeRelockP10objc_classP11objc_objectR12locker_mixinIN9lockdebug10lock_mixinI16objc_lock_base_tEEEb + 176\n9   libobjc.A.dylib                     0x000000019bf61f8c lookUpImpOrForward + 292\n10  libobjc.A.dylib                     0x000000019bf61b84 _objc_msgSend_uncached + 68\n11  acanvas-surface                     0x000000010274e3b8 main + 100\n",
+      "0   acanvas-surface                     0x000000010274d4fc _Z21DenyGeneralPasteboardP11objc_objectP13objc_selector + 72\n1   Chromium Embedded Framework         0x00000001165382e4 _Z23_v8_internal_Node_PrintPv + 10061032\n2   Chromium Embedded Framework         0x000000011545d0a0 reading_mode$cxxbridge1$199$parse_distilled_html + 12906120\n3   Chromium Embedded Framework         0x0000000112a68070 ChromeWebAppShortcutCopierMain + 2260628\n4   Chromium Embedded Framework         0x0000000112a6ca90 ChromeWebAppShortcutCopierMain + 2279604\n5   Chromium Embedded Framework         0x0000000112a697a4 ChromeWebAppShortcutCopierMain + 2266568\n6   Chromium Embedded Framework         0x0000000112a767c8 ChromeWebAppShortcutCopierMain + 2319852\n7   Chromium Embedded Framework         0x0000000112a6ca90 ChromeWebAppShortcutCopierMain + 2279604\n8   Chromium Embedded Framework         0x0000000112a66110 ChromeWebAppShortcutCopierMain + 2252596\n9   Chromium Embedded Framework         0x0000000110c58d24 cef_string_map_size + 308580\n10  Chromium Embedded Framework         0x0000000112a87f94 ChromeWebAppShortcutCopierMain + 2391480\n11  Chromium Embedded Framework         0x00000001129452e4 ChromeWebAppShortcutCopierMain + 1069320\n",
+      "0   acanvas-surface                     0x000000010274d4fc _Z21DenyGeneralPasteboardP11objc_objectP13objc_selector + 72\n1   Chromium Embedded Framework         0x00000001165382e4 _Z23_v8_internal_Node_PrintPv + 10061032\n2   Chromium Embedded Framework         0x000000011545d0a0 reading_mode$cxxbridge1$199$parse_distilled_html + 12906120\n3   Chromium Embedded Framework         0x0000000112a68070 ChromeWebAppShortcutCopierMain + 2260628\n4   Chromium Embedded Framework         0x0000000112a6ca90 ChromeWebAppShortcutCopierMain + 2279604\n5   Chromium Embedded Framework         0x0000000112a697a4 ChromeWebAppShortcutCopierMain + 2266568\n6   Chromium Embedded Framework         0x0000000112a767c8 ChromeWebAppShortcutCopierMain + 2319852\n7   Chromium Embedded Framework         0x0000000112a6ca90 ChromeWebAppShortcutCopierMain + 2279604\n8   Chromium Embedded Framework         0x0000000112a66110 ChromeWebAppShortcutCopierMain + 2252596\n9   Chromium Embedded Framework         0x0000000110c58d24 cef_string_map_size + 308580\n10  Chromium Embedded Framework         0x0000000112a87f94 ChromeWebAppShortcutCopierMain + 2391480\n11  Chromium Embedded Framework         0x00000001129452e4 ChromeWebAppShortcutCopierMain + 1069320\n",
+      "0   acanvas-surface                     0x000000010274d4fc _Z21DenyGeneralPasteboardP11objc_objectP13objc_selector + 72\n1   Chromium Embedded Framework         0x00000001165382e4 _Z23_v8_internal_Node_PrintPv + 10061032\n2   Chromium Embedded Framework         0x000000011545d0a0 reading_mode$cxxbridge1$199$parse_distilled_html + 12906120\n3   Chromium Embedded Framework         0x0000000112a68070 ChromeWebAppShortcutCopierMain + 2260628\n4   Chromium Embedded Framework         0x0000000112a6ca90 ChromeWebAppShortcutCopierMain + 2279604\n5   Chromium Embedded Framework         0x0000000112a697a4 ChromeWebAppShortcutCopierMain + 2266568\n6   Chromium Embedded Framework         0x0000000112a767c8 ChromeWebAppShortcutCopierMain + 2319852\n7   Chromium Embedded Framework         0x0000000112a6ca90 ChromeWebAppShortcutCopierMain + 2279604\n8   Chromium Embedded Framework         0x0000000112a66110 ChromeWebAppShortcutCopierMain + 2252596\n9   Chromium Embedded Framework         0x0000000110c58d24 cef_string_map_size + 308580\n10  Chromium Embedded Framework         0x0000000112a87f94 ChromeWebAppShortcutCopierMain + 2391480\n11  Chromium Embedded Framework         0x00000001129452e4 ChromeWebAppShortcutCopierMain + 1069320\n",
+      "0   acanvas-surface                     0x000000010274d4fc _Z21DenyGeneralPasteboardP11objc_objectP13objc_selector + 72\n1   Chromium Embedded Framework         0x00000001165382e4 _Z23_v8_internal_Node_PrintPv + 10061032\n2   Chromium Embedded Framework         0x000000011545d0a0 reading_mode$cxxbridge1$199$parse_distilled_html + 12906120\n3   Chromium Embedded Framework         0x0000000112a68070 ChromeWebAppShortcutCopierMain + 2260628\n4   Chromium Embedded Framework         0x0000000112a6ca90 ChromeWebAppShortcutCopierMain + 2279604\n5   Chromium Embedded Framework         0x0000000112a697a4 ChromeWebAppShortcutCopierMain + 2266568\n6   Chromium Embedded Framework         0x0000000112a767c8 ChromeWebAppShortcutCopierMain + 2319852\n7   Chromium Embedded Framework         0x0000000112a6ca90 ChromeWebAppShortcutCopierMain + 2279604\n8   Chromium Embedded Framework         0x0000000112a66110 ChromeWebAppShortcutCopierMain + 2252596\n9   Chromium Embedded Framework         0x0000000110c58d24 cef_string_map_size + 308580\n10  Chromium Embedded Framework         0x0000000112a87f94 ChromeWebAppShortcutCopierMain + 2391480\n11  Chromium Embedded Framework         0x00000001129452e4 ChromeWebAppShortcutCopierMain + 1069320\n"
+    ],
+    "pasteboardCalls": 6,
+    "pasteboardReads": 0,
+    "pasteboardWrites": 0
+  },
+  "headlessArgument": "--headless=new",
+  "nativeCopyTrusted": true,
+  "nativePasteTrusted": true,
+  "nativeCutTrusted": true,
+  "afterDocumentOpenExecCopy": true,
+  "brokerClipboardRoundtrip": true,
+  "richHtmlRoundtrip": true,
+  "effectiveDisabledFeatures": [
+    "--disable-features=GlicActorUi,AutofillActorMode,LensOverlay,KillOnInvalidNavigationHeaders,UseKeychainKeyProvider"
+  ],
+  "mockKeychain": false,
+  "basicPasswordStore": false,
+  "sandboxEnabled": true,
+  "windowless": true,
+  "product": "Chrome/154.0.8037.98",
+  "protocolVersion": "1.3",
+  "pcm": {
+    "packets": 16,
+    "sampleRate": 48000,
+    "channels": 2,
+    "rms": 0.16693268156476462,
+    "ptsFirst": 1076105143,
+    "ptsLast": 1076105459
+  },
+  "png": {
+    "width": 480,
+    "height": 260,
+    "bytes": 4014
+  },
+  "credentialDatabaseFileNames": [
+    "instance-ENrUyn/Default/Cookies",
+    "instance-ENrUyn/Default/Cookies-journal",
+    "instance-ENrUyn/Default/Login Data",
+    "instance-ENrUyn/Default/Login Data-journal",
+    "instance-ENrUyn/Default/Web Data",
+    "instance-ENrUyn/Default/Web Data-journal"
+  ],
+  "elapsedMs": 4462,
+  "ownedBrowserExited": true,
+  "temporaryProfileRemoved": true,
+  "credentialDatabaseRemains": false,
+  "limitations": [
+    "No Keychain content or Keychain API was accessed by test code.",
+    "No system prompt was observed in this authorized cold startup; provider exclusion is independently source-backed.",
+    "This trial measures PCM and PNG initialization only; full native product interaction remains separate."
+  ]
+}

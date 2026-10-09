@@ -1,6 +1,7 @@
 import type { AnnotationInput, AnnotationTarget, Asset, BoardObject, ContentAnchor, SessionView } from '../shared/types';
 import type { BrowserCaptureFrame, BrowserCaptureIdentity } from '../shared/browser-capture';
 import { intersects, normalizedRegion, objectRegion, screenBounds, unionBounds, type Rect } from './geometry';
+import { readMarkdownContentAnchor } from './scene-renderer/media/markdown-anchor.js';
 
 export const annotationTarget = (annotation: AnnotationInput): AnnotationTarget => {
   const { scope, objectId, objectIds, assetId, bounds, coordinateSpace, timeStart, timeEnd, snapshotAssetId, geometry, contentAnchor } = annotation;
@@ -15,27 +16,11 @@ export function markTarget(world: Rect, geometry: 'point' | 'rect', objects: Boa
   return object ? { scope: 'object', objectId: object.id, objectIds: [object.id], assetId: object.assetId, bounds: normalizedRegion(world, contentBounds(object)), coordinateSpace: 'normalized', geometry } : { scope: 'region', objectId: undefined, objectIds: [], assetId: undefined, bounds: world, coordinateSpace: 'world', geometry, timeStart: undefined, timeEnd: undefined, snapshotAssetId: undefined, contentAnchor: undefined };
 }
 
-export function markdownAnchor(objectId: string): ContentAnchor | undefined {
+export function requestedMarkdownAnchor(objectId: string): ContentAnchor | undefined {
   const object = document.querySelector<HTMLElement>(`[data-object-id="${CSS.escape(objectId)}"]`);
-  const scroll = object?.querySelector<HTMLElement>('.markdown-content'), body = scroll?.querySelector<HTMLElement>('.markdown-body');
+  const scroll = object?.querySelector<HTMLElement>('.markdown-content');
   if (!scroll) return;
-  const anchor: ContentAnchor = { kind: 'visual', scroll: { x: scroll.scrollLeft, y: scroll.scrollTop } };
-  const selection = window.getSelection();
-  if (!body || !selection?.rangeCount || selection.isCollapsed) return anchor;
-  const range = selection.getRangeAt(0);
-  if (!body.contains(range.startContainer) || !body.contains(range.endContainer)) return anchor;
-  const quote = range.toString();
-  if (!quote.trim() || quote.length > 10_000) return anchor;
-  const before = document.createRange(); before.selectNodeContents(body); before.setEnd(range.startContainer, range.startOffset);
-  const start = before.toString().length, end = start + quote.length;
-  const context = body.textContent || '';
-  const block = (range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer as Element : range.startContainer.parentElement)?.closest('p,li,h1,h2,h3,h4,h5,h6,pre,blockquote,td');
-  const path: string[] = [];
-  for (let element = block; element && element !== body; element = element.parentElement) {
-    const siblings = element.parentElement ? [...element.parentElement.children].filter(value => value.tagName === element!.tagName) : [];
-    path.unshift(`${element.tagName.toLowerCase()}[${siblings.indexOf(element)}]`);
-  }
-  return { ...anchor, kind: 'text', quote, context: context.slice(Math.max(0, start - 100), Math.min(context.length, end + 100)), ...(path.length ? { path: `rendered-dom:${path.join('/')}` } : {}), start, end };
+  return readMarkdownContentAnchor(scroll);
 }
 
 function clip(a: Rect, b: Rect): Rect | undefined {

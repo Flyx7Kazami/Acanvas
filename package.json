@@ -15,7 +15,10 @@
     "dev": "node scripts/runtime.mjs dev",
     "typecheck": "node scripts/runtime.mjs typecheck",
     "demo": "node scripts/runtime.mjs demo",
-    "test:browser": "node scripts/runtime.mjs test-browser"
+    "test:browser": "node scripts/runtime.mjs test-browser",
+    "install:render-engine": "node scripts/runtime.mjs install-render-engine",
+    "install:html-runtime": "node scripts/runtime.mjs install-html-runtime",
+    "test:html-surface": "node scripts/runtime.mjs test-html-surface"
   },
   "devDependencies": {
     "@playwright/test": "1.55.1",
@@ -30,6 +33,7 @@
   },
   "dependencies": {
     "better-sqlite3": "13.0.3",
+    "gifuct-js": "2.1.2",
     "lucide-react": "0.468.0",
     "markdown-it": "14.3.2",
     "music-metadata": "12.0.0",

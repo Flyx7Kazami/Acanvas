@@ -1,0 +1,283 @@
+{
+  "generatedAt": "2026-10-08T18:15:39.026Z",
+  "stage": "P1 scene prototype",
+  "node": "v24.21.0",
+  "result": "passed",
+  "measurements": [
+    {
+      "engine": "chromium",
+      "browserVersion": "154.0.8037.98",
+      "dpr": 1,
+      "displayedFrame": 45,
+      "savedFrame": 40,
+      "workerAheadFrame": 15,
+      "capturedWhileWorkerAhead": 10,
+      "workerStaleFrame": 12,
+      "staleAccepted": false,
+      "fullBitmap": [
+        320,
+        240
+      ],
+      "cropBitmap": [
+        91,
+        82
+      ],
+      "comparedChannels": 1258648,
+      "mismatchedChannels": 0,
+      "mutableSourcePixel": [
+        219,
+        61,
+        69,
+        255
+      ],
+      "taintedCandidate": "SecurityError",
+      "previousExportableFrameRetained": 50,
+      "htmlSurface": {
+        "presentedFrame": 1,
+        "latestFrame": 6,
+        "savedFrame": 1,
+        "instanceId": "d2f0dc0c-1933-4ba8-9e2a-3c13f49a3ed4",
+        "mismatchedChannels": 0,
+        "actualBitmap": {
+          "width": 480,
+          "height": 260
+        },
+        "animationAdvanced": true,
+        "randomInstanceRetained": true,
+        "formRetained": true,
+        "webglDefaultPreserveDrawingBuffer": false
+      },
+      "encodeMs": [
+        2.5,
+        6.899999976158142,
+        1.7000000476837158
+      ],
+      "pageCount": 1,
+      "focus": "comment",
+      "output": "/private/tmp/acanvas-scene-p1-20261009-run4"
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "154.0.8037.98",
+      "dpr": 2,
+      "displayedFrame": 45,
+      "savedFrame": 40,
+      "workerAheadFrame": 15,
+      "capturedWhileWorkerAhead": 10,
+      "workerStaleFrame": 12,
+      "staleAccepted": false,
+      "fullBitmap": [
+        640,
+        480
+      ],
+      "cropBitmap": [
+        181,
+        162
+      ],
+      "comparedChannels": 5032488,
+      "mismatchedChannels": 0,
+      "mutableSourcePixel": [
+        219,
+        61,
+        69,
+        255
+      ],
+      "taintedCandidate": "SecurityError",
+      "previousExportableFrameRetained": 50,
+      "htmlSurface": {
+        "presentedFrame": 7,
+        "latestFrame": 12,
+        "savedFrame": 7,
+        "instanceId": "d2f0dc0c-1933-4ba8-9e2a-3c13f49a3ed4",
+        "mismatchedChannels": 0,
+        "actualBitmap": {
+          "width": 480,
+          "height": 260
+        },
+        "animationAdvanced": true,
+        "randomInstanceRetained": true,
+        "formRetained": true,
+        "webglDefaultPreserveDrawingBuffer": false
+      },
+      "encodeMs": [
+        2.5,
+        5.899999976158142,
+        1.899999976158142
+      ],
+      "pageCount": 1,
+      "focus": "comment",
+      "output": "/private/tmp/acanvas-scene-p1-20261009-run4"
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "141.0",
+      "dpr": 1,
+      "displayedFrame": 45,
+      "savedFrame": 40,
+      "workerAheadFrame": 15,
+      "capturedWhileWorkerAhead": 10,
+      "workerStaleFrame": 12,
+      "staleAccepted": false,
+      "fullBitmap": [
+        320,
+        240
+      ],
+      "cropBitmap": [
+        91,
+        82
+      ],
+      "comparedChannels": 1258648,
+      "mismatchedChannels": 0,
+      "mutableSourcePixel": [
+        219,
+        61,
+        69,
+        255
+      ],
+      "taintedCandidate": "SecurityError",
+      "previousExportableFrameRetained": 50,
+      "htmlSurface": {
+        "presentedFrame": 13,
+        "latestFrame": 18,
+        "savedFrame": 13,
+        "instanceId": "d2f0dc0c-1933-4ba8-9e2a-3c13f49a3ed4",
+        "mismatchedChannels": 0,
+        "actualBitmap": {
+          "width": 480,
+          "height": 260
+        },
+        "animationAdvanced": true,
+        "randomInstanceRetained": true,
+        "formRetained": true,
+        "webglDefaultPreserveDrawingBuffer": false
+      },
+      "encodeMs": [
+        1,
+        1,
+        1
+      ],
+      "pageCount": 1,
+      "focus": "comment",
+      "output": "/private/tmp/acanvas-scene-p1-20261009-run4"
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "141.0",
+      "dpr": 2,
+      "displayedFrame": 45,
+      "savedFrame": 40,
+      "workerAheadFrame": 15,
+      "capturedWhileWorkerAhead": 10,
+      "workerStaleFrame": 12,
+      "staleAccepted": false,
+      "fullBitmap": [
+        640,
+        480
+      ],
+      "cropBitmap": [
+        181,
+        162
+      ],
+      "comparedChannels": 5032488,
+      "mismatchedChannels": 0,
+      "mutableSourcePixel": [
+        219,
+        61,
+        69,
+        255
+      ],
+      "taintedCandidate": "SecurityError",
+      "previousExportableFrameRetained": 50,
+      "htmlSurface": {
+        "presentedFrame": 19,
+        "latestFrame": 24,
+        "savedFrame": 19,
+        "instanceId": "d2f0dc0c-1933-4ba8-9e2a-3c13f49a3ed4",
+        "mismatchedChannels": 0,
+        "actualBitmap": {
+          "width": 480,
+          "height": 260
+        },
+        "animationAdvanced": true,
+        "randomInstanceRetained": true,
+        "formRetained": true,
+        "webglDefaultPreserveDrawingBuffer": false
+      },
+      "encodeMs": [
+        2,
+        2,
+        2
+      ],
+      "pageCount": 1,
+      "focus": "comment",
+      "output": "/private/tmp/acanvas-scene-p1-20261009-run4"
+    }
+  ],
+  "verified": [
+    "visible Canvas uses candidate pixels",
+    "paired immutable presentation",
+    "Done synchronous copy before encoding",
+    "worker ahead and stale candidates",
+    "DPR1/2 actual dimensions",
+    "offset viewport and partial crop",
+    "resize/pan/canvas zoom/page CSS zoom/theme/marks",
+    "70 objects",
+    "animation N to N+5",
+    "mutable texture source isolation",
+    "cross-origin canvas export failure",
+    "persistent HTML surface into actual SceneRenderer",
+    "same page and focus",
+    "actual Codex in-app browser hidden isolated tab"
+  ],
+  "pending": [
+    "production App integration",
+    "video/GIF/Markdown/HTML semantics",
+    "upload and persisted recovery",
+    "p50/p95 CPU/RAM"
+  ],
+  "output": "/private/tmp/acanvas-scene-p1-20261009-run4",
+  "embeddedBrowser": {
+    "measuredAt": "2026-10-08T18:14:47.768Z",
+    "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "visibilityRequested": false,
+    "createdTabClosed": true,
+    "currentPageRetained": true,
+    "nativeForegroundMeasured": false,
+    "devicePixelRatio": 2,
+    "displayedFrame": 105,
+    "savedFrame": 100,
+    "capturedWhileWorkerAhead": 100,
+    "actualBitmap": [
+      640,
+      480
+    ],
+    "comparedChannels": 2457600,
+    "mismatchedChannels": 0,
+    "focus": "comment",
+    "encodedMs": 4.299999952316284,
+    "output": "/private/tmp/acanvas-scene-p1-iab-20261009-final"
+  },
+  "totalComparedChannels": 15039872,
+  "sourceRule": {
+    "unexportableCandidate": "SecurityError before presentation",
+    "previousPresentedPixelsAndMetadataRetained": true,
+    "candidateOriginRead": "one pixel before publication",
+    "singleRuleForMeasuredEngines": true
+  },
+  "validation": {
+    "typecheck": "passed",
+    "nodePure": {
+      "passed": 2
+    },
+    "realBrowserTest": {
+      "passed": 1,
+      "engines": 2,
+      "cases": 4
+    },
+    "embeddedBrowser": "passed"
+  },
+  "browserRuntime": {
+    "firefox": "project-driver-pinned build1490 installed under isolated /private/tmp/acanvas-scene-browser-runtime",
+    "globalConfigurationChanged": false
+  }
+}

@@ -1,6 +1,14 @@
 # acanvas 验证记录
 
-本文保留各轮实际验证结果；早期 P0 记录可从 Git 提交 `d62e8ad` 查询。最新专项为正文引用与点位标记，记录见下文。
+## 任意浏览器后台截图（2026-10-09）
+
+当前状态与完整事实见[实施记录](chatbox/UNIVERSAL_BACKGROUND_CAPTURE_IMPLEMENTATION.md)。默认 Done 在当前页复制已呈现 Canvas 及元数据，再后台上传；隔离七类型、内置浏览器、删除后的刷新恢复、取消、来源版本与 Markdown 锚点流程通过。最终默认检查共 193 项，169 通过、24 个专项跳过，失败与取消均为零；最后核心增量独立 13/13 PASS。
+
+正常原生 HTML 的控件、私有剪贴板、48kHz 双声道 PCM、来源权限、主画面配对、renderer 崩溃恢复及颜色 PagePopup 增量均通过独立验收，当前范围无未解决发现。正式服务已在原端口/会话受控更新，两次公开业务字段比较和原素材逐字节比较一致；现有页面正常刷新后载入新构建。该方案的实际客户端、macOS arm64 引擎安装、codec 和长期性能边界分别记录；普通捕获的完成流程在原网页进行。
+
+证据：[最终交付检查](evidence/universal-capture/delivery-execution.json)、[阶段完整检查](evidence/universal-capture/full-checks.json)、[最后核心复验](evidence/universal-capture/final-core-delta-review.json)、[Markdown 锚点](evidence/universal-capture/md-anchor-review.json)、[原生候选验收](evidence/universal-capture/native-final-review.json)。历史失败、环境限制和后续复验均保留在各记录中。
+
+本文保留各轮实际验证结果；早期 P0 记录可从 Git 提交 `d62e8ad` 查询。正文引用与点位标记的上一轮专项记录见下文。
 
 ## 2026-10-08 · 正文引用与点位标记
 

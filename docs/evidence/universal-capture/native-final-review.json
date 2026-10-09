@@ -1,0 +1,2233 @@
+{
+  "date": "2026-10-09T01:10:27.859Z",
+  "scope": "Independent source and actual-runtime review of the native CEF renderer, typed HTML HTTP input, controls/IME/clipboard/file semantics, PCM, ownership and process lifecycle for universal background capture.",
+  "result": "PASS",
+  "candidateAccepted": true,
+  "sourceStatus": "All native review findings are closed. Final source was independently compiled into the private tmp directory and checked without emission to live dist. Native CEF/macOS-arm64 candidate acceptance covers source authority, paired main/popup surfaces, original counterexamples, current-client input/PCM and lifecycle boundaries measured here. Separate scene/core/product release reviews remain their owners scopes.",
+  "reviewer": {
+    "cleanContext": true,
+    "productionSourceModified": false,
+    "gitCommitted": false,
+    "topLevelDocumentsModified": false,
+    "ownTestDirectory": "/private/tmp/acanvas-native-final-review-oDl0Lw"
+  },
+  "requirements": [
+    "R02",
+    "R04",
+    "R05",
+    "R13",
+    "A02",
+    "A06",
+    "A07",
+    "A09"
+  ],
+  "boundaries": {
+    "existingUserServiceAndBoard": "No refresh, restart, stop or write performed.",
+    "liveDist": "All tsc output and Vite build used the unique private tmp directory. Existing dist/web was not written.",
+    "runtime": "Normal installed CEF154.0.34+g14c5a08+chromium154.0.8037.98 macOS arm64 helper; production TEST macros OFF; true headless OSR and inner renderer sandbox kept.",
+    "clipboard": "Actual tests used generated marker/text/HTML/PNG in source CEF and project Chromium headless private ClipboardNonBacked stores; no real OS clipboard, IAB clipboard or user clipboard content read/write.",
+    "platformPrivacy": "Prior independent native-privacy-source-review.json grants limited imported-HTML/input data-authority PASS. AppKit initialization CF opaque getter and accessBehavior are platform metadata domains; this review makes no entire-OS-framework zero-syscall claim.",
+    "approvals": "Sandbox initial native test failed listen EPERM. Approved own-fixture escalation reran without weakening renderer sandbox. A read-only ps attempt was rejected by the environment and was not used as runtime evidence."
+  },
+  "checks": [
+    {
+      "item": "Project engine, runtime policy and installation configuration",
+      "result": "PASS",
+      "evidence": "Default manager chooses CEF, exact official macOS arm64 distribution declared, explicit project install, true headless=new, command_line_args_disabled, one merged UseKeychainKeyProvider exclusion, no --no-sandbox, fresh private roots. Production actual Surface.instrumentation reports clipboardTripwire false. Cached installation macro override remains an open P2. Increment: normal installer now explicitly overrides both TEST flags OFF; cached-instrumentation finding closed."
+    },
+    {
+      "item": "Imported source/resource authority and native host commands",
+      "result": "PASS in named source boundary",
+      "evidence": "Opaque sandbox allow-scripts, capability-scoped bundle resources, permissions policy retained. No arbitrary browser/debug/edit-command HTTP route. Public SendKeyEvent retains source raw-key processing; post-renderer OnKeyEvent consumes every unhandled Cmd host command. Context menu cleared, permissions denied, file/download canceled, JS modal suppressed, beforeunload continues."
+    },
+    {
+      "item": "Production native source input and immutable old frame",
+      "result": "PASS",
+      "actual": {
+        "test": "universal-html-native.test.js",
+        "passed": 2,
+        "failed": 0,
+        "firstDurationMs": 1359.541833,
+        "lifecycleDurationMs": 2164.530375
+      },
+      "evidence": "q source cancel and b once with trusted down/up, password abdc omitted from semantic value, contenteditable composition/caret, source values/file/link and pinned N after N+5 PNG identical."
+    },
+    {
+      "item": "HTTP surface/frame/audio scope and typed input negatives",
+      "result": "PASS",
+      "actual": {
+        "date": "2026-10-08T23:04:47.587Z",
+        "elapsedMs": 1143,
+        "checks": [
+          {
+            "name": "frame_requires_auth",
+            "status": 401,
+            "code": "authentication_required",
+            "pass": true
+          },
+          {
+            "name": "foreign_view_frame",
+            "status": 403,
+            "code": "surface_frame_scope",
+            "pass": true
+          },
+          {
+            "name": "foreign_session_audio",
+            "status": 403,
+            "code": "surface_frame_scope",
+            "pass": true
+          },
+          {
+            "name": "wrong_document",
+            "status": 409,
+            "code": "scene_view_conflict",
+            "pass": true
+          },
+          {
+            "name": "wrong_generation",
+            "status": 409,
+            "code": "scene_view_conflict",
+            "pass": true
+          },
+          {
+            "name": "wrong_instance",
+            "status": 409,
+            "code": "surface_input_state",
+            "pass": true
+          },
+          {
+            "name": "wrong_viewport",
+            "status": 409,
+            "code": "surface_input_state",
+            "pass": true
+          },
+          {
+            "name": "unpublished_frame",
+            "status": 409,
+            "code": "surface_input_frame",
+            "pass": true
+          },
+          {
+            "name": "unpublished_control",
+            "status": 409,
+            "code": "surface_input_control",
+            "pass": true
+          },
+          {
+            "name": "arbitrary_protocol",
+            "status": 400,
+            "code": "surface_input_type",
+            "pass": true
+          },
+          {
+            "name": "selected_file_client_path_rejected",
+            "status": 500,
+            "code": "server_error",
+            "pass": true
+          },
+          {
+            "name": "accepted_focus",
+            "status": 200,
+            "pass": true
+          },
+          {
+            "name": "replayed_input",
+            "status": 409,
+            "code": "surface_input_state",
+            "pass": true
+          },
+          {
+            "name": "frame_copy_is_immutable",
+            "pass": true
+          },
+          {
+            "name": "clipboard_failure_sequence",
+            "initialStatus": 500,
+            "nextStatus": 409,
+            "serverSeq": 2,
+            "pass": false
+          }
+        ]
+      },
+      "limit": "The clipboard failure entry in this same measurement is a separate FAIL item; foreign view/session, document/generation, instance, viewport, unpublished frame/control, arbitrary protocol, authentication, replay and immutable-copy checks passed."
+    },
+    {
+      "item": "Dynamic pixel and semantic pairing",
+      "result": "PASS for main surface after independent root-cause retest",
+      "actual": {
+        "date": "2026-10-08T23:54:09.875Z",
+        "elapsedMs": 2953,
+        "scenario": "Source updates background color and control value together in each rAF; sample pixels read against semantic value.",
+        "runtime": "normal production CEF154, inner sandbox true, test macros OFF",
+        "frames": [
+          {
+            "frameSeq": 1,
+            "pixelRGB": [
+              10,
+              17,
+              31
+            ],
+            "semanticValue": 10,
+            "match": true
+          },
+          {
+            "frameSeq": 2,
+            "pixelRGB": [
+              12,
+              17,
+              31
+            ],
+            "semanticValue": 12,
+            "match": true
+          },
+          {
+            "frameSeq": 3,
+            "pixelRGB": [
+              14,
+              17,
+              31
+            ],
+            "semanticValue": 14,
+            "match": true
+          },
+          {
+            "frameSeq": 4,
+            "pixelRGB": [
+              15,
+              17,
+              31
+            ],
+            "semanticValue": 15,
+            "match": true
+          },
+          {
+            "frameSeq": 5,
+            "pixelRGB": [
+              16,
+              17,
+              31
+            ],
+            "semanticValue": 16,
+            "match": true
+          },
+          {
+            "frameSeq": 6,
+            "pixelRGB": [
+              16,
+              17,
+              31
+            ],
+            "semanticValue": 16,
+            "match": true
+          },
+          {
+            "frameSeq": 7,
+            "pixelRGB": [
+              17,
+              17,
+              31
+            ],
+            "semanticValue": 17,
+            "match": true
+          },
+          {
+            "frameSeq": 8,
+            "pixelRGB": [
+              18,
+              17,
+              31
+            ],
+            "semanticValue": 18,
+            "match": true
+          },
+          {
+            "frameSeq": 9,
+            "pixelRGB": [
+              18,
+              17,
+              31
+            ],
+            "semanticValue": 18,
+            "match": true
+          },
+          {
+            "frameSeq": 10,
+            "pixelRGB": [
+              19,
+              17,
+              31
+            ],
+            "semanticValue": 19,
+            "match": true
+          },
+          {
+            "frameSeq": 11,
+            "pixelRGB": [
+              20,
+              17,
+              31
+            ],
+            "semanticValue": 20,
+            "match": true
+          },
+          {
+            "frameSeq": 12,
+            "pixelRGB": [
+              20,
+              17,
+              31
+            ],
+            "semanticValue": 20,
+            "match": true
+          },
+          {
+            "frameSeq": 13,
+            "pixelRGB": [
+              21,
+              17,
+              31
+            ],
+            "semanticValue": 21,
+            "match": true
+          },
+          {
+            "frameSeq": 14,
+            "pixelRGB": [
+              21,
+              17,
+              31
+            ],
+            "semanticValue": 21,
+            "match": true
+          },
+          {
+            "frameSeq": 15,
+            "pixelRGB": [
+              22,
+              17,
+              31
+            ],
+            "semanticValue": 22,
+            "match": true
+          },
+          {
+            "frameSeq": 16,
+            "pixelRGB": [
+              23,
+              17,
+              31
+            ],
+            "semanticValue": 23,
+            "match": true
+          },
+          {
+            "frameSeq": 17,
+            "pixelRGB": [
+              23,
+              17,
+              31
+            ],
+            "semanticValue": 23,
+            "match": true
+          },
+          {
+            "frameSeq": 18,
+            "pixelRGB": [
+              24,
+              17,
+              31
+            ],
+            "semanticValue": 24,
+            "match": true
+          },
+          {
+            "frameSeq": 19,
+            "pixelRGB": [
+              25,
+              17,
+              31
+            ],
+            "semanticValue": 25,
+            "match": true
+          },
+          {
+            "frameSeq": 20,
+            "pixelRGB": [
+              25,
+              17,
+              31
+            ],
+            "semanticValue": 25,
+            "match": true
+          },
+          {
+            "frameSeq": 21,
+            "pixelRGB": [
+              26,
+              17,
+              31
+            ],
+            "semanticValue": 26,
+            "match": true
+          },
+          {
+            "frameSeq": 22,
+            "pixelRGB": [
+              27,
+              17,
+              31
+            ],
+            "semanticValue": 27,
+            "match": true
+          },
+          {
+            "frameSeq": 23,
+            "pixelRGB": [
+              28,
+              17,
+              31
+            ],
+            "semanticValue": 28,
+            "match": true
+          },
+          {
+            "frameSeq": 24,
+            "pixelRGB": [
+              30,
+              17,
+              31
+            ],
+            "semanticValue": 30,
+            "match": true
+          }
+        ],
+        "mismatches": 0
+      },
+      "evidence": "Serialized production native pair uses own isolated-world task boundary, preserves CSS rate, reads semantics synchronously and forces current visual capture. Original rAF24 now24/24; static native input12 samples and multisource16 samples pass, JS/seed/PCM continue and original .5 rate restores after failure.",
+      "originalResult": "FAIL",
+      "originalActual": {
+        "date": "2026-10-08T23:02:45.105Z",
+        "elapsedMs": 1687,
+        "scenario": "Source updates background color and control value together in each rAF; sample pixels read against semantic value.",
+        "runtime": "normal production CEF154, inner sandbox true, test macros OFF",
+        "frames": [
+          {
+            "frameSeq": 1,
+            "pixelRGB": [
+              10,
+              17,
+              31
+            ],
+            "semanticValue": 11,
+            "match": false
+          },
+          {
+            "frameSeq": 2,
+            "pixelRGB": [
+              12,
+              17,
+              31
+            ],
+            "semanticValue": 12,
+            "match": true
+          },
+          {
+            "frameSeq": 3,
+            "pixelRGB": [
+              13,
+              17,
+              31
+            ],
+            "semanticValue": 13,
+            "match": true
+          },
+          {
+            "frameSeq": 4,
+            "pixelRGB": [
+              14,
+              17,
+              31
+            ],
+            "semanticValue": 14,
+            "match": true
+          },
+          {
+            "frameSeq": 5,
+            "pixelRGB": [
+              14,
+              17,
+              31
+            ],
+            "semanticValue": 15,
+            "match": false
+          },
+          {
+            "frameSeq": 6,
+            "pixelRGB": [
+              15,
+              17,
+              31
+            ],
+            "semanticValue": 15,
+            "match": true
+          },
+          {
+            "frameSeq": 7,
+            "pixelRGB": [
+              16,
+              17,
+              31
+            ],
+            "semanticValue": 16,
+            "match": true
+          },
+          {
+            "frameSeq": 8,
+            "pixelRGB": [
+              17,
+              17,
+              31
+            ],
+            "semanticValue": 17,
+            "match": true
+          },
+          {
+            "frameSeq": 9,
+            "pixelRGB": [
+              18,
+              17,
+              31
+            ],
+            "semanticValue": 18,
+            "match": true
+          },
+          {
+            "frameSeq": 10,
+            "pixelRGB": [
+              18,
+              17,
+              31
+            ],
+            "semanticValue": 19,
+            "match": false
+          },
+          {
+            "frameSeq": 11,
+            "pixelRGB": [
+              19,
+              17,
+              31
+            ],
+            "semanticValue": 19,
+            "match": true
+          },
+          {
+            "frameSeq": 12,
+            "pixelRGB": [
+              20,
+              17,
+              31
+            ],
+            "semanticValue": 20,
+            "match": true
+          },
+          {
+            "frameSeq": 13,
+            "pixelRGB": [
+              21,
+              17,
+              31
+            ],
+            "semanticValue": 21,
+            "match": true
+          },
+          {
+            "frameSeq": 14,
+            "pixelRGB": [
+              22,
+              17,
+              31
+            ],
+            "semanticValue": 22,
+            "match": true
+          },
+          {
+            "frameSeq": 15,
+            "pixelRGB": [
+              22,
+              17,
+              31
+            ],
+            "semanticValue": 23,
+            "match": false
+          },
+          {
+            "frameSeq": 16,
+            "pixelRGB": [
+              23,
+              17,
+              31
+            ],
+            "semanticValue": 23,
+            "match": true
+          },
+          {
+            "frameSeq": 17,
+            "pixelRGB": [
+              24,
+              17,
+              31
+            ],
+            "semanticValue": 24,
+            "match": true
+          },
+          {
+            "frameSeq": 18,
+            "pixelRGB": [
+              25,
+              17,
+              31
+            ],
+            "semanticValue": 25,
+            "match": true
+          },
+          {
+            "frameSeq": 19,
+            "pixelRGB": [
+              25,
+              17,
+              31
+            ],
+            "semanticValue": 26,
+            "match": false
+          },
+          {
+            "frameSeq": 20,
+            "pixelRGB": [
+              26,
+              17,
+              31
+            ],
+            "semanticValue": 26,
+            "match": true
+          },
+          {
+            "frameSeq": 21,
+            "pixelRGB": [
+              27,
+              17,
+              31
+            ],
+            "semanticValue": 27,
+            "match": true
+          },
+          {
+            "frameSeq": 22,
+            "pixelRGB": [
+              28,
+              17,
+              31
+            ],
+            "semanticValue": 28,
+            "match": true
+          },
+          {
+            "frameSeq": 23,
+            "pixelRGB": [
+              29,
+              17,
+              31
+            ],
+            "semanticValue": 29,
+            "match": true
+          },
+          {
+            "frameSeq": 24,
+            "pixelRGB": [
+              29,
+              17,
+              31
+            ],
+            "semanticValue": 30,
+            "match": false
+          }
+        ],
+        "mismatches": 6
+      }
+    },
+    {
+      "item": "Chrome current-page controls, clipboard and visible pixels",
+      "result": "PASS in measured scope",
+      "durationMs": 9547.436375,
+      "actual": {
+        "measuredAt": "2026-10-08T23:08:31.068Z",
+        "status": "production-client-controls-passed",
+        "engine": {
+          "client": "140.0.7339.186",
+          "source": "normal production CEF",
+          "nativeRuntimeTripwire": false,
+          "innerSandbox": true
+        },
+        "input": {
+          "sourceKeydownCancellation": true,
+          "acceptedCharacterInsertedOnce": true,
+          "keydownAndKeyupTrusted": true,
+          "sourcePasswordValueOmitted": true,
+          "clientPasswordRetained": true,
+          "contenteditableCaret": "漢字Z候補😀",
+          "utf16Replacement": true,
+          "compositionCommittedOnBlur": true,
+          "compositionStartTrusted": true,
+          "compositionUpdateTrusted": true,
+          "compositionEndTrusted": false
+        },
+        "clipboard": {
+          "store": "installed headless ClipboardNonBacked in own client/source processes",
+          "generatedMarkerOnly": true,
+          "sourceCopyCutPasteTrusted": true,
+          "richHtmlPreserved": true,
+          "cutDefaultAction": true,
+          "sourceCanceledPasteRespected": true,
+          "generatedPngPaste": {
+            "width": 2,
+            "height": 2
+          }
+        },
+        "controls": {
+          "select": "b",
+          "clientSelectChangeTrusted": true,
+          "date": "2027-02-02",
+          "clientDateInputTrusted": true,
+          "color": "#abcdef",
+          "sourceValueEventsTrusted": false,
+          "fileChooser": true,
+          "selectedBytes": "Client selected bytes 世界",
+          "eightMiBAccepted": true,
+          "overLimitMessageRetained": true,
+          "clientMachinePathAccepted": false
+        },
+        "semantics": {
+          "currentPresentedFrameSeq": 33,
+          "readingOrder": true,
+          "headingAndLink": true,
+          "linkClickTrusted": true,
+          "tabScrolledFocusedField": true,
+          "scroll": {
+            "x": 0,
+            "y": 565
+          }
+        },
+        "pixels": {
+          "comparedChannels": 1036800,
+          "mismatches": 0,
+          "frameSeq": 31
+        },
+        "sourceEventCount": 187,
+        "limitations": [
+          "Client color automation dispatches its own synthetic input/change to the native client input; no OS color dialog is opened.",
+          "Native OS IME candidate UI remains separate from the measured browser composition event lifecycle.",
+          "This fixture uses generated HTML, files and an isolated service/profile."
+        ],
+        "output": "/private/tmp/acanvas-native-final-review-oDl0Lw/client-output"
+      },
+      "evidence": "Actual current-page production controls; generated rich HTML, copy/cut/paste cancellation and PNG 2x2 in private store; UTF-16/IME blur, password local value after 500ms, source-aware keys, actual file chooser and 8MiB, heading/link reading order, Tab scroll; 1,036,800 channel comparison zero differences."
+    },
+    {
+      "item": "Firefox current-page ordinary controls",
+      "result": "PASS in measured scope",
+      "durationMs": 5099.908167,
+      "actual": {
+        "measuredAt": "2026-10-08T23:08:36.075Z",
+        "status": "firefox-client-controls-passed",
+        "client": "141.0",
+        "source": "normal production CEF",
+        "qCanceledAndBInsertedOnce": true,
+        "trustedSourceKeyboard": true,
+        "passwordRetainedAndSourceValueOmitted": true,
+        "contenteditableCaret": "CareXt",
+        "selectDateColorSourceValues": true,
+        "nativeClientFileChooserBytes": true,
+        "headingTextLinkAndReadingOrder": true,
+        "tabFocusedAfterSourceScroll": true,
+        "displayedFrameSeq": 12,
+        "limitations": [
+          "Firefox composition has no CDP test adapter; full composition lifecycle is measured in the Chromium client case.",
+          "Firefox clipboard is not read or written in this ordinary controls case.",
+          "Select/date/color automation uses explicitly generated native-input value events."
+        ]
+      },
+      "limit": "Firefox clipboard and composition lifecycle were not tested by this ordinary case."
+    },
+    {
+      "item": "Source custom clipboard and default cut",
+      "result": "PASS after independent error-recovery retest",
+      "actual": {
+        "date": "2026-10-08T23:07:23.817Z",
+        "elapsedMs": 1060,
+        "store": "exact declared true-headless production CEF ClipboardNonBacked; no real OS clipboard access",
+        "customCopy": {
+          "text": "Custom owned marker",
+          "richHtmlPreserved": true
+        },
+        "sourcePasteCancel": true,
+        "nativeDefaultCut": true,
+        "events": [
+          {
+            "type": "copy",
+            "trusted": true
+          },
+          {
+            "type": "paste",
+            "trusted": true
+          },
+          {
+            "type": "cut",
+            "trusted": true
+          },
+          {
+            "type": "copy",
+            "trusted": true
+          }
+        ],
+        "largeSourceCopy": {
+          "failure": "Error: surface_clipboard_protocol",
+          "nextInput": "Error: Send the next input for the displayed HTML instance and viewport.",
+          "clientSequence": 6,
+          "serverSequence": 7
+        }
+      },
+      "evidence": "Source custom copy produced its marker and strong HTML; native trusted copy/cut/paste, source-canceled paste and native default cut passed. A real source copy of 65,537 chars exposed the input-sequence failure."
+    },
+    {
+      "item": "File parsing, staging, budgets and cleanup",
+      "result": "PASS",
+      "actual": {
+        "date": "2026-10-08T23:10:26.072Z",
+        "elapsedMs": 99,
+        "scope": "Private selected-file staging and budget logic; fake engine node adapter accepts scoped paths, real filesystem bytes written",
+        "files32Accepted": true,
+        "files33Rejected": true,
+        "fourSelectionsOfEightMiBAccepted": true,
+        "retainedBytes": 33554432,
+        "nextByteRejectedBeforeEngine": true,
+        "privateFiles0600": true,
+        "closeCleanup": true
+      },
+      "evidence": "Canonical bounded linear base64 parser with 8MiB total selection, basename/time validation, 32-file count and 32MiB retained limit; selected bytes staged private 0700/0600 and removed on close. Unit full-8MiB parsing test plus production actual file transfer passed."
+    },
+    {
+      "item": "HTML input HTTP body boundary",
+      "result": "PASS",
+      "actual": {
+        "date": "2026-10-08T23:10:44.174Z",
+        "scope": "HTML input HTTP body parsing boundary before missing surface ownership",
+        "cases": [
+          {
+            "requestBytes": 12582912,
+            "status": 403,
+            "code": "surface_frame_scope"
+          },
+          {
+            "requestBytes": 12582913,
+            "status": 413,
+            "code": "request_too_large"
+          }
+        ]
+      },
+      "evidence": "Exactly 12,582,912 bytes parsed to the expected ownership rejection; the next byte rejected as request_too_large before surface input."
+    },
+    {
+      "item": "Current-client PCM, gesture and instance lifecycle",
+      "result": "PASS in measured scope",
+      "durationMs": 4106.825959,
+      "actual": {
+        "measuredAt": "2026-10-08T23:05:23.555Z",
+        "status": "native-pcm-prototype-passed",
+        "engine": {
+          "name": "CEF",
+          "version": "154.0.34",
+          "chromium": "154.0.8037.98",
+          "osr": true,
+          "sandbox": true,
+          "transport": "private-stdio-pipes",
+          "debuggingTcpPort": false
+        },
+        "original": {
+          "sandbox": "allow-scripts",
+          "opaqueOrigin": true,
+          "userGesture": "native-pointer",
+          "webAudioSemantics": "original AudioContext and oscillator"
+        },
+        "audio": {
+          "packets": 110,
+          "sampleRate": 48000,
+          "channels": 2,
+          "rms": 0.1768328277576156,
+          "peak": 0.25,
+          "measuredHz": 440.625,
+          "ptsMonotonic": true,
+          "captureHandlerOwnsOutput": true
+        },
+        "client": {
+          "trusted": true,
+          "state": "running",
+          "rms": 0.1774841547083792,
+          "elapsed": 0.14933333333333335
+        },
+        "window": {
+          "foregroundAppStable": true
+        },
+        "limitations": [
+          "server audio suppression follows the native CefAudioHandler capture sink; host acoustic loopback was not measured",
+          "client playback and oscillator PCM measured in project Chromium; actual user browser listening and all-browser audio clock synchronization require product validation",
+          "native helper currently targets macOS arm64"
+        ]
+      },
+      "evidence": "Normal source AudioContext produces 48kHz stereo planar PCM, monotonic PTS and bounded packets. Client real trusted click resumes running graph with measured RMS; switching instance stops output and close closes context. Source capture sink owns background output; host acoustic loopback not measured."
+    },
+    {
+      "item": "Fresh profile, normal/forced/EOF lifecycle and unknown preservation",
+      "result": "PASS for tested boundaries",
+      "actual": {
+        "date": "2026-10-08T23:06:23.563Z",
+        "elapsedMs": 9466,
+        "eof": {
+          "browserPid": 9922,
+          "workers": [
+            {
+              "pid": 9922,
+              "type": "gpu-process"
+            },
+            {
+              "pid": 9923,
+              "type": "utility"
+            },
+            {
+              "pid": 9926,
+              "type": "utility"
+            },
+            {
+              "pid": 9930,
+              "type": "renderer"
+            },
+            {
+              "pid": 9931,
+              "type": "renderer"
+            },
+            {
+              "pid": 9932,
+              "type": "renderer"
+            }
+          ],
+          "profileRemoved": true,
+          "workersReaped": true
+        },
+        "rendererCrash": {
+          "killedOwnedRenderers": 3,
+          "closed": false,
+          "result": {
+            "outcome": "sample-error",
+            "message": "Error: native_surface_protocol_timeout:Page.getFrameTree"
+          },
+          "oldFrameRetained": true,
+          "note": "Pre-recovery source snapshot measurement; owner is implementing the final recovery path."
+        }
+      },
+      "evidence": "0700 fresh roots, fresh cookie state, main process SIGKILL and close cleanup passed. EOF reaped all 6 identified owned workers and removed profile. Dedicated cleanup test preserved active controller/browser records, unknown/unrelated material and symlinks."
+    },
+    {
+      "item": "Actual renderer subprocess crash automatic recovery",
+      "result": "PASS after independent recovery increment",
+      "evidence": "Original 3 renderer SIGKILL now typed renderer exit; actual current page sourceOOP Page.crash recreates automatically, keeps ten old-canvas samples while fresh response held, starts fresh seed/value and removes profile. Explicit DELETE stays stopped.",
+      "originalResult": "PENDING fix and independent retest",
+      "actual": {
+        "measuredAt": "2026-10-08T23:58:06.347Z",
+        "status": "actual-renderer-recovery-passed",
+        "sourceOopRendererCrash": true,
+        "newInstanceAutomatic": true,
+        "lastNBytesRetained": true,
+        "crashedProfileRemoved": true,
+        "explicitStopResurrected": false,
+        "sourceStateRestart": "fresh instance",
+        "retainedClientVisualSamples": 10,
+        "clientOldPixelsHeldWhileNewInstanceOpening": true,
+        "originalEditedFieldRestartsFresh": true,
+        "sourceRandomSeedFresh": true,
+        "elapsedMs": 8238
+      }
+    },
+    {
+      "item": "Active surface grant lifetime and original source",
+      "result": "PASS",
+      "actual": {
+        "test": "html-preview.test.js",
+        "passed": 6,
+        "failed": 0,
+        "durationMs": 777.319458
+      },
+      "evidence": "Held surface grant remains valid beyond short test expiry, original source has no preview input/snapshot bridges, release expires it; source/resource/CSP/host permission tests passed. Source shows no active-grant reload timer."
+    },
+    {
+      "item": "Typecheck and related ordinary tests",
+      "result": "PASS for reviewed snapshot",
+      "actual": {
+        "serverTypecheck": "tsc -p tsconfig.server.json --outDir own tmp compiled",
+        "clientTypecheck": "tsc -p tsconfig.json --noEmit",
+        "clientBuild": "Vite production own tmp web",
+        "nativeControlsAndProfiles": {
+          "passed": 8,
+          "failed": 0,
+          "skipped": 1,
+          "durationMs": 475.080292
+        }
+      },
+      "limit": "Final stable renderer changes will require fresh typecheck and applicable increment; the skipped ordinary-browser adapter is separately covered by production actual controls above."
+    },
+    {
+      "item": "Original real oversize source-copy recovery increment",
+      "result": "PASS",
+      "actual": {
+        "date": "2026-10-08T23:13:56.378Z",
+        "elapsedMs": 1161,
+        "store": "exact declared true-headless production CEF ClipboardNonBacked; no real OS clipboard access",
+        "customCopy": {
+          "text": "Custom owned marker",
+          "richHtmlPreserved": true
+        },
+        "sourcePasteCancel": true,
+        "nativeDefaultCut": true,
+        "events": [
+          {
+            "type": "copy",
+            "trusted": true
+          },
+          {
+            "type": "paste",
+            "trusted": true
+          },
+          {
+            "type": "cut",
+            "trusted": true
+          },
+          {
+            "type": "copy",
+            "trusted": true
+          }
+        ],
+        "largeSourceCopy": {
+          "failure": "Error: Clipboard is unavailable. Try this action again.",
+          "nextInput": "accepted focus then native key b",
+          "clientSequence": 9,
+          "serverSequence": 9,
+          "typedReceiptRecovery": true
+        }
+      },
+      "evidence": "Source custom copy writes 65,537 chars. Typed failure receipt informs real HtmlInputProxy, next focus/native b succeed and accepted client/server sequences both reach 9. Original pre-fix measurement remains above for traceability."
+    },
+    {
+      "item": "P2 stable typecheck and ordinary control/profile increment",
+      "result": "PASS",
+      "actual": {
+        "serverTypecheck": "tsc server to private tmp compiled",
+        "clientTypecheck": "tsc client --noEmit",
+        "relatedTests": {
+          "passed": 9,
+          "failed": 0,
+          "skipped": 1,
+          "durationMs": 425.993792
+        },
+        "macroCache": {
+          "ACANVAS_TEST_CLIPBOARD_TRIPWIRE": "OFF",
+          "ACANVAS_TEST_CLIPBOARD_FAKE_HANDLE": "OFF"
+        }
+      }
+    },
+    {
+      "item": "Static native input and complete task candidate",
+      "result": "PASS",
+      "actual": {
+        "date": "2026-10-08T23:56:06.610Z",
+        "elapsedMs": 1285,
+        "scenario": "Immediately sample after each native key; source input handler holds a half-update marker during a 25ms synchronous task then commits background color, value and title.",
+        "sourceTaskCompletedBeforeSnapshot": true,
+        "samples": [
+          {
+            "phase": "immediate accepted-input",
+            "frameSeq": 2,
+            "acceptedInputSeq": 3,
+            "value": "Ab",
+            "pixelRGB": [
+              98,
+              17,
+              31
+            ],
+            "taskComplete": true
+          },
+          {
+            "phase": "source input executed",
+            "frameSeq": 3,
+            "value": "Ab",
+            "pixelRGB": [
+              98,
+              17,
+              31
+            ],
+            "taskComplete": true
+          },
+          {
+            "phase": "immediate accepted-input",
+            "frameSeq": 4,
+            "acceptedInputSeq": 4,
+            "value": "Abc",
+            "pixelRGB": [
+              99,
+              17,
+              31
+            ],
+            "taskComplete": true
+          },
+          {
+            "phase": "source input executed",
+            "frameSeq": 5,
+            "value": "Abc",
+            "pixelRGB": [
+              99,
+              17,
+              31
+            ],
+            "taskComplete": true
+          },
+          {
+            "phase": "immediate accepted-input",
+            "frameSeq": 6,
+            "acceptedInputSeq": 5,
+            "value": "Abcd",
+            "pixelRGB": [
+              100,
+              17,
+              31
+            ],
+            "taskComplete": true
+          },
+          {
+            "phase": "source input executed",
+            "frameSeq": 7,
+            "value": "Abcd",
+            "pixelRGB": [
+              100,
+              17,
+              31
+            ],
+            "taskComplete": true
+          },
+          {
+            "phase": "immediate accepted-input",
+            "frameSeq": 8,
+            "acceptedInputSeq": 6,
+            "value": "Abcde",
+            "pixelRGB": [
+              101,
+              17,
+              31
+            ],
+            "taskComplete": true
+          },
+          {
+            "phase": "source input executed",
+            "frameSeq": 9,
+            "value": "Abcde",
+            "pixelRGB": [
+              101,
+              17,
+              31
+            ],
+            "taskComplete": true
+          },
+          {
+            "phase": "immediate accepted-input",
+            "frameSeq": 10,
+            "acceptedInputSeq": 7,
+            "value": "Abcdef",
+            "pixelRGB": [
+              102,
+              17,
+              31
+            ],
+            "taskComplete": true
+          },
+          {
+            "phase": "source input executed",
+            "frameSeq": 11,
+            "value": "Abcdef",
+            "pixelRGB": [
+              102,
+              17,
+              31
+            ],
+            "taskComplete": true
+          },
+          {
+            "phase": "immediate accepted-input",
+            "frameSeq": 12,
+            "acceptedInputSeq": 8,
+            "value": "Abcdefg",
+            "pixelRGB": [
+              103,
+              17,
+              31
+            ],
+            "taskComplete": true
+          },
+          {
+            "phase": "source input executed",
+            "frameSeq": 13,
+            "value": "Abcdefg",
+            "pixelRGB": [
+              103,
+              17,
+              31
+            ],
+            "taskComplete": true
+          }
+        ],
+        "allMatch": true
+      }
+    },
+    {
+      "item": "rAF/timer/authorized network/CSS/WebGL main-surface pair and finally/PCM",
+      "result": "PASS",
+      "durationMs": 2303.726833,
+      "actual": {
+        "measuredAt": "2026-10-08T23:54:35.746Z",
+        "status": "paired-sampling-passed",
+        "samples": 16,
+        "rAF": true,
+        "timers": true,
+        "network": true,
+        "cssTransform": true,
+        "webglDefaultBuffer": true,
+        "originalSeedRetained": true,
+        "scriptContinued": true,
+        "activeGrantSurvivedLifetime": true,
+        "oldPixelsRetainedAfterFiveNewFrames": true,
+        "failedCandidateNotPublished": true,
+        "originalAnimationRateRestored": true,
+        "pcm": {
+          "packets": 30,
+          "maxPtsGapMs": 22,
+          "sampleRate": 48000,
+          "channels": 2
+        },
+        "timings": [
+          {
+            "prepareMs": 13.534000000000106,
+            "pauseMs": 36.382457999999815,
+            "semanticMs": 4.366749999999911,
+            "copyMs": 32.015707999999904,
+            "totalMs": 54.528041999999914
+          },
+          {
+            "prepareMs": 0.9423749999998563,
+            "pauseMs": 40.07266700000014,
+            "semanticMs": 1.958167000000003,
+            "copyMs": 38.114500000000135,
+            "totalMs": 41.980999999999995
+          },
+          {
+            "prepareMs": 1.0138750000000982,
+            "pauseMs": 25.751708000000008,
+            "semanticMs": 1.9304999999999382,
+            "copyMs": 23.82120800000007,
+            "totalMs": 27.577833000000055
+          },
+          {
+            "prepareMs": 0.9457079999999678,
+            "pauseMs": 26.69683299999997,
+            "semanticMs": 1.79424999999992,
+            "copyMs": 24.90258300000005,
+            "totalMs": 28.430207999999993
+          },
+          {
+            "prepareMs": 1.0514590000000226,
+            "pauseMs": 24.974457999999913,
+            "semanticMs": 1.5571669999999358,
+            "copyMs": 23.417290999999977,
+            "totalMs": 26.79099999999994
+          },
+          {
+            "prepareMs": 0.8327919999999267,
+            "pauseMs": 45.486958000000186,
+            "semanticMs": 1.854292000000214,
+            "copyMs": 43.63266599999997,
+            "totalMs": 47.67633300000011
+          },
+          {
+            "prepareMs": 0.840458000000126,
+            "pauseMs": 28.854041999999936,
+            "semanticMs": 1.7213340000000699,
+            "copyMs": 27.132707999999866,
+            "totalMs": 30.605332999999973
+          },
+          {
+            "prepareMs": 0.8279580000000806,
+            "pauseMs": 29.998790999999983,
+            "semanticMs": 1.8410000000001219,
+            "copyMs": 28.15779099999986,
+            "totalMs": 31.75845800000002
+          },
+          {
+            "prepareMs": 0.8068749999999909,
+            "pauseMs": 28.839750000000095,
+            "semanticMs": 1.8113749999999982,
+            "copyMs": 27.028375000000096,
+            "totalMs": 30.573292000000038
+          },
+          {
+            "prepareMs": 1.027165999999852,
+            "pauseMs": 28.318459000000075,
+            "semanticMs": 1.6776250000000346,
+            "copyMs": 26.64083400000004,
+            "totalMs": 30.16599999999994
+          },
+          {
+            "prepareMs": 0.8809590000000753,
+            "pauseMs": 30.036375000000135,
+            "semanticMs": 1.5604170000001432,
+            "copyMs": 28.47595799999999,
+            "totalMs": 31.89516700000013
+          },
+          {
+            "prepareMs": 0.7843749999999545,
+            "pauseMs": 28.630584,
+            "semanticMs": 1.6184169999999085,
+            "copyMs": 27.01216700000009,
+            "totalMs": 30.32333400000016
+          },
+          {
+            "prepareMs": 0.9797920000000886,
+            "pauseMs": 29.294083,
+            "semanticMs": 1.5887500000001182,
+            "copyMs": 27.705332999999882,
+            "totalMs": 31.161749999999984
+          },
+          {
+            "prepareMs": 1.2363749999999527,
+            "pauseMs": 27.783290999999963,
+            "semanticMs": 1.5458329999999023,
+            "copyMs": 26.23745800000006,
+            "totalMs": 30.00541599999997
+          },
+          {
+            "prepareMs": 1.025000000000091,
+            "pauseMs": 28.435249999999996,
+            "semanticMs": 2.060417000000143,
+            "copyMs": 26.374832999999853,
+            "totalMs": 30.773124999999936
+          },
+          {
+            "prepareMs": 0.853708000000097,
+            "pauseMs": 29.079042000000072,
+            "semanticMs": 1.6132920000000013,
+            "copyMs": 27.46575000000007,
+            "totalMs": 30.83750000000009
+          }
+        ],
+        "elapsedMs": 1981
+      }
+    },
+    {
+      "item": "Navigation context and fatal restoration containment",
+      "result": "PASS",
+      "actual": {
+        "date": "2026-10-08T23:59:58.217Z",
+        "elapsedMs": 1492,
+        "navigation": {
+          "trigger": "source-owned location.reload via typed native pointer",
+          "isolatedContextInvalidated": true,
+          "newContextAndSeed": true,
+          "newSemanticsReadable": true
+        },
+        "restoreFailure": {
+          "trigger": "one injected internal Animation rate-restoration failure on own real native instance",
+          "instanceDestroyed": true,
+          "failedCandidateNotPublished": true,
+          "typedRendererExit": true,
+          "profileRemoved": true
+        }
+      }
+    },
+    {
+      "item": "Original renderer SIGKILL/EOF lifecycle increment",
+      "result": "PASS",
+      "actual": {
+        "date": "2026-10-08T23:57:13.250Z",
+        "elapsedMs": 2395,
+        "eof": {
+          "workers": [
+            {
+              "pid": 16624,
+              "type": "gpu-process"
+            },
+            {
+              "pid": 16625,
+              "type": "utility"
+            },
+            {
+              "pid": 16626,
+              "type": "utility"
+            },
+            {
+              "pid": 16628,
+              "type": "renderer"
+            },
+            {
+              "pid": 16629,
+              "type": "renderer"
+            },
+            {
+              "pid": 16630,
+              "type": "renderer"
+            }
+          ],
+          "profileRemoved": true,
+          "workersReaped": true
+        },
+        "rendererCrash": {
+          "killedOwnedRenderers": 3,
+          "closed": true,
+          "termination": "renderer",
+          "result": {
+            "outcome": "sample-error",
+            "message": "Error: The HTML renderer is reconnecting."
+          },
+          "oldFrameRetained": true,
+          "crashedProfileRemoved": true,
+          "freshInstanceAndState": true,
+          "explicitStopStaysClosed": true
+        }
+      }
+    },
+    {
+      "item": "Legal source renderer PagePopup pixel and pointer increment",
+      "result": "PASS after independent popup fix",
+      "actual": {
+        "date": "2026-10-09T01:01:13.754Z",
+        "pickerResult": "success",
+        "pairBytes": 20655,
+        "nativeBytes": 20655,
+        "samePng": true,
+        "popup": {
+          "bounds": {
+            "height": 252,
+            "width": 234,
+            "x": 8,
+            "y": 36
+          },
+          "frameSeq": 4
+        },
+        "newPopupFrameSeq": 6,
+        "pointer": {
+          "point": {
+            "x": 190,
+            "y": 105
+          },
+          "before": "#abcdef",
+          "after": "#1b4d7e"
+        },
+        "oldPopupPixelsAndMetadataImmutable": true
+      },
+      "images": [
+        "/private/tmp/acanvas-native-final-review-oDl0Lw/popup-retest-paired.png"
+      ],
+      "evidence": "Legal color showPicker uses renderer PagePopup in the opaque frame. Callback pixels/rect/seq are paired, native widget input works and retained N pixels/metadata remain immutable. Date cross-origin showPicker permission behavior is separately preserved.",
+      "originalResult": "FAIL",
+      "originalActual": {
+        "date": "2026-10-09T00:06:36.763Z",
+        "pickerResult": "success",
+        "pairBytes": 3436,
+        "nativeBytes": 20655,
+        "samePng": false,
+        "pointer": {
+          "point": {
+            "x": 190,
+            "y": 105
+          },
+          "before": "#abcdef",
+          "after": "#abcdef"
+        }
+      }
+    },
+    {
+      "item": "Final source typecheck and ordinary related regression increment",
+      "result": "PASS",
+      "actual": {
+        "server": "private tmp compilation",
+        "client": "noEmit",
+        "relatedTests": {
+          "passed": 15,
+          "failed": 0,
+          "skipped": 1,
+          "durationMs": 800.022083
+        },
+        "gitDiffCheck": "PASS"
+      }
+    },
+    {
+      "item": "Independent full popup matrix and actual current-page Done",
+      "result": "PASS",
+      "actual": {
+        "measuredAt": "2026-10-09T01:01:31.089Z",
+        "status": "native-popup-pair-and-input-passed",
+        "sources": {
+          "colorKeySemantics": "https://raw.githubusercontent.com/chromium/chromium/154.0.8037.98/third_party/blink/renderer/core/html/forms/resources/color_picker.js",
+          "keyRouting": "https://raw.githubusercontent.com/chromium/chromium/154.0.8037.98/third_party/blink/renderer/core/frame/web_frame_widget_impl.cc",
+          "osrRouting": "https://raw.githubusercontent.com/chromiumembedded/cef/14c5a089e8452874cb1a556dc3fde26ed2d87723/libcef/browser/osr/render_widget_host_view_osr.cc"
+        },
+        "cases": [
+          {
+            "scale": 1,
+            "edge": false,
+            "width": 480,
+            "height": 430,
+            "clipped": false,
+            "openerActive": "BUTTON",
+            "point": {
+              "x": 190,
+              "y": 105
+            },
+            "value": "#1b4d7e",
+            "committed": "#1b4d7e",
+            "popupBounds": {
+              "height": 252,
+              "width": 234,
+              "x": 8,
+              "y": 36
+            },
+            "popupPngBytes": 20655,
+            "ordinaryInputRestored": true,
+            "oldPixelsRetained": true,
+            "ordinaryKeyTrusted": true,
+            "colorInputTrusted": true,
+            "escape": "changed restores then closes; unchanged closes",
+            "enter": "commits and closes"
+          },
+          {
+            "scale": 2,
+            "edge": true,
+            "width": 480,
+            "height": 430,
+            "clipped": false,
+            "openerActive": "BODY",
+            "point": {
+              "x": 344,
+              "y": 171
+            },
+            "value": "#1e548a",
+            "committed": "#1e548a",
+            "popupBounds": {
+              "height": 252,
+              "width": 234,
+              "x": 164,
+              "y": 106
+            },
+            "popupPngBytes": 52671,
+            "ordinaryInputRestored": true,
+            "oldPixelsRetained": true,
+            "ordinaryKeyTrusted": true,
+            "colorInputTrusted": true,
+            "escape": "changed restores then closes; unchanged closes",
+            "enter": "commits and closes"
+          },
+          {
+            "scale": 2,
+            "edge": false,
+            "width": 180,
+            "height": 140,
+            "clipped": true,
+            "openerActive": "BUTTON",
+            "point": {
+              "x": 170,
+              "y": 65
+            },
+            "value": "#295989",
+            "committed": "#295989",
+            "popupBounds": {
+              "height": 252,
+              "width": 234,
+              "x": 8,
+              "y": 0
+            },
+            "popupPngBytes": 23344,
+            "ordinaryInputRestored": true,
+            "oldPixelsRetained": true,
+            "ordinaryKeyTrusted": true,
+            "colorInputTrusted": true,
+            "escape": "changed restores then closes; unchanged closes",
+            "enter": "commits and closes"
+          }
+        ],
+        "client": {
+          "source190105": "#1b4d7e",
+          "overlapPoint": {
+            "x": 131.5625,
+            "y": 123
+          },
+          "committed": "#b0c4d8",
+          "enterCommitted": true,
+          "donePopup": true,
+          "zeroPixelDifference": 0,
+          "comparedChannels": 147456,
+          "palettePixel": [
+            6,
+            30,
+            53,
+            255
+          ],
+          "sameInstance": true,
+          "oldNAfterNPlus5": true,
+          "stopWithPopupProfileRemoved": true
+        }
+      },
+      "durationsMs": {
+        "backend": 8451.075125,
+        "client": 15130.009042
+      },
+      "evidence": "DPR1/2, large/edge/cropped viewport, nonfocus DIV/BODY opener, wheel, native trusted source color events, first changed Escape restores original color while keeping popup, next closes; unchanged Escape closes and Enter commits. Source ordinary b restores. Highest client popup overlay captures real points over lower semantic button. Done target is inside palette; actual palette RGBA[6,30,53,255], all147456 exported/current-frame channels match, oldN remains afterN+5 and Stop removes profile."
+    },
+    {
+      "item": "Final mouse CSS-pixel interval and viewport-edge matrix increment",
+      "result": "PASS",
+      "actual": {
+        "measuredAt": "2026-10-09T01:07:17.879Z",
+        "status": "native-popup-pair-and-input-passed",
+        "sources": {
+          "colorKeySemantics": "https://raw.githubusercontent.com/chromium/chromium/154.0.8037.98/third_party/blink/renderer/core/html/forms/resources/color_picker.js",
+          "keyRouting": "https://raw.githubusercontent.com/chromium/chromium/154.0.8037.98/third_party/blink/renderer/core/frame/web_frame_widget_impl.cc",
+          "osrRouting": "https://raw.githubusercontent.com/chromiumembedded/cef/14c5a089e8452874cb1a556dc3fde26ed2d87723/libcef/browser/osr/render_widget_host_view_osr.cc"
+        },
+        "cases": [
+          {
+            "scale": 1,
+            "edge": false,
+            "width": 480,
+            "height": 430,
+            "clipped": false,
+            "openerActive": "BUTTON",
+            "point": {
+              "x": 190,
+              "y": 105
+            },
+            "value": "#1b4d7e",
+            "committed": "#1b4d7e",
+            "popupBounds": {
+              "height": 252,
+              "width": 234,
+              "x": 8,
+              "y": 36
+            },
+            "popupPngBytes": 20665,
+            "edgeClicks": [
+              {
+                "edge": "right",
+                "x": 479,
+                "y": 10,
+                "trusted": true
+              },
+              {
+                "edge": "bottom",
+                "x": 10,
+                "y": 429,
+                "trusted": true
+              }
+            ],
+            "ordinaryInputRestored": true,
+            "oldPixelsRetained": true,
+            "ordinaryKeyTrusted": true,
+            "colorInputTrusted": true,
+            "escape": "changed restores then closes; unchanged closes",
+            "enter": "commits and closes"
+          },
+          {
+            "scale": 2,
+            "edge": true,
+            "width": 480,
+            "height": 430,
+            "clipped": false,
+            "openerActive": "BODY",
+            "point": {
+              "x": 344,
+              "y": 171
+            },
+            "value": "#1e548a",
+            "committed": "#1e548a",
+            "popupBounds": {
+              "height": 252,
+              "width": 234,
+              "x": 164,
+              "y": 106
+            },
+            "popupPngBytes": 52693,
+            "edgeClicks": [
+              {
+                "edge": "right",
+                "x": 479,
+                "y": 10,
+                "trusted": true
+              },
+              {
+                "edge": "bottom",
+                "x": 10,
+                "y": 429,
+                "trusted": true
+              }
+            ],
+            "ordinaryInputRestored": true,
+            "oldPixelsRetained": true,
+            "ordinaryKeyTrusted": true,
+            "colorInputTrusted": true,
+            "escape": "changed restores then closes; unchanged closes",
+            "enter": "commits and closes"
+          },
+          {
+            "scale": 2,
+            "edge": false,
+            "width": 180,
+            "height": 140,
+            "clipped": true,
+            "openerActive": "BUTTON",
+            "point": {
+              "x": 170,
+              "y": 65
+            },
+            "value": "#295989",
+            "committed": "#295989",
+            "popupBounds": {
+              "height": 252,
+              "width": 234,
+              "x": 8,
+              "y": 0
+            },
+            "popupPngBytes": 23348,
+            "edgeClicks": [
+              {
+                "edge": "right",
+                "x": 179,
+                "y": 10,
+                "trusted": true
+              },
+              {
+                "edge": "bottom",
+                "x": 10,
+                "y": 139,
+                "trusted": true
+              }
+            ],
+            "ordinaryInputRestored": true,
+            "oldPixelsRetained": true,
+            "ordinaryKeyTrusted": true,
+            "colorInputTrusted": true,
+            "escape": "changed restores then closes; unchanged closes",
+            "enter": "commits and closes"
+          }
+        ]
+      },
+      "durationMs": 5225.176584,
+      "evidence": "Original479.8 counterexample repaired. Source trusted right/bottom1px clicks pass in scale1 viewport480x430, scale2 viewport480x430 and scale2 viewport180x140 with clipped popup. Popup interaction, exact keyboard semantics and ordinary input remain valid."
+    },
+    {
+      "item": "Final native source and public policy check",
+      "result": "PASS",
+      "evidence": "Normal installed CEF helper retains TEST macrosOFF, true headless OSR, inner renderer sandbox, fixed key-provider exclusion, original source/resource permissions and private clipboard store. Pointer/wheel/key transport uses public CEF with typed server scope. Popup metadata exposes only callback bounds and frame sequence, not browser/debug or OS handles. Popup composition input limit accommodates the bounded10MiB frame as base64 below the16MiB private-pipe envelope; HTTP HTML selected-byte request retains its12MiB limit. No native/window DOM focus workaround or synthetic Escape close is used."
+    },
+    {
+      "item": "Final private source compilation and minimal related ordinary regression",
+      "result": "PASS",
+      "actual": {
+        "serverTypecheck": "tsc -p tsconfig.server.json --outDir own private tmp compiled",
+        "clientTypecheck": "tsc -p tsconfig.json --noEmit",
+        "relatedTests": {
+          "passed": 15,
+          "failed": 0,
+          "skipped": 1,
+          "durationMs": 698.014417
+        },
+        "gitDiffCheck": "PASS"
+      },
+      "limit": "The gated ordinary browser-adapter test was already covered by prior actual current-page Chrome/Firefox production controls. No full matrix was repeated after the final mouse coordinate-only change."
+    }
+  ],
+  "openFindings": [],
+  "unmeasured": [
+    "Safari and Edge actual client sessions",
+    "Actual native OS IME candidate UI",
+    "Firefox clipboard and full composition lifecycle",
+    "Host acoustic loopback and all-browser PCM clock synchronization",
+    "Entire macOS framework syscalls beyond scoped platform metadata",
+    "Long-duration native sampling/input/audio latency",
+    "Full native distribution/runtime acceptance on Windows, Linux or other architectures"
+  ],
+  "separateAcceptedScopes": [
+    "Seven scene content-type matrix, source persistence/cancel and Done/Send were independently accepted by the separate scene review and were not rerun wholesale here.",
+    "Actual IAB two Done/Send captures are recorded separately; Playwright WebKit is not Safari."
+  ],
+  "sources": [
+    "docs/chatbox/UNIVERSAL_BACKGROUND_CAPTURE_DESIGN.md",
+    "docs/chatbox/UNIVERSAL_BACKGROUND_CAPTURE_IMPLEMENTATION.md",
+    "docs/evidence/universal-capture/native-privacy-source-review.json",
+    "src/server/render-surface/",
+    "src/shared/html-surface.ts",
+    "src/shared/browser-capture.ts",
+    "src/server/http.ts",
+    "src/server/html-preview.ts",
+    "src/web/html-surface/",
+    "src/web/HtmlCanvasContent.tsx",
+    "html-runtime.json",
+    "scripts/install-html-runtime.mjs",
+    "scripts/runtime.mjs",
+    "https://raw.githubusercontent.com/chromium/chromium/140.0.7339.186/chrome/browser/headless/chrome_browser_main_extra_parts_headless.cc",
+    "https://raw.githubusercontent.com/chromium/chromium/140.0.7339.186/components/headless/clipboard/headless_clipboard.cc"
+  ],
+  "evidencePreservation": "All original INCOMPLETE states, counterexamples and closed findings remain in history/originalActual. Detailed independent native/client facts and fixtures remain in ownTestDirectory. Reviewer changed only this acceptance record and private test artifacts, never production source, top-level design, user service, live dist or Git commit. PASS is limited to the named native candidate and measured Chrome/Firefox boundaries; Safari/Edge, OS IME candidate UI, host acoustic loopback and entire OS framework internals remain unmeasured as listed.",
+  "resolvedFindings": [
+    {
+      "id": "NATIVE-P2-CLIPBOARD-SEQUENCE",
+      "priority": 2,
+      "state": "CLOSED",
+      "source": "src/server/render-surface/html.ts:188-189",
+      "failure": "Real source custom copy of 65,537 chars fails private clipboard read, while server inputSeq advances. Client following input reuses its last next seq and is rejected indefinitely.",
+      "required": "Keep accepted input sequencing consistent after failed clipboard action, then rerun real-source oversize-copy case and normal operations.",
+      "resolution": "Accepted clipboard operation returns typed inputSeq and clipboardError; HtmlInputProxy records accepted sequence before reporting action failure. Original actual oversize source copy followed by focus and native b passed with both sequences 9."
+    },
+    {
+      "id": "NATIVE-P2-INSTALL-TEST-FLAGS",
+      "priority": 2,
+      "state": "CLOSED",
+      "source": "scripts/install-html-runtime.mjs:25",
+      "failure": "CMake cached ACANVAS_TEST_CLIPBOARD_TRIPWIRE/FAKE_HANDLE=ON can persist through the ordinary install invocation because option default OFF does not override an existing cache.",
+      "required": "Explicit normal-install OFF arguments and final normal helper actual instrumentation false; retain separate opt-in test build directories.",
+      "resolution": "Normal install invocation explicitly passes both TEST flags OFF. Current production CMake cache has both OFF and normal helper actual instrumentation is false."
+    },
+    {
+      "id": "NATIVE-P1-PIXEL-SEMANTICS",
+      "priority": 1,
+      "state": "CLOSED",
+      "source": "src/server/render-surface/html.ts:137-143",
+      "failure": "Pixel N can be paired with semantic N+1 because Surface.sample and readSemantics run as separate asynchronous operations.",
+      "required": "Build an engine-authoritative atomic candidate pair; preserve source JS state and PCM, displayed N and Done-copy semantics. Rerun the original color/value fixture and actual client controls.",
+      "resolution": "Serialized production native pair uses own isolated-world task boundary, preserves CSS rate, reads semantics synchronously and forces current visual capture. Original rAF24 now24/24; static native input12 samples and multisource16 samples pass, JS/seed/PCM continue and original .5 rate restores after failure."
+    },
+    {
+      "id": "NATIVE-RECOVERY-ACCEPTANCE",
+      "priority": 1,
+      "state": "CLOSED",
+      "failure": "Pre-recovery renderer child crash leaves browser main alive and semantic sampling stuck. Owner is implementing recovery.",
+      "required": "Independent actual browser-main and renderer-child crash recovery; retain old pixels until new ready instance, immutable prior captures, cleanup, explicit stop remains stopped.",
+      "resolution": "Original 3 renderer SIGKILL now typed renderer exit; actual current page sourceOOP Page.crash recreates automatically, keeps ten old-canvas samples while fresh response held, starts fresh seed/value and removes profile. Explicit DELETE stays stopped."
+    },
+    {
+      "id": "NATIVE-P1-POPUP-FRAME-AND-INPUT",
+      "priority": 1,
+      "state": "CLOSED",
+      "source": "src/server/render-surface/cef.ts:samplePair; src/server/render-surface/native-input.ts:pointer; src/web/html-surface/Controls.tsx",
+      "failure": "Legal source colorInput.showPicker succeeds in opaque iframe and creates renderer PagePopup. Public Page.captureScreenshot excludes PET_POPUP: candidatePNG3436bytes has only main surface while existing native OSR compositedPNG20655bytes shows palette. Typed click inside palette at(190,105) hits underlying root body, dismisses popup and keeps value #abcdef.",
+      "required": "Pair the actual popup layer and placement with the same candidate, route source-popup pointer/keyboard through correct native widget, and prevent underlying semantic proxy controls from replacing popup hit coordinates. Original popup fixture must show palette and change source value through actual client input. Keep renderer PagePopup scope and native permissions; no OS dialog fallback.",
+      "resolution": "Public force visual capture supplies the frozen base. Surface.composePopup waits for fresh PET_POPUP callback then composites premultiplied BGRA at same-callback rect/seq with DPR and viewport clipping. Public CEF mouse/wheel route to the native widget; current-frame client popup overlay has highest hit priority and keeps real source coordinates. Original190105 now changes #abcdef to #1b4d7e and paired/native PNG both20655 bytes identical. Actual App overlay, palette-inside Done147456 channel comparison, sourceN+5 immutability and Stop/profile cleanup pass."
+    },
+    {
+      "id": "NATIVE-P2-POINTER-EDGE",
+      "priority": 2,
+      "state": "CLOSED",
+      "source": "src/server/render-surface/native-input.ts:pointer/wheel",
+      "failure": "Public CEF mouse integer conversion rounded valid CSS479.8 to480 outside a480px viewport; a1px right-edge control stopped receiving clicks.",
+      "originalActual": {
+        "date": "2026-10-09T01:02:57.137Z",
+        "bounds": {
+          "x": 479,
+          "y": 0,
+          "width": 1,
+          "height": 30
+        },
+        "cases": [
+          {
+            "x": 479.1,
+            "before": 0,
+            "after": 1,
+            "hitDelta": 1
+          },
+          {
+            "x": 479.8,
+            "before": 1,
+            "after": 1,
+            "hitDelta": 0
+          }
+        ],
+        "scope": "Original actual independent normal CEF measurement before CSS-point floor conversion; source tool transcript retained."
+      },
+      "resolution": "Point coordinates use their CSS pixel interval via Math.floor for pointer and wheel. Original479.8 now hits. DPR1/2 full viewport and DPR2 clipped180x140 right/bottom1px controls receive trusted events at width-1/height-1. No outside-point clamping, DPR multiplication or final-pixel special case is introduced.",
+      "actual": {
+        "date": "2026-10-09T01:07:10.393Z",
+        "bounds": {
+          "x": 479,
+          "y": 0,
+          "width": 1,
+          "height": 30
+        },
+        "cases": [
+          {
+            "x": 479.1,
+            "before": 0,
+            "after": 1,
+            "hitDelta": 1
+          },
+          {
+            "x": 479.8,
+            "before": 1,
+            "after": 2,
+            "hitDelta": 1
+          }
+        ]
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-08T23:15:07.420Z",
+      "result": "INCOMPLETE",
+      "candidateAccepted": false,
+      "openFindings": [
+        {
+          "id": "NATIVE-P1-PIXEL-SEMANTICS",
+          "priority": 1,
+          "state": "OPEN",
+          "source": "src/server/render-surface/html.ts:137-143",
+          "failure": "Pixel N can be paired with semantic N+1 because Surface.sample and readSemantics run as separate asynchronous operations.",
+          "required": "Build an engine-authoritative atomic candidate pair; preserve source JS state and PCM, displayed N and Done-copy semantics. Rerun the original color/value fixture and actual client controls."
+        },
+        {
+          "id": "NATIVE-RECOVERY-ACCEPTANCE",
+          "priority": 1,
+          "state": "PENDING_IMPLEMENTATION",
+          "failure": "Pre-recovery renderer child crash leaves browser main alive and semantic sampling stuck. Owner is implementing recovery.",
+          "required": "Independent actual browser-main and renderer-child crash recovery; retain old pixels until new ready instance, immutable prior captures, cleanup, explicit stop remains stopped."
+        }
+      ],
+      "originalDynamicCounterexample": {
+        "date": "2026-10-08T23:02:45.105Z",
+        "elapsedMs": 1687,
+        "scenario": "Source updates background color and control value together in each rAF; sample pixels read against semantic value.",
+        "runtime": "normal production CEF154, inner sandbox true, test macros OFF",
+        "frames": [
+          {
+            "frameSeq": 1,
+            "pixelRGB": [
+              10,
+              17,
+              31
+            ],
+            "semanticValue": 11,
+            "match": false
+          },
+          {
+            "frameSeq": 2,
+            "pixelRGB": [
+              12,
+              17,
+              31
+            ],
+            "semanticValue": 12,
+            "match": true
+          },
+          {
+            "frameSeq": 3,
+            "pixelRGB": [
+              13,
+              17,
+              31
+            ],
+            "semanticValue": 13,
+            "match": true
+          },
+          {
+            "frameSeq": 4,
+            "pixelRGB": [
+              14,
+              17,
+              31
+            ],
+            "semanticValue": 14,
+            "match": true
+          },
+          {
+            "frameSeq": 5,
+            "pixelRGB": [
+              14,
+              17,
+              31
+            ],
+            "semanticValue": 15,
+            "match": false
+          },
+          {
+            "frameSeq": 6,
+            "pixelRGB": [
+              15,
+              17,
+              31
+            ],
+            "semanticValue": 15,
+            "match": true
+          },
+          {
+            "frameSeq": 7,
+            "pixelRGB": [
+              16,
+              17,
+              31
+            ],
+            "semanticValue": 16,
+            "match": true
+          },
+          {
+            "frameSeq": 8,
+            "pixelRGB": [
+              17,
+              17,
+              31
+            ],
+            "semanticValue": 17,
+            "match": true
+          },
+          {
+            "frameSeq": 9,
+            "pixelRGB": [
+              18,
+              17,
+              31
+            ],
+            "semanticValue": 18,
+            "match": true
+          },
+          {
+            "frameSeq": 10,
+            "pixelRGB": [
+              18,
+              17,
+              31
+            ],
+            "semanticValue": 19,
+            "match": false
+          },
+          {
+            "frameSeq": 11,
+            "pixelRGB": [
+              19,
+              17,
+              31
+            ],
+            "semanticValue": 19,
+            "match": true
+          },
+          {
+            "frameSeq": 12,
+            "pixelRGB": [
+              20,
+              17,
+              31
+            ],
+            "semanticValue": 20,
+            "match": true
+          },
+          {
+            "frameSeq": 13,
+            "pixelRGB": [
+              21,
+              17,
+              31
+            ],
+            "semanticValue": 21,
+            "match": true
+          },
+          {
+            "frameSeq": 14,
+            "pixelRGB": [
+              22,
+              17,
+              31
+            ],
+            "semanticValue": 22,
+            "match": true
+          },
+          {
+            "frameSeq": 15,
+            "pixelRGB": [
+              22,
+              17,
+              31
+            ],
+            "semanticValue": 23,
+            "match": false
+          },
+          {
+            "frameSeq": 16,
+            "pixelRGB": [
+              23,
+              17,
+              31
+            ],
+            "semanticValue": 23,
+            "match": true
+          },
+          {
+            "frameSeq": 17,
+            "pixelRGB": [
+              24,
+              17,
+              31
+            ],
+            "semanticValue": 24,
+            "match": true
+          },
+          {
+            "frameSeq": 18,
+            "pixelRGB": [
+              25,
+              17,
+              31
+            ],
+            "semanticValue": 25,
+            "match": true
+          },
+          {
+            "frameSeq": 19,
+            "pixelRGB": [
+              25,
+              17,
+              31
+            ],
+            "semanticValue": 26,
+            "match": false
+          },
+          {
+            "frameSeq": 20,
+            "pixelRGB": [
+              26,
+              17,
+              31
+            ],
+            "semanticValue": 26,
+            "match": true
+          },
+          {
+            "frameSeq": 21,
+            "pixelRGB": [
+              27,
+              17,
+              31
+            ],
+            "semanticValue": 27,
+            "match": true
+          },
+          {
+            "frameSeq": 22,
+            "pixelRGB": [
+              28,
+              17,
+              31
+            ],
+            "semanticValue": 28,
+            "match": true
+          },
+          {
+            "frameSeq": 23,
+            "pixelRGB": [
+              29,
+              17,
+              31
+            ],
+            "semanticValue": 29,
+            "match": true
+          },
+          {
+            "frameSeq": 24,
+            "pixelRGB": [
+              29,
+              17,
+              31
+            ],
+            "semanticValue": 30,
+            "match": false
+          }
+        ],
+        "mismatches": 6
+      },
+      "originalRendererCounterexample": {
+        "killedOwnedRenderers": 3,
+        "closed": false,
+        "result": {
+          "outcome": "sample-error",
+          "message": "Error: native_surface_protocol_timeout:Page.getFrameTree"
+        },
+        "oldFrameRetained": true,
+        "note": "Pre-recovery source snapshot measurement; owner is implementing the final recovery path."
+      }
+    },
+    {
+      "date": "2026-10-09T00:08:19.253Z",
+      "result": "INCOMPLETE",
+      "candidateAccepted": false,
+      "sourceStatus": "Original pairing and renderer-recovery findings are closed by independent increments. New screenshot-path increment found missing legal renderer color PagePopup pixels and incorrect popup pointer routing. Owner/root notified; candidate remains unaccepted until popup fix and retest.",
+      "openFindings": [
+        {
+          "id": "NATIVE-P1-POPUP-FRAME-AND-INPUT",
+          "priority": 1,
+          "state": "OPEN",
+          "source": "src/server/render-surface/cef.ts:samplePair; src/server/render-surface/native-input.ts:pointer; src/web/html-surface/Controls.tsx",
+          "failure": "Legal source colorInput.showPicker succeeds in opaque iframe and creates renderer PagePopup. Public Page.captureScreenshot excludes PET_POPUP: candidatePNG3436bytes has only main surface while existing native OSR compositedPNG20655bytes shows palette. Typed click inside palette at(190,105) hits underlying root body, dismisses popup and keeps value #abcdef.",
+          "required": "Pair the actual popup layer and placement with the same candidate, route source-popup pointer/keyboard through correct native widget, and prevent underlying semantic proxy controls from replacing popup hit coordinates. Original popup fixture must show palette and change source value through actual client input. Keep renderer PagePopup scope and native permissions; no OS dialog fallback."
+        }
+      ],
+      "popupOriginalCounterexample": {
+        "date": "2026-10-09T00:06:36.763Z",
+        "pickerResult": "success",
+        "pairBytes": 3436,
+        "nativeBytes": 20655,
+        "samePng": false,
+        "pointer": {
+          "point": {
+            "x": 190,
+            "y": 105
+          },
+          "before": "#abcdef",
+          "after": "#abcdef"
+        }
+      },
+      "additionalOriginalEdgeCounterexample": {
+        "date": "2026-10-09T01:02:57.137Z",
+        "bounds": {
+          "x": 479,
+          "y": 0,
+          "width": 1,
+          "height": 30
+        },
+        "cases": [
+          {
+            "x": 479.1,
+            "before": 0,
+            "after": 1,
+            "hitDelta": 1
+          },
+          {
+            "x": 479.8,
+            "before": 1,
+            "after": 1,
+            "hitDelta": 0
+          }
+        ],
+        "scope": "Original actual independent normal CEF measurement before CSS-point floor conversion; source tool transcript retained."
+      }
+    }
+  ],
+  "inputSequenceMeaning": "inputSeq is the service-accepted input sequence, including typed accepted clipboard failure receipts. Candidate semantics belong to the same engine-owned paired visual state; inputSeq acknowledgement alone does not assert renderer-task completion.",
+  "recoveryBounds": "An active/visible/desired long-lived surface maintains cancellable reconnection, using500ms to5000ms capped exponential intervals,8s private protocol/task-boundary waits and bounded concurrent instances/queues. It has no cumulative attempt-count cap. Explicit stop/close cancels and prevents resurrection. Done PNG capture jobs have at most3 total attempts: the initial attempt plus up to2 automatic retries.",
+  "acceptanceScope": "Named macOS arm64 CEF154 native candidate and measured Chrome/Firefox boundaries; separate complete-product and other-platform acceptance remain scoped independently."
+}

@@ -1,0 +1,81 @@
+{
+  "measuredAt": "2026-10-08T21:50:45.959Z",
+  "status": "static-production-flow-passed",
+  "browser": "154.0.8037.98",
+  "dpr": 2,
+  "visibleSource": "scene-canvas",
+  "nativeProvider": false,
+  "sourceSnapshot": "d9f3806d-1c67-4dff-9c53-b4621cb1102d",
+  "savedFrame": 26,
+  "bitmap": {
+    "width": 2880,
+    "height": 2000
+  },
+  "comparison": {
+    "mismatches": 0,
+    "width": 1064,
+    "height": 784,
+    "channels": 3336704
+  },
+  "reloadSameCapture": true,
+  "samePage": true,
+  "sourceDOMOpacity": 0,
+  "pendingBlobRecovery": {
+    "storedBeforeUpload": true,
+    "objectDeletedAfterDone": true,
+    "sameSource": true,
+    "savedOldFrame": 25,
+    "comparison": {
+      "mismatches": 0,
+      "channels": 2870784
+    }
+  },
+  "cancelBeforeSourceHold": {
+    "lateResponseReleased": true,
+    "commentRetained": true,
+    "laterBodyRetained": true,
+    "captureComplete": false
+  },
+  "failedResponses": [
+    "404 /api/sessions/b6b43f11-dc25-43dc-b311-8ac5412ea246/drafts/c491ff51-b190-4fdb-a47b-f05372aaed95/annotations/26235c11-c714-4960-96a1-f1b8f048feb6/captures/1",
+    "404 /api/sessions/b6b43f11-dc25-43dc-b311-8ac5412ea246/drafts/c491ff51-b190-4fdb-a47b-f05372aaed95/annotations/c34adf71-7f7e-48d2-acb8-00961d914323/captures/1",
+    "409 /api/sessions/b6b43f11-dc25-43dc-b311-8ac5412ea246/capture-views/b3aee795-b24b-41ab-9c97-5ef709c547fc/presentations",
+    "404 /api/sessions/b6b43f11-dc25-43dc-b311-8ac5412ea246/drafts/c491ff51-b190-4fdb-a47b-f05372aaed95/annotations/c0745155-3f4a-44b0-b777-d7a77c898817/captures/1",
+    "404 /api/sessions/b6b43f11-dc25-43dc-b311-8ac5412ea246/drafts/c491ff51-b190-4fdb-a47b-f05372aaed95/annotations/b125bd4e-8e71-41e4-9339-0b076a3b381e/captures/1",
+    "404 /api/sessions/b6b43f11-dc25-43dc-b311-8ac5412ea246/drafts/c491ff51-b190-4fdb-a47b-f05372aaed95/annotations/b125bd4e-8e71-41e4-9339-0b076a3b381e/captures/2",
+    "409 /api/sessions/b6b43f11-dc25-43dc-b311-8ac5412ea246/draft",
+    "401 /api/sessions/b6b43f11-dc25-43dc-b311-8ac5412ea246/capture-views/b3aee795-b24b-41ab-9c97-5ef709c547fc/presented",
+    "404 /api/sessions/b6b43f11-dc25-43dc-b311-8ac5412ea246/drafts/c491ff51-b190-4fdb-a47b-f05372aaed95/annotations/36f66f2f-d903-4f14-9cce-9acbab20e95f/captures/1"
+  ],
+  "output": "/private/tmp/acanvas-scene-production-20261009-run9",
+  "cancelAfterSourceSave": {
+    "lateResponseReleased": true,
+    "savedVersion": 1,
+    "invalidatedVersion": 2,
+    "commentRetained": true,
+    "captureComplete": false
+  },
+  "serviceRestart": {
+    "sameURL": true,
+    "instanceChanged": true,
+    "captureComplete": true,
+    "viewGeneration": 2
+  },
+  "limitations": [
+    "Actual Safari/Edge coverage and native HTML interaction acceptance are pending."
+  ],
+  "performanceEvidence": "scene-types-execution.json",
+  "sourceTests": {
+    "passed": 29,
+    "skipped": 1,
+    "serverTypecheck": true,
+    "clientTypecheck": true,
+    "buildOutput": "independent temporary current-dist"
+  },
+  "materialProductionEvidence": [
+    "scene-types-execution.json",
+    "scene-types-cef-execution.json"
+  ],
+  "geometryEvidence": "scene-geometry-execution.json",
+  "embeddedEvidence": "scene-iab-execution.json"
+}

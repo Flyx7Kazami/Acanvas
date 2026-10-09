@@ -1,0 +1,17 @@
+{
+  "measuredAt": "2026-10-08T21:40:52.922Z",
+  "result": "passed",
+  "engine": "firefox",
+  "version": "141.0",
+  "source": "isolated built production App and local service",
+  "captureWindowsOpened": 0,
+  "ordinaryAutosaveTargetVersion": 2,
+  "commentOnlyPreservedCapture": true,
+  "lateSavedTargetResponseRejected": true,
+  "targetBackRetainsIncompleteNewVersion": true,
+  "finalVersion": 4,
+  "newThumbnailAndSend": true,
+  "apiFailures": [],
+  "errors": [],
+  "output": "/private/tmp/acanvas-target-edit-output-luAgKf"
+}

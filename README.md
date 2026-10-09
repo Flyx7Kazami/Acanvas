@@ -8,7 +8,7 @@ Import images, video, audio, and documents, select materials, and add annotation
 
 The runnable P0 prototype includes a full-screen canvas, floating controls, an adaptive composer, an expandable request queue, material imports and annotations, host conversation binding, and a persistent local service. The latest multimodal interactions support direct document interaction, eight-point resizing, embedded audio artwork, and a compact player with a complete audio waveform.
 
-Chatbox references appear inline with the text, with a separate preview for each selected material and object/task search. Point markers stay at the clicked position. Point and region annotations capture the current scene in the background through the project's managed Chrome, and task history reads the saved scene.
+Chatbox references appear inline with the text, with a separate preview for each selected material and object/task search. Point markers stay at the clicked position. Point and region annotations save the open page's displayed whiteboard pixels in the background. Task history reads the saved scene.
 
 - [Project plan](docs/PLAN.md): requirements, architecture, implementation stages, and acceptance criteria.
 - [Frontend design](docs/FRONTEND.md): visual references, grayscale themes, and interaction rules.
@@ -17,6 +17,7 @@ Chatbox references appear inline with the text, with a separate preview for each
 - [Chatbox capture foundation](docs/chatbox/CAPTURE_FOUNDATION_DESIGN.md): background capture direction, persistent evidence APIs, and [validation](docs/chatbox/CAPTURE_FOUNDATION_VALIDATION.md).
 - [Chatbox implementation](docs/chatbox/CHATBOX_IMPLEMENTATION_DESIGN.md): references, annotations, task messages, history and the project-managed browser; [validation](docs/chatbox/CHATBOX_IMPLEMENTATION_VALIDATION.md).
 - [Inline references and point markers](docs/chatbox/INLINE_REFERENCES_POINT_ANCHOR_DESIGN.md): caret placement, saved reference positions and anchored annotation numbers; [validation](docs/chatbox/INLINE_REFERENCES_POINT_ANCHOR_VALIDATION.md).
+- [Browser-independent capture](docs/chatbox/UNIVERSAL_BACKGROUND_CAPTURE_DESIGN.md): shared display/evidence pixels, persistent HTML surfaces and [implementation results](docs/chatbox/UNIVERSAL_BACKGROUND_CAPTURE_IMPLEMENTATION.md).
 - [Agent Skill](skill/acanvas/SKILL.md): task processing and recovery.
 
 ## Install and run
@@ -39,9 +40,17 @@ npm run cli -- project stop --project "$PWD"
 
 Use an explicit session ID or its URL to keep requests in the intended task scope. An agent can also use its host binding when available. For a foreground service, use `npm start`; Ctrl+C shuts it down normally.
 
+Dynamic HTML uses a project-installed CEF runtime. The current native package supports macOS arm64 and requires CMake and Apple Clang. Install it with:
+
+```sh
+npm run install:html-runtime
+```
+
+The installer stores the SDK and compiled helper in `.runtime/`. HTML surfaces start in the background on demand, with temporary profiles and a private clipboard. Images, files, Markdown, audio, video, GIF and their captures work independently of HTML engine initialization. Stop a running project before rebuilding its served application, then reopen the same project and session.
+
 `project open --session SESSION_ID` opens that scope directly. Explicit session selection takes priority over automatic environment binding; use `--host` and `--thread` when an association is intended.
 
-Background annotation capture uses the installed Google Chrome in a project-managed window with an independent profile. Obtain a session ID from the current URL, `session list`, or `session create`, and replace `SESSION_ID` below:
+Open the returned whiteboard URL in a supported browser or WebView. Done uses the page's own Canvas frame through the project API. The optional managed-browser commands use installed Google Chrome with a separate profile; replace `SESSION_ID` with the scope from the URL, `session list`, or `session create`:
 
 ```sh
 npm run cli -- session list --project "$PWD"
@@ -50,7 +59,7 @@ npm run cli -- browser status --project "$PWD" --session SESSION_ID
 npm run cli -- browser close --project "$PWD" --session SESSION_ID
 ```
 
-The page remains open after the launcher exits. `project stop` closes the project's browser and service. A regular web page can use **Open capture window** to open the same session in the managed browser.
+An optional managed page remains open after the launcher exits. `project stop` closes the project's managed browser and service.
 
 For UI development, first stop the project's existing background service with `npm run cli -- project stop --project "$PWD"`. Then run these commands in separate terminals:
 
@@ -63,9 +72,9 @@ A production service rejects duplicate instances and unapproved development orig
 
 ## Workflow
 
-1. Open the project whiteboard in the intended session. Materials and layout belong to the project; requests belong to that session. Use the managed Chrome window for background capture.
+1. Open the project whiteboard in the intended session. Materials and layout belong to the project; requests belong to that session.
 2. Import, drop, or paste materials onto the canvas. Selecting objects previews each reference at the current or last composer caret; entering the composer confirms them in place. Type `@` to select objects or tasks from the current session. References move with text edits, can be removed individually, and keep their positions after refresh or queue editing.
-3. Use **Annotate** to mark a point or region, including blank canvas and areas crossing materials. A point's number appears at the clicked position, with its comment beside it. Enter a comment and choose **Done**; the managed browser saves a screenshot in the background. Annotation summaries keep their thumbnails above the composer. Failed captures retain the comment and offer **Retry**.
+3. Use **Annotate** to mark a point or region, including blank canvas and areas crossing materials. A point's number appears at the clicked position, with its comment beside it. Enter a comment and choose **Done**; the page copies the displayed frame and saves it in the background. Annotation summaries keep their thumbnails above the composer. Short upload failures recover using the same copied pixels; failures retain the comment and offer **Retry**.
 4. Add instructions and send. Text, formal references and complete annotations become one task. Task history displays the saved scene, and current-object location is a separate action. Dragging, multi-selection, alignment and Alt snapping bypass retain their canvas controls. The composer supports Enter to send and Shift+Enter for a new line.
 5. The agent reads the repository Skill and processes requests within the explicit project and task scope. The UI can copy a resume prompt containing the current whiteboard link.
 6. The agent registers outputs, publishes canvas changes, completes the task, and proceeds to the next request. Processing stops when the queue is empty or user input is needed.
@@ -102,7 +111,9 @@ A mixed selection can share one group annotation, with a common number and comme
 
 Canvas controls, including audio timelines, inherit canvas pan and zoom gestures. Components that need ordinary content scrolling declare a content wheel region; click, drag, and keyboard controls retain their own behavior. See [canvas input responsibilities](docs/CANVAS_INPUT.md) when adding a component.
 
-HTML previews support self-contained files and explicitly imported local resource bundles in an isolated origin. Snapshot generation shares the same four-instance limit as live interaction and waits for an available slot. Offscreen and stopped previews release their running slots; a retained snapshot can be displayed without rerunning the file. Snapshots preserve an image, not restorable script or form state. Live preview grants expire after ten minutes and can be restarted. Remote resources and host-specific APIs require further integration. Markdown displays raw HTML as text and uses source placeholders for embedded images.
+HTML previews support self-contained files and explicitly imported local resource bundles in an isolated origin. A persistent project renderer produces the displayed pixels; current-page controls forward input to that instance. Offscreen and stopped previews release their running slots; retained pixels preserve the view, while a restarted instance starts its script state again. Remote resources and host-specific APIs require further integration. Markdown displays raw HTML as text and uses source placeholders for embedded images.
+
+HTML file controls accept up to 32 selected files and 8 MiB total per selection, with up to 32 MiB retained by one runtime. Files travel as selected bytes. Select, date and color controls submit values through the input bridge; their source `input/change` events are synthetic. Composition event properties follow the installed engine. See the implementation results for the measured input and accessibility scope.
 
 To import HTML with separate local CSS, JavaScript and images, select the entry file and its resource directory:
 
@@ -112,7 +123,7 @@ npm run cli -- asset import --project "$PWD" --file "$PWD/site/index.html" --bun
 
 Use a dedicated directory containing the files intended for the preview. `--bundle-root` explicitly authorizes that source directory, including when it is outside the project. The service stores the original files and their relative-path mapping inside the target project's `.acanvas/`; moving or deleting the source directory does not affect the saved preview. Imports without `--bundle-root` retain single-file behavior. Importing registers an asset; use the returned entry asset ID in `board operations` or `task complete` to create its canvas item. An open canvas receives the normal change notification and generates a snapshot automatically when the item is visible.
 
-Bundles accept HTML, CSS, JavaScript, images and fonts, up to 128 files and 128 directories (including the entry and root), 10 MiB per file and 32 MiB total. Hidden files/directories are skipped; symlinks and unsupported file types are rejected. Finish generating the directory before importing it; changes during import cause the operation to stop. Use relative resource URLs, including inside CSS; absolute site-root paths such as `/assets/style.css` are not mapped. Custom fonts can load during live interaction but are not embedded in static snapshots, which may use fallback fonts.
+Bundles accept HTML, CSS, JavaScript, images and fonts, up to 128 files and 128 directories (including the entry and root), 10 MiB per file and 32 MiB total. Hidden files/directories are skipped; symlinks and unsupported file types are rejected. Finish generating the directory before importing it; changes during import cause the operation to stop. Use relative resource URLs, including inside CSS; absolute site-root paths such as `/assets/style.css` are not mapped. A captured frame preserves the glyphs and other pixels that the instance displayed.
 
 Audio waveforms are calculated from the complete file on first view; playback uses the native audio element. A small waveform summary is reused on remount and in the same browser tab across refreshes. Waveform decoding currently supports files up to 32 MB. If waveform decoding is unavailable, native playback and time-based seeking remain available when supported by the browser. Audio playback and HTML runtime state are local viewing state; tasks preserve original files and explicitly submitted annotations.
 
@@ -142,7 +153,7 @@ The isolated background capture prototype uses the project runtime and a managed
 .runtime/node_modules/node/bin/node scripts/chatbox-capture-prototype.mjs background
 ```
 
-The prototype preserves the initial capture experiments. Production capture uses the project browser commands and the chatbox UI; its scope and joint validation follow the chatbox implementation records.
+The prototype preserves the initial capture experiments. Current capture uses the open whiteboard's SceneRenderer and project API; see the browser-independent capture implementation results. The optional visual HTML prototype installs its test engine with `npm run install:render-engine`.
 
 Tests use isolated temporary projects. Localhost services and Chrome may require execution permissions in restricted environments. Validation records distinguish environment restrictions from product failures.
 

@@ -1,0 +1,79 @@
+{
+  "measuredAt": "2026-10-08T22:30:34.321Z",
+  "result": "passed",
+  "browser": "140.0.7339.186",
+  "nativeRequested": {
+    "kind": "text",
+    "scroll": {
+      "x": 0,
+      "y": 220
+    },
+    "quote": "paragrap",
+    "context": "\ud83c\udf0a Frame context\nA paragraph with selected text and a link.\nParagraph 0 gives another viewport line.\nParagraph 1 gives another ",
+    "path": "rendered-dom:p[0]",
+    "start": 19,
+    "end": 27
+  },
+  "displayedSourceScroll": {
+    "x": 0,
+    "y": 0
+  },
+  "displayedActualAnchor": {
+    "kind": "text",
+    "scroll": {
+      "x": 0,
+      "y": 0
+    },
+    "quote": "Frame",
+    "context": "\ud83c\udf0a Frame context\nA paragraph with selected text and a link.\nParagraph 0 gives another viewport line.\nParagra",
+    "path": "rendered-dom:h1[0]",
+    "start": 3,
+    "end": 8
+  },
+  "laterPresentedAnchor": {
+    "kind": "text",
+    "scroll": {
+      "x": 0,
+      "y": 220
+    },
+    "quote": "paragrap",
+    "context": "\ud83c\udf0a Frame context\nA paragraph with selected text and a link.\nParagraph 0 gives another viewport line.\nParagraph 1 gives another ",
+    "path": "rendered-dom:p[0]",
+    "start": 19,
+    "end": 27
+  },
+  "immutableSourceRunsPreserved": true,
+  "oldCopiedActualAnchorPreserved": true,
+  "exactPNGChannels": 307200,
+  "persistedTargetIntentScroll": 220,
+  "persistedSceneScroll": 0,
+  "output": "/private/tmp/acanvas-markdown-anchor-My2I6j",
+  "scope": "Same-tick Markdown requested intent and copied presented context",
+  "ordinaryNativePointerSelection": true,
+  "utf16SelectionOffsets": {
+    "start": 3,
+    "end": 8,
+    "precededBySurrogatePairEmoji": true
+  },
+  "dataPath": "Markdown publisher -> immutable content frame -> ScenePresentation layer.contentAnchor -> capture.scene.objects.contentAnchor",
+  "requestedIntent": "AnnotationTarget.contentAnchor retains the complete native requested quote and scroll.",
+  "actualContext": "Scene layer/object contentAnchor records the content selection belonging to the displayed frame. Existing source scroll and text runs stay paired.",
+  "sourceValidation": "Ordinary anchor limits reused; prepared capture actual anchor and scroll must equal the held presentation layer.",
+  "oldRecords": "Missing actual anchor fields stay absent; no snapshot is synthesized.",
+  "typechecks": "server and client --noEmit passed",
+  "affectedNodeTests": {
+    "passed": 38,
+    "failed": 0,
+    "skipped": 1
+  },
+  "buildOutput": "/private/tmp/acanvas-markdown-anchor-build-tOCUj7",
+  "sharedDistWritten": false,
+  "userServiceOrBoardAccessed": false,
+  "nativeCefKeychainOrClipboardAccessed": false,
+  "independentReview": "pending",
+  "commands": [
+    ".runtime/node_modules/node/bin/node node_modules/typescript/bin/tsc -p tsconfig.server.json --outDir /private/tmp/acanvas-markdown-anchor-build-tOCUj7/server",
+    "TMPDIR=/private/tmp ACANVAS_MARKDOWN_ANCHOR_TEST=1 .runtime/node_modules/node/bin/node --test /private/tmp/acanvas-markdown-anchor-build-tOCUj7/server/tests/universal-markdown-anchor.test.js",
+    "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test /private/tmp/acanvas-markdown-anchor-build-tOCUj7/server/tests/markdown-anchor.test.js /private/tmp/acanvas-markdown-anchor-build-tOCUj7/server/tests/scene-source.test.js /private/tmp/acanvas-markdown-anchor-build-tOCUj7/server/tests/project-capture-provider.test.js /private/tmp/acanvas-markdown-anchor-build-tOCUj7/server/tests/annotation-capture.test.js"
+  ]
+}

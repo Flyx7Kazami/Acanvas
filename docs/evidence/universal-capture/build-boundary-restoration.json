@@ -1,0 +1,47 @@
+{
+  "measuredAt": "2026-10-08T20:54:51.666Z",
+  "commit": "9fbcfc6",
+  "exposure": {
+    "buildCommand": "npm run build",
+    "directory": "dist",
+    "livePid": 27048,
+    "port": 4317,
+    "candidateAssetReferences": [
+      "/assets/main-CDDTi7up.js",
+      "/assets/content-types-DX4IyiMK.js",
+      "/assets/main-CemAJVyi.css"
+    ]
+  },
+  "restoration": {
+    "archiveBuild": "isolated git archive with project Node24 and dependency links",
+    "atomicOperation": "Darwin renamex_np RENAME_SWAP",
+    "serviceRestarted": false,
+    "sourceChanged": false,
+    "servedAssetReferences": [
+      "/assets/main-DFAMQYql.js",
+      "/assets/content-types-B2oiFJ5p.js",
+      "/assets/main-CHjAU-wb.css"
+    ],
+    "pid": 27048
+  },
+  "businessCounts": {
+    "before": {
+      "sessions": 4,
+      "tasks": 27,
+      "assets": 32,
+      "objects": 12,
+      "annotations": 15,
+      "draftAnnotations": 0
+    },
+    "after": {
+      "sessions": 4,
+      "tasks": 27,
+      "assets": 32,
+      "objects": 12,
+      "annotations": 15,
+      "draftAnnotations": 0
+    }
+  },
+  "candidateDirectory": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-build-boundary-rFTdnR/candidate-dist",
+  "futureBuilds": "owned temporary output directories"
+}

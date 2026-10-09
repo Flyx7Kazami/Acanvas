@@ -1,0 +1,69 @@
+{
+  "measuredAt": "2026-10-08T18:28:09.649Z",
+  "status": "visual-prototype-passed",
+  "engine": {
+    "name": "chromium",
+    "revision": "1193",
+    "browserVersion": "140.0.7339.186",
+    "headless": true,
+    "audioOutput": "unsupported"
+  },
+  "isolation": {
+    "opaqueOrigin": "null",
+    "sandbox": "allow-scripts",
+    "parentAccess": "SecurityError",
+    "storageAccess": "SecurityError",
+    "cookieAccess": "SecurityError",
+    "chromiumSandbox": true
+  },
+  "inputs": {
+    "pointerTrusted": true,
+    "textTrusted": true,
+    "scrollPixels": 180,
+    "processedInputSeq": 4
+  },
+  "frames": {
+    "displayedFrame": 1,
+    "latestFrame": 6,
+    "evidenceFrame": 1,
+    "actualPixelEquality": true,
+    "formRetained": true,
+    "randomCanvasInstanceRetained": true,
+    "webglDefaultPreserveDrawingBuffer": false,
+    "webglPixel": [
+      31,
+      144,
+      166,
+      255
+    ],
+    "animationAdvanced": true
+  },
+  "window": {
+    "headlessArgument": true,
+    "foregroundAppStable": true,
+    "bringToFrontCalls": 0
+  },
+  "limitations": [
+    "client measured in project Chromium; other client engines and actual in-app browser are separate acceptance",
+    "HTML audio PCM output, IME, native widgets, file selection, text selection and accessibility remain P2",
+    "visual frames use PNG snapshots; throughput and audio/video synchronization require P2 measurement"
+  ],
+  "additionalChecks": {
+    "suiteTests": 4,
+    "suitePass": 4,
+    "displayedFramePinnedAcrossTwentyCandidateFrames": true,
+    "releasedFrameEligibleForEviction": true,
+    "browserExitReopensFreshRenderer": true,
+    "closedSurfaceRetentionBounded": true
+  },
+  "currentAdditionalChecks": {
+    "standaloneVisualAndSemanticsTests": {
+      "passed": 5,
+      "failed": 0
+    },
+    "frameSemanticsPersistedWithPixels": true,
+    "passwordValueOmitted": true,
+    "visibleDomReadingOrder": true,
+    "unknownControlRejectedBeforeDispatch": true
+  }
+}

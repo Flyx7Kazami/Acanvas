@@ -1,13 +1,15 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react';
 import { ArrowDownToLine, Code2, RotateCw, Square } from 'lucide-react';
 import type { Asset } from '../shared/types';
+import { useSceneContent } from './scene-renderer/content';
+import { SceneHtmlSurface } from './html-surface/SceneHtmlSurface';
 import type { BoardApi, HtmlPreviewGrant } from './api';
 import { HTML_PREVIEW_LIMIT, useHtmlPreviewSlot } from './HtmlPreviewPool';
 import { rasterizeHtmlSnapshot } from './html-preview-snapshot';
 
 import type { CanvasWheelInput } from './canvas-wheel';
 
-export function HtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFrameWheel, preserveScene = false }: { asset: Asset; api: BoardApi; preserveScene?: boolean; onFrameWheel?: (event: CanvasWheelInput) => void; onReloadBoard?: () => Promise<void>; onFrameDrag?: (frame: HTMLIFrameElement, start: { x: number; y: number }, event: PointerEvent<HTMLElement>) => void }) {
+function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFrameWheel, preserveScene = false }: { asset: Asset; api: BoardApi; preserveScene?: boolean; onFrameWheel?: (event: CanvasWheelInput) => void; onReloadBoard?: () => Promise<void>; onFrameDrag?: (frame: HTMLIFrameElement, start: { x: number; y: number }, event: PointerEvent<HTMLElement>) => void }) {
   const container = useRef<HTMLDivElement>(null), preview = useHtmlPreviewSlot(container, preserveScene);
   const stoppedWhileHovered = useRef(false), hoverAttempted = useRef(false);
   const [attempt, setAttempt] = useState(0), [pendingDrag, setPendingDrag] = useState<{ pointerId: number; x: number; y: number }>();
@@ -154,4 +156,10 @@ export function HtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFr
     </div>
     {error && <div className="html-preview-error" role="status"><p>{error}</p>{reloadRequired && <button type="button" data-canvas-control onPointerDown={event => event.stopPropagation()} onClick={() => { if (onReloadBoard) void onReloadBoard(); else window.location.reload(); }}>Reload board</button>}</div>}
   </div>;
+}
+
+export function HtmlCanvasContent(props: Parameters<typeof LegacyHtmlCanvasContent>[0]) {
+  const scene=useSceneContent();
+  if(scene) return <SceneHtmlSurface asset={props.asset} api={props.api} scene={scene}/>;
+  return <LegacyHtmlCanvasContent {...props}/>;
 }

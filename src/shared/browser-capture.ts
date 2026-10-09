@@ -1,4 +1,4 @@
-import type { AnnotationCaptureInput, AnnotationTarget, Bounds, CaptureResult, CaptureRetryResult } from './types.js';
+import type { AnnotationCaptureInput, AnnotationTarget, Bounds, CaptureResult, CaptureRetryResult, ScenePresentation, SceneSource } from './types.js';
 
 export interface BrowserCaptureIdentity {
   documentId: string;
@@ -17,6 +17,28 @@ export interface BrowserCaptureFrame {
   viewport: AnnotationCaptureInput['viewport'];
   crop: Bounds;
   scene: AnnotationCaptureInput['scene'];
+}
+
+/** Done has copied these pixels before asynchronous service calls or encoding. */
+export interface SceneEvidenceFrame {
+  identity: BrowserCaptureIdentity;
+  sceneSource: SceneSource;
+  presentation: ScenePresentation;
+  capturedAt: string;
+  target: AnnotationTarget;
+  worldBounds: Bounds;
+  cropCSS: Bounds;
+  viewport: AnnotationCaptureInput['viewport'];
+  scene: AnnotationCaptureInput['scene'];
+  png: Blob;
+}
+
+export interface ProjectCaptureProvider {
+  readonly documentId: string;
+  readonly sessionId: string;
+  readonly viewId: string;
+  capture(frame: SceneEvidenceFrame): Promise<BrowserCaptureResult>;
+  cancel(identity: BrowserCaptureIdentity): Promise<CaptureRetryResult | undefined>;
 }
 
 export type BrowserCaptureResult =

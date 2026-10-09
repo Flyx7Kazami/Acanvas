@@ -1,0 +1,718 @@
+{
+  "date": "2026-10-09",
+  "reviewScope": "Independent scene-source, project-provider module and ordinary-media producer review; product Scene/App and native HTML integration excluded",
+  "result": "PASS for reviewed ordinary-media producer and scene-source/project-provider modules; HTML production safety and full product acceptance remain pending",
+  "sourceReview": {
+    "firstSaveSnapshotAuthority": "PASS",
+    "candidateExpiryAndCurrentPresentationRetention": "PASS",
+    "concurrentObjectMoveDeleteBeforeFirstSave": "PASS",
+    "twoViewsAndSourceScopes": "PASS",
+    "durableSourceAfterClosedViewAndRestart": "PASS",
+    "queuedTaskCommentEditAndNewTargetVersion": "PASS",
+    "pendingHoldSaveUploadCancelAndLateResponses": "PASS",
+    "cancellationPreservesLaterPersistedBodyAndComment": "PASS",
+    "immutableContentPixelsAndMetadata": "PASS",
+    "actualBitmapCropMapping": "PASS for reviewed module contract; full product geometry remains separate"
+  },
+  "independentCommands": [
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test dist/tests/project-capture-provider.test.js dist/tests/gif-decoder.test.js dist/tests/scene-source.test.js",
+      "result": "PASS after allowed isolated loopback rerun",
+      "passed": 23,
+      "failed": 0,
+      "skipped": 1,
+      "initialSandboxResult": "22 passed, HTTP test listen EPERM; environment restriction was not counted as a source failure or success",
+      "skippedScope": "Optional native/HTML surface experiment"
+    },
+    {
+      "command": "TMPDIR=/private/tmp PLAYWRIGHT_BROWSERS_PATH=/private/tmp/acanvas-media-browser-runtime ACANVAS_MEDIA_TESTS=1 ACANVAS_MEDIA_ENGINES=chromium,firefox,webkit .runtime/node_modules/node/bin/node --test dist/tests/universal-media.test.js",
+      "result": "CANCELLED at cumulative 180 second timeout during WebKit video stage",
+      "output": "/private/tmp/acanvas-media-run-aGjqTy",
+      "completedBeforeCancellation": "Chromium and Firefox audio/Markdown/GIF/video assertions and PNGs; WebKit audio/Markdown/GIF assertions and PNGs",
+      "wholeRunPassed": false
+    },
+    {
+      "command": "TMPDIR=/private/tmp PLAYWRIGHT_BROWSERS_PATH=/private/tmp/acanvas-media-browser-runtime ACANVAS_MEDIA_TESTS=1 ACANVAS_MEDIA_ENGINES=webkit .runtime/node_modules/node/bin/node --test dist/tests/universal-media.test.js",
+      "result": "FAIL at Video seek after approximately 58 seconds",
+      "observed": {
+        "currentTime": 0.7,
+        "readyState": 4,
+        "seeking": false,
+        "sourceTime": "0",
+        "metadataPlaybackTime": 0.7,
+        "metadataPresentedTime": 0,
+        "timePrecision": "rvfc-observed"
+      }
+    },
+    {
+      "command": "Independent isolated WebKit targeted script using same numbered video and SceneVideoContent; wait 200ms after decoded readiness, seek to 0.7, inspect after 1000ms",
+      "result": "PASS for this timing only",
+      "observed": {
+        "currentTime": 0.7,
+        "sourceTime": "0.7",
+        "metadataPresentedTime": 0.7,
+        "actualNumberedFrame": 7
+      },
+      "meaning": "The successful timing does not close the observed failure; decoder callback and seek ordering require correction and regression verification."
+    }
+  ],
+  "mediaReview": {
+    "audioNativeGestureAndInternalPcm": "PASS for tested native media path across Chromium, Firefox and WebKit",
+    "audioNarrowThemeAndCopiedPng": "PASS for tested samples",
+    "markdownRenderedUtf16RunsNativeSelectionScrollNarrowCssScale": "PASS for tested controlled DOM samples across three engines",
+    "markdownRawByteOffsets": "Outside current anchor representation",
+    "gifNonFirstFrameTransparencyDisposalLoopClockAndCopiedPng": "PASS for tested samples and three unit tests",
+    "videoChromiumFirefoxNumberedFrameAndCopiedPng": "PASS for completed engine assertions",
+    "videoWebkitSeekPresentedTime": "PASS after independent fix verification; historical failure remains in independentCommands",
+    "pngVisualInspection": [
+      "chromium-audio.png",
+      "chromium-markdown.png",
+      "firefox-markdown.png",
+      "webkit-markdown.png",
+      "chromium-video.png"
+    ]
+  },
+  "findings": [
+    {
+      "priority": "P1",
+      "file": "src/web/scene-renderer/media/video-source.ts",
+      "lines": [
+        10,
+        25
+      ],
+      "title": "WebKit seek can leave presented source time at the initial frame",
+      "trigger": "Run the existing isolated media test with ACANVAS_MEDIA_ENGINES=webkit; once readyState is at least 2, seek native video to 0.7 without a readiness grace delay.",
+      "actual": "After seek completion and a 10 second wait, native currentTime is 0.7 but published rvfc-observed presentedTime remains 0.",
+      "impact": "The saved presentation may describe the initial media position after the user has sought to a later frame; the required displayed-frame/time association is not established.",
+      "sourceObservation": "Frame callbacks publish metadata.mediaTime without a seek generation or callback freshness condition. The refresh path also publishes a sampled seek time. The exact overwrite order remains for the executor to instrument.",
+      "acceptance": "Correct the decoder/seek ordering with current-frame source authority; verify the failing WebKit flow repeatedly and preserve numbered-frame pixels and time precision in Chromium and Firefox.",
+      "status": "CLOSED after source fix and independent original WebKit plus three-engine video regressions",
+      "closure": "Source and seek generations invalidate old callbacks, seeking pauses pixel copying, seek completion uses explicit playback-sampled precision, and RVFC compositor submission timestamps reject stale frames. Independent original full WebKit flow passed without readiness grace; three-engine targeted regression retained actual initial RVFC callbacks and delivered them after seek."
+    },
+    {
+      "priority": "P2",
+      "file": "src/web/scene-renderer/media/gif-decoder.ts",
+      "lines": [
+        27,
+        86
+      ],
+      "status": "CLOSED after bounded structural scanning and independent resource verification",
+      "title": "GIF descriptor limit is enforced after full parser allocation",
+      "trigger": "gifFixture with 50001 valid 1x1 frames, each color=1, left=0, top=0, width=1, height=1, disposal=1; call decodeGif on its ArrayBuffer",
+      "actual": {
+        "compressedBytes": 1150049,
+        "frameDescriptors": 50001,
+        "result": "GIF playback supports one to 10000 frames.",
+        "elapsedMs": 135.86775,
+        "heapBefore": 34224496,
+        "heapAfter": 83265824,
+        "rssBefore": 116047872,
+        "rssAfter": 270106624
+      },
+      "impact": "Small compressed input allocates all parsed descriptor objects before rejecting the documented frame limit; larger inputs inside the 20 MiB file limit can exhaust ordinary-client resources.",
+      "acceptance": "Bound GIF structural parsing before descriptor allocation, including frame count and malformed/truncated blocks; preserve current bounded composition/disposal/timeline behavior and verify the excessive-descriptor sample independently.",
+      "closure": "decodeGif scans byte extents, logical and patch dimensions, supported extension headers, terminated sub-blocks, 10000 image descriptors and 20000 parser records with cursor-only state before invoking parseGIF. Current composition/disposal/timeline logic is preserved."
+    }
+  ],
+  "pending": [
+    "Complete product Done-to-thumbnail-to-Send, actual embedded browser, recovery Blob persistence and P4 environment matrix",
+    "HTML native semantics/audio/clipboard and runtime lifecycle acceptance belong to their independent integration stage"
+  ],
+  "nativeHeadlessStaticReview": {
+    "result": "PASS as an instrumented short-trial prerequisite only",
+    "chromiumVersion": "154.0.8037.98",
+    "cefCommit": "14c5a089e8452874cb1a556dc3fde26ed2d87723",
+    "chain": "CefMainRunner -> ChromeMainDelegateCef -> ChromeContentBrowserClientCef -> ChromeContentBrowserClient::CreateBrowserMainParts -> ChromeBrowserMainParts::Create -> ChromeBrowserMainExtraPartsHeadless::PreBrowserStart -> SetHeadlessClipboardForCurrentThread -> ClipboardNonBacked",
+    "patchesScanned": 117,
+    "relevantPatch": "chrome_runtime.patch preserves headless part registration and PreBrowserStart traversal",
+    "requiredRuntimeProof": "Instrument from before CefInitialize through representative broker actions and shutdown; prove zero NSPasteboard.generalPasteboard invocations for the exact binary, retaining Chromium inner sandbox and fixed ephemeral credential policy",
+    "runtimeExecutedByReviewer": false,
+    "sources": [
+      "https://raw.githubusercontent.com/chromiumembedded/cef/14c5a089e8452874cb1a556dc3fde26ed2d87723/libcef/browser/main_runner.cc",
+      "https://raw.githubusercontent.com/chromiumembedded/cef/14c5a089e8452874cb1a556dc3fde26ed2d87723/libcef/common/chrome/chrome_main_delegate_cef.cc",
+      "https://raw.githubusercontent.com/chromiumembedded/cef/14c5a089e8452874cb1a556dc3fde26ed2d87723/libcef/browser/chrome/chrome_content_browser_client_cef.cc",
+      "https://raw.githubusercontent.com/chromium/chromium/154.0.8037.98/chrome/browser/chrome_content_browser_client.cc",
+      "https://raw.githubusercontent.com/chromium/chromium/154.0.8037.98/chrome/browser/chrome_browser_main.cc",
+      "https://raw.githubusercontent.com/chromium/chromium/154.0.8037.98/chrome/browser/headless/chrome_browser_main_extra_parts_headless.cc",
+      "https://raw.githubusercontent.com/chromium/chromium/154.0.8037.98/components/headless/clipboard/headless_clipboard.cc"
+    ]
+  },
+  "boundaries": "Isolated canonical temporary projects and fixtures only; no user board/service, port 4317, CEF launch, native clipboard callback, Keychain operation, global settings, source mutation or git commit",
+  "followupReview": {
+    "date": "2026-10-09",
+    "typecheck": "PASS",
+    "sourceProviderGifOrdinaryTests": {
+      "passed": 23,
+      "failed": 0,
+      "skipped": 1,
+      "scope": "Native HTML experiment remains skipped"
+    },
+    "originalWebkitFullMedia": {
+      "generatedAt": "2026-10-08T20:20:27.654Z",
+      "stage": "P2 media producer implementation",
+      "node": "v24.21.0",
+      "result": "passed",
+      "output": "/private/tmp/acanvas-media-run-qTLQMX",
+      "measurements": [
+        {
+          "engine": "webkit",
+          "version": "26.0",
+          "dpr": 2,
+          "audio": {
+            "rms": 0.06570836752838684,
+            "presentedTime": 0.2763729167636484,
+            "narrow": {
+              "width": 224,
+              "height": 280
+            }
+          },
+          "markdown": {
+            "sourceRunsMatchDOMOffsets": true,
+            "quote": "paragrap",
+            "scroll": {
+              "x": 0,
+              "y": 220
+            },
+            "narrowBitmap": [
+              448,
+              560
+            ],
+            "cssScaleLogicalRunsAligned": true
+          },
+          "gif": {
+            "savedFrameIndex": 1,
+            "savedTime": 0.109,
+            "laterTime": 1.411,
+            "knownFramePixelMatched": true
+          },
+          "video": {
+            "savedTime": 0.7,
+            "timePrecision": "playback-sampled",
+            "knownFrameNumber": 7,
+            "expectedFrameNumber": 7,
+            "laterTime": 1.3
+          },
+          "pixelComparisons": "PNG channels equal synchronously copied displayed Canvas channels",
+          "errors": []
+        }
+      ],
+      "limits": {
+        "gif": "20 MiB compressed, four million pixels, 10000 compressed frame descriptors, current plus disposal restore RGBA, 16 decode steps per tick; zero delay becomes 20ms"
+      },
+      "pending": [
+        "actual embedded browser integration acceptance",
+        "production Scene/App complete acceptance",
+        "native codec availability per browser"
+      ]
+    },
+    "videoRegressions": [
+      {
+        "generatedAt": "2026-10-08T20:21:49.357Z",
+        "engine": "chromium",
+        "browserVersion": "154.0.8037.98",
+        "result": "passed",
+        "source": "actual native video element and numbered H264 baseline frames",
+        "noReadinessGraceDelay": true,
+        "outcomes": [
+          {
+            "iteration": 0,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "iteration": 1,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "iteration": 2,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "iteration": 3,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "iteration": 4,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "forward/back seek",
+            "number": 2,
+            "media": {
+              "playbackTime": 0.2,
+              "presentedTime": 0.2,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "forward/back seek",
+            "number": 15,
+            "media": {
+              "playbackTime": 1.5,
+              "presentedTime": 1.5,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "forward/back seek",
+            "number": 1,
+            "media": {
+              "playbackTime": 0.1,
+              "presentedTime": 0.1,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "forward/back seek",
+            "number": 11,
+            "media": {
+              "playbackTime": 1.1,
+              "presentedTime": 1.1,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "paused",
+            "number": 19,
+            "media": {
+              "playbackTime": 2,
+              "presentedTime": 2,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "native loop",
+            "number": 0,
+            "media": {
+              "playbackTime": 8.8e-05,
+              "presentedTime": 8.8e-05,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "replaced source",
+            "number": 3,
+            "media": {
+              "playbackTime": 0.3,
+              "presentedTime": 0.3,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "real initial RVFC delivered after seek",
+            "rejectedOldCallbacks": 1,
+            "originalCallbackTimes": [
+              0.1
+            ],
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          }
+        ],
+        "output": "/private/tmp/acanvas-video-seek-run-MZcqS0",
+        "errors": []
+      },
+      {
+        "generatedAt": "2026-10-08T20:22:37.945Z",
+        "engine": "firefox",
+        "browserVersion": "141.0",
+        "result": "passed",
+        "source": "actual native video element and numbered H264 baseline frames",
+        "noReadinessGraceDelay": true,
+        "outcomes": [
+          {
+            "iteration": 0,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "iteration": 1,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "iteration": 2,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "iteration": 3,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "iteration": 4,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "forward/back seek",
+            "number": 2,
+            "media": {
+              "playbackTime": 0.2,
+              "presentedTime": 0.2,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "forward/back seek",
+            "number": 15,
+            "media": {
+              "playbackTime": 1.5,
+              "presentedTime": 1.5,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "forward/back seek",
+            "number": 1,
+            "media": {
+              "playbackTime": 0.1,
+              "presentedTime": 0.1,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "forward/back seek",
+            "number": 11,
+            "media": {
+              "playbackTime": 1.1,
+              "presentedTime": 1.1,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "paused",
+            "number": 19,
+            "media": {
+              "playbackTime": 2,
+              "presentedTime": 2,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "native loop",
+            "number": 0,
+            "media": {
+              "playbackTime": 0.047301,
+              "presentedTime": 0.047301,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "replaced source",
+            "number": 3,
+            "media": {
+              "playbackTime": 0.3,
+              "presentedTime": 0.3,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "real initial RVFC delivered after seek",
+            "rejectedOldCallbacks": 1,
+            "originalCallbackTimes": [
+              0
+            ],
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          }
+        ],
+        "output": "/private/tmp/acanvas-video-seek-run-hiYbGZ",
+        "errors": []
+      },
+      {
+        "generatedAt": "2026-10-08T20:23:06.568Z",
+        "engine": "webkit",
+        "browserVersion": "26.0",
+        "result": "passed",
+        "source": "actual native video element and numbered H264 baseline frames",
+        "noReadinessGraceDelay": true,
+        "outcomes": [
+          {
+            "iteration": 0,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "iteration": 1,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "iteration": 2,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "iteration": 3,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "iteration": 4,
+            "stage": "immediate ready seek",
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "forward/back seek",
+            "number": 2,
+            "media": {
+              "playbackTime": 0.2,
+              "presentedTime": 0.2,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "forward/back seek",
+            "number": 15,
+            "media": {
+              "playbackTime": 1.5,
+              "presentedTime": 1.5,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "forward/back seek",
+            "number": 1,
+            "media": {
+              "playbackTime": 0.1,
+              "presentedTime": 0.1,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "forward/back seek",
+            "number": 11,
+            "media": {
+              "playbackTime": 1.1,
+              "presentedTime": 1.1,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "paused",
+            "number": 19,
+            "media": {
+              "playbackTime": 2,
+              "presentedTime": 2,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "native loop",
+            "number": 0,
+            "media": {
+              "playbackTime": 0,
+              "presentedTime": 0,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "replaced source",
+            "number": 3,
+            "media": {
+              "playbackTime": 0.3,
+              "presentedTime": 0.3,
+              "timePrecision": "playback-sampled"
+            }
+          },
+          {
+            "stage": "real initial RVFC delivered after seek",
+            "rejectedOldCallbacks": 1,
+            "originalCallbackTimes": [
+              0.1
+            ],
+            "number": 7,
+            "media": {
+              "playbackTime": 0.7,
+              "presentedTime": 0.7,
+              "timePrecision": "playback-sampled"
+            }
+          }
+        ],
+        "output": "/private/tmp/acanvas-video-seek-run-36gvi9",
+        "errors": []
+      }
+    ],
+    "videoDurationsMs": {
+      "chromium": 46497.435333,
+      "firefox": 30503.761625,
+      "webkit": 28159.508833
+    },
+    "originalWebkitDurationMs": 63019.630583,
+    "pngVisualInspection": "Fixed WebKit numbered frame 7 viewed; displayed PNG matches original known frame geometry",
+    "nativeClipboardEvidence": {
+      "status": "Instrumented owned trial accepted as trial evidence; production safety remains pending",
+      "pasteboardFactories": 6,
+      "dataReads": 0,
+      "dataWrites": 0,
+      "factoryBehavior": "Test interposer returns nil from NSPasteboard.generalPasteboard; data selectors are intercepted. Production helper has no test interposer.",
+      "actualThreadScope": "Chromium154 Clipboard::SetClipboardForCurrentThread installs a thread-map entry; GetForCurrentThread creates ClipboardMac for other absent entries. ClipboardNonBacked creates internal copy/paste and mac drag buffers. Six native factory caller stacks must be classified before production acceptance.",
+      "keychainClaim": "Fixed UseKeychainKeyProvider exclusion is source-backed. The trial does not verify all user Keychain activity.",
+      "reviewerLaunchedNativeRuntime": false
+    }
+  },
+  "fullCandidateAcceptanceChecklist": [
+    "Default Done copies actual presented pixels before async work, persists thumbnail and Send in each supported ordinary and actual embedded browser without opening another window.",
+    "All seven content kinds share visible pixels and evidence; media selection, presented time and representative snapshot time remain separate.",
+    "Point/region, DPR1/2, browser/CSS and board zoom, offsets, narrow view, resize, partial clipping, themes and more than 64 visible layers use actual bitmap mapping.",
+    "Same-session two documents, object move/delete before first save, queue edits, cancellation, delayed save/upload and later user edits preserve correct source and versions.",
+    "Refresh and service restart recover uploaded bytes; not-yet-uploaded captures use the authorized persistent browser Blob path with explicit storage-failure state.",
+    "HTML fixed native policy, clipboard caller-stack closure, permitted controls/selection/IME/accessibility, scoped PCM and lifecycle/performance require their independent actual matrix before P2 HTML or P4 acceptance."
+  ],
+  "gifResourceIndependentClosure": {
+    "date": "2026-10-09",
+    "result": "PASS",
+    "unitTests": {
+      "passed": 5,
+      "failed": 0
+    },
+    "typecheck": "PASS",
+    "originalFailureSample": {
+      "bytes": 1150049,
+      "frameDescriptors": 50001,
+      "error": "GIF playback supports one to 10000 frames.",
+      "milliseconds": 1.9073340000000059,
+      "heapBytes": 181128,
+      "rssBytes": 1294336
+    },
+    "legalMaximum": {
+      "images": 10000,
+      "bytes": 230045,
+      "parserRecords": 10001,
+      "loopExtension": true,
+      "scanAndDecode": "PASS"
+    },
+    "legalExtensionRecordBoundary": {
+      "comments": 19996,
+      "images": 4,
+      "parserRecords": 20000,
+      "scanAndDecode": "PASS"
+    },
+    "excessExtensionRecords": {
+      "comments": 20001,
+      "result": "Rejected before object parser"
+    },
+    "malformedPrefixes": {
+      "tested": 130,
+      "rejected": 130
+    },
+    "sourceReview": "Scanner stage ordering matches gifuct gce/application/comment/image/plain-text record grouping; malformed/truncated tables, extensions, patches, sub-blocks and trailer are bounded before allocations.",
+    "originalFailurePreserved": true
+  },
+  "nativeClipboardSafetyReadOnlyUpdate": {
+    "result": "PENDING production safety",
+    "fakeHandleTrial": "Trial-only nonnil owned marker passed observed private text/html and native copy/paste/cut/document.open flows; source/provider/media PASS does not include native production acceptance.",
+    "factoryCalls": 6,
+    "contentReads": 0,
+    "contentWrites": 0,
+    "startupFactories": "Two AppKit NSApplication initialization telemetry/prevalidation callbacks",
+    "fourCefFactories": "Exact154 ClipboardHostImpl::GetPlatformPermissionState queries generalPasteboard.accessBehavior; binary top caller static0x5cc02ac and selector refs map to generalPasteboard/accessBehavior. It is clipboard privacy metadata, not a content read/write.",
+    "instrumentationRemaining": "Log marker name/changeCount/accessBehavior counters and all unknown selectors; current forwardInvocation silently returns nil with a fixed object signature.",
+    "additionalSourceBoundary": "Exact154 ClipboardHostImpl::WriteStringToFindPboard writes through FindPasteboard.sharedInstance setFindText, bypassing ui ClipboardNonBacked and the generalPasteboard-only interposer. Reachability of permitted native edit commands requires independent classification.",
+    "productionPolicy": "Production has no test interposer and retains sandbox-exec failclosed. Do not remove it until metadata/unknown selectors and every reachable named/system pasteboard content operation have source-backed exclusion or application-owned handling. Keep inner Chromium sandbox and fixed credential policy.",
+    "sources": [
+      "https://raw.githubusercontent.com/chromium/chromium/154.0.8037.98/content/browser/renderer_host/clipboard_host_impl_mac.mm"
+    ],
+    "runtimeStartedByReviewer": false,
+    "userKeychainVerification": "No broad user Keychain verification claim"
+  },
+  "nativePrivacySourceDecision": {
+    "result": "PASS for fixed imported-HTML/input data-authority boundary",
+    "outerGuard": "May remove outer sandbox-exec while keeping fixed headless OSR, inner renderer sandbox, credential exclusion, private profile and typed host policies",
+    "record": "native-privacy-source-review.json",
+    "platformMetadataLimit": "AppKit startup CF bridge and accessBehavior queries are accurately separate from imported HTML content authority; no zero-system-call or all-Keychain measurement claim",
+    "fullNativeProductRuntime": "PENDING"
+  }
+}

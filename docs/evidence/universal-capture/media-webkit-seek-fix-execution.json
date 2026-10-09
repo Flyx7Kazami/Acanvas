@@ -1,0 +1,58 @@
+{
+  "generatedAt": "2026-10-08T20:07:59.861Z",
+  "stage": "P2 media producer implementation",
+  "node": "v24.21.0",
+  "result": "passed",
+  "output": "/private/tmp/acanvas-media-run-gGMSCB",
+  "measurements": [
+    {
+      "engine": "webkit",
+      "version": "26.0",
+      "dpr": 2,
+      "audio": {
+        "rms": 0.1718972921417691,
+        "presentedTime": 0.30248483340255916,
+        "narrow": {
+          "width": 224,
+          "height": 280
+        }
+      },
+      "markdown": {
+        "sourceRunsMatchDOMOffsets": true,
+        "quote": "paragrap",
+        "scroll": {
+          "x": 0,
+          "y": 220
+        },
+        "narrowBitmap": [
+          448,
+          560
+        ],
+        "cssScaleLogicalRunsAligned": true
+      },
+      "gif": {
+        "savedFrameIndex": 1,
+        "savedTime": 0.112,
+        "laterTime": 1.41,
+        "knownFramePixelMatched": true
+      },
+      "video": {
+        "savedTime": 0.7,
+        "timePrecision": "playback-sampled",
+        "knownFrameNumber": 7,
+        "expectedFrameNumber": 7,
+        "laterTime": 1.3
+      },
+      "pixelComparisons": "PNG channels equal synchronously copied displayed Canvas channels",
+      "errors": []
+    }
+  ],
+  "limits": {
+    "gif": "20 MiB compressed, four million pixels, 10000 compressed frame descriptors, current plus disposal restore RGBA, 16 decode steps per tick; zero delay becomes 20ms"
+  },
+  "pending": [
+    "actual embedded browser integration acceptance",
+    "production Scene/App complete acceptance",
+    "native codec availability per browser"
+  ]
+}

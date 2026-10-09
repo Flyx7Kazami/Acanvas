@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,mkdir,rm,stat,writeFile} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {tmpdir} from 'node:os';
+import {build} from 'vite';
+import {startServer} from '../src/server/http.js';
+import {ProjectHtmlSurfaces,type HtmlSurfaceInfo} from '../src/server/render-surface/html.js';
+import type {NativeHtmlRuntime} from '../src/server/render-surface/cef.js';
+import {launchRenderEngine} from '../src/server/render-surface/engine.js';
+const enabled=process.env.ACANVAS_HTML_NATIVE_TESTS==='1';
+
+test('actual client recreates a crashed OOP renderer automatically, retains N and honors explicit stop',{skip:!enabled,timeout:90_000},async t=>{
+  const began=Date.now(),directory=await mkdtemp(join(tmpdir(),'acanvas-native-recovery-')),root=join(directory,'project'),web=join(directory,'web');await mkdir(root);
+  await build({logLevel:'silent',build:{outDir:web,emptyOutDir:true}});
+  let trackedAsset='';const created:Array<{info:HtmlSurfaceInfo;manager:ProjectHtmlSurfaces;runtime:NativeHtmlRuntime}>=[],original=ProjectHtmlSurfaces.prototype.create;
+  ProjectHtmlSurfaces.prototype.create=async function(...args){const info=await original.apply(this,args);if(info.assetId===trackedAsset)created.push({info,manager:this,runtime:(this as any).entries.get(info.surfaceId).native});return info};
+  const server=await startServer({root,port:0,webRoot:web});const bootstrap=await(await fetch(server.url+'/api/bootstrap')).json();
+  const request=async(path:string,method='GET',body?:object)=>{const result=await fetch(server.url+path,{method,headers:{Authorization:`Bearer ${bootstrap.token}`,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});const data=await result.json();assert(result.ok,JSON.stringify(data));return data};
+  const session=await request('/api/sessions','POST',{name:'Renderer recovery'}),upload=await fetch(server.url+'/api/assets?name=recovery.html&mime=text%2Fhtml',{method:'POST',headers:{Authorization:`Bearer ${bootstrap.token}`},body:'<!doctype html><style>body{margin:0;background:#345;color:white}</style><input id="field" value="fresh"><script>window.seed=Math.random()</script>'}),asset=await upload.json();trackedAsset=asset.id;
+  const board=await request('/api/board/operations','POST',{sessionId:session.id,operations:[{type:'create',object:{assetId:asset.id,x:60,y:80,width:480,height:260}}]}),object=board.objects.find((item:any)=>item.assetId===asset.id);
+  const browser=await launchRenderEngine(),page=await browser.newPage({viewport:{width:1100,height:800}});t.after(async()=>{await browser.close();await server.close();ProjectHtmlSurfaces.prototype.create=original;await rm(directory,{recursive:true,force:true})});await page.goto(server.url+'/?session='+session.id);const panel=page.locator(`[data-object-id="${object.id}"] .html-content`);await panel.locator('[data-html-semantics]').waitFor({timeout:30000});
+  const first=created[0],seq=Number(await panel.locator('[data-html-semantics]').getAttribute('data-frame-seq')),shown=first.manager.frame(first.info.surfaceId,seq),profile=first.runtime.directory();first.manager.retainSurface(shown.owner,shown);
+  const terminated=new Promise<void>(resolve=>first.runtime.once('closed',()=>resolve()));void first.runtime.documentProtocol('Page.crash').catch(()=>{});await Promise.race([terminated,new Promise((_,reject)=>setTimeout(()=>reject(new Error('source_renderer_crash_timeout')),5000))]);
+  const deadline=Date.now()+15000;while(created.length<2&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,20));assert.equal(created.length,2);
+  await page.waitForFunction(id=>document.querySelector(`[data-object-id="${id}"] .html-content`)?.getAttribute('data-preview-ready')==='true',object.id);
+  const next=created[1];assert.notEqual(next.info.instanceId,first.info.instanceId);assert(first.manager.frame(first.info.surfaceId,seq).png.equals(shown.png));await first.runtime.close();await assert.rejects(stat(profile),{code:'ENOENT'});
+  const view=next.info,path=`/api/sessions/${view.sessionId}/capture-views/${view.viewId}/html-surfaces/${view.surfaceId}`,nextProfile=next.runtime.directory();await request(path,'DELETE',{documentId:view.documentId,viewGeneration:view.viewGeneration});await new Promise(resolve=>setTimeout(resolve,1000));assert.equal(created.length,2);await assert.rejects(stat(nextProfile),{code:'ENOENT'});first.manager.releaseSurface(shown.owner,shown);
+  const evidence=process.env.ACANVAS_HTML_RECOVERY_EVIDENCE;if(evidence)await writeFile(evidence,JSON.stringify({measuredAt:new Date().toISOString(),status:'actual-renderer-recovery-passed',sourceOopRendererCrash:true,newInstanceAutomatic:true,lastNBytesRetained:true,crashedProfileRemoved:true,explicitStopResurrected:false,sourceStateRestart:'fresh instance',elapsedMs:Date.now()-began},null,2)+'\n');
+});

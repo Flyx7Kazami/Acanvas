@@ -1,0 +1,767 @@
+{
+  "measuredAt": "2026-10-09T01:18:07.042Z",
+  "status": "controlled-update-and-two-public-business-comparisons-passed",
+  "scope": "Final delivery preflight, controlled project service update and business-state preservation for universal background capture.",
+  "environment": {
+    "projectRoot": "/Users/yingbowu/Documents/Projects/acanvas",
+    "node": "24.21.0",
+    "runtime": "project-local .runtime/node_modules/node/bin/node",
+    "tmpdir": "/private/tmp",
+    "baselineCommit": "9fbcfc6",
+    "serviceOrigin": "http://127.0.0.1:4317",
+    "sessionId": "fff4c7bb-8ae3-4c66-a717-235fe73e0171"
+  },
+  "readOnlyPreflight": {
+    "measuredAt": "2026-10-09T00:45:42.472Z",
+    "route": "Already-built CLI project status, session list, session read for all existing sessions, browser status; already-built client connectProject bootstrap origin verification.",
+    "projectId": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+    "service": {
+      "pid": 27048,
+      "instanceId": "aa0b26a5-cfde-4fe8-a4ae-c404549de66b"
+    },
+    "targetSessionPresent": true,
+    "businessCounts": {
+      "sessions": 4,
+      "tasks": 27,
+      "assets": 32,
+      "sharedAssets": 28,
+      "evidenceAssets": 4,
+      "objects": 12,
+      "annotations": 15
+    },
+    "activity": {
+      "runningTasks": 0,
+      "runningRuns": 0,
+      "editingTasks": 0,
+      "editingDrafts": 0,
+      "nonemptyDrafts": 0
+    },
+    "targetDraft": {
+      "id": "4c29aeb4-2b53-4f24-9cdd-aa63de218c66",
+      "revision": 17,
+      "tasks": 3
+    },
+    "protectedSnapshot": {
+      "path": "/private/tmp/acanvas-delivery-readonly-fYPXZT/snapshot-before.json",
+      "directoryMode": "0700",
+      "fileMode": "0600",
+      "tokensIncluded": false,
+      "businessTextPrinted": false,
+      "purpose": "Preflight reference; a fresh controlled-API snapshot is required immediately before an authorized service update."
+    },
+    "environmentBoundary": "Initial sandbox loopback connection returned EPERM. An authorized read-only CLI retry succeeded; service and business state were read through public project interfaces."
+  },
+  "staticChecks": {
+    "measuredAt": "2026-10-09T01:18:07.259Z",
+    "scope": "README, PLAN, universal capture design and implementation local file links; universal evidence and changed JSON; changed tracked and untracked text files.",
+    "changedFiles": 141,
+    "textFilesScanned": 137,
+    "credentialPatternCandidates": 0,
+    "jsonFiles": 51,
+    "jsonParseFailures": 0,
+    "localFileLinks": 124,
+    "localFileLinkFailures": 0,
+    "localAnchorLinks": 0,
+    "gitDiffCheck": "PASS",
+    "resultPath": "/private/tmp/acanvas-delivery-readonly-fYPXZT/delivery-static.json",
+    "limit": "Final runtime execution evidence and current README/PLAN/universal design/implementation links at measurement time. Subsequent main-document edits are reviewed separately."
+  },
+  "deliveryPlan": {
+    "precondition": "Parent confirms all independent popup/native and documentation acceptance is complete and authorizes the controlled update.",
+    "isolatedBuild": [
+      "Create a unique /private/tmp candidate output directory with project Node24 and TMPDIR=/private/tmp.",
+      "Run server TypeScript compilation with an explicit temporary --outDir, client TypeScript --noEmit, and Vite with an explicit temporary --outDir.",
+      "Run only final applicable checks for accepted source changes; prior complete default and material matrices retain their separate evidence."
+    ],
+    "commands": {
+      "isolatedServer": ".runtime/node_modules/node/bin/node node_modules/typescript/bin/tsc -p tsconfig.server.json --outDir CANDIDATE_DIRECTORY/dist",
+      "isolatedClient": ".runtime/node_modules/node/bin/node node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
+      "isolatedWeb": ".runtime/node_modules/node/bin/node node_modules/vite/bin/vite.js build --outDir CANDIDATE_DIRECTORY/dist/web",
+      "normalHelper": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node scripts/install-html-runtime.mjs",
+      "normalBuild": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node scripts/runtime.mjs build",
+      "sameServiceAndSession": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node dist/src/cli.js project open --project /Users/yingbowu/Documents/Projects/acanvas --port 4317 --session fff4c7bb-8ae3-4c66-a717-235fe73e0171"
+    },
+    "controlledUpdate": [
+      "Read status and all existing session states immediately before updating; verify original project, origin, target session, instance and absence of execution/editing activity.",
+      "Save a new protected business snapshot through the controlled CLI/API and compare it with the preflight reference for intervening user activity.",
+      "Use instance-verified project stop, then normal project HTML helper build with both TEST clipboard macros OFF and the formal application build.",
+      "Reopen the same project on port 4317 with the explicit original session ID.",
+      "Read all business fields through controlled CLI/API after startup and compare them against the fresh immediate-before snapshot.",
+      "Repeat the read and compare once more, verify page resource references and service identity, and record both comparison results."
+    ]
+  },
+  "serviceOnlyLaunchVerification": {
+    "checkedSources": [
+      "src/cli.ts",
+      "src/server/client-runtime.ts",
+      "src/server/main.ts",
+      "src/server/browser-capture.ts",
+      "skill/acanvas/scripts/acanvas.mjs"
+    ],
+    "projectOpenBehavior": "connectProject starts a detached Node service when needed; explicit session selection reads that scope and returns openUrl. The entry does not invoke a system URL opener or bringToFront.",
+    "managedBrowserBehavior": "ProjectBrowser construction is lazy. The separate browser open command launches the managed Chrome context and may bring its page to front; it is outside this delivery procedure.",
+    "sameIabUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+    "visibleBrowserOrCaptureWindowOpened": false
+  },
+  "finalBuild": {
+    "status": "PASS",
+    "measuredAt": "2026-10-09T00:59:47.335Z",
+    "directory": "/private/tmp/acanvas-delivery-candidate-mh4KKk",
+    "serverTypecheck": "PASS",
+    "clientTypecheck": "PASS",
+    "viteBuild": "PASS",
+    "sharedDistWritten": false,
+    "buildResult": "/private/tmp/acanvas-delivery-candidate-mh4KKk/build.json",
+    "defaultAttempts": [
+      {
+        "measuredAt": "2026-10-09T01:01:16.742Z",
+        "finishedAt": "2026-10-09T01:03:36.850Z",
+        "executionCwd": "/Users/yingbowu/Documents/Projects/acanvas",
+        "fileCount": 34,
+        "tests": 193,
+        "pass": 157,
+        "fail": 12,
+        "cancelled": 0,
+        "skipped": 24,
+        "durationMilliseconds": 140061.670584,
+        "status": "fixture-path-mismatch",
+        "finding": "Compiled browser fixtures resolve dist/web and child dist/src paths relative to cwd. This attempt read the restored baseline application rather than the isolated candidate application.",
+        "candidateUiValidated": false,
+        "log": "/private/tmp/acanvas-delivery-candidate-mh4KKk/default-incorrect-cwd.log",
+        "result": "/private/tmp/acanvas-delivery-candidate-mh4KKk/default-incorrect-cwd.json",
+        "next": "Use candidate cwd and its own dist/web, dist/src and read-only test-fixture link after the final pointer-boundary source delta is stable."
+      }
+    ],
+    "latestServerCompilation": {
+      "status": "PASS",
+      "sourceDelta": "Public CEF pointer/wheel CSS coordinates use containing-pixel Math.floor; wheel amounts retain Math.round.",
+      "log": "/private/tmp/acanvas-delivery-candidate-mh4KKk/latest-server.log"
+    },
+    "finalDefault": {
+      "measuredAt": "2026-10-09T01:05:26.616Z",
+      "finishedAt": "2026-10-09T01:06:43.749Z",
+      "executionCwd": "/private/tmp/acanvas-delivery-candidate-mh4KKk",
+      "fileCount": 34,
+      "tests": 193,
+      "pass": 169,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 24,
+      "durationMilliseconds": 77082.104833,
+      "selection": "Current runtime.mjs test selection: every compiled dist/tests/*.test.js, with opt-in browser/native variables absent.",
+      "files": [
+        "annotation-capture.test.js",
+        "audio-artwork.test.js",
+        "browser-capture.test.js",
+        "chatbox-ui.test.js",
+        "content-types.test.js",
+        "cookie-isolation.test.js",
+        "frontend-geometry.test.js",
+        "gif-decoder.test.js",
+        "host-runtime.test.js",
+        "html-bundle.test.js",
+        "html-preview.test.js",
+        "markdown-anchor.test.js",
+        "native-controls.test.js",
+        "native-gc.test.js",
+        "native-profile-cleanup.test.js",
+        "point-anchor.test.js",
+        "project-capture-provider.test.js",
+        "scene-source.test.js",
+        "server.test.js",
+        "task-message.test.js",
+        "universal-html-audio.test.js",
+        "universal-html-client-controls.test.js",
+        "universal-html-native.test.js",
+        "universal-html-pairing.test.js",
+        "universal-html-popup.test.js",
+        "universal-html-prototype.test.js",
+        "universal-html-recovery.test.js",
+        "universal-markdown-anchor.test.js",
+        "universal-media.test.js",
+        "universal-scene-geometry.test.js",
+        "universal-scene-production.test.js",
+        "universal-scene-prototype.test.js",
+        "universal-scene-types.test.js",
+        "universal-target-edit.test.js"
+      ],
+      "latestPopupTestCompiled": true,
+      "log": "/private/tmp/acanvas-delivery-candidate-mh4KKk/final-default.log",
+      "result": "/private/tmp/acanvas-delivery-candidate-mh4KKk/default-tests.json",
+      "nativeScope": "Default actual-App fixtures may initialize the installed normal CEF helper only in test-owned temporary projects; opt-in native suites remain skipped."
+    },
+    "applicableOrdinaryResults": [
+      {
+        "filename": "native-controls.test.js",
+        "tests": 9,
+        "pass": 8,
+        "skipped": 1,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "native-gc.test.js",
+        "tests": 1,
+        "pass": 1,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "native-profile-cleanup.test.js",
+        "tests": 1,
+        "pass": 1,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "html-preview.test.js",
+        "tests": 6,
+        "pass": 6,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "html-bundle.test.js",
+        "tests": 5,
+        "pass": 5,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "project-capture-provider.test.js",
+        "tests": 10,
+        "pass": 10,
+        "skipped": 0,
+        "fail": 0,
+        "unmatched": 0
+      },
+      {
+        "filename": "scene-source.test.js",
+        "tests": 16,
+        "pass": 15,
+        "skipped": 1,
+        "fail": 0,
+        "unmatched": 0
+      }
+    ],
+    "scope": "Final compiled candidate default selection and applicable ordinary control/profile/resource grant/provider/source suites; opt-in native/browser acceptance retains separate independent evidence."
+  },
+  "originalPageRefresh": {
+    "status": "updated-service-ready-original-page-awaits-normal-user-refresh",
+    "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+    "readOnlyCapabilityCheck": "CUA getBrowser({id:'iab'}) returned Browser is not available: iab. Native-app inventory reported a locked Mac.",
+    "parentDecision": "Keep existing pages and URL; after the controlled service update, the user can refresh the original page normally to load the new application bundle.",
+    "originalPageReloaded": false,
+    "alternateBrowserTabsTouched": false,
+    "visibleWindowOpenedOrActivated": false,
+    "realBoardDoneSendOrFormInput": false,
+    "newBundleServed": true,
+    "currentServerAssetReferences": [
+      "/assets/main-DtsX9zqw.js",
+      "/assets/content-types-GP_APozu.js",
+      "/assets/content-types-BsJH9bFb.css",
+      "/assets/main-CemAJVyi.css"
+    ]
+  },
+  "controlledUpdate": {
+    "status": "PASS",
+    "authorizedAfter": "Independent core, native popup/pointer and final candidate-document acceptance reported PASS by parent; final default selection193/169pass/24skip/0fail/0cancelled.",
+    "freshReference": {
+      "measuredAt": "2026-10-09T01:13:41.497Z",
+      "label": "fresh-reference",
+      "protectedSnapshot": {
+        "path": "/private/tmp/acanvas-delivery-readonly-fYPXZT/snapshot-fresh-reference.json",
+        "directoryMode": "0700",
+        "fileMode": "0600",
+        "tokensIncluded": false,
+        "businessTextPrinted": false
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "status": {
+        "project": {
+          "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+          "name": "acanvas",
+          "root": "/Users/yingbowu/Documents/Projects/acanvas"
+        },
+        "service": {
+          "pid": 27048,
+          "instanceId": "aa0b26a5-cfde-4fe8-a4ae-c404549de66b"
+        },
+        "status": "running"
+      },
+      "counts": {
+        "sessions": 4,
+        "tasks": 27,
+        "assets": 32,
+        "sharedAssets": 28,
+        "evidenceAssets": 4,
+        "objects": 12,
+        "annotations": 15
+      },
+      "activity": {
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0,
+        "nonemptyDrafts": 0
+      },
+      "browser": {
+        "running": false,
+        "pageCount": 0
+      },
+      "comparisons": [
+        {
+          "reference": "/private/tmp/acanvas-delivery-readonly-fYPXZT/snapshot-before.json",
+          "businessFieldsEqual": true
+        }
+      ]
+    },
+    "immediateBefore": {
+      "measuredAt": "2026-10-09T01:14:47.850Z",
+      "label": "immediate-before",
+      "protectedSnapshot": {
+        "path": "/private/tmp/acanvas-delivery-readonly-fYPXZT/snapshot-immediate-before.json",
+        "directoryMode": "0700",
+        "fileMode": "0600",
+        "tokensIncluded": false,
+        "businessTextPrinted": false
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "status": {
+        "project": {
+          "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+          "name": "acanvas",
+          "root": "/Users/yingbowu/Documents/Projects/acanvas"
+        },
+        "service": {
+          "pid": 27048,
+          "instanceId": "aa0b26a5-cfde-4fe8-a4ae-c404549de66b"
+        },
+        "status": "running"
+      },
+      "counts": {
+        "sessions": 4,
+        "tasks": 27,
+        "assets": 32,
+        "sharedAssets": 28,
+        "evidenceAssets": 4,
+        "objects": 12,
+        "annotations": 15
+      },
+      "activity": {
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0,
+        "nonemptyDrafts": 0
+      },
+      "browser": {
+        "running": false,
+        "pageCount": 0
+      },
+      "comparisons": [
+        {
+          "reference": "/private/tmp/acanvas-delivery-readonly-fYPXZT/snapshot-fresh-reference.json",
+          "businessFieldsEqual": true
+        }
+      ]
+    },
+    "productStop": {
+      "measuredAt": "2026-10-09T01:15:04.594Z",
+      "productRoute": "POST /api/project/stop",
+      "boundProjectId": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+      "boundService": {
+        "pid": 27048,
+        "instanceId": "aa0b26a5-cfde-4fe8-a4ae-c404549de66b"
+      },
+      "responseStatus": 202,
+      "status": "stopped",
+      "normalLifecycle": true
+    },
+    "formalBuild": {
+      "measuredAt": "2026-10-09T01:15:39.024Z",
+      "projectNode": "24.21.0",
+      "tmpdir": "/private/tmp",
+      "testMacros": {
+        "ACANVAS_TEST_CLIPBOARD_FAKE_HANDLE": "OFF",
+        "ACANVAS_TEST_CLIPBOARD_TRIPWIRE": "OFF"
+      },
+      "helper": {
+        "path": "/Users/yingbowu/Documents/Projects/acanvas/.runtime/cef-build/Release/acanvas-surface.app/Contents/MacOS/acanvas-surface",
+        "bytes": 750192,
+        "modifiedAt": "2026-10-09T00:55:05.503Z"
+      },
+      "results": [
+        {
+          "name": "normal-helper",
+          "measuredAt": "2026-10-09T01:15:30.905Z",
+          "status": 0,
+          "log": "/private/tmp/acanvas-delivery-readonly-fYPXZT/normal-helper.log"
+        },
+        {
+          "name": "formal-application",
+          "measuredAt": "2026-10-09T01:15:32.194Z",
+          "status": 0,
+          "log": "/private/tmp/acanvas-delivery-readonly-fYPXZT/formal-application.log"
+        }
+      ],
+      "sharedDistWritten": true,
+      "serviceKeptStoppedDuringBuild": true
+    },
+    "start": {
+      "command": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node dist/src/cli.js project open --project /Users/yingbowu/Documents/Projects/acanvas --port 4317 --session fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "mode": "detached-background-service-only",
+      "projectId": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+      "service": {
+        "pid": 30391,
+        "instanceId": "170f0ac5-4274-4fb8-af75-30ba125eaf89"
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sessionId": "fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "openUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171"
+    },
+    "http": {
+      "measuredAt": "2026-10-09T01:17:09.786Z",
+      "scope": "Read-only controlled project HTTP/API routes and exact served formal build resources; no user page reload or business mutation.",
+      "origin": "http://127.0.0.1:4317",
+      "sessionId": "fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "service": {
+        "pid": 30391,
+        "instanceId": "170f0ac5-4274-4fb8-af75-30ba125eaf89"
+      },
+      "checks": [
+        {
+          "name": "project-status",
+          "status": 200,
+          "pass": true
+        },
+        {
+          "name": "session-list",
+          "status": 200,
+          "pass": true
+        },
+        {
+          "name": "original-session-state",
+          "status": 200,
+          "pass": true
+        },
+        {
+          "name": "unauthenticated-state",
+          "status": 401,
+          "code": "authentication_required",
+          "pass": true
+        },
+        {
+          "name": "invalid-cookie-state",
+          "status": 401,
+          "code": "authentication_required",
+          "pass": true
+        },
+        {
+          "name": "foreign-origin-state",
+          "status": 403,
+          "code": "origin_rejected",
+          "pass": true
+        },
+        {
+          "name": "original-url-homepage",
+          "status": 200,
+          "contentType": "text/html",
+          "cacheControl": "no-cache",
+          "cspPresent": true,
+          "originalSessionQuery": true,
+          "references": [
+            "/assets/main-DtsX9zqw.js",
+            "/assets/content-types-GP_APozu.js",
+            "/assets/content-types-BsJH9bFb.css",
+            "/assets/main-CemAJVyi.css"
+          ],
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/audioReview-Da5NcPoK.css",
+          "status": 200,
+          "bytes": 965,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/audioReview-F6hujoPI.js",
+          "status": 200,
+          "bytes": 1669,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/content-types-BsJH9bFb.css",
+          "status": 200,
+          "bytes": 4751,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/content-types-GP_APozu.js",
+          "status": 200,
+          "bytes": 214881,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/google-sans-latin-CLLqw55C.woff2",
+          "status": 200,
+          "bytes": 35852,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/google-sans-latin-ext-D9SFGpAd.woff2",
+          "status": 200,
+          "bytes": 21320,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/main-CemAJVyi.css",
+          "status": 200,
+          "bytes": 53434,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        },
+        {
+          "name": "built-asset",
+          "path": "/assets/main-DtsX9zqw.js",
+          "status": 200,
+          "bytes": 358222,
+          "byteEqualToFormalBuild": true,
+          "pass": true
+        }
+      ],
+      "assetsChecked": 8,
+      "servedBytes": 691094,
+      "failures": [],
+      "credentialHandling": "Bootstrap token only in the process; response content and user bodies omitted from evidence.",
+      "result": "PASS"
+    }
+  },
+  "businessComparisons": {
+    "status": "PASS",
+    "completed": 2,
+    "scope": "Complete publicly exposed project/session/view/consumer/draft/assets/objects/annotations/tasks/run/snapshot business fields returned by controlled CLI/API, plus exact original asset bytes; service runtime identity and schema/lifecycle metadata may change normally.",
+    "countsBefore": {
+      "sessions": 4,
+      "tasks": 27,
+      "assets": 32,
+      "sharedAssets": 28,
+      "evidenceAssets": 4,
+      "objects": 12,
+      "annotations": 15
+    },
+    "countsAfterFirst": {
+      "sessions": 4,
+      "tasks": 27,
+      "assets": 32,
+      "sharedAssets": 28,
+      "evidenceAssets": 4,
+      "objects": 12,
+      "annotations": 15
+    },
+    "countsAfterSecond": {
+      "sessions": 4,
+      "tasks": 27,
+      "assets": 32,
+      "sharedAssets": 28,
+      "evidenceAssets": 4,
+      "objects": 12,
+      "annotations": 15
+    },
+    "first": {
+      "measuredAt": "2026-10-09T01:16:27.702Z",
+      "label": "after-first",
+      "protectedSnapshot": {
+        "path": "/private/tmp/acanvas-delivery-readonly-fYPXZT/snapshot-after-first.json",
+        "directoryMode": "0700",
+        "fileMode": "0600",
+        "tokensIncluded": false,
+        "businessTextPrinted": false
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "status": {
+        "project": {
+          "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+          "name": "acanvas",
+          "root": "/Users/yingbowu/Documents/Projects/acanvas"
+        },
+        "service": {
+          "pid": 30391,
+          "instanceId": "170f0ac5-4274-4fb8-af75-30ba125eaf89"
+        },
+        "status": "running"
+      },
+      "counts": {
+        "sessions": 4,
+        "tasks": 27,
+        "assets": 32,
+        "sharedAssets": 28,
+        "evidenceAssets": 4,
+        "objects": 12,
+        "annotations": 15
+      },
+      "activity": {
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0,
+        "nonemptyDrafts": 0
+      },
+      "browser": {
+        "running": false,
+        "pageCount": 0
+      },
+      "comparisons": [
+        {
+          "reference": "/private/tmp/acanvas-delivery-readonly-fYPXZT/snapshot-immediate-before.json",
+          "businessFieldsEqual": true
+        }
+      ]
+    },
+    "second": {
+      "measuredAt": "2026-10-09T01:17:25.167Z",
+      "label": "after-second",
+      "protectedSnapshot": {
+        "path": "/private/tmp/acanvas-delivery-readonly-fYPXZT/snapshot-after-second.json",
+        "directoryMode": "0700",
+        "fileMode": "0600",
+        "tokensIncluded": false,
+        "businessTextPrinted": false
+      },
+      "origin": "http://127.0.0.1:4317",
+      "sameUrl": "http://127.0.0.1:4317/?session=fff4c7bb-8ae3-4c66-a717-235fe73e0171",
+      "status": {
+        "project": {
+          "id": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+          "name": "acanvas",
+          "root": "/Users/yingbowu/Documents/Projects/acanvas"
+        },
+        "service": {
+          "pid": 30391,
+          "instanceId": "170f0ac5-4274-4fb8-af75-30ba125eaf89"
+        },
+        "status": "running"
+      },
+      "counts": {
+        "sessions": 4,
+        "tasks": 27,
+        "assets": 32,
+        "sharedAssets": 28,
+        "evidenceAssets": 4,
+        "objects": 12,
+        "annotations": 15
+      },
+      "activity": {
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0,
+        "nonemptyDrafts": 0
+      },
+      "browser": {
+        "running": false,
+        "pageCount": 0
+      },
+      "comparisons": [
+        {
+          "reference": "/private/tmp/acanvas-delivery-readonly-fYPXZT/snapshot-immediate-before.json",
+          "businessFieldsEqual": true
+        },
+        {
+          "reference": "/private/tmp/acanvas-delivery-readonly-fYPXZT/snapshot-after-first.json",
+          "businessFieldsEqual": true
+        }
+      ]
+    },
+    "assetBytes": {
+      "reference": {
+        "measuredAt": "2026-10-09T01:14:29.807Z",
+        "phase": "before",
+        "assetCount": 32,
+        "bytesCompared": 0,
+        "savedOriginalBytes": 91261548,
+        "comparison": "protected-reference-read",
+        "failures": [],
+        "result": "PASS",
+        "controlledInterface": "Already-built asset read CLI, authenticated content GET; evidence uses its owning session.",
+        "protectedCopies": {
+          "directory": "/private/tmp/acanvas-delivery-readonly-fYPXZT/assets-before",
+          "directoryMode": "0700",
+          "fileMode": "0600",
+          "bodyPrinted": false,
+          "credentialsIncluded": false
+        }
+      },
+      "first": {
+        "measuredAt": "2026-10-09T01:16:30.487Z",
+        "phase": "after-first",
+        "assetCount": 32,
+        "bytesCompared": 91261548,
+        "comparison": "exact-Buffer.equals-against-before",
+        "failures": [],
+        "result": "PASS",
+        "controlledInterface": "Already-built asset read CLI, authenticated content GET; evidence uses its owning session.",
+        "protectedCopies": {
+          "directory": "/private/tmp/acanvas-delivery-readonly-fYPXZT/assets-after-first",
+          "directoryMode": "0700",
+          "fileMode": "0600",
+          "bodyPrinted": false,
+          "credentialsIncluded": false
+        }
+      },
+      "second": {
+        "measuredAt": "2026-10-09T01:17:35.083Z",
+        "phase": "after-second",
+        "assetCount": 32,
+        "bytesCompared": 91261548,
+        "comparison": "exact-Buffer.equals-against-before",
+        "failures": [],
+        "result": "PASS",
+        "controlledInterface": "Already-built asset read CLI, authenticated content GET; evidence uses its owning session.",
+        "protectedCopies": {
+          "directory": "/private/tmp/acanvas-delivery-readonly-fYPXZT/assets-after-second",
+          "directoryMode": "0700",
+          "fileMode": "0600",
+          "bodyPrinted": false,
+          "credentialsIncluded": false
+        }
+      }
+    },
+    "hostBindingBoundary": "Existing host_bindings rows have no controlled GET endpoint. Explicit --session startup issues no host/thread binding POST. Internal table rows were kept outside direct inspection; public session and task ownership fields compare equal."
+  },
+  "boundaries": {
+    "sharedDistWritten": true,
+    "formalServiceStoppedOrRestarted": true,
+    "userBoardWritten": false,
+    "keychainAccess": false,
+    "systemClipboardAccess": false,
+    "userChromeProfileAccess": false,
+    "codexAppModified": false,
+    "gitCommitted": false,
+    "topLevelDocumentsEdited": false,
+    "credentialHandling": "Service bootstrap credentials remain only in the built client process; no token or business body is included in this evidence.",
+    "directUserSQLiteAccess": false,
+    "visibleBrowserOrCaptureWindowOpened": false,
+    "realUserBusinessMutation": false
+  }
+}

@@ -1,6 +1,7 @@
 import { resolveContentMime } from '../shared/content-types';
-import type { AnnotationCaptureInput, ApiError, Asset, BoardOperation, BoardState, Bootstrap, CaptureResult, CaptureRetryResult, Draft, Session, SessionView, Task } from '../shared/types';
+import type { AnnotationCaptureInput, ApiError, Asset, BaseSceneSnapshot, BoardOperation, BoardState, Bootstrap, CaptureResult, CaptureRetryResult, CaptureView, CaptureViewOperation, Draft, HtmlSurfaceFrameMetadata, ProjectHtmlSurface, ProjectHtmlSurfaceInput, ScenePresentation, ScenePresentationOperation, SceneSource, Session, SessionView, Task } from '../shared/types';
 import type { BrowserPage, BrowserStatus } from '../shared/browser-capture';
+import type {HtmlPcmBatch,HtmlInputResult} from '../shared/html-surface';
 
 const errorMessages: Record<string, string> = {
   authentication_required: 'Your connection has expired. Reconnect to continue.',
@@ -30,6 +31,21 @@ const errorMessages: Record<string, string> = {
   capture_file_invalid: 'Upload the complete screenshot with its saved dimensions.',
   capture_upload_active: 'Wait for the current upload and query its result.',
   capture_missing: 'Prepare this annotation capture first.',
+  scene_scope: 'Use a scene from this document and task context.',
+  scene_source_missing: 'Save the displayed scene before capturing this annotation.',
+  scene_source_expired: 'Load the current scene and finish the annotation again.',
+  scene_source_conflict: 'Keep the saved scene and target together.',
+  scene_view_closed: 'Reconnect this document to continue capturing.',
+  scene_view_conflict: 'Reconnect the current document view.',
+  scene_operation_conflict: 'Complete the current view operation before continuing.',
+  scene_frame_conflict: 'Confirm the displayed frame before finishing this annotation.',
+  scene_object_conflict: 'Choose an object from the displayed scene.',
+  invalid_scene: 'Check the displayed scene and bitmap dimensions.',
+  surface_unavailable: 'The HTML surface is reconnecting. Try again shortly.',
+  surface_frame_scope: 'Use the HTML frame belonging to this document and view.',
+  surface_missing: 'Reconnect the HTML surface in this view.',
+  surface_renderer_exit: 'The HTML preview is reconnecting.',
+  surface_input_state: 'Use the displayed HTML instance and viewport.',
   invalid_capture: 'Check the screenshot and scene metadata.',
   evidence_scope: 'Read this screenshot in its original task context.',
   evidence_usage: 'Use this screenshot as annotation evidence.',
@@ -103,6 +119,21 @@ export class BoardApi {
   browserStatus(sessionId?: string) { return this.request<BrowserStatus>(`/api/browser/pages${sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : ''}`); }
   closeBrowser(sessionId: string) { return this.request<BrowserStatus>(`/api/browser/pages/${encodeURIComponent(sessionId)}`, { method: 'DELETE', body: JSON.stringify({ instanceId: this.instanceId }) }); }
   saveDraft(draft: Draft) { return this.request<Draft>(`/api/sessions/${encodeURIComponent(draft.sessionId)}/draft`, { method: 'PUT', body: JSON.stringify(draft) }); }
+  private captureViewPath(sessionId: string, viewId?: string) { return `/api/sessions/${encodeURIComponent(sessionId)}/capture-views${viewId ? `/${encodeURIComponent(viewId)}` : ''}`; }
+  registerCaptureView(sessionId: string, documentId: string) { return this.request<CaptureView>(this.captureViewPath(sessionId), { method: 'POST', body: JSON.stringify({ documentId }) }); }
+  sceneSnapshot(sessionId: string, viewId: string, operation: CaptureViewOperation) { return this.request<BaseSceneSnapshot>(`${this.captureViewPath(sessionId, viewId)}/scenes`, { method: 'POST', body: JSON.stringify(operation) }); }
+  confirmScenePresentation(sessionId: string, viewId: string, operation: ScenePresentationOperation) { return this.request<ScenePresentation>(`${this.captureViewPath(sessionId, viewId)}/presented`, { method: 'PUT', body: JSON.stringify(operation) }); }
+  holdScenePresentation(sessionId: string, viewId: string, operation: ScenePresentationOperation) { return this.request<SceneSource>(`${this.captureViewPath(sessionId, viewId)}/presentations`, { method: 'POST', body: JSON.stringify(operation) }); }
+  closeCaptureView(sessionId: string, viewId: string, operation: CaptureViewOperation) { return this.request<{ closed: true }>(this.captureViewPath(sessionId, viewId), { method: 'DELETE', body: JSON.stringify(operation) }); }
+  private htmlSurfacePath(view: CaptureView, surfaceId?: string) { return `${this.captureViewPath(view.sessionId, view.viewId)}/html-surfaces${surfaceId ? `/${encodeURIComponent(surfaceId)}` : ''}`; }
+  private htmlSurfaceIdentity(view: CaptureView) { return { documentId: view.documentId, viewGeneration: view.viewGeneration }; }
+  createHtmlSurface(view: CaptureView, objectId: string, assetId: string, viewport: { width: number; height: number; deviceScaleFactor?: number }) { return this.request<ProjectHtmlSurface>(this.htmlSurfacePath(view), { method: 'POST', body: JSON.stringify({ ...this.htmlSurfaceIdentity(view), objectId, assetId, viewport }) }); }
+  sampleHtmlSurface(view: CaptureView, surfaceId: string) { return this.request<HtmlSurfaceFrameMetadata>(`${this.htmlSurfacePath(view, surfaceId)}/sample`, { method: 'POST', body: JSON.stringify(this.htmlSurfaceIdentity(view)) }); }
+  htmlSurfaceFrame(view: CaptureView, surfaceId: string, frameSeq: number) { return this.request<HtmlSurfaceFrameMetadata>(`${this.htmlSurfacePath(view, surfaceId)}/frames/${frameSeq}?${new URLSearchParams({ documentId: view.documentId, viewGeneration: String(view.viewGeneration) })}`); }
+  inputHtmlSurface(view: CaptureView, surfaceId: string, input: ProjectHtmlSurfaceInput) { return this.request<HtmlInputResult>(`${this.htmlSurfacePath(view, surfaceId)}/input`, { method: 'POST', body: JSON.stringify({ ...this.htmlSurfaceIdentity(view), input }) }); }
+  htmlSurfaceAudio(view:CaptureView,surfaceId:string,afterSeq:number,signal?:AbortSignal){return this.request<HtmlPcmBatch>(`${this.htmlSurfacePath(view,surfaceId)}/audio?${new URLSearchParams({...this.htmlSurfaceIdentity(view),viewGeneration:String(view.viewGeneration),afterSeq:String(afterSeq)})}`,{signal});}
+  resizeHtmlSurface(view: CaptureView, surfaceId: string, viewport: { width: number; height: number }) { return this.request<ProjectHtmlSurface>(`${this.htmlSurfacePath(view, surfaceId)}/viewport`, { method: 'PUT', body: JSON.stringify({ ...this.htmlSurfaceIdentity(view), viewport }) }); }
+  closeHtmlSurface(view: CaptureView, surfaceId: string) { return this.request<{ closed: true }>(this.htmlSurfacePath(view, surfaceId), { method: 'DELETE', body: JSON.stringify(this.htmlSurfaceIdentity(view)) }); }
   send(sessionId: string, draftId: string, expectedRevision: number) { return this.request<{ task: Task; draft: Draft }>(`/api/sessions/${encodeURIComponent(sessionId)}/tasks`, { method: 'POST', body: JSON.stringify({ draftId, expectedRevision }) }); }
   editTask(sessionId: string, taskId: string, draftId: string, expectedRevision: number, cancel = false) { return this.request<{ task: Task; draft: Draft }>(`/api/sessions/${encodeURIComponent(sessionId)}/tasks/${encodeURIComponent(taskId)}/${cancel ? 'cancel-edit' : 'edit'}`, { method: 'POST', body: JSON.stringify({ draftId, expectedRevision }) }); }
   view(sessionId: string, view: SessionView) { return this.request<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/view`, { method: 'PUT', body: JSON.stringify(view) }); }

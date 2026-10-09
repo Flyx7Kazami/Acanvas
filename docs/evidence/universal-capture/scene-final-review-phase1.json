@@ -1,0 +1,158 @@
+{
+  "review": "independent-scene-app-core-phase-1",
+  "measuredAt": "2026-10-08T21:18:04.742102+00:00",
+  "status": "changes-required",
+  "scope": "P3/P4 Scene/App/provider/source and default material capture; native HTML operations reviewed separately",
+  "isolation": {
+    "productionSourcesModified": false,
+    "sharedDistModified": false,
+    "formalServiceAccessed": false,
+    "nativeHelperStarted": false,
+    "clientEngines": [
+      "project Chromium 1193 / 140.0.7339.186",
+      "project Firefox 1490 / 141.0"
+    ],
+    "chromiumSandbox": true
+  },
+  "findings": [
+    {
+      "id": "scene-coordinates",
+      "priority": "P2",
+      "status": "open",
+      "problem": "Page-space and board-space coordinates are combined inconsistently.",
+      "cases": [
+        {
+          "action": "Move canvas origin to CSS x=40,y=30 then normal Done.",
+          "result": "Capture preparation returns 400 and annotation remains incomplete.",
+          "cause": "App stores viewport x/y as camera plus CSS viewport origin; service compares against camera alone.",
+          "evidence": "/private/tmp/acanvas-scene-final-review-wlpSJk/layout/layout-review.json"
+        },
+        {
+          "action": "Use CSS zoom 1.25 and click visible image at CSS 160,150.",
+          "result": "Point world x=128,y=120 is correct, but annotation scope becomes region and objectId is absent.",
+          "cause": "targetForWorld maps world to elementsFromPoint using unscaled session view rather than presented camera and CSS origin.",
+          "evidence": "/private/tmp/acanvas-scene-final-review-wlpSJk/csszoom-point/layout-review.json"
+        }
+      ]
+    },
+    {
+      "id": "scene-semantic-focus",
+      "priority": "P2",
+      "status": "open",
+      "problem": "Transparent semantic controls lack matching visible keyboard focus; file card has an independently positioned raster layout.",
+      "case": "Tab from File.zip article to Download file link.",
+      "result": "DOM link becomes focused while visible Canvas RGBA difference is zero.",
+      "details": "Measured DOM link at x=630.25,y=223,width=79.5,height=19; file producer manually paints text and does not repaint focus or scroll. Article/pin opacity or outline suppression also needs visible focus parity.",
+      "evidence": "/private/tmp/acanvas-scene-final-review-wlpSJk/layout/layout-review.json"
+    },
+    {
+      "id": "scene-target-edit",
+      "priority": "P2",
+      "status": "open",
+      "problem": "Changing a completed annotation target prevents a new normal Done.",
+      "case": "Complete point annotation, open its draft chip, select Canvas region in Target, wait 600 ms, click Done.",
+      "result": "Autosave returns 409 and fails source/target pairing; Done returns 409 and fails capture version. Original server capture remains complete at version 1 while UI shows the changed incomplete target.",
+      "cause": "Local target changes remove sceneSource and rewrite display capture state; ordinary save and captured save do not reconstruct the service-managed state and new source together.",
+      "evidence": "/private/tmp/acanvas-scene-final-review-wlpSJk/target-edit/layout-review.json"
+    }
+  ],
+  "acceptance": [
+    {
+      "criterion": "Independent provider/source ordinary tests",
+      "status": "PASS",
+      "facts": "20 passed, 0 failed; one separate HTML surface transport test skipped. Scope, ordered operations, transactional binding, old deleted objects, target version invalidation, explicit references, CLI and PNG validation retained."
+    },
+    {
+      "criterion": "Synchronous displayed pixels and paired metadata",
+      "status": "PASS",
+      "facts": {
+        "chromiumDPR": 2,
+        "bitmap": {
+          "width": 2880,
+          "height": 2000
+        },
+        "channelsCompared": 6207488,
+        "mismatchedChannels": 0,
+        "networkHoldDoesNotFreezeZoomOrLaterBody": true
+      }
+    },
+    {
+      "criterion": "Default seven materials Done to thumbnail to Send",
+      "status": "PASS",
+      "facts": {
+        "engines": [
+          {
+            "browser": "project Chromium 140.0.7339.186",
+            "video": "numbered VP8 WebM",
+            "videoFrame": 7,
+            "videoTime": 0.7,
+            "materials": 7
+          },
+          {
+            "browser": "project Firefox 141.0",
+            "video": "H264 MP4",
+            "videoTime": 0.7,
+            "materials": 7
+          }
+        ],
+        "exactPNGChannelsCompared": 9842048,
+        "mismatchedChannels": 0,
+        "nativeProvider": false,
+        "captureWindowsOpened": 0,
+        "HTML": "project headless persistent visual surface only"
+      }
+    },
+    {
+      "criterion": "Cancellation before source hold and after committed source-save with delayed response",
+      "status": "PASS",
+      "facts": "Late responses leave incomplete evidence; original comments remain. Later composer body survives the held capture. Saved cancellation advances the service capture version."
+    },
+    {
+      "criterion": "Pending PNG Blob reload, deleted source object and service restart",
+      "status": "PASS",
+      "facts": "IndexedDB stores the copied PNG before upload; reload after source deletion preserves exact pixels and durable source. Same page URL captures again after service restart."
+    },
+    {
+      "criterion": "Point mark at ordinary click",
+      "status": "PASS",
+      "facts": "Click 263,177 persists zero-size world point 263,177 and normalized image target."
+    },
+    {
+      "criterion": "Nonzero origin and page zoom hit ownership",
+      "status": "FAIL",
+      "finding": "scene-coordinates"
+    },
+    {
+      "criterion": "Semantic layout and visible keyboard focus",
+      "status": "FAIL",
+      "finding": "scene-semantic-focus"
+    },
+    {
+      "criterion": "Completed target edit and normal Done",
+      "status": "FAIL",
+      "finding": "scene-target-edit"
+    },
+    {
+      "criterion": "320 px viewport",
+      "status": "PASS",
+      "facts": "Actual page uses 320 px and body does not overflow. Screenshot inspected; expanded target/focus behavior remains pending correction."
+    },
+    {
+      "criterion": "Independent TypeScript checks and isolated Vite build",
+      "status": "PASS",
+      "facts": "Server and web type checks passed; Vite build completed to unique temporary outDir."
+    }
+  ],
+  "fixtureAdaptations": [
+    "Only temporary compiled test copies changed their launch to project Chromium with chromiumSandbox:true.",
+    "Production test oracle reads frame sequence and pixels at the synchronous Canvas drawImage copy boundary; an earlier pre-click sequence sample can advance before actual Done.",
+    "Chromium seven-material test uses self-generated numbered VP8 WebM because this engine rejects the H264 sample. Original copied-PNG and media-time assertions retained."
+  ],
+  "environmentLimits": [
+    "Project Chromium 140 rejects the H264 MP4 fixture and renders its actual preview-error file card; H264 support is not claimed for that engine.",
+    "Actual Safari, Edge and Codex IAB were not tested by this reviewer.",
+    "CEF/native HTML controls, audio, Keychain and clipboard are outside this review.",
+    "Full source/font/widget accessibility and performance percentiles await final core increment."
+  ],
+  "evidenceDirectory": "/private/tmp/acanvas-scene-final-review-wlpSJk"
+}

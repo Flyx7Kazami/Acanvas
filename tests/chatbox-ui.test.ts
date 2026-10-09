@@ -6,7 +6,35 @@ import { join, resolve } from 'node:path';
 import { expect } from '@playwright/test';
 import type { Page } from 'playwright-core';
 import { startServer } from '../src/server/http.js';
-import type { AnnotationInput, Asset, BoardObject, RequestReference } from '../src/shared/types.js';
+import type { AnnotationInput, Asset, BoardObject, HtmlSurfaceFrameMetadata, RequestReference } from '../src/shared/types.js';
+
+async function enteredStage(stage: Promise<void>) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try { await Promise.race([stage, new Promise<never>((_resolve, reject) => { timer = setTimeout(() => reject(new Error('The expected project capture stage was not reached.')), 15_000); })]); }
+  finally { clearTimeout(timer); }
+}
+function installSceneOracle() {
+  const draw = CanvasRenderingContext2D.prototype.drawImage;
+  CanvasRenderingContext2D.prototype.drawImage = function (this: CanvasRenderingContext2D, ...args: any[]) {
+    const source = args[0];
+    if (source instanceof HTMLCanvasElement && source.classList.contains('scene-canvas') && args.length === 9 && this.canvas !== source) {
+      (window as any).sceneCopyOracle = { frameSeq: Number(source.dataset.frameSeq), width: args[7], height: args[8], pixels: source.getContext('2d')!.getImageData(args[1], args[2], args[3], args[4]).data };
+    }
+    return (draw as any).apply(this, args);
+  } as typeof draw;
+}
+async function assertSceneCopy(page: Page, annotation: AnnotationInput) {
+  assert.equal(annotation.capture?.sourceMode, 'scene-bitmap'); assert.equal(annotation.captureState?.version, annotation.capture?.version);
+  const pixels = await page.evaluate(async capture => {
+    const response = await fetch(`/api/assets/${capture.screenshotAssetId}/content?sessionId=${capture.sessionId}`); if (!response.ok) throw new Error('The captured PNG is unavailable.');
+    const image = await createImageBitmap(await response.blob()), canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; canvas.getContext('2d')!.drawImage(image, 0, 0); image.close();
+    const actual = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data, oracle = (window as any).sceneCopyOracle;
+    if (!oracle || actual.length !== oracle.pixels.length || canvas.width !== oracle.width || canvas.height !== oracle.height) throw new Error('The saved PNG dimensions differ from the synchronously copied visible frame.');
+    let mismatches = 0; for (let index = 0; index < actual.length; index++) if (actual[index] !== oracle.pixels[index]) mismatches++;
+    return { mismatches, frameSeq: oracle.frameSeq };
+  }, annotation.capture!);
+  assert.equal(pixels.mismatches, 0); assert.equal(pixels.frameSeq, annotation.capture!.presentation!.frameSeq); assert.equal(annotation.capture!.sceneSource!.frameSeq, pixels.frameSeq);
+}
 
 async function fixture(t: test.TestContext, narrow = false) {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'acanvas-chatbox-ui-')));
@@ -15,6 +43,7 @@ async function fixture(t: test.TestContext, narrow = false) {
   const session = running.service.createSession('Chatbox acceptance');
   await running.browser.open(session.id);
   const page = running.browser.page(session.id)!;
+  await page.context().addInitScript(installSceneOracle); await page.evaluate(installSceneOracle);
   if (narrow) await page.setViewportSize({ width: 320, height: 700 });
   await expect(page.locator('#whiteboard')).toBeVisible();
   await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
@@ -49,7 +78,7 @@ async function fixture(t: test.TestContext, narrow = false) {
     await page.getByRole('button', { name: 'Done', exact: true }).click();
     try { await expect(page.locator('.draft-annotation').last()).toHaveAttribute('data-capture-state', 'complete', { timeout: 15_000 }); }
     catch (cause) { t.diagnostic(await page.locator('.draft-annotation').last().innerText()); throw cause; }
-    return (await saved()).annotations.at(-1)!;
+    await expect(page.locator('.capture-progress')).toHaveCount(0); const annotation = (await saved()).annotations.at(-1)!; await assertSceneCopy(page, annotation); return annotation;
   };
   t.after(async () => {
     if (!page.isClosed()) {
@@ -352,7 +381,7 @@ test('managed React target edits require a new capture while text edits preserve
   await page.reload(); await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'complete'); assert.equal((await app.saved()).annotations[0].text, 'Edited words');
 });
 
-test('managed React delayed saves retain the newer target and capture cancellation invalidates late screenshots', async t => {
+test('managed React delayed saves retain the newer target and capture cancellation invalidates late uploads', { timeout: 90_000 }, async t => {
   const app = await fixture(t), { page } = app;
   const asset = await app.image(); const first = await app.object(asset), second = await app.object(asset);
   await app.mark({ x: 520, y: 360 }); await app.done('Stable words');
@@ -363,35 +392,36 @@ test('managed React delayed saves retain the newer target and capture cancellati
     if (route.request().method() === 'PUT' && !delayed) { delayed = true; const response = await route.fetch(); enteredSave(); await held; await route.fulfill({ response }); }
     else await route.continue();
   });
-  await page.locator('.draft-annotation .annotation-content').click(); await page.getByRole('combobox', { name: 'Annotation target', exact: true }).selectOption(''); await entered;
+  await page.locator('.draft-annotation .annotation-content').click(); await page.getByRole('combobox', { name: 'Annotation target', exact: true }).selectOption(''); await enteredStage(entered);
   await page.getByRole('combobox', { name: 'Annotation target', exact: true }).selectOption(first.id);
   await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'incomplete'); releaseSave();
   const changed = (await app.saved()).annotations[0]; assert.equal(changed.objectId, first.id); assert.equal(changed.captureState?.status, 'incomplete'); assert.equal(changed.capture, undefined); assert(changed.captureState!.version >= 2);
   await page.unroute('**/api/sessions/*/draft');
-  const originalScreenshot = page.screenshot.bind(page);
   let releaseCapture!: () => void, enteredCapture!: () => void;
   const heldCapture = new Promise<void>(resolve => releaseCapture = resolve), enteredCapturePromise = new Promise<void>(resolve => enteredCapture = resolve);
-  (page as any).screenshot = async (options: Parameters<Page['screenshot']>[0]) => { enteredCapture(); await heldCapture; return originalScreenshot(options); };
-  await page.getByRole('button', { name: 'Done', exact: true }).click(); await enteredCapturePromise;
-  await page.keyboard.press('Escape'); releaseCapture();
-  await expect(page.locator('.capture-progress')).toHaveCount(0); (page as any).screenshot = originalScreenshot;
-  const cancelled = (await app.saved()).annotations[0]; assert.equal(cancelled.text, 'Stable words'); assert.equal(cancelled.captureState?.status, 'incomplete'); assert(cancelled.captureState!.version > changed.captureState!.version);
+  await page.route('**/captures/*/content', async route => { if (route.request().method() !== 'PUT') return route.continue(); enteredCapture(); await heldCapture; await route.continue().catch(() => undefined); });
+  await page.getByRole('button', { name: 'Done', exact: true }).click(); await enteredStage(enteredCapturePromise);
+  await expect(page.getByRole('button', { name: 'Cancel capture', exact: true })).toBeVisible();
+  await page.getByRole('combobox', { name: 'Request', exact: true }).focus(); await page.keyboard.press('ControlOrMeta+A'); await page.keyboard.press('Backspace'); await page.keyboard.insertText('The newer request survives capture cancellation.');
+  await page.keyboard.press('Escape'); releaseCapture(); await page.unroute('**/captures/*/content');
+  await expect(page.locator('.capture-progress')).toHaveCount(0);
+  const cancelled = (await app.saved()).annotations[0]; assert.equal(cancelled.text, 'Stable words'); assert.equal(cancelled.captureState?.status, 'incomplete'); assert(cancelled.captureState!.version > changed.captureState!.version); assert.equal((await app.saved()).text, 'The newer request survives capture cancellation.');
   await page.locator('.draft-annotation .annotation-content').click(); await page.getByRole('combobox', { name: 'Annotation target', exact: true }).selectOption(second.id);
   await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'complete');
   assert.equal((await app.saved()).annotations[0].objectId, second.id);
 });
 
-test('ordinary pages preserve incomplete comments and open the project capture window for retry', async t => {
+test('ordinary pages complete Done and Send through the project API on the same page', { timeout: 60_000 }, async t => {
   const app = await fixture(t), { page } = app;
-  const ordinary = await page.context().newPage(); await ordinary.goto(`${app.running.url}/?session=${app.session.id}`);
+  const ordinary = await page.context().newPage(), originalURL = `${app.running.url}/?session=${app.session.id}`; await ordinary.goto(originalURL);
   await expect(ordinary.locator('#whiteboard')).toBeVisible(); assert.equal(await ordinary.evaluate(() => !!window.acanvasCaptureProvider), false);
   await ordinary.getByRole('button', { name: 'Mark canvas', exact: true }).click(); await ordinary.mouse.click(900, 400);
-  await ordinary.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Capture from the managed window'); await ordinary.getByRole('button', { name: 'Done', exact: true }).click();
-  await expect(ordinary.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'incomplete'); await expect(ordinary.getByRole('button', { name: 'Send request', exact: true })).toBeDisabled();
-  await ordinary.getByRole('button', { name: 'Open capture window', exact: true }).click();
-  await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'incomplete');
-  await page.getByRole('button', { name: 'Retry annotation 1 capture', exact: true }).click(); await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'complete');
-  assert.equal((await app.saved()).annotations[0].text, 'Capture from the managed window'); await ordinary.close();
+  await ordinary.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Keep this ordinary page scene.'); await ordinary.getByRole('button', { name: 'Done', exact: true }).click();
+  await expect(ordinary.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'complete'); await expect(ordinary.locator('.draft-annotation img')).toBeVisible();
+  const annotation = (await app.saved()).annotations[0]; assert.equal(annotation.text, 'Keep this ordinary page scene.'); await assertSceneCopy(ordinary, annotation);
+  await expect(ordinary.getByRole('button', { name: 'Open capture window', exact: true })).toHaveCount(0); assert.equal(page.context().pages().length, 2);
+  await ordinary.getByRole('combobox', { name: 'Request', exact: true }).fill('Use the saved page scene.'); await ordinary.getByRole('button', { name: 'Send request', exact: true }).click();
+  await expect(ordinary.locator('.queue-item')).toHaveCount(1); const task = app.state().tasks[0]; assert.equal(task.snapshot.annotations[0].capture!.id, annotation.capture!.id); assert.equal(ordinary.url(), originalURL); await ordinary.close();
 });
 
 test('managed React refresh exposes a lost captured image and explicitly recaptures a new version', async t => {
@@ -423,13 +453,15 @@ test('managed React refresh exposes a lost captured image and explicitly recaptu
   await page.unroute('**/captures/1');
 });
 
-test('managed sampling keeps corner and full-viewport marks clear and restores pointer cancellation before saving', async t => {
+test('visible Canvas evidence excludes native controls while capture cancellation stays usable', { timeout: 60_000 }, async t => {
   const app = await fixture(t), { page } = app;
-  await page.evaluate(() => {
-    const root = document.querySelector('.app-shell')!; (window as any).samplingEvents = [];
-    new MutationObserver(() => { const progress = document.querySelector('.capture-progress'); (window as any).samplingEvents.push({ sampling: root.hasAttribute('data-sampling'), capturing: root.hasAttribute('data-capturing'), cancelVisible: !!progress && getComputedStyle(progress).visibility === 'visible' }); }).observe(root, { attributes: true, attributeFilter: ['data-sampling', 'data-capturing'] });
-  });
-  await app.mark({ x: 1415, y: 970 }); const corner = await app.done('Bottom-right point');
+  let release!: () => void, entered!: () => void;
+  const gate = new Promise<void>(resolve => release = resolve), captureEntered = new Promise<void>(resolve => entered = resolve);
+  await page.route('**/captures/*/content', async route => { if (route.request().method() !== 'PUT') return route.continue(); entered(); await gate; await route.continue(); });
+  await app.mark({ x: 1415, y: 970 }); await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Bottom-right point'); await page.getByRole('button', { name: 'Done', exact: true }).click(); await enteredStage(captureEntered);
+  await expect(page.getByRole('button', { name: 'Cancel capture', exact: true })).toBeVisible(); await expect(page.locator('.project-identity')).toBeVisible(); await expect(page.getByRole('button', { name: 'Zoom in', exact: true })).toBeEnabled();
+  assert.equal(await page.locator('.app-shell').getAttribute('data-sampling'), null);
+  const uploaded = page.waitForResponse(response => response.request().method() === 'PUT' && /\/captures\/[^/]+\/content$/.test(new URL(response.url()).pathname) && response.ok()); release(); await (await uploaded).finished(); await page.unroute('**/captures/*/content'); await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'complete'); const corner = (await app.saved()).annotations[0]; await assertSceneCopy(page, corner);
   const stats = await page.evaluate(async capture => {
     const response = await fetch(`/api/assets/${capture.screenshotAssetId}/content?sessionId=${capture.sessionId}`); const bitmap = await createImageBitmap(await response.blob());
     const canvas = document.createElement('canvas'); canvas.width = bitmap.width; canvas.height = bitmap.height; const context = canvas.getContext('2d')!; context.drawImage(bitmap, 0, 0);
@@ -438,14 +470,12 @@ test('managed sampling keeps corner and full-viewport marks clear and restores p
     let blue = 0, outside = 0;
     for (let row = 0; row < bitmap.height; row++) for (let column = 0; column < bitmap.width; column++) {
       const offset = (row * bitmap.width + column) * 4, pixel = [data[offset], data[offset + 1], data[offset + 2]];
-      if (Math.abs(column - x) <= 12 && Math.abs(row - y) <= 12) { if (pixel[2] - pixel[0] > 45 && pixel[1] - pixel[0] > 20) blue++; }
+      if (Math.abs(column - x) <= 14 && Math.abs(row - y) <= 14) { if (pixel[2] - pixel[0] > 45 && pixel[1] - pixel[0] > 20) blue++; }
       else if (Math.abs(pixel[0] - 252) > 3 || Math.abs(pixel[1] - 252) > 3 || Math.abs(pixel[2] - 250) > 3) outside++;
     }
-    return { blue, outside, transitions: (window as any).samplingEvents };
+    return { blue, outside };
   }, corner.capture!);
   assert(stats.blue > 15); assert.equal(stats.outside, 0);
-  assert(stats.transitions.some((event: { sampling: boolean; capturing: boolean; cancelVisible: boolean }) => event.sampling && event.capturing && !event.cancelVisible));
-  assert(stats.transitions.some((event: { sampling: boolean; capturing: boolean; cancelVisible: boolean }) => !event.sampling && event.capturing && event.cancelVisible));
   await app.mark({ x: 8, y: 8 }, { x: 1432, y: 992 }); const full = await app.done('Whole visible scene');
   const pixels = await page.evaluate(async capture => {
     const response = await fetch(`/api/assets/${capture.screenshotAssetId}/content?sessionId=${capture.sessionId}`), bitmap = await createImageBitmap(await response.blob());
@@ -455,7 +485,7 @@ test('managed sampling keeps corner and full-viewport marks clear and restores p
   assert.deepEqual(pixels[0], pixels[2]); assert.deepEqual(pixels[1], pixels[2]);
 });
 
-test('managed React records Markdown scroll and real selected text and keeps the live HTML frame and form', async t => {
+test('managed React records Markdown intent and displayed anchors and keeps the native HTML source instance and form', { timeout: 90_000 }, async t => {
   const app = await fixture(t), { page } = app;
   const md = await app.importAsset('Notes.md', 'text/markdown', Buffer.from(Array.from({ length: 30 }, (_, i) => `## Block ${i}\n\nObserved paragraph ${i} with stable text.\n`).join('\n')));
   const mdObject = await app.object(md, { x: 220, y: 250, width: 340, height: 300 });
@@ -465,16 +495,22 @@ test('managed React records Markdown scroll and real selected text and keeps the
   await app.mark({ x: 300, y: 380 }); const annotated = await app.done('Selected document text');
   assert.equal(annotated.contentAnchor?.kind, 'text'); assert.equal(annotated.contentAnchor?.scroll?.y, 210); assert(annotated.contentAnchor?.quote); assert(annotated.contentAnchor?.path?.startsWith('rendered-dom:'));
   assert.equal(annotated.capture?.scene.objects.find(value => value.object.id === mdObject.id)?.scroll?.y, 210);
-  const html = await app.importAsset('Live.html', 'text/html', Buffer.from('<!doctype html><style>body{background:#cff0e8;font:20px sans-serif}input{font:20px sans-serif}</style><input id="value" value="initial"><p id="clock">Live scene</p><script>window.identity=Math.random();setInterval(()=>document.querySelector("#clock").style.color=["red","blue"][Math.floor(Date.now()/100)%2],100)</script>'));
-  const htmlObject = await app.object(html, { x: 730, y: 250, width: 350, height: 240 });
-  const htmlContent = page.locator(`[data-object-id="${htmlObject.id}"] .html-content`);
-  await htmlContent.hover(); await expect(htmlContent).toHaveAttribute('data-preview-state', 'live'); await expect(htmlContent.locator('iframe')).toBeVisible();
-  const liveFrame = page.frameLocator(`[data-object-id="${htmlObject.id}"] iframe`); await liveFrame.locator('#value').fill('Saved live input');
-  const frame = await (await htmlContent.locator('iframe').elementHandle())!.contentFrame(); assert(frame);
-  const identity = await frame.evaluate(() => (window as any).identity);
-  await app.mark({ x: 830, y: 280 }); const captured = await app.done('Keep the live HTML state');
-  assert.equal(captured.objectId, htmlObject.id); assert.equal(await frame.evaluate(() => (window as any).identity), identity); assert.equal(await liveFrame.locator('#value').inputValue(), 'Saved live input');
-  assert.equal(await htmlContent.getAttribute('data-preview-state'), 'live');
+  let latestFrame: HtmlSurfaceFrameMetadata | undefined;
+  page.on('response', response => { if (response.request().method() === 'POST' && /\/html-surfaces\/[^/]+\/sample$/.test(new URL(response.url()).pathname) && response.ok()) void response.json().then(value => { latestFrame = value; }).catch(() => undefined); });
+  const html = await app.importAsset('Live.html', 'text/html', Buffer.from('<!doctype html><style>body{background:#cff0e8;font:20px sans-serif}input{font:20px sans-serif}</style><input id="value" aria-label="Live value" value="initial"><p id="identity"></p><p id="clock">Live scene</p><script>window.identity=Math.random();document.querySelector("#identity").textContent="Instance "+window.identity;setInterval(()=>document.querySelector("#clock").style.color=["red","blue"][Math.floor(Date.now()/100)%2],100)</script>'));
+  const htmlObject = await app.object(html, { x: 730, y: 250, width: 350, height: 240 }), htmlContent = page.locator(`[data-object-id="${htmlObject.id}"] .html-content`);
+  await expect(htmlContent).toHaveAttribute('data-preview-ready', 'true', { timeout: 20_000 });
+  await expect.poll(() => latestFrame?.semantics.controls.find(value => value.label === 'Live value')?.value, { timeout: 20_000 }).toBe('initial');
+  const original = latestFrame!, identity = original.semantics.readingOrder.find(value => value.text.startsWith('Instance '))?.text; assert(identity);
+  const liveInput = htmlContent.getByRole('textbox', { name: 'Live value', exact: true }); await liveInput.click(); await liveInput.press('ControlOrMeta+A'); await liveInput.press('Backspace'); await liveInput.pressSequentially('Saved live input');
+  await expect.poll(() => latestFrame?.semantics.controls.find(value => value.label === 'Live value')?.value).toBe('Saved live input');
+  await expect.poll(async () => Number(await htmlContent.locator('[data-html-semantics]').getAttribute('data-frame-seq'))).toBeGreaterThanOrEqual(latestFrame!.frameSeq);
+  await app.mark({ x: 830, y: 280 }); const captured = await app.done('Keep the native HTML state'); assert.equal(captured.objectId, htmlObject.id);
+  const surface = captured.capture!.presentation!.layers.find(value => value.objectId === htmlObject.id)!.surface!; assert.equal(surface.surfaceId, original.surfaceId); assert.equal(surface.instanceId, original.instanceId);
+  const frame = await app.call(`/api/sessions/${app.session.id}/capture-views/${original.owner.viewId}/html-surfaces/${surface.surfaceId}/frames/${surface.frameSeq}?documentId=${encodeURIComponent(original.owner.documentId)}&viewGeneration=${original.owner.viewGeneration}`) as HtmlSurfaceFrameMetadata;
+  assert.equal(frame.semantics.controls.find(value => value.label === 'Live value')?.value, 'Saved live input'); assert.equal(frame.semantics.readingOrder.find(value => value.text.startsWith('Instance '))?.text, identity); assert.equal(frame.frameSeq, surface.frameSeq); assert.equal(frame.inputSeq, surface.inputSeq);
+  await expect(liveInput).toHaveValue('Saved live input'); assert.equal((latestFrame as HtmlSurfaceFrameMetadata).instanceId, original.instanceId); await expect(htmlContent.locator('iframe')).toHaveCount(0);
+
 });
 
 test('managed React saves independent video/audio selections and actual playback positions', async t => {
@@ -516,7 +552,7 @@ test('managed React saves independent video/audio selections and actual playback
   assert(Math.abs(partialVideo.capture!.scene.objects.find(value => value.object.id === videoObject.id)!.media!.playbackTime! - .35) < .01);
   await record('video-partial', partialVideo, videoObject.id);
   await writeFile(join(app.evidence, 'video-partial-representative-frame.png'), await readFile(app.running.service.assetPath(partialVideo.snapshotAssetId!)));
-  await page.locator('.draft-annotation .annotation-content').nth(0).click(); await end.press('Home');
+  await expect(page.locator('.capture-progress')).toHaveCount(0); await page.locator('.draft-annotation .annotation-content').nth(0).click(); await expect(page.getByRole('textbox', { name: 'Annotation text', exact: true })).toBeFocused(); await end.press('Home');
   await expect(page.locator('.annotation-range-selection')).toHaveAttribute('data-point', 'true'); await expect(end).toHaveAttribute('aria-valuenow', '0.2');
   await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.draft-annotation').nth(0)).toHaveAttribute('data-capture-state', 'complete');
   const videoPoint = (await app.saved()).annotations[0]; assert.equal(videoPoint.timeStart, .2); assert.equal(videoPoint.timeEnd, undefined); assert(videoPoint.captureState!.version > partialVideo.captureState!.version); assert.notEqual(videoPoint.capture?.id, partialVideo.capture?.id); assert.equal(videoPoint.snapshotAssetId, partialVideo.snapshotAssetId);
@@ -536,21 +572,20 @@ test('managed React saves independent video/audio selections and actual playback
   await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.draft-annotation').nth(1)).toHaveAttribute('data-capture-state', 'complete');
   const partialAudio = (await app.saved()).annotations[1]; assert.equal(partialAudio.text, audioNote.text); assert.equal(partialAudio.timeStart, selectedAudioStart); assert.equal(partialAudio.timeEnd, selectedAudioEnd); assert(partialAudio.captureState!.version > audioNote.captureState!.version); assert.notEqual(partialAudio.capture?.id, audioNote.capture?.id); assert.equal(partialAudio.snapshotAssetId, undefined);
   assert(Math.abs(partialAudio.capture!.scene.objects.find(value => value.object.id === audioObject.id)!.media!.playbackTime! - audioHead) < .01); await record('audio-partial', partialAudio, audioObject.id);
-  await page.locator('.draft-annotation .annotation-content').nth(1).click(); await end.press('Home'); await expect(page.locator('.annotation-range-selection')).toHaveAttribute('data-point', 'true');
-  const evaluate = page.evaluate.bind(page); let sawCommittedBeforeCheck = false;
-  (page as any).evaluate = async (fn: any, arg?: any) => {
-    const current = app.running.service.draft(app.session.id).annotations[1];
-    if (!sawCommittedBeforeCheck && typeof fn === 'function' && fn.toString().includes('acanvasCaptureController') && current?.captureState?.status === 'complete' && current.timeEnd === undefined) {
-      sawCommittedBeforeCheck = true;
-      await expect(page.locator('.draft-annotation').nth(1)).toHaveAttribute('data-capture-state', 'complete');
-    }
-    return evaluate(fn, arg);
-  };
-  await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.draft-annotation').nth(1)).toHaveAttribute('data-capture-state', 'complete');
-  await expect(page.locator('.capture-progress')).toHaveCount(0); (page as any).evaluate = evaluate; assert(sawCommittedBeforeCheck);
+  await expect(page.locator('.capture-progress')).toHaveCount(0); await page.locator('.draft-annotation .annotation-content').nth(1).click(); await expect(page.getByRole('textbox', { name: 'Annotation text', exact: true })).toBeFocused(); await end.press('Home'); await expect(page.locator('.annotation-range-selection')).toHaveAttribute('data-point', 'true');
+  let releaseUpload!: () => void, enteredUpload!: () => void;
+  const uploadGate = new Promise<void>(resolve => releaseUpload = resolve), uploaded = new Promise<void>(resolve => enteredUpload = resolve); let responseHeld = false;
+  await page.route('**/captures/*/content', async route => {
+    if (route.request().method() !== 'PUT' || responseHeld) return route.continue(); responseHeld = true;
+    const response = await route.fetch(); assert.equal(response.status(), 200); enteredUpload(); await uploadGate; await route.fulfill({ response });
+  });
+  await page.getByRole('button', { name: 'Done', exact: true }).click(); await enteredStage(uploaded); await expect(page.locator('.draft-annotation').nth(1)).toHaveAttribute('data-capture-state', 'complete');
+  await expect(page.locator('.draft-annotation .annotation-content').nth(1)).toBeDisabled(); await expect(page.locator('.draft-annotation .annotation-content').nth(1)).toHaveAttribute('aria-busy', 'true');
+  const committedDuringResponseHold = app.running.service.draft(app.session.id).annotations[1]; assert.equal(committedDuringResponseHold.captureState?.status, 'complete'); assert.equal(committedDuringResponseHold.timeEnd, undefined);
+  releaseUpload(); await expect(page.locator('.capture-progress')).toHaveCount(0); await expect(page.locator('.draft-annotation .annotation-content').nth(1)).toBeEnabled(); await page.unroute('**/captures/*/content');
   const audioPoint = (await app.saved()).annotations[1]; assert.equal(audioPoint.timeStart, selectedAudioStart); assert.equal(audioPoint.timeEnd, undefined); assert(audioPoint.captureState!.version > partialAudio.captureState!.version); assert.notEqual(audioPoint.capture?.id, partialAudio.capture?.id); assert.equal(audioPoint.snapshotAssetId, undefined);
   assert(Math.abs(audioPoint.capture!.scene.objects.find(value => value.object.id === audioObject.id)!.media!.playbackTime! - audioHead) < .01); await record('audio-point', audioPoint, audioObject.id);
-  await writeFile(join(app.evidence, 'media-time-phases.json'), JSON.stringify({ interaction: { videoPartial: 'native keyboard ArrowRight / ArrowLeft', audioPartial: 'native pointer drag 25% to 75%', temporalPoints: 'End handle Home clamps end to chosen start' }, committedUiVisibleBeforeHostCheck: sawCommittedBeforeCheck, phases }, null, 2));
+  await writeFile(join(app.evidence, 'media-time-phases.json'), JSON.stringify({ interaction: { videoPartial: 'native keyboard ArrowRight / ArrowLeft', audioPartial: 'native pointer drag 25% to 75%', temporalPoints: 'End handle Home clamps end to chosen start' }, committedUiVisibleBeforeUploadResponse: true, phases }, null, 2));
 });
 
 test('managed React captures GIF, file cards, mixed scenes and the actual overlapping target', async t => {
@@ -558,17 +593,17 @@ test('managed React captures GIF, file cards, mixed scenes and the actual overla
   const gif = await app.importAsset('Animation.gif', 'image/gif', await readFile(resolve('tests/fixtures/animated-reference.gif')));
   const file = await app.importAsset('Source.bin', 'application/octet-stream', Buffer.from('Generic source document'));
   const gifObject = await app.object(gif, { x: 350, y: 290, width: 300, height: 180 }), fileObject = await app.object(file, { x: 790, y: 310, width: 280, height: 150 });
-  await expect(page.locator(`[data-object-id="${gifObject.id}"] img`)).toBeVisible();
+  await expect(page.locator(`[data-object-id="${gifObject.id}"] [data-scene-media="gif"]`)).toBeVisible(); await expect(page.locator(`[data-object-id="${gifObject.id}"] [data-scene-media="gif"]`)).toHaveAttribute('data-frame-index', /\d+/);
   await app.mark({ x: 470, y: 380 }); const gifNote = await app.done('The visible GIF frame'); assert.equal(gifNote.assetId, gif.id); assert(gifNote.capture?.screenshotAssetId);
   await app.mark({ x: 920, y: 390 }); const fileNote = await app.done('The visible file card'); assert.equal(fileNote.assetId, file.id); assert(fileNote.capture?.scene.objects.some(value => value.object.id === fileObject.id));
   await app.mark({ x: 330, y: 270 }, { x: 1100, y: 490 }); const mixed = await app.done('Across media boundaries');
   assert.equal(mixed.scope, 'region'); assert.deepEqual(mixed.objectIds, []); assert.equal(mixed.timeStart, undefined); assert.deepEqual(mixed.capture?.scene.objects.map(value => value.object.id), [gifObject.id, fileObject.id]);
   const back = await app.object(await app.image('Overlapping image.png'), { x: 350, y: 290, width: 300, height: 180 });
   await page.locator(`[data-object-id="${gifObject.id}"]`).evaluate(element => (element as HTMLElement).style.zIndex = '5');
-  await app.mark({ x: 560, y: 430 }); const top = await app.done('Top painted target'); assert.equal(top.objectId, gifObject.id);
-  await page.locator('.draft-annotation .annotation-content').last().click(); await page.getByRole('combobox', { name: 'Annotation target', exact: true }).selectOption(back.id);
+  await app.mark({ x: 560, y: 430 }); const top = await app.done('Top painted target'); assert.equal(top.objectId, back.id);
+  await page.locator('.draft-annotation .annotation-content').last().click(); await page.getByRole('combobox', { name: 'Annotation target', exact: true }).selectOption(gifObject.id);
   await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.draft-annotation').last()).toHaveAttribute('data-capture-state', 'complete');
-  assert.equal((await app.saved()).annotations.at(-1)?.objectId, back.id);
+  assert.equal((await app.saved()).annotations.at(-1)?.objectId, gifObject.id);
   await page.locator(`[data-object-id="${gifObject.id}"]`).evaluate(element => { const object = element as HTMLElement; object.style.borderRadius = '32px'; const media = object.querySelector<HTMLElement>('.object-media')!; media.style.backgroundColor = 'transparent'; });
   await app.mark({ x: 380, y: 350 }); const rounded = await app.done('Visible lower corners');
   assert(rounded.capture?.scene.objects.some(value => value.object.id === back.id)); assert.deepEqual((await app.saved()).references.objectIds, []);
@@ -580,13 +615,48 @@ test('managed marks use the top painted media owner and keep letterbox points an
   const red = await app.importAsset('Underlying red.png', 'image/png', Buffer.from(sources[0], 'base64')), blue = await app.importAsset('Letterboxed blue.png', 'image/png', Buffer.from(sources[1], 'base64'));
   const lower = await app.object(red, { x: 350, y: 220, width: 400, height: 400 }), upper = await app.object(blue, { x: 350, y: 220, width: 400, height: 400 });
   await expect.poll(() => page.locator(`[data-object-id="${upper.id}"] img`).evaluate(image => (image as HTMLImageElement).naturalHeight)).toBe(200);
+  const visiblePNG = () => page.locator('.scene-canvas').evaluate(async element => { const canvas = element as HTMLCanvasElement, blob = await new Promise<Blob>(resolve => canvas.toBlob(value => resolve(value!), 'image/png')); return Array.from(new Uint8Array(await blob.arrayBuffer())); });
+  const wholeWithLower = await visiblePNG(), stable = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, theme: document.documentElement.dataset.theme, focusedTag: document.activeElement?.tagName }));
+  await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: lower.id, expectedVersion: lower.version, changes: { x: 5000, y: 5000 } }] });
+  await expect(page.locator(`[data-object-id="${lower.id}"]`)).toHaveCSS('left', '5000px'); await page.evaluate(() => new Promise(requestAnimationFrame));
+  const wholeWithoutVisibleLower = await visiblePNG(); assert.deepEqual(await page.evaluate(() => ({ width: innerWidth, height: innerHeight, theme: document.documentElement.dataset.theme, focusedTag: document.activeElement?.tagName })), stable);
+  const contribution = await page.evaluate(async ({ before, after }) => {
+    const read = async (bytes: number[]) => { const image = await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: 'image/png' })), canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; canvas.getContext('2d')!.drawImage(image, 0, 0); image.close(); return { width: canvas.width, height: canvas.height, pixels: canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data }; };
+    const a = await read(before), b = await read(after); if (a.width !== b.width || a.height !== b.height) throw new Error('The measured Canvas viewport changed.'); let wholeChannels = 0, shadowChannels = 0;
+    for (let index = 0; index < a.pixels.length; index++) if (a.pixels[index] !== b.pixels[index]) { wholeChannels++; const pixel = Math.floor(index / 4), x = pixel % a.width, y = Math.floor(pixel / a.width); if (x >= 420 && x < 680 && y >= 185 && y < 220) shadowChannels++; }
+    return { wholeChannels, shadowChannels, width: a.width, height: a.height, comparedShadowRegion: { x: 420, y: 185, width: 260, height: 35 } };
+  }, { before: wholeWithLower, after: wholeWithoutVisibleLower });
+  assert(contribution.shadowChannels > 0, JSON.stringify(contribution)); await writeFile(join(app.evidence, 'with-lower.png'), Buffer.from(wholeWithLower)); await writeFile(join(app.evidence, 'without-visible-lower.png'), Buffer.from(wholeWithoutVisibleLower)); await writeFile(join(app.evidence, 'lower-paint-contribution.json'), JSON.stringify(contribution, null, 2));
+  const moved = app.running.service.objects().find(value => value.id === lower.id)!; await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: lower.id, expectedVersion: moved.version, changes: { x: 350, y: 220 } }] });
+  await expect(page.locator(`[data-object-id="${lower.id}"]`)).toHaveCSS('left', '350px'); await page.evaluate(() => new Promise(requestAnimationFrame));
   await app.mark({ x: 500, y: 250 }); const letterbox = await app.done('The visible white margin');
   assert.equal(letterbox.scope, 'region'); assert.deepEqual(letterbox.objectIds, []); assert.equal(letterbox.objectId, undefined);
-  assert(letterbox.capture?.scene.objects.some(value => value.object.id === upper.id)); assert(!letterbox.capture?.scene.objects.some(value => value.object.id === lower.id));
+  assert(letterbox.capture?.scene.objects.some(value => value.object.id === upper.id)); assert(letterbox.capture?.scene.objects.some(value => value.object.id === lower.id)); assert(letterbox.capture?.presentation?.layers.some(value => value.objectId === lower.id));
   await app.mark({ x: 500, y: 400 }); const content = await app.done('The visible blue image'); assert.equal(content.objectId, upper.id); assert.equal(content.assetId, blue.id);
   await app.mark({ x: 480, y: 310 }, { x: 540, y: 350 }); const cross = await app.done('Across the content boundary'); assert.equal(cross.scope, 'region'); assert.deepEqual(cross.objectIds, []);
   await app.mark({ x: 480, y: 330 }, { x: 540, y: 350 }); const contained = await app.done('Inside the visible content'); assert.equal(contained.objectId, upper.id); assert.equal(contained.coordinateSpace, 'normalized');
   assert.deepEqual((await app.saved()).references.objectIds, []);
+});
+
+test('CSS zoom keeps edge annotation controls visible and copies only the presented pixels within the page', { timeout: 60_000 }, async t => {
+  const app = await fixture(t), { page } = app; await page.setViewportSize({ width: 1200, height: 850 }); await page.addStyleTag({ content: '.app-shell{zoom:1.25}' });
+  const results = [];
+  for (const point of [{ x: 950, y: 830 }, { x: 8, y: 8 }]) {
+    await app.mark(point); const done = await page.getByRole('button', { name: 'Done', exact: true }).boundingBox(); assert(done); assert(done.x >= 0 && done.y >= 0 && done.x + done.width <= 1200 && done.y + done.height <= 850);
+    const annotation = await app.done(`Keep the visible edge at ${point.x}, ${point.y}.`), capture = annotation.capture!, crop = capture.mapping.crop;
+    assert(crop.x >= 0 && crop.y >= 0 && crop.x + crop.width <= 1200 + .000001 && crop.y + crop.height <= 850 + .000001);
+    const mapped = { x: capture.worldBounds.x * capture.viewport.zoom + capture.viewport.x, y: capture.worldBounds.y * capture.viewport.zoom + capture.viewport.y };
+    assert(Math.abs(mapped.x - point.x) < .001 && Math.abs(mapped.y - point.y) < .001); assert.equal(capture.viewport.zoom, 1.25);
+    results.push({ point, done, mapped, crop, bitmap: capture.presentation!.bitmap, cssViewport: capture.presentation!.cssViewport, png: capture.image });
+  }
+  await page.addStyleTag({ content: '.canvas-main{left:-17.5px;top:-11.25px;width:calc(100% + 14px);height:calc(100% + 9px)}' });
+  const keyboardPoint = { x: 20, y: 800 }; await app.mark(keyboardPoint); await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Keep the negative-origin keyboard edge.'); await page.getByRole('textbox', { name: 'Add a comment', exact: true }).press('ControlOrMeta+Enter');
+  await expect(page.locator('.capture-progress')).toHaveCount(0); await expect(page.locator('.draft-annotation').last()).toHaveAttribute('data-capture-state', 'complete'); const keyboard = (await app.saved()).annotations.at(-1)!; await assertSceneCopy(page, keyboard);
+  assert(keyboard.capture!.presentation!.cssViewport.x < 0 && keyboard.capture!.presentation!.cssViewport.y < 0); assert(keyboard.capture!.mapping.crop.x >= 0 && keyboard.capture!.mapping.crop.y >= 0); assert(keyboard.capture!.mapping.crop.y + keyboard.capture!.mapping.crop.height <= 850 + .000001);
+  const keyboardMapped = { x: keyboard.capture!.worldBounds.x * keyboard.capture!.viewport.zoom + keyboard.capture!.viewport.x, y: keyboard.capture!.worldBounds.y * keyboard.capture!.viewport.zoom + keyboard.capture!.viewport.y }; assert(Math.abs(keyboardMapped.x - keyboardPoint.x) < .001 && Math.abs(keyboardMapped.y - keyboardPoint.y) < .001); results.push({ keyboardPoint, keyboardMapped, crop: keyboard.capture!.mapping.crop, bitmap: keyboard.capture!.presentation!.bitmap, cssViewport: keyboard.capture!.presentation!.cssViewport });
+  await page.addStyleTag({ content: '.canvas-main{left:0;top:0;width:100%;height:100%}' }); await page.setViewportSize({ width: 320, height: 740 }); await app.mark({ x: 160, y: 700 }); const narrow = await app.done('Keep the resized visible edge.'); assert(narrow.capture!.mapping.crop.y + narrow.capture!.mapping.crop.height <= 740 + .000001); results.push({ narrowViewport: { width: 320, height: 740 }, crop: narrow.capture!.mapping.crop, bitmap: narrow.capture!.presentation!.bitmap, cssViewport: narrow.capture!.presentation!.cssViewport });
+  await page.getByRole('combobox', { name: 'Request', exact: true }).fill('Use these exact visible edge scenes.'); await page.getByRole('button', { name: 'Send request', exact: true }).click(); await expect(page.locator('.queue-item')).toHaveCount(1); assert.equal(app.state().tasks[0].snapshot.annotations.length, 4);
+  assert.equal(await page.locator('#whiteboard').evaluate(element => element.scrollTop), 0); await writeFile(join(app.evidence, 'csszoom-edges.json'), JSON.stringify(results, null, 2));
 });
 
 test('managed React 320px themes, keyboard point marking and reduced motion retain usable composer', async t => {

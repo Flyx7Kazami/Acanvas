@@ -1,0 +1,189 @@
+{
+  "date": "2026-10-09",
+  "stage": "scene source, project API transport and provider module",
+  "node": "v24.21.0",
+  "environment": "isolated temporary projects; canonical TMPDIR=/private/tmp",
+  "runtimeChanges": "no user project service or board changes",
+  "interfaces": {
+    "viewRegistration": "POST /api/sessions/:sessionId/capture-views",
+    "sceneDelivery": "POST /api/sessions/:sessionId/capture-views/:viewId/scenes",
+    "presentedConfirmation": "PUT /api/sessions/:sessionId/capture-views/:viewId/presented",
+    "doneHold": "POST /api/sessions/:sessionId/capture-views/:viewId/presentations",
+    "viewClose": "DELETE /api/sessions/:sessionId/capture-views/:viewId",
+    "htmlCreate": "POST /api/sessions/:sessionId/capture-views/:viewId/html-surfaces",
+    "htmlSample": "POST /api/sessions/:sessionId/capture-views/:viewId/html-surfaces/:surfaceId/sample",
+    "htmlFrame": "GET /api/sessions/:sessionId/capture-views/:viewId/html-surfaces/:surfaceId/frames/:frameSeq",
+    "htmlPixels": "GET /api/sessions/:sessionId/capture-views/:viewId/html-surfaces/:surfaceId/frames/:frameSeq/content",
+    "htmlInput": "POST /api/sessions/:sessionId/capture-views/:viewId/html-surfaces/:surfaceId/input",
+    "htmlResize": "PUT /api/sessions/:sessionId/capture-views/:viewId/html-surfaces/:surfaceId/viewport",
+    "htmlClose": "DELETE /api/sessions/:sessionId/capture-views/:viewId/html-surfaces/:surfaceId",
+    "operationIdentity": [
+      "documentId",
+      "viewGeneration",
+      "operationSeq"
+    ],
+    "sourceIdentity": [
+      "projectId",
+      "sessionId",
+      "documentId",
+      "viewId",
+      "viewGeneration",
+      "id",
+      "baseSceneId",
+      "frameSeq",
+      "operationSeq"
+    ],
+    "durableAnnotationSourceKey": [
+      "session_id",
+      "draft_id",
+      "annotation_id",
+      "version"
+    ],
+    "providerFactory": "createProjectCaptureProvider(transport, {sessionId, documentId?})",
+    "providerMethods": [
+      "ready",
+      "sceneSnapshot",
+      "confirmPresentation",
+      "freezeAndHold",
+      "cancelPending",
+      "capture",
+      "cancel",
+      "resume",
+      "close"
+    ],
+    "pendingFreezeIdentity": [
+      "documentId",
+      "sessionId",
+      "draftId",
+      "annotationId",
+      "pendingGeneration"
+    ],
+    "pendingFreezeCancellation": "freezeAndHold accepts AbortSignal and returns an awaitable task with identity and cancel()."
+  },
+  "sourceChecks": [
+    "Service-issued full scene belongs to project, session, document and view generation.",
+    "Presented confirmation and Done hold follow view operation order; altered sequence replay is rejected.",
+    "The current confirmed base scene survives candidate expiry and candidate retention limits.",
+    "Done hold accepts the confirmed presentation and verifies retained HTML frame ownership.",
+    "Confirmed HTML frames are retained until presentation replacement or view close.",
+    "First annotation save and source binding share the draft transaction and version.",
+    "Read, save, prepare and Send resolve the same durable annotation source.",
+    "Moving or deleting an object after Done preserves the service-delivered object version.",
+    "New target or source advances the annotation version; text changes preserve the source.",
+    "Queued request edits inherit their original source; new targets use a new Done source.",
+    "Closed views reject fresh holds; persisted evidence can complete after close and restart.",
+    "Explicit object references retain their independent Send availability rule.",
+    "PNG bytes, decoded dimensions, crop mapping and original capture guards remain enforced.",
+    "Normalized object geometry uses contentWorldBounds, including letterboxing.",
+    "The presentation camera stores actual positive CSS-adjusted scale; source capture uses that same scale.",
+    "HTML surface owner includes the service-delivered asset identity.",
+    "Media precision and frame index are validated and retained in scene and capture conversion."
+  ],
+  "resourceBounds": {
+    "candidateSceneLifetimeMinutes": 10,
+    "unpresentedCandidateScenesPerView": 8,
+    "unboundDoneSourcesPerView": 8,
+    "fullSceneObjects": 10000,
+    "captureReferenceObjects": 64,
+    "captureReferenceAssets": 256,
+    "bitmapPixels": 16000000,
+    "capturePngMiB": 20,
+    "providerDefaultAttempts": 3,
+    "providerDefaultPendingCaptures": 4
+  },
+  "measurements": [
+    {
+      "command": "npm run typecheck",
+      "result": "passed",
+      "scope": "Final shared source APIs, provider module, HTML manager hooks and existing client types."
+    },
+    {
+      "command": "npm run build:server && ACANVAS_HTML_SURFACE_TESTS=1 .runtime/node_modules/node/bin/node --test dist/tests/scene-source.test.js dist/tests/annotation-capture.test.js",
+      "result": "passed",
+      "passed": 22,
+      "failed": 0,
+      "scope": "New source data tests, existing capture lifecycle, and actual managed Chromium HTML surface HTTP transport; completed before CEF experiment suspension."
+    },
+    {
+      "command": "npm run test",
+      "result": "partial failure",
+      "total": 148,
+      "passed": 137,
+      "failed": 5,
+      "skipped": 6,
+      "failures": [
+        "chatbox media slider timing",
+        "html-bundle temporary path alias",
+        "html-bundle temporary entry alias",
+        "html-bundle ancestor swap fixture alias",
+        "html-bundle directory swap fixture alias"
+      ]
+    },
+    {
+      "command": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test dist/tests/html-bundle.test.js",
+      "result": "passed",
+      "passed": 5,
+      "failed": 0,
+      "scope": "Canonical macOS temporary path rerun of all bundle regressions, including the four first-run failures."
+    },
+    {
+      "command": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test --test-name-pattern='managed React saves independent video/audio selections and actual playback positions' dist/tests/chatbox-ui.test.js",
+      "result": "passed",
+      "passed": 1,
+      "failed": 0,
+      "scope": "Isolated rerun of the first-run slider timing failure."
+    },
+    {
+      "command": "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test dist/tests/project-capture-provider.test.js dist/tests/scene-source.test.js",
+      "result": "passed",
+      "passed": 15,
+      "failed": 0,
+      "skipped": 1,
+      "scope": "Six provider and nine source tests; optional HTML experiment disabled."
+    },
+    {
+      "command": "npm run build:server && TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test dist/tests/project-capture-provider.test.js",
+      "result": "passed",
+      "passed": 9,
+      "failed": 0,
+      "scope": "Original six provider tests plus pending hold cancellation, committed save response cancellation and close cancellation against actual isolated SQLite persistence."
+    },
+    {
+      "command": "npm run typecheck && TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test dist/tests/project-capture-provider.test.js dist/tests/gif-decoder.test.js dist/tests/scene-source.test.js",
+      "result": "passed",
+      "passed": 23,
+      "failed": 0,
+      "skipped": 1,
+      "scope": "Ten provider, ten scene-source and three GIF tests. Scaled content bounds and delayed view initialization cleanup included."
+    }
+  ],
+  "providerChecks": [
+    "Freeze callback runs synchronously before presentation, hold or draft requests.",
+    "Pixels and copied presentation metadata survive later scene changes.",
+    "Lost hold, save, prepare and upload responses recover the same source and capture identities.",
+    "Bounded encoding retry reuses copied pixels.",
+    "Cancelled upload advances the service version and rejects delayed completion.",
+    "A new document resumes supplied persisted PNG pixels using the durable source after original view close and service restart.",
+    "Pending capture limits include pixel copies awaiting queued service saves.",
+    "Pending freeze identity is registered synchronously and remains cancellable before a capture version exists.",
+    "Cancellation during a delayed Done hold saves no annotation and accepts no late source.",
+    "Cancellation during a committed save response queries the matching source and invalidates its version while retaining the latest request body and annotation comment.",
+    "Close cancels pending stages and rejects late persistence completion."
+  ],
+  "pending": [
+    "Production App integration with the unified visible SceneRenderer and this provider.",
+    "Application-managed persistent Blob storage for captures that have not reached the service.",
+    "Complete media renderer, HTML semantics and production integration acceptance.",
+    "Optional native CEF experiment remains suspended after its unexpected Keychain access request."
+  ],
+  "containmentReadOnlyCheck": {
+    "inventoryFields": [
+      "pid",
+      "ppid",
+      "comm"
+    ],
+    "matchingOwnedExperimentalHelpers": 0,
+    "signalsSent": 0,
+    "keychainAccess": "none"
+  }
+}

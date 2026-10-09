@@ -14,8 +14,10 @@ const sameTarget = (a: AnnotationInput, b: AnnotationInput) => JSON.stringify(an
 const draftIntent = (value: Draft) => JSON.stringify({ id: value.id, sessionId: value.sessionId, editingTaskId: value.editingTaskId, text: value.text, attachments: value.attachments, references: comparableReferences(value.references), annotations: value.annotations.map(({ captureState, capture, ...annotation }) => annotation) });
 const displayAnnotation = (local: AnnotationInput, server?: AnnotationInput): AnnotationInput => {
   if (!server?.captureState) return local;
-  return sameTarget(local, server) ? { ...local, captureState: server.captureState, capture: server.capture } : { ...local, captureState: { version: server.captureState.version, status: 'incomplete' }, capture: undefined };
+  return sameTarget(local, server) ? { ...local, sceneSource: server.sceneSource, captureState: server.captureState, capture: server.capture } : { ...local, sceneSource: undefined, captureState: { version: server.captureState.version, status: 'incomplete' }, capture: undefined };
 };
+/** Capture versions and records come from the service; local target edits retain their own intent. */
+const annotationForSave = (annotation: AnnotationInput, server?: AnnotationInput): AnnotationInput => server?.captureState ? { ...annotation, captureState: server.captureState, capture: server.capture } : annotation;
 
 export function useBoard() {
   const api = useMemo(() => new BoardApi(), []);
@@ -27,6 +29,7 @@ export function useBoard() {
   const error = failure.message;
   const setError = useCallback((message: string) => setFailure(current => ({ message, revision: current.revision + (message ? 1 : 0) })), []);
   const [connection, setConnection] = useState<'connecting' | 'connected' | 'reconnecting'>('connecting');
+  const [serviceInstance, setServiceInstance] = useState('');
   const [saveState, setSaveState] = useState<SaveState>('saved');
   const [switching, setSwitching] = useState(false);
   const [sending, setSending] = useState(false);
@@ -104,7 +107,7 @@ export function useBoard() {
       reconnectTimerRef.current = window.setTimeout(() => {
         reconnectTimerRef.current = 0;
         if (!alive || api.projectChanged) return;
-        reconnectingRequest = api.bootstrap().then(() => alive ? refresh() : undefined).then(() => { if (alive) connectEvents(); }).catch(cause => { if (alive) { if (cause instanceof RequestError && cause.code === 'project_changed') showError(cause); else reconnect(); } }).finally(() => { reconnectingRequest = undefined; });
+      reconnectingRequest = api.bootstrap().then(bootstrap => { if (alive) { setServiceInstance(bootstrap.service.instanceId); return refresh(); } }).then(() => { if (alive) connectEvents(); }).catch(cause => { if (alive) { if (cause instanceof RequestError && cause.code === 'project_changed') showError(cause); else reconnect(); } }).finally(() => { reconnectingRequest = undefined; });
       }, 800);
     };
     const connectEvents = () => {
@@ -121,6 +124,7 @@ export function useBoard() {
     (async () => {
       const bootstrap = await api.bootstrap();
       if (!alive) return;
+      setServiceInstance(bootstrap.service.instanceId);
       if (!sessionRef.current) {
         const remembered = sessionStorage.getItem(`acanvas-context:${bootstrap.project.id}`);
         const sessionId = remembered || (await api.createSession('Creative tasks')).id;
@@ -140,7 +144,7 @@ export function useBoard() {
       if (current.conflict) throw new RequestError('Your draft was updated elsewhere. Compare both versions to continue.', 409, 'draft_revision_conflict');
       const saving = { value: { ...snapshot.value, revision: current.confirmedRevision, annotations: snapshot.value.annotations.map(annotation => {
         const server = current.serverAnnotations.find(value => value.id === annotation.id);
-        return server?.captureState ? { ...annotation, captureState: server.captureState, capture: server.capture } : annotation;
+        return annotationForSave(annotation, server);
       }) }, editRevision: snapshot.editRevision, expectedRevision: current.confirmedRevision };
       current.inflight = saving; current.lastAttempt = saving; current.failed = false;
       if (sessionRef.current === sessionId) setSaveState('saving');
@@ -214,6 +218,32 @@ export function useBoard() {
     if (sessionRef.current === saved.sessionId) reflectDraft(next);
     return true;
   }, [reflectDraft]);
+
+  /** Service capture saves share the draft queue and merge local edits made after Done. */
+  const saveCapturedDraft = useCallback((candidate: Draft): Promise<Draft> => {
+    const sessionId = candidate.sessionId, draftId = candidate.id;
+    window.clearTimeout(draftTimers.current.get(sessionId));
+    const pending = (draftQueues.current.get(sessionId) || Promise.resolve()).catch(() => undefined).then(async () => {
+      const current = drafts.current.get(sessionId);
+      if (!current || current.value.id !== draftId || current.conflict) throw new RequestError('Load the current annotation draft.', 409, 'draft_conflict');
+      const captured = candidate.annotations.find(value => value.sceneSource && !current.value.annotations.some(local => local.id === value.id && local.sceneSource?.id === value.sceneSource?.id));
+      if (!captured) throw new RequestError('Read the copied annotation source.', 409, 'scene_source_conflict');
+      const local = current.value.annotations.find(value => value.id === captured.id);
+      if (!local || !sameTarget(local, captured)) throw new RequestError('The annotation target changed.', 409, 'capture_version_conflict');
+      const saving = { value: { ...current.value, revision: current.confirmedRevision, annotations: current.value.annotations.map(value => annotationForSave(value.id === captured.id ? { ...value, sceneSource: captured.sceneSource, captureState: value.captureState ?? captured.captureState } : value, current.serverAnnotations.find(server => server.id === value.id))) }, editRevision: current.editRevision, expectedRevision: current.confirmedRevision };
+      current.inflight = saving; current.lastAttempt = saving;
+      try {
+        const saved = await api.saveDraft(saving.value), latest = drafts.current.get(sessionId);
+        if (latest?.value.id === draftId && saved.revision >= latest.confirmedRevision) {
+          latest.confirmedRevision = saved.revision; latest.serverAnnotations = saved.annotations; latest.savedEditRevision = Math.max(latest.savedEditRevision, saving.editRevision); latest.failed = false;
+          latest.value = latest.editRevision === saving.editRevision ? saved : { ...latest.value, revision: saved.revision, annotations: latest.value.annotations.map(value => displayAnnotation(value, saved.annotations.find(annotation => annotation.id === value.id))) };
+          if (sessionRef.current === sessionId) reflectDraft(latest);
+        }
+        return saved;
+      } finally { const latest = drafts.current.get(sessionId); if (latest?.inflight === saving) { latest.inflight = undefined; if (sessionRef.current === sessionId) reflectDraft(latest); } }
+    });
+    draftQueues.current.set(sessionId, pending.then(() => undefined, () => undefined)); return pending;
+  }, [api, reflectDraft]);
 
   const changeDraft = useCallback((change: (value: Draft) => Draft) => {
     const current = drafts.current.get(sessionRef.current)?.value;
@@ -316,5 +346,5 @@ export function useBoard() {
     const handler = (event: BeforeUnloadEvent) => { if ([...drafts.current.values()].some(value => value.editRevision !== value.savedEditRevision)) event.preventDefault(); };
     window.addEventListener('beforeunload', handler); return () => window.removeEventListener('beforeunload', handler);
   }, []);
-  return { api, state, draft, draftConflict, view, error, errorRevision: failure.revision, connection, saveState, switching, sending, projectChanged, setError, showError, refresh, changeDraft, changeDraftFor, getDraftFor, acceptSavedDraft, updateView, switchSession, createSession, send, editTask, operations, flushDraft, resolveDraftConflict };
+  return { api, state, draft, draftConflict, view, error, errorRevision: failure.revision, connection, serviceInstance, saveState, switching, sending, projectChanged, setError, showError, refresh, changeDraft, changeDraftFor, getDraftFor, acceptSavedDraft, saveCapturedDraft, updateView, switchSession, createSession, send, editTask, operations, flushDraft, resolveDraftConflict };
 }

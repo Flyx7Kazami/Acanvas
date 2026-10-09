@@ -4,22 +4,24 @@ import { createReadStream } from 'node:fs';
 import { open, mkdir, readFile, realpath, rename, rm, stat } from 'node:fs/promises';
 import { dirname, extname, resolve, relative } from 'node:path';
 import type { AddressInfo } from 'node:net';
-import type { AnnotationCaptureInput, Asset, Bootstrap, CompleteInput, Draft, ServiceRuntime, SessionView } from '../shared/types.js';
+import type { AnnotationCaptureInput, Asset, Bootstrap, CaptureView, CompleteInput, Draft, ServiceRuntime, SessionView } from '../shared/types.js';
 import { resolveContentKind, resolveContentMime, storageAssetKind } from '../shared/content-types.js';
 import { ApiFailure, CanvasService, within } from './service.js';
 import { AudioArtworkReader } from './audio-artwork.js';
 import { clearRuntime, publishRuntime } from './runtime.js';
 import { startHtmlPreview } from './html-preview.js';
 import { ProjectBrowser, type ProjectBrowserOptions } from './browser-capture.js';
+import { ProjectHtmlSurfaces, type HtmlSurfaceFrame, type HtmlSurfacesOptions } from './render-surface/html.js';
+import { htmlInputRequestBytes } from '../shared/html-surface.js';
 
-export interface ServerOptions { root: string; port?: number; maxUploadBytes?: number; webRoot?: string; allowedOrigins?: string[]; browser?: ProjectBrowserOptions }
+export interface ServerOptions { root: string; port?: number; maxUploadBytes?: number; webRoot?: string; allowedOrigins?: string[]; browser?: ProjectBrowserOptions; htmlSurfaces?: HtmlSurfacesOptions }
 export interface RunningServer { service: CanvasService; browser: ProjectBrowser; url: string; close: () => Promise<void> }
 const mimeTypes: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.png': 'image/png', '.ico': 'image/x-icon' };
 const send = (response: ServerResponse, status: number, value: unknown) => { response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); response.end(JSON.stringify(value)); };
 const sameToken = (received: string | undefined, token: string): boolean => !!received && Buffer.byteLength(received) === Buffer.byteLength(token) && timingSafeEqual(Buffer.from(received), Buffer.from(token));
-const payload = async (request: IncomingMessage): Promise<any> => {
+const payload = async (request: IncomingMessage,limit=2*1024*1024): Promise<any> => {
   const chunks: Buffer[] = []; let size = 0;
-  for await (const chunk of request) { size += chunk.length; if (size > 2 * 1024 * 1024) throw new ApiFailure(413, 'request_too_large', 'The request exceeds 2 MiB.'); chunks.push(Buffer.from(chunk)); }
+  for await (const chunk of request) { size += chunk.length; if (size > limit) throw new ApiFailure(413, 'request_too_large', `The request exceeds ${limit} bytes.`); chunks.push(Buffer.from(chunk)); }
   const body = Buffer.concat(chunks).toString('utf8');
   try { const value = JSON.parse(body || '{}'); if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(); return value; } catch { throw new ApiFailure(400, 'invalid_json', 'Send a JSON object.'); }
 };
@@ -28,6 +30,11 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   const service = new CanvasService(options.root);
   const artwork = new AudioArtworkReader(id => service.assetPath(id));
   const preview = await startHtmlPreview(service).catch(error => { service.close(); throw error; });
+  const surfaces = new ProjectHtmlSurfaces(service, preview, options.htmlSurfaces);
+  const surfaceOwners = new Map<string, CaptureView & { objectId: string; assetId: string }>();
+  service.validateSurface = (owner, reference) => surfaces.validateSurface(owner, reference);
+  service.retainSurface = (owner, reference) => surfaces.retainSurface(owner, reference);
+  service.releaseSurface = (owner, reference) => surfaces.releaseSurface(owner, reference);
   const token = randomBytes(32).toString('base64url');
   const maxUploadBytes = options.maxUploadBytes ?? 512 * 1024 * 1024;
   const events = new Set<ServerResponse>();
@@ -103,6 +110,42 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
         if (path === '/api/state' && method === 'GET') { send(response, 200, service.state(url.searchParams.get('sessionId') ?? '')); return; }
         if (path === '/api/sessions' && method === 'POST') { send(response, 201, service.createSession((await payload(request)).name)); return; }
         if (path === '/api/sessions' && method === 'GET') { send(response, 200, service.sessions()); return; }
+        const captureViewMatch = path.match(/^\/api\/sessions\/([^/]+)\/capture-views(?:\/([^/]+)(?:\/(scenes|presented|presentations))?)?$/);
+        if (captureViewMatch) {
+          const sessionId = decodeURIComponent(captureViewMatch[1]), viewId = captureViewMatch[2] && decodeURIComponent(captureViewMatch[2]);
+          if (!viewId && method === 'POST') { send(response, 201, service.registerCaptureView(sessionId, await payload(request))); return; }
+          if (viewId && captureViewMatch[3] === 'scenes' && method === 'POST') { send(response, 200, service.sceneSnapshot(sessionId, viewId, await payload(request))); return; }
+          if (viewId && captureViewMatch[3] === 'presented' && method === 'PUT') { send(response, 200, service.confirmScenePresentation(sessionId, viewId, await payload(request))); return; }
+          if (viewId && captureViewMatch[3] === 'presentations' && method === 'POST') { send(response, 200, service.holdScenePresentation(sessionId, viewId, await payload(request))); return; }
+          if (viewId && !captureViewMatch[3] && method === 'DELETE') { const result = service.closeCaptureView(sessionId, viewId, await payload(request)); await surfaces.closeView(viewId); for (const [id, owner] of surfaceOwners) if (owner.viewId === viewId) surfaceOwners.delete(id); send(response, 200, result); return; }
+        }
+        const surfaceMatch = path.match(/^\/api\/sessions\/([^/]+)\/capture-views\/([^/]+)\/html-surfaces(?:\/([^/]+)(?:\/(sample|input|viewport|audio|frames\/(\d+)(\/content)?))?)?$/);
+        if (surfaceMatch) {
+          const sessionId = decodeURIComponent(surfaceMatch[1]), viewId = decodeURIComponent(surfaceMatch[2]), surfaceId = surfaceMatch[3] && decodeURIComponent(surfaceMatch[3]);
+          const input = ['GET', 'HEAD'].includes(method ?? '') ? { documentId: url.searchParams.get('documentId'), viewGeneration: Number(url.searchParams.get('viewGeneration')) } : await payload(request,surfaceMatch[4]==='input'?htmlInputRequestBytes:2*1024*1024);
+          const view = service.captureView(sessionId, viewId);
+          if (input.documentId !== view.documentId || input.viewGeneration !== view.viewGeneration) throw new ApiFailure(409, 'scene_view_conflict', 'Use the current document and view generation.');
+          const frameMetadata = (frame: HtmlSurfaceFrame) => { const { png, ...metadata } = frame; return { ...metadata, contentUrl: `/api/sessions/${encodeURIComponent(sessionId)}/capture-views/${encodeURIComponent(viewId)}/html-surfaces/${encodeURIComponent(frame.surfaceId)}/frames/${frame.frameSeq}/content?documentId=${encodeURIComponent(view.documentId)}&viewGeneration=${view.viewGeneration}` }; };
+          if (!surfaceId && method === 'POST') {
+            const info = await surfaces.create({ sessionId, viewId, documentId: view.documentId, viewGeneration: view.viewGeneration, objectId: input.objectId, assetId: input.assetId }, input.viewport);
+            try { service.captureView(sessionId, viewId); }
+            catch (error) { await surfaces.closeSurface(info.surfaceId); throw error; }
+            surfaceOwners.set(info.surfaceId, { ...view, objectId: info.objectId, assetId: info.assetId }); send(response, 201, info); return;
+          }
+          const owner = surfaceOwners.get(surfaceId ?? '');
+          if (!owner || owner.projectId !== view.projectId || owner.sessionId !== sessionId || owner.documentId !== view.documentId || owner.viewId !== viewId || owner.viewGeneration !== view.viewGeneration) throw new ApiFailure(403, 'surface_frame_scope', 'Use an HTML surface belonging to this document and view.');
+          if (surfaceMatch[4] === 'sample' && method === 'POST') { send(response, 200, frameMetadata(await surfaces.sample(surfaceId!))); return; }
+          if (surfaceMatch[4] === 'input' && method === 'POST') { if (!input.input || typeof input.input !== 'object' || Array.isArray(input.input)) throw new ApiFailure(400, 'invalid_input', 'Send a typed HTML surface input.'); send(response, 200, await surfaces.input(surfaceId!, input.input)); return; }
+          if(surfaceMatch[4]==='audio'&&method==='GET'){const audio=surfaces.audioSince(surfaceId!,Number(url.searchParams.get('afterSeq')??0));send(response,200,{...audio,packets:audio.packets.map(({pcm,...packet})=>({...packet,pcmBase64:pcm.toString('base64')}))});return;}
+          if (surfaceMatch[4] === 'viewport' && method === 'PUT') { send(response, 200, await surfaces.resize(surfaceId!, input.viewport)); return; }
+          if (surfaceMatch[5] && ['GET', 'HEAD'].includes(method ?? '')) {
+            const frame = surfaces.frame(surfaceId!, Number(surfaceMatch[5])); surfaces.validateSurface(owner, frame);
+            if (surfaceMatch[6]) { response.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': frame.png.length, 'Cache-Control': 'no-store' }); response.end(method === 'HEAD' ? undefined : frame.png); }
+            else send(response, 200, frameMetadata(frame));
+            return;
+          }
+          if (!surfaceMatch[4] && method === 'DELETE') { await surfaces.closeSurface(surfaceId!); surfaceOwners.delete(surfaceId!); send(response, 200, { closed: true }); return; }
+        }
         if (path === '/api/board/operations' && method === 'POST') { const input = await payload(request); send(response, 200, service.boardOperations(input.sessionId, input.operations)); return; }
         const previewAssetMatch = path.match(/^\/api\/assets\/([^/]+)\/html-preview$/);
         if (previewAssetMatch && method === 'POST') {
@@ -284,7 +327,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   });
   service.onChange = () => { for (const response of events) response.write('event: change\ndata: {}\n\n'); };
   const heartbeat = setInterval(() => { for (const response of events) response.write(': alive\n\n'); }, 15_000); heartbeat.unref();
-  await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch(async error => { clearInterval(heartbeat); await preview.close(); service.close(); throw error; });
+  await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch(async error => { clearInterval(heartbeat); await surfaces.close(); await preview.close(); service.close(); throw error; });
   let shutdown: Promise<void> | undefined;
   const runtime: ServiceRuntime = { project: service.project, ...service.identity(), url: `http://127.0.0.1:${port}` };
   browser = new ProjectBrowser(service, runtime.url, token, options.browser);
@@ -303,7 +346,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
       server.closeIdleConnections();
       const forceTransportClose = setTimeout(() => server.closeAllConnections(), 1000); forceTransportClose.unref();
       try { await Promise.allSettled([...handlers]); await stopped; }
-      finally { clearTimeout(forceTransportClose); await preview.close(); service.close(); await clearRuntime(runtime); }
+      finally { clearTimeout(forceTransportClose); await surfaces.close(); surfaceOwners.clear(); await preview.close(); service.close(); await clearRuntime(runtime); }
     })();
     return shutdown;
   };

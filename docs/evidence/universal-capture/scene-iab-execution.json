@@ -1,0 +1,67 @@
+{
+  "measuredAt": "2026-10-08T21:51:40.254Z",
+  "status": "actual-embedded-production-flow-passed",
+  "browser": "Codex in-app browser",
+  "isolatedURL": "http://127.0.0.1:65402/?session=b8e8c517-716f-45bd-b5c5-581e19e25697",
+  "isolatedSessionId": "b8e8c517-716f-45bd-b5c5-581e19e25697",
+  "isolatedProjectId": "0d195710-58f8-44a6-a956-13112b046fca",
+  "fixtureProcessId": 97340,
+  "ownTemporaryProject": true,
+  "hiddenOwnTabsCreated": 2,
+  "hiddenOwnTabsClosed": 2,
+  "doneToThumbnailToSend": true,
+  "observedThumbnailCount": 1,
+  "taskCount": 2,
+  "nativeProvider": false,
+  "captureWindowOpened": false,
+  "captures": [
+    {
+      "taskId": "cb996055-4f11-4e57-bfcb-52540a1fe526",
+      "annotationId": "21c15134-a643-4d5e-89e7-ced7e82a9056",
+      "status": "complete",
+      "sourceMode": "scene-bitmap",
+      "frameSeq": 16,
+      "bitmap": {
+        "width": 2560,
+        "height": 1440
+      },
+      "actualPNG": {
+        "width": 984,
+        "height": 744,
+        "bytes": 34776
+      },
+      "sourceId": "a20efd94-6288-4148-a097-4dd3ee768ceb"
+    },
+    {
+      "taskId": "5d5f265b-3591-417c-a113-20d1cfd221fd",
+      "annotationId": "d594e573-753b-44e2-b5d0-b1ecc202e063",
+      "status": "complete",
+      "sourceMode": "scene-bitmap",
+      "frameSeq": 12,
+      "bitmap": {
+        "width": 2560,
+        "height": 1440
+      },
+      "actualPNG": {
+        "width": 984,
+        "height": 744,
+        "bytes": 34776
+      },
+      "sourceId": "81523ccb-b253-42f0-83f8-accd96ead831"
+    }
+  ],
+  "samePageURL": true,
+  "foregroundApplication": {
+    "api": "NSWorkspace.shared.frontmostApplication.bundleIdentifier",
+    "before": "com.apple.loginwindow",
+    "after": "com.apple.loginwindow",
+    "continuousSampling": false
+  },
+  "clipboardOrKeychainAccess": false,
+  "userBoardAccess": false,
+  "output": "/private/tmp/acanvas-scene-production-iab-20261009",
+  "limitations": [
+    "OS foreground samples expose loginwindow in this execution session; they do not establish which user window was active.",
+    "Pixel identity was verified in the separate Chrome/Firefox actual App matrix; IAB verified the actual default UI/API path and saved PNG dimensions."
+  ]
+}

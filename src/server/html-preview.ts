@@ -11,10 +11,11 @@ import { installHtmlSnapshotBridge } from '../shared/html-preview-snapshot.js';
 import { ApiFailure, type CanvasService } from './service.js';
 
 export interface HtmlPreviewGrant { id: string; url: string; origin: string; expiresAt: string }
-interface Grant { bundle?: HtmlBundle; assetId: string; parentOrigin: string; origin: string; expires: number }
+interface Grant { bundle?: HtmlBundle; assetId: string; parentOrigin: string; origin: string; expires: number;purpose:'preview'|'surface' }
 export interface HtmlPreviewRuntime {
   originFor: (parentOrigin: string) => string;
-  issue: (assetId: string, parentOrigin: string) => HtmlPreviewGrant;
+  issue: (assetId: string, parentOrigin: string,purpose?:'preview'|'surface') => HtmlPreviewGrant;
+  hold:(id:string)=>()=>void;
   revoke: (id: string) => void;
   close: () => Promise<void>;
 }
@@ -27,12 +28,14 @@ const deny = (response: ServerResponse, status: number, code: string) => {
 
 export async function startHtmlPreview(service: CanvasService, options: { lifetimeMs?: number; maxBytes?: number } = {}): Promise<HtmlPreviewRuntime> {
   const grants = new Map<string, Grant>();
+  const active=new Map<string,number>();
   const handlers = new Set<Promise<void>>(), responses = new Set<ServerResponse>();
   const lifetime = options.lifetimeMs ?? 10 * 60 * 1000, maxBytes = options.maxBytes ?? 10 * 1024 * 1024;
   let port = 0, closing = false, shutdown: Promise<void> | undefined;
   // The preview uses the other loopback hostname so the main authentication cookie stays on its host.
   const originFor = (parentOrigin: string) => `http://${new URL(parentOrigin).hostname === 'localhost' ? '127.0.0.1' : 'localhost'}:${port}`;
-  const prune = () => { for (const [id, grant] of grants) if (grant.expires <= Date.now()) grants.delete(id); };
+  const expired=(id:string,grant:Grant)=>grant.expires<=Date.now()&&!active.has(id);
+  const prune = () => { for (const [id, grant] of grants) if (expired(id,grant)) grants.delete(id); };
   const handle = async (request: IncomingMessage, response: ServerResponse) => {
     responses.add(response); response.on('close', () => responses.delete(response));
     response.setHeader('Cache-Control', 'no-store');
@@ -59,7 +62,7 @@ export async function startHtmlPreview(service: CanvasService, options: { lifeti
         const accepted = mime === 'text/css' ? ['style'] : mime === 'text/javascript' ? ['script'] : mime.startsWith('image/') ? ['image', 'empty'] : mime.startsWith('font/') ? ['font'] : [];
         if (typeof destination !== 'string' || !accepted.includes(destination) || !['cors', 'no-cors'].includes(String(request.headers['sec-fetch-mode']))) { deny(response, 403, 'preview_resource_type'); return; }
         const bytes = await readFile(service.assetPath(bundle.files[resourcePath]));
-        if (closing || !grants.has(match![1]) || grant.expires <= Date.now()) { deny(response, 404, 'preview_missing'); return; }
+        if (closing || !grants.has(match![1]) || expired(match![1],grant)) { deny(response, 404, 'preview_missing'); return; }
         // Only this capability-scoped resource endpoint supports opaque-origin CORS.
         response.setHeader('Access-Control-Allow-Origin', '*');
         response.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
@@ -70,11 +73,11 @@ export async function startHtmlPreview(service: CanvasService, options: { lifeti
       if (request.headers['sec-fetch-dest'] !== 'iframe' || request.headers['sec-fetch-mode'] !== 'navigate') { deny(response, 403, 'preview_embedding_required'); return; }
       if (asset.size > maxBytes) { deny(response, 413, 'preview_too_large'); return; }
       const source = await readFile(service.assetPath(asset.id), 'utf8');
-      if (closing || !grants.has(match![1]) || grant.expires <= Date.now()) { deny(response, 404, 'preview_missing'); return; }
+      if (closing || !grants.has(match![1]) || expired(match![1],grant)) { deny(response, 404, 'preview_missing'); return; }
       const bridge = `(()=>{const hit=${isContentInteraction.toString()};const send=parent.postMessage.bind(parent),instanceId=${JSON.stringify(match![1])},target=${JSON.stringify(grant.parentOrigin)};${bundle ? 'window' : 'document'}.addEventListener('${bundle ? 'load' : 'DOMContentLoaded'}',()=>send({type:'acanvas:preview-ready',instanceId},target),{once:true});let blankDown=false;document.addEventListener('dragstart',event=>{if(blankDown)event.preventDefault();},{capture:true});document.addEventListener('pointerdown',event=>{blankDown=false;if(event.isTrusted&&event.button===0&&!hit(document.documentElement,event.clientX,event.clientY,event.target)){blankDown=true;send({type:'acanvas:preview-drag',instanceId,pointerId:event.pointerId,x:event.clientX/innerWidth,y:event.clientY/innerHeight},target);}},{capture:true});})();`;
       const snapshotBridge = `(${installHtmlSnapshotBridge.toString()})(${JSON.stringify(match![1])},${JSON.stringify(grant.parentOrigin)});`;
       const inputBridge = `(${installHtmlInputBridge.toString()})(${JSON.stringify(match![1])},${JSON.stringify(grant.parentOrigin)});`;
-      const document = `<!doctype html><script>${inputBridge}${bridge}${snapshotBridge}</script>${source}`;
+      const document = grant.purpose==='surface'?source:`<!doctype html><script>${inputBridge}${bridge}${snapshotBridge}</script>${source}`;
       const resources = bundle ? `${grant.origin}/preview/${match![1]}/files/` : '';
       response.setHeader('Content-Security-Policy', `sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline'${resources ? ` ${resources}` : ''}; style-src 'unsafe-inline'${resources ? ` ${resources}` : ''}; img-src data:${resources ? ` ${resources}` : ''}; connect-src ${resources || "'none'"}; media-src 'none'; font-src ${resources || "'none'"}; worker-src 'none'; child-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors ${grant.parentOrigin}`);
       response.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -93,7 +96,7 @@ export async function startHtmlPreview(service: CanvasService, options: { lifeti
   const expiry = setInterval(prune, Math.min(lifetime, 60_000)); expiry.unref();
   return {
     originFor,
-    issue: (assetId, parentOrigin) => {
+    issue: (assetId, parentOrigin,purpose='preview') => {
       const parent = new URL(parentOrigin);
       if (parent.origin !== parentOrigin || !['http:', 'https:'].includes(parent.protocol)) throw new ApiFailure(400, 'preview_origin', 'Use the current whiteboard origin.');
       const asset = service.asset(assetId); service.assetPath(asset.id);
@@ -101,14 +104,15 @@ export async function startHtmlPreview(service: CanvasService, options: { lifeti
       if (asset.size > maxBytes) throw new ApiFailure(413, 'preview_too_large', 'HTML previews support files up to 10 MiB. Download the original file to open it separately.');
       prune();
       const id = randomBytes(32).toString('base64url'), expires = Date.now() + lifetime, origin = originFor(parentOrigin);
-      grants.set(id, { assetId, parentOrigin, origin, expires, ...(asset.htmlBundle ? { bundle: structuredClone(asset.htmlBundle) } : {}) });
+      grants.set(id, { assetId, parentOrigin, origin, expires,purpose, ...(asset.htmlBundle ? { bundle: structuredClone(asset.htmlBundle) } : {}) });
       return { id, url: `${origin}/preview/${id}${asset.htmlBundle ? `/files/${asset.htmlBundle.entryPath.split('/').map(encodeURIComponent).join('/')}` : ''}`, origin, expiresAt: new Date(expires).toISOString() };
     },
-    revoke: id => { grants.delete(id); },
+    hold:id=>{const grant=grants.get(id);if(!grant||expired(id,grant)||grant.purpose!=='surface')throw new ApiFailure(404,'preview_missing','Open an active HTML surface.');active.set(id,(active.get(id)??0)+1);let released=false;return()=>{if(released)return;released=true;const owners=(active.get(id)??1)-1;if(owners>0)active.set(id,owners);else active.delete(id);prune();};},
+    revoke: id => { grants.delete(id);active.delete(id); },
     close: () => {
       if (shutdown) return shutdown;
       shutdown = (async () => {
-        closing = true; clearInterval(expiry); grants.clear();
+        closing = true; clearInterval(expiry); grants.clear();active.clear();
         const stopped = new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
         for (const response of responses) response.destroy();
         server.closeAllConnections();

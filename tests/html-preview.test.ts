@@ -103,6 +103,14 @@ test('preview load size is bounded while the source remains available for downlo
   assert.equal(response.status, 200); assert.equal(Number(response.headers.get('content-length')), html.size); assert.match(response.headers.get('content-disposition')!, /^attachment;/);
 });
 
+test('active surface owns its resource grant lifetime and loads original HTML without preview bridges',async t=>{
+  const f=await fixture(t),html=await f.upload('surface.html','text/html','<!doctype html><p>Original source</p>');
+  const preview=await startHtmlPreview(f.running.service,{lifetimeMs:40});t.after(()=>preview.close());
+  const grant=preview.issue(html.id,f.running.url,'surface'),release=preview.hold(grant.id);
+  await new Promise(resolve=>setTimeout(resolve,60));const current=await navigation(grant.url);assert.equal(current.status,200);assert.equal(await current.text(),'<!doctype html><p>Original source</p>');
+  release();const expired=await navigation(grant.url);assert.equal(expired.status,404);await expired.text();
+});
+
 test('new annotation targets follow capabilities and task edits retain only their exact source target', async t => {
   const f = await fixture(t), session = await f.call('/api/sessions', 'POST', { name: 'Content targets' }, 201);
   const assets = await Promise.all(['sound.wav', 'notes.md', 'widget.html', 'picture.png', 'clip.mp4'].map(name => f.upload(name)));

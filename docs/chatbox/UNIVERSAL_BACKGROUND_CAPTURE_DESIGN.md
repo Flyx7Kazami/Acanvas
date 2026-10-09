@@ -1,6 +1,6 @@
 # 任意浏览器中的后台截图技术方案
 
-日期：2026-10-09（Asia/Shanghai）。状态：技术设计与当前源码核对完成，独立设计审查 PASS；隔离原型与实现验收待执行。关联 R02、R04、R05、R13 / A02、A06、A07、A09。依据用户要求：acanvas 网页在任意支持的浏览器或 agent 容器中打开，完成批注后自动保存截图，使用当前页面继续工作。
+日期：2026-10-09（Asia/Shanghai）。状态：技术设计与当前源码核对完成，独立设计审查 PASS；当前范围实现、独立验收与正式服务更新完成，实际支持和测量边界见[实施记录](UNIVERSAL_BACKGROUND_CAPTURE_IMPLEMENTATION.md)。关联 R02、R04、R05、R13 / A02、A06、A07、A09。依据用户要求：acanvas 网页在任意支持的浏览器或 agent 容器中打开，完成批注后自动保存截图，使用当前页面继续工作。
 
 ## 1. 产品目标与成立范围
 
@@ -10,11 +10,11 @@
 
 “所见一致”定义为同一个应用呈现帧的内容和坐标一致：保存用于显示的白板像素及其场景元数据。浏览器对 CSS 缩放的采样、操作系统色彩管理与显示器输出属于显示设备边界；证据记录实际图像尺寸和应用坐标映射。
 
-本方案属于白板呈现架构调整，不能只修改现有 Chrome 的启动参数。生产代码仍采用[完整交互设计](CHATBOX_IMPLEMENTATION_DESIGN.md)的受控 Chrome 路径；本轮交付设计与验收计划。
+本方案属于白板呈现架构调整。新实现将当前网页的可导出呈现帧接入默认 Done；正式运行更新在完整候选独立验收后执行。既有受控 Chrome 路径的事实保留在[完整交互设计](CHATBOX_IMPLEMENTATION_DESIGN.md)，新路径按本方案及实施记录验收。
 
-## 2. 当前差距与技术依据
+## 2. 方案开始时的差距与技术依据
 
-当前 [ProjectBrowser](../../src/server/browser-capture.ts) 默认启动可见 Chrome，并在打开页面时调用 `bringToFront()`；provider 只注入其创建的 Page。[App](../../src/web/App.tsx) 的 Done 遇到缺少 provider 会要求打开截图窗口。[当前协议](../../src/shared/browser-capture.ts)保存坐标、视口和场景参考元数据，真实 PNG 来自该受控 Page。
+方案开始时，[ProjectBrowser](../../src/server/browser-capture.ts) 默认启动可见 Chrome，并在打开页面时调用 `bringToFront()`；provider 只注入其创建的 Page。此前 App 的 Done 遇到缺少 provider 会要求打开截图窗口。既有协议保存坐标、视口和场景参考元数据，真实 PNG 来自该受控 Page；当前实施将默认捕获接入原网页的已呈现 Canvas。
 
 普通网页的屏幕捕获要求用户选择来源、瞬时交互和授权，授权不能永久保存，因此适合作为显式共享能力。[W3C Screen Capture](https://www.w3.org/TR/screen-capture/#dom-mediadevices-getdisplaymedia)
 
@@ -89,7 +89,7 @@ worker 只产生候选帧及与其成对的 `ScenePresentation`。主线程接�
 
 任意允许脚本的 HTML 从前端独立 iframe 执行改为项目服务持有的持续实例。该实例保留实际表单、DOM、滚动、随机结果、canvas/WebGL 与动画状态。客户端只接收表面像素及必要的语义信息，指针、滚轮、键盘、焦点和输入法操作通过项目协议送回该实例。
 
-每个 HTML 实例按 `project/session/view/object` 归属。相同会话的两个网页可以有不同内部状态；实例身份表达客户端视图，agent 身份继续独立。表面帧带 `surfaceId/frameSeq/instanceId`、实际像素尺寸、内容 viewport、已处理输入序号与语义快照关联。
+每个 HTML 实例按 `project/session/view/object` 归属。相同会话的两个网页可以有不同内部状态；实例身份表达客户端视图，agent 身份继续独立。表面帧带 `surfaceId/frameSeq/instanceId`、实际像素尺寸、内容 viewport、服务已接受输入序号与语义快照关联。成功及失败的已接受输入都取得序号回执；配对候选另外表达实际呈现状态。
 
 客户端记录实际合入白板的 HTML 帧身份。截图保存这份像素，后台 HTML 即使已推进到后续动画帧，也不会改写证据。后台实例按需采样帧供展示；Done 使用既有表面像素，继续使用原实例。
 
@@ -98,6 +98,8 @@ worker 只产生候选帧及与其成对的 `ScenePresentation`。主线程接�
 现有 HTML 的独立 origin、opaque sandbox、CSP、bundle 资源范围和关闭的宿主权限继续保留。后台页面中仍按现有隔离模型承载 HTML；浏览器调试和任意 JavaScript 执行接口留在服务内部。远程表面的键盘/IME、文字选择、可访问性与延迟是该方案必须通过的独立验收项。
 
 HTML 当前允许的交互需要逐项迁移：文本/contenteditable 和组合输入、select/date/color 的值及原生弹层、文件选择、选区/复制、剪贴板入口和焦点。浏览器原生控件由前端语义控件承接，提交明确的值与事件到指定 HTML 实例，交互状态回到同一表面帧。文件入口保留当前页面的用户选择，将已选择字节送入受控实例，服务使用该字节，不接收客户端机器路径。原有关闭的剪贴板等权限继续关闭；用户发起的复制/粘贴按客户端权限和选区语义处理。
+
+源脚本通过合法 `showPicker()` 打开的 renderer PagePopup 属于引擎表面。主表面最新 visual commit 完成后，原生运行器在新绘制回调中成对取得弹层像素与 root-view CSS 位置，按实际位图比例合成，保留该候选的弹层元数据。前端以已呈现弹层区域优先路由实际指针坐标，公开 CEF 主机输入接口交给正确原生 widget。关闭弹层的后续候选恢复普通语义控件命中；旧 N 的像素和位置保持原样。
 
 HTML 内允许的 WebAudio 发声若进入交付范围，声音回传当前客户端，并由本地用户手势启用；后台实例保持静音输出到传输管道。音频时间、可见表面帧和客户端播放时间一起测量。任意实例的声音不能在后台机器直接播放。P1 原型允许仅测视觉；P2 必须验证现有允许的发声及上述控件，明确逐类型支持结果，之后才进入完整 HTML 产品验收。
 
@@ -114,7 +116,7 @@ interface ScenePresentation {
   frameSeq: number;
   baseSceneId: string;
   camera: { x: number; y: number; zoom: number };
-  cssViewport: { width: number; height: number };
+  cssViewport: { x: number; y: number; width: number; height: number };
   bitmap: { width: number; height: number };
   layers: RenderedLayer[];
   media: PresentedMedia[];
@@ -164,6 +166,8 @@ interface EvidenceFrame {
 
 项目管理后台引擎和解码依赖，运行配置通过项目声明；客户端浏览器品牌和 agent 运行时不参与选择。后台引擎使用 headless 模式、独立项目配置与现有系统沙箱，所有访问限定授权资源和项目接口。页面启动自动取得所需表面；生命周期随实例使用和已完成证据管理。
 
+活跃表面在连接或运行实例失效时持续重连，重连间隔采用有上限的退避，每步有超时，关闭及明确停止结束重连。截图工作的编码／上传采用有限次数恢复，继续沿用同一份已复制像素。表面连接生命周期与单次证据工作的重试范围分别管理。
+
 动态 HTML 需要持续执行、采样、编码、传输与解码；相较当前本地 iframe 会增加成本和输入时延。静态表面按变化发布，动态表面有界发送，客户端只合成需要显示的帧。前台线程复制证据像素也有开销，worker 编码属于优化路径，普通 Canvas 异步编码需要实测大图响应。
 
 资源限制使用并发数、像素数、字节数、时间和有界队列。1440×1000 RGBA 的单帧约 5.76 MB，DPR2 约 23.04 MB；副本、解码器和后台实例另外计量。当前 PNG/解码和预览资源限制作为初始依据，参数按原型测量调整。实例回收/崩溃会丢失任意 JS 运行态，保留的帧与已完成证据继续可读，交互实例重新启动的实际状态明确呈现。
@@ -199,4 +203,4 @@ interface EvidenceFrame {
 
 `App.finishAnnotation` 接入默认 provider，移除正常流程中的窗口切换要求；`CanvasService`、共享类型和 CLI 更新场景来源与归属，保留已存任务与证据读取。普通网页自动连接属于标准应用能力，不依赖修改 Codex、安装宿主插件或要求 agent 调用截图工具。
 
-本轮提交技术设计、当前 Codex 源码核对及[独立可行性审查](../evidence/universal-capture/design-review.json)结果。实现、媒体原型及性能结果按后续真实验证记录，现有用户白板、服务与截图运行方式保持本轮开始时的运行状态。
+技术设计、当前 Codex 源码核对及[独立可行性审查](../evidence/universal-capture/design-review.json)结果已经提交。实现、媒体原型、故障恢复、原生隔离和性能结果按[实施记录](UNIVERSAL_BACKGROUND_CAPTURE_IMPLEMENTATION.md)中的实际执行状态更新；正式运行更新独立记录。

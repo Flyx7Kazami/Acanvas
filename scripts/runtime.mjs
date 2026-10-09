@@ -17,7 +17,7 @@ const execute = (args) => {
 const tsc = ['node_modules/typescript/bin/tsc'];
 const command = process.argv[2];
 const rest = process.argv.slice(3);
-if (['build', 'build-server', 'test', 'typecheck'].includes(command)) execute([...tsc, '-p', 'tsconfig.server.json']);
+if (['build', 'build-server', 'test', 'typecheck', 'test-html-surface'].includes(command)) execute([...tsc, '-p', 'tsconfig.server.json']);
 if (['build', 'typecheck'].includes(command)) execute([...tsc, '-p', 'tsconfig.json']);
 if (command === 'build') execute(['node_modules/vite/bin/vite.js', 'build']);
 else if (command === 'test') execute(['--test', ...readdirSync('dist/tests').filter((name) => name.endsWith('.test.js')).map((name) => `dist/tests/${name}`)]);
@@ -26,4 +26,10 @@ else if (command === 'cli') execute(['dist/src/cli.js', ...rest]);
 else if (command === 'dev') execute(['node_modules/vite/bin/vite.js', ...rest]);
 else if (command === 'demo') execute(['scripts/demo.mjs', ...rest]);
 else if (command === 'test-browser') execute(['node_modules/@playwright/test/cli.js', 'test', '--config', 'tests/frontend.config.ts', ...rest]);
+else if (command === 'install-render-engine') execute(['scripts/install-render-engine.mjs']);
+else if (command === 'install-html-runtime') execute(['scripts/install-html-runtime.mjs']);
+else if (command === 'test-html-surface') {
+  process.env.ACANVAS_HTML_SURFACE_TESTS = '1';
+  execute(['--test', ...rest, 'dist/tests/universal-html-prototype.test.js']);
+}
 else if (!['build', 'build-server', 'typecheck'].includes(command)) throw new Error(`Unknown runtime command: ${command}`);

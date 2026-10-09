@@ -1,0 +1,53 @@
+{
+  "measuredAt": "2026-10-08T20:04:21.926Z",
+  "status": "instrumented-headless-startup-observed",
+  "instrumentation": {
+    "clipboardTripwire": true,
+    "pasteboardCalls": 2,
+    "pasteboardReads": 0,
+    "pasteboardWrites": 0
+  },
+  "headlessArgument": "--headless=new",
+  "nativeCopyExecuted": false,
+  "nativePasteExecuted": false,
+  "brokerClipboardExecuted": false,
+  "effectiveDisabledFeatures": [
+    "--disable-features=GlicActorUi,AutofillActorMode,LensOverlay,KillOnInvalidNavigationHeaders,UseKeychainKeyProvider"
+  ],
+  "mockKeychain": false,
+  "basicPasswordStore": false,
+  "sandboxEnabled": true,
+  "windowless": true,
+  "product": "Chrome/154.0.8037.98",
+  "protocolVersion": "1.3",
+  "pcm": {
+    "packets": 16,
+    "sampleRate": 48000,
+    "channels": 2,
+    "rms": 0.1669097504298936,
+    "ptsFirst": 1073549256,
+    "ptsLast": 1073549571
+  },
+  "png": {
+    "width": 480,
+    "height": 260,
+    "bytes": 2480
+  },
+  "credentialDatabaseFileNames": [
+    "instance-5EenYb/Default/Cookies",
+    "instance-5EenYb/Default/Cookies-journal",
+    "instance-5EenYb/Default/Login Data",
+    "instance-5EenYb/Default/Login Data-journal",
+    "instance-5EenYb/Default/Web Data",
+    "instance-5EenYb/Default/Web Data-journal"
+  ],
+  "elapsedMs": 3808,
+  "ownedBrowserExited": true,
+  "temporaryProfileRemoved": true,
+  "credentialDatabaseRemains": false,
+  "limitations": [
+    "No Keychain content or Keychain API was accessed by test code.",
+    "No system prompt was observed in this authorized cold startup; provider exclusion is independently source-backed.",
+    "This trial measures PCM and PNG initialization only; full native product interaction remains separate."
+  ]
+}

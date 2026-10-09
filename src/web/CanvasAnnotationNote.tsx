@@ -15,11 +15,13 @@ export function CanvasAnnotationNote({ canvas, bounds, markBounds, geometry, vie
   useLayoutEffect(() => {
     const board = canvas.current, node = group.current, note = element.current;
     if (!board || !node || !note) return;
+    const page = board.getBoundingClientRect(), scale = page.width / Math.max(1, board.clientWidth);
+    const visible = () => { const rect = board.getBoundingClientRect(), x = Math.max(0, rect.x), y = Math.max(64, rect.y), right = Math.min(innerWidth, rect.right), bottom = Math.min(innerHeight - 80, rect.bottom); return { x: (x + 8 - rect.x) / scale, y: (y - rect.y) / scale, width: Math.max(0, (right - x - 16) / scale), height: Math.max(0, (bottom - y) / scale) }; };
     const prior = remembered.current, before = prior?.point === point ? prior : null, changing = before && before.expanded !== expanded;
     if (prior && prior.point !== point) { animations.current.forEach(animation => animation.cancel()); animations.current = []; }
     const moving = animations.current.some(animation => animation.playState === 'running' || animation.playState === 'paused');
     const position = node.getBoundingClientRect(), visual = note.getBoundingClientRect(), visualStyle = getComputedStyle(note);
-    const from = moving ? { width: visual.width, height: visual.height, padding: visualStyle.padding, backgroundColor: visualStyle.backgroundColor, borderRadius: visualStyle.borderRadius, boxShadow: visualStyle.boxShadow } : before;
+    const from = moving ? { width: visual.width / scale, height: visual.height / scale, padding: visualStyle.padding, backgroundColor: visualStyle.backgroundColor, borderRadius: visualStyle.borderRadius, boxShadow: visualStyle.boxShadow } : before;
     if (changing) { animations.current.forEach(animation => animation.cancel()); animations.current = []; }
     const style = getComputedStyle(note);
     const target: NoteLayout = changing || !moving ? { expanded, point, width: note.offsetWidth, height: Math.max(28, note.offsetHeight), padding: style.padding, backgroundColor: style.backgroundColor, borderRadius: style.borderRadius, boxShadow: style.boxShadow } : { ...before!, expanded };
@@ -33,18 +35,18 @@ export function CanvasAnnotationNote({ canvas, bounds, markBounds, geometry, vie
         const anchor = screenBounds(markBounds!, view), viewport = board.getBoundingClientRect();
         node.style.left = `${anchor.x}px`; node.style.top = `${anchor.y}px`; node.style.height = '';
         node.dataset.anchorX = String(markBounds!.x); node.dataset.anchorY = String(markBounds!.y);
-        const obstacles = [...precedingNotes, ...pins, ...controls].filter(value => value.closest<HTMLElement>('.canvas-annotation-group')?.dataset.anchorVisible !== 'false' && getComputedStyle(value).visibility === 'visible').map(value => { const rect = value.getBoundingClientRect(); return { x: rect.x - viewport.x, y: rect.y - viewport.y, width: rect.width, height: rect.height }; }).filter(rect => rect.width > 0 && rect.height > 0);
-        const placed = placePointAnnotationNote(anchor, target, { x: 8, y: 64, width: Math.max(0, viewport.width - 16), height: Math.max(0, viewport.height - 144) }, obstacles);
+        const obstacles = [...precedingNotes, ...pins, ...controls].filter(value => value.closest<HTMLElement>('.canvas-annotation-group')?.dataset.anchorVisible !== 'false' && getComputedStyle(value).visibility === 'visible').map(value => { const rect = value.getBoundingClientRect(); return { x: (rect.x - viewport.x) / scale, y: (rect.y - viewport.y) / scale, width: rect.width / scale, height: rect.height / scale }; }).filter(rect => rect.width > 0 && rect.height > 0);
+        const placed = placePointAnnotationNote(anchor, target, visible(), obstacles);
         note.style.left = `${placed.x - anchor.x}px`; note.style.top = `${placed.y - anchor.y}px`;
-        const visible = anchor.x + 14 > 0 && anchor.x - 14 < viewport.width && anchor.y + 14 > 0 && anchor.y - 14 < viewport.height;
-        node.dataset.anchorVisible = String(visible); node.dataset.positioned = 'true'; node.inert = !visible;
+        const shown = anchor.x + 14 > -viewport.x / scale && anchor.x - 14 < (innerWidth - viewport.x) / scale && anchor.y + 14 > -viewport.y / scale && anchor.y - 14 < (innerHeight - viewport.y) / scale;
+        node.dataset.anchorVisible = String(shown); node.dataset.positioned = 'true'; node.inert = !shown;
         return { placed, viewport };
       };
       const destination = layout();
       if (changing && from && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
         const options = { duration: 260, easing: 'cubic-bezier(.16,1,.3,1)' };
         const frame = (value: typeof from) => ({ width: `${value.width}px`, height: `${value.height}px`, padding: value.padding, backgroundColor: value.backgroundColor, borderRadius: value.borderRadius, boxShadow: value.boxShadow });
-        const x = visual.x - destination.viewport.x - destination.placed.x, y = visual.y - destination.viewport.y - destination.placed.y;
+        const x = (visual.x - destination.viewport.x) / scale - destination.placed.x, y = (visual.y - destination.viewport.y) / scale - destination.placed.y;
         animations.current = [note.animate([frame(from), frame(target)], options), note.animate([{ transform: `translate(${x}px,${y}px)` }, { transform: 'translate(0,0)' }], options)];
       }
       const observer = new ResizeObserver(layout);
@@ -57,19 +59,20 @@ export function CanvasAnnotationNote({ canvas, bounds, markBounds, geometry, vie
       const offset = previous.filter(value => value.dataset.geometry !== 'point' && Number(value.dataset.anchorX) === bounds.x && Number(value.dataset.anchorY) === bounds.y).reduce((sum, value) => sum + value.offsetHeight + 8, 0);
       const viewport = board.getBoundingClientRect(), rect = node.getBoundingClientRect(), transform = new DOMMatrix(getComputedStyle(node).transform);
       const anchoredTop = anchor.y - 8 - height - offset;
-      const top = expanded ? Math.max(64, Math.min(anchoredTop, viewport.height - height - 80)) : anchoredTop;
-      const left = expanded ? Math.max(8, Math.min(anchor.x, viewport.width - node.offsetWidth - 8)) : anchor.x;
+      const available = visible();
+      const top = expanded ? Math.max(available.y, Math.min(anchoredTop, available.y + available.height - height)) : anchoredTop;
+      const left = expanded ? Math.max(available.x, Math.min(anchor.x, available.x + available.width - node.offsetWidth)) : anchor.x;
       node.dataset.anchorX = String(bounds.x); node.dataset.anchorY = String(bounds.y);
       node.style.left = `${left}px`; node.style.top = `${top}px`; node.style.height = `${height}px`;
       node.dataset.positioned = 'true';
-      node.inert = left + transform.m41 + rect.width <= 0 || left + transform.m41 >= viewport.width || top + transform.m42 + rect.height <= 0 || top + transform.m42 >= viewport.height;
+      node.inert = left + transform.m41 + rect.width / scale <= -viewport.x / scale || left + transform.m41 >= (innerWidth - viewport.x) / scale || top + transform.m42 + rect.height / scale <= -viewport.y / scale || top + transform.m42 >= (innerHeight - viewport.y) / scale;
       return { left, top, viewport };
     };
     const destination = layout();
     if (changing && from && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const options = { duration: 260, easing: 'cubic-bezier(.16,1,.3,1)' };
       const frame = (value: typeof from) => ({ width: `${value.width}px`, height: `${value.height}px`, padding: value.padding, backgroundColor: value.backgroundColor, borderRadius: value.borderRadius, boxShadow: value.boxShadow });
-      const y = position.y - destination.viewport.y - destination.top;
+      const y = (position.y - destination.viewport.y) / scale - destination.top;
       animations.current = [
         note.animate([frame(from), frame(target)], options),
         node.animate([{ transform: `translateY(${y}px)`, height: `${from.height}px` }, { transform: 'translateY(0)', height: `${target.height}px` }], options),

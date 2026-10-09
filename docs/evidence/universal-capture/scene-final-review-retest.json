@@ -1,0 +1,247 @@
+{
+  "review": "independent-scene-app-core-retest",
+  "measuredAt": "2026-10-08T22:06:30.746096+00:00",
+  "status": "PASS",
+  "scope": "Previously reported Scene/App/provider/source P2 fixes, target-source lifecycle and same-page view retirement. Native HTML integration remains a separate review.",
+  "priorReview": "scene-final-review-phase1.json",
+  "priorFailureRecordPreserved": true,
+  "findings": [
+    {
+      "id": "scene-coordinates",
+      "priority": "P2",
+      "status": "closed",
+      "originalCases": {
+        "originCSS": {
+          "x": 40,
+          "y": 30
+        },
+        "originDone": "complete",
+        "cssZoom": 1.25,
+        "clickCSS": {
+          "x": 160,
+          "y": 150
+        },
+        "worldPoint": {
+          "x": 128,
+          "y": 120,
+          "width": 0,
+          "height": 0
+        },
+        "objectOwnershipCorrect": true
+      },
+      "pairedPixelRetest": {
+        "engines": [
+          "project Chromium 140.0.7339.186",
+          "project Firefox 141.0"
+        ],
+        "originCSS": {
+          "x": 50,
+          "y": 37.5
+        },
+        "cameraZoom": 1.25,
+        "channels": 1179648,
+        "mismatchedChannels": 0,
+        "Send": true
+      },
+      "sourceFinding": "Service maps viewport through camera plus CSS origin. Target hit testing uses presented layers/content bounds and the matching snapshot objects."
+    },
+    {
+      "id": "scene-semantic-focus",
+      "priority": "P2",
+      "status": "closed",
+      "sourceFinding": "File cards use the shared controlled DOM layout publisher, including native focus and scroll. Article and pin focus rings are drawn into the actual visible scene.",
+      "originalDownloadFocusPixelDifference": 1596,
+      "engineFacts": [
+        {
+          "engine": "chromium",
+          "browser": "140.0.7339.186",
+          "articleFocusPixelDifference": 24000,
+          "linkFocusPixelDifference": 30042,
+          "pinFocusPixelDifference": 43200,
+          "actualLinkOutlinePixel": [
+            32,
+            32,
+            32,
+            255
+          ],
+          "download": "File.zip",
+          "resizedFileScrollPixelDifference": 22647,
+          "narrowViewport": {
+            "width": 320,
+            "height": 740,
+            "bitmapWidth": 640,
+            "bodyOverflow": false
+          }
+        },
+        {
+          "engine": "firefox",
+          "browser": "141.0",
+          "articleFocusPixelDifference": 24000,
+          "linkFocusPixelDifference": 30036,
+          "pinFocusPixelDifference": 43200,
+          "actualLinkOutlinePixel": [
+            32,
+            32,
+            32,
+            255
+          ],
+          "download": "File.zip",
+          "resizedFileScrollPixelDifference": 22662,
+          "narrowViewport": {
+            "width": 320,
+            "height": 740,
+            "bitmapWidth": 640,
+            "bodyOverflow": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "scene-target-edit",
+      "priority": "P2",
+      "status": "closed",
+      "originalCase": "Completed point chip -> Canvas region -> 600 ms ordinary save -> normal Done -> thumbnail -> Send.",
+      "sourceFinding": "Canonical capture state remains service-owned. An ordinary target change advances the version and stores the new target as awaiting. Its new Done source binds at that same version. Prior bound sources and captures remain readable.",
+      "engineFacts": [
+        {
+          "engine": "chromium",
+          "browser": "140.0.7339.186",
+          "ordinaryAutosaveTargetVersion": 3,
+          "commentOnlyPreservedCapture": true,
+          "lateSavedTargetResponseRejected": true,
+          "targetBackRetainsIncompleteNewVersion": true,
+          "finalVersion": 5,
+          "newThumbnailAndSend": true,
+          "apiFailures": []
+        },
+        {
+          "engine": "firefox",
+          "browser": "141.0",
+          "ordinaryAutosaveTargetVersion": 2,
+          "commentOnlyPreservedCapture": true,
+          "lateSavedTargetResponseRejected": true,
+          "targetBackRetainsIncompleteNewVersion": true,
+          "finalVersion": 4,
+          "newThumbnailAndSend": true,
+          "apiFailures": []
+        }
+      ]
+    }
+  ],
+  "additionalAcceptance": [
+    {
+      "criterion": "Source lifecycle, migration, legacy/CLI and ordinary capture regression",
+      "status": "PASS",
+      "facts": "36 passed, 0 failed, 1 separate HTML transport test skipped. Includes awaiting/bound migration and restart, cross-version source reuse rejection, atomic deleted-target failure, old capture history and explicit object references."
+    },
+    {
+      "criterion": "Same-page view retirement under delayed close",
+      "status": "PASS",
+      "facts": {
+        "sameURL": true,
+        "instanceChanged": true,
+        "captureComplete": true,
+        "viewGeneration": 2,
+        "retirement": {
+          "oldCloseHeld": true,
+          "registrationsWhileHeld": 0
+        }
+      },
+      "sourceFinding": "Replacement initialization awaits retirement of the prior document provider."
+    },
+    {
+      "criterion": "Pixels and metadata across network delay, two-stage cancel, source deletion and reload",
+      "status": "PASS",
+      "facts": {
+        "dpr": 2,
+        "bitmap": {
+          "width": 2880,
+          "height": 2000
+        },
+        "channelsCompared": 6207488,
+        "mismatchedChannels": 0,
+        "cancelBeforeHold": {
+          "lateResponseReleased": true,
+          "commentRetained": true,
+          "laterBodyRetained": true,
+          "captureComplete": false
+        },
+        "cancelAfterSourceSave": {
+          "lateResponseReleased": true,
+          "savedVersion": 1,
+          "invalidatedVersion": 2,
+          "commentRetained": true,
+          "captureComplete": false
+        },
+        "samePage": true
+      }
+    },
+    {
+      "criterion": "Delayed new scene delivery preserves the displayed historical source",
+      "status": "PASS",
+      "facts": {
+        "displayedObjectVersionWhileDeliveryHeld": 1,
+        "currentServiceObjectX": 130,
+        "savedSceneObjectX": 120,
+        "savedSceneObjectVersion": 1,
+        "captureState": "complete",
+        "pixelComparison": {
+          "channels": 732096,
+          "mismatches": 0,
+          "seq": 33
+        },
+        "notices": ""
+      },
+      "sourceFinding": "Scene objects and primary assets come from the same delivered snapshot; immutable auxiliary preview asset metadata is supplied separately."
+    },
+    {
+      "criterion": "Unsupported H264 format in project Chromium retains usable actual fallback",
+      "status": "PASS",
+      "facts": {
+        "fileCard": true,
+        "description": "Movie.mp4Preview unavailable in this browserDownload file",
+        "downloadName": "Movie.mp4",
+        "downloadBytesMatch": true,
+        "captureState": "complete",
+        "sourceMode": "scene-bitmap",
+        "thumbnail": 1,
+        "sent": true
+      },
+      "supportBoundary": "H264 playback is not claimed for project Chromium 140.0.7339.186. Its actual preview-error card, original file bytes, default Done screenshot/thumbnail and Send are verified."
+    },
+    {
+      "criterion": "Independent isolated build and no-emit checks",
+      "status": "PASS",
+      "facts": "Server compilation to the unique temporary outDir, web no-emit type check and latest isolated Vite build passed. Final web build follows the last stable App source modification."
+    }
+  ],
+  "verificationBoundary": {
+    "engines": [
+      "project Chromium 1193 / 140.0.7339.186",
+      "project Firefox 1490 / 141.0"
+    ],
+    "rendererSandbox": true,
+    "phase1MaterialMatrix": "The prior independent 14 exact seven-material captures remain recorded in phase1. This increment retests changed file/focus/source/geometry/target/recovery behavior; the entire matrix is not relabeled as a new run.",
+    "actualSafariEdge": "Not tested by this reviewer.",
+    "actualIAB": "Parent coordinates the separate executor evidence; not tested by this reviewer.",
+    "nativeHtml": "CEF controls, HTML audio, Keychain and OS clipboard are outside this review; no native helper was started.",
+    "performance": "Executor records resource/performance results separately; this review does not claim percentile measurements.",
+    "textAccessibility": "Focused file/board/mark controls, shared DOM layout, download and scroll were tested; full screen-reader and every script/font/widget combination were not tested."
+  },
+  "fixtureNotes": [
+    "Geometry and production tests were copied only into temporary compiled output to launch project Chromium with chromiumSandbox:true rather than the Chrome brand channel.",
+    "A preliminary delayed-scene probe waited for desired DOM version 2 while holding its delivery response; the actual display correctly remained at delivered version 1. The corrected displayed-source probe validates version 1 and exact PNG against the synchronous copy.",
+    "The deterministic retirement increment holds the old view DELETE for 400 ms and counts replacement registrations before releasing it."
+  ],
+  "isolation": {
+    "productionSourceModified": false,
+    "sharedDistModified": false,
+    "formalServiceAccessed": false,
+    "userBoardAccessed": false,
+    "nativeHelperStarted": false,
+    "OSClipboardOrKeychainAccessed": false,
+    "committed": false,
+    "temporaryEvidenceDirectory": "/private/tmp/acanvas-scene-retest-KLiOrF"
+  },
+  "unresolvedFindings": []
+}

@@ -29,6 +29,8 @@ capture prepare --session ID --draft ID --annotation ID --version NUMBER --input
 capture commit --session ID --draft ID --annotation ID --version NUMBER --file IMAGE [--allow-directory DIR]
 capture result --session ID --draft ID --annotation ID --version NUMBER
 capture retry --session ID --draft ID --annotation ID --version NUMBER
+capture-view register --session ID --document ID
+capture-view scene|presented|hold|close --session ID --view ID --input operation.json
 view save --session ID --input view.json
 asset import --file FILE [--mime MIME] [--allow-directory DIR] [--bundle-root DIR]
   --bundle-root authorizes and imports a publishable HTML directory (128 files / 32 MiB; hidden files skipped).
@@ -133,6 +135,14 @@ export async function cli(args: string[]): Promise<unknown> {
       const response = await fetch(new URL(`${path}/content`, base), { method: 'PUT', headers: { Authorization: `Bearer ${bootstrap.token}`, 'Content-Type': 'application/octet-stream', 'Content-Length': String(info.size) }, body: createReadStream(file) as unknown as BodyInit, duplex: 'half' } as RequestInit & { duplex: string });
       const result = await response.json(); if (!response.ok) throw new Error(JSON.stringify(result)); return result;
     }
+  }
+  if (group === 'capture-view') {
+    if (action === 'register') return request(`${sessionPath()}/capture-views`, 'POST', { documentId: required('document') });
+    const path = `${sessionPath()}/capture-views/${encodeURIComponent(required('view'))}`;
+    if (action === 'scene') return request(`${path}/scenes`, 'POST', await input());
+    if (action === 'presented') return request(`${path}/presented`, 'PUT', await input());
+    if (action === 'hold') return request(`${path}/presentations`, 'POST', await input());
+    if (action === 'close') return request(path, 'DELETE', await input());
   }
   if (group === 'view' && action === 'save') return request(`${sessionPath()}/view`, 'PUT', await input());
   if (group === 'board' && action === 'operations') { const value = await input(); return request('/api/board/operations', 'POST', { sessionId: required('session'), operations: value.operations }); }

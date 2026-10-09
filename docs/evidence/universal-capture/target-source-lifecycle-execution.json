@@ -1,0 +1,77 @@
+{
+  "date": "2026-10-09",
+  "scope": "Completed annotation target editing, service-managed capture state and source lifecycle",
+  "result": "executor verification passed; independent retest pending",
+  "sourceStates": {
+    "bound": "A complete service-confirmed scene source, presentation, target and annotation version.",
+    "awaiting": "The saved current target and version await a newly held Done scene; no source or snapshot placeholder is stored."
+  },
+  "transitions": [
+    "Ordinary target edit validates the canonical prior capture state, advances the version, saves the new target and clears its current capture/source in one transaction.",
+    "Done holds a new displayed scene and changes awaiting to bound at the same saved target version.",
+    "Comment-only edits keep their bound source, capture and version.",
+    "Explicit recapture changes a bound source and advances the version.",
+    "Changing a persisted pending target back advances another version and keeps the evidence incomplete.",
+    "A source previously bound to another version of the same annotation cannot stand in for the new Done proof.",
+    "Unresolved deleted object targets fail atomically while the previous saved target remains available.",
+    "Prior bound source and committed capture records remain readable as historical evidence."
+  ],
+  "clientRule": "Ordinary and captured saves serialize captureState/capture from the latest canonical server annotation; local incomplete display state expresses the user's changed target.",
+  "migration": "A NOT NULL state column with bound default retains existing complete source rows. An awaiting row persists only its actual target JSON. Restart preserves both states.",
+  "verification": {
+    "serverTypecheck": "passed with --noEmit",
+    "clientTypecheck": "passed with --noEmit",
+    "diffCheck": "passed",
+    "isolatedNodeTests": {
+      "passed": 36,
+      "failed": 0,
+      "skipped": 1,
+      "captureTests": 12,
+      "providerTests": 10,
+      "sourceTests": 14,
+      "skippedScope": "Separate HTML surface transport experiment"
+    },
+    "productionAppFlows": [
+      {
+        "engine": "project Chromium 140.0.7339.186",
+        "rendererSandbox": true,
+        "result": "passed",
+        "facts": "target-edit-execution.json"
+      },
+      {
+        "engine": "project Firefox 141.0",
+        "result": "passed",
+        "facts": "target-edit-firefox-execution.json"
+      }
+    ],
+    "actualActions": [
+      "Complete point annotation, reopen its draft chip, select Canvas region, wait 600 ms, then normal Done.",
+      "Read the newly completed version, wait for its thumbnail, and Send the matching saved capture.",
+      "Edit comment text and confirm the original capture/version remain.",
+      "Hold a target-save response after service commit, change the target back, then deliver the late response and complete the fresh version."
+    ]
+  },
+  "commands": [
+    ".runtime/node_modules/node/bin/node node_modules/typescript/bin/tsc -p tsconfig.server.json --noEmit",
+    ".runtime/node_modules/node/bin/node node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
+    ".runtime/node_modules/node/bin/node node_modules/typescript/bin/tsc -p tsconfig.server.json --outDir /private/tmp/acanvas-target-edit-build-yujZAa/server",
+    ".runtime/node_modules/node/bin/node node_modules/vite/bin/vite.js build --outDir /private/tmp/acanvas-target-edit-build-yujZAa/web --emptyOutDir",
+    "TMPDIR=/private/tmp .runtime/node_modules/node/bin/node --test /private/tmp/acanvas-target-edit-build-yujZAa/server/tests/scene-source.test.js /private/tmp/acanvas-target-edit-build-yujZAa/server/tests/project-capture-provider.test.js /private/tmp/acanvas-target-edit-build-yujZAa/server/tests/annotation-capture.test.js",
+    "TMPDIR=/private/tmp ACANVAS_TARGET_EDIT_TEST=1 ACANVAS_TARGET_WEB_ROOT=/private/tmp/acanvas-target-edit-build-yujZAa/web .runtime/node_modules/node/bin/node --test /private/tmp/acanvas-target-edit-build-yujZAa/server/tests/universal-target-edit.test.js",
+    "TMPDIR=/private/tmp ACANVAS_TARGET_EDIT_TEST=1 ACANVAS_TARGET_EDIT_ENGINE=firefox ACANVAS_TARGET_WEB_ROOT=/private/tmp/acanvas-target-edit-build-yujZAa/web .runtime/node_modules/node/bin/node --test /private/tmp/acanvas-target-edit-build-yujZAa/server/tests/universal-target-edit.test.js"
+  ],
+  "isolation": {
+    "buildOutput": "/private/tmp/acanvas-target-edit-build-yujZAa",
+    "testProjects": "owned mkdtemp projects and port 0 services",
+    "sharedDistWritten": false,
+    "userServiceAccessed": false,
+    "userBoardAccessed": false,
+    "nativeCefStarted": false,
+    "keychainOrOsClipboardAccessed": false,
+    "committed": false
+  },
+  "pending": [
+    "Independent retest of the original completed-target-edit action and affected lifecycle cases.",
+    "Root coordinates the separate source-space/focus and native HTML integration findings."
+  ]
+}

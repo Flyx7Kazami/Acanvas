@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Download, Music2 } from 'lucide-react';
 import { useAudioWaveform } from './useAudioWaveform';
 import { useAudioArtwork } from './audioArtwork';
+import { useControlledScenePanel } from './scene-renderer/media/use-controlled-panel.js';
 import './audio-canvas.css';
 
 export interface AudioCanvasPlayerProps {
@@ -17,7 +18,9 @@ export function AudioCanvasPlayer({ src, title, assetId, disabled = false, onEle
   const player = useRef<HTMLDivElement>(null), [layout, setLayout] = useState<'compact' | 'beside' | 'stack'>('compact');
   const audio = useRef<HTMLAudioElement>(null), wave = useRef<HTMLCanvasElement>(null), slider = useRef<HTMLDivElement>(null), current = useRef<HTMLSpanElement>(null), total = useRef<HTMLSpanElement>(null);
   const notifyElement = useRef(onElement); notifyElement.current = onElement;
-  const playback = useAudioWaveform(audio, { wave, slider, current, total }, src, onError), cover = useAudioArtwork(assetId ? src : undefined);
+  const presentedTime = useRef(0);
+  const panel = useControlledScenePanel(player, { metadata: () => ({ media: { playbackTime: presentedTime.current, presentedTime: presentedTime.current, timePrecision: 'playback-sampled' } }), onError });
+  const playback = useAudioWaveform(audio, { wave, slider, current, total, onFrame: frame => { presentedTime.current = frame.time; panel.publish.current(); } }, src, onError), cover = useAudioArtwork(assetId ? src : undefined);
   const drag = useRef<{ pointer: number; playing: boolean } | null>(null);
   useLayoutEffect(() => {
     const element = player.current!;

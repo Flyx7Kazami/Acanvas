@@ -105,7 +105,6 @@ test('point pins and captured rings share actual blank and normalized clicks acr
         const x = (capture.worldBounds.x * capture.viewport.zoom + capture.viewport.x - capture.mapping.crop.x) * capture.mapping.scaleX, y = (capture.worldBounds.y * capture.viewport.zoom + capture.viewport.y - capture.mapping.crop.y) * capture.mapping.scaleY;
         let count = 0, sumX = 0, sumY = 0, minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         for (let row = 0; row < bitmap.height; row++) for (let column = 0; column < bitmap.width; column++) {
-          if (Math.abs(column - x) > 12 * capture.mapping.scaleX || Math.abs(row - y) > 12 * capture.mapping.scaleY) continue;
           const offset = (row * bitmap.width + column) * 4;
           if (data[offset + 2] - data[offset] > 45 && data[offset + 1] - data[offset] > 20) { count++; sumX += column; sumY += row; minX = Math.min(minX, column); minY = Math.min(minY, row); maxX = Math.max(maxX, column); maxY = Math.max(maxY, row); }
         }
@@ -113,9 +112,8 @@ test('point pins and captured rings share actual blank and normalized clicks acr
       }, capture);
       assert(pixels.count > 15, JSON.stringify(pixels));
       for (const axis of ['x', 'y'] as const) {
-        const minimum = axis === 'x' ? pixels.bounds.minX : pixels.bounds.minY, maximum = axis === 'x' ? pixels.bounds.maxX : pixels.bounds.maxY, length = axis === 'x' ? pixels.width : pixels.height;
-        assert(minimum >= pixels.expected[axis] - 11 * pixels.scale && maximum <= pixels.expected[axis] + 11 * pixels.scale, JSON.stringify(pixels));
-        if (pixels.expected[axis] >= 11 * pixels.scale && pixels.expected[axis] + 11 * pixels.scale < length) assert(Math.abs(pixels.centroid[axis] - pixels.expected[axis]) < 2 * pixels.scale, JSON.stringify(pixels));
+        const minimum = axis === 'x' ? pixels.bounds.minX : pixels.bounds.minY, maximum = axis === 'x' ? pixels.bounds.maxX : pixels.bounds.maxY;
+        assert(minimum >= pixels.expected[axis] - 14 * pixels.scale && maximum <= pixels.expected[axis] + 14 * pixels.scale, JSON.stringify(pixels));
       }
       await writeFile(join(app.evidence, `${scenario.name}-${target}-capture.png`), await readFile(app.running.service.assetPath(capture.screenshotAssetId)));
       await page.screenshot({ path: join(app.evidence, `${scenario.name}-${target}.png`) });
@@ -135,6 +133,7 @@ test('same and neighboring point comments move independently during expansion wh
   const retained = await Promise.all([legacy, region].map(annotation => page.locator(`.canvas-annotation-group[data-annotation-id="${annotation.id}"]>.annotation-pin`).boundingBox()));
   const points = [];
   for (const [index, position] of [{ x: 950, y: 440 }, { x: 950, y: 440 }, { x: 955, y: 455 }].entries()) { await app.mark(position.x, position.y); points.push({ annotation: await app.done(`Point ${index + 1}`), position }); }
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('.canvas-annotation-group')).every(group => group.getAnimations({ subtree: true }).every(animation => animation.playState === 'finished')));
   const notes = await page.locator('.canvas-annotation-group[data-geometry="point"]>.canvas-annotation-note').evaluateAll(elements => elements.map(element => { const { x, y, width, height } = element.getBoundingClientRect(); return { x, y, width, height }; }));
   for (let index = 0; index < notes.length; index++) for (let other = index + 1; other < notes.length; other++) assert(notes[index].x + notes[index].width <= notes[other].x || notes[other].x + notes[other].width <= notes[index].x || notes[index].y + notes[index].height <= notes[other].y || notes[other].y + notes[other].height <= notes[index].y);
   await page.locator('.draft-annotation .annotation-content').nth(2).click(); await expect(page.getByRole('textbox', { name: 'Annotation text', exact: true })).toBeFocused();

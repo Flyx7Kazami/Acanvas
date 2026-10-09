@@ -1,0 +1,137 @@
+{
+  "measuredAt": "2026-10-08T23:35:44.848Z",
+  "status": "paired-sampling-passed",
+  "samples": 16,
+  "rAF": true,
+  "timers": true,
+  "network": true,
+  "cssTransform": true,
+  "webglDefaultBuffer": true,
+  "originalSeedRetained": true,
+  "scriptContinued": true,
+  "activeGrantSurvivedLifetime": true,
+  "oldPixelsRetainedAfterFiveNewFrames": true,
+  "failedCandidateNotPublished": true,
+  "originalAnimationRateRestored": true,
+  "pcm": {
+    "packets": 47,
+    "maxPtsGapMs": 22,
+    "sampleRate": 48000,
+    "channels": 2
+  },
+  "timings": [
+    {
+      "prepareMs": 16.42162499999995,
+      "pauseMs": 57.04074999999989,
+      "semanticMs": 6.970832999999857,
+      "copyMs": 50.06991700000003,
+      "totalMs": 75.43374999999992
+    },
+    {
+      "prepareMs": 2.004000000000133,
+      "pauseMs": 32.723000000000184,
+      "semanticMs": 1.8700000000001182,
+      "copyMs": 30.853000000000065,
+      "totalMs": 36.150125000000116
+    },
+    {
+      "prepareMs": 0.9602909999998701,
+      "pauseMs": 46.91220800000019,
+      "semanticMs": 1.9203750000001492,
+      "copyMs": 44.99183300000004,
+      "totalMs": 48.93541600000003
+    },
+    {
+      "prepareMs": 3.0956659999999374,
+      "pauseMs": 34.721042000000125,
+      "semanticMs": 1.7511250000000018,
+      "copyMs": 32.96991700000012,
+      "totalMs": 40.884000000000015
+    },
+    {
+      "prepareMs": 9.13537499999984,
+      "pauseMs": 134.79774999999995,
+      "semanticMs": 2.7333750000000236,
+      "copyMs": 132.06437499999993,
+      "totalMs": 148.95616699999982
+    },
+    {
+      "prepareMs": 1.864415999999892,
+      "pauseMs": 43.23087499999997,
+      "semanticMs": 2.836917000000085,
+      "copyMs": 40.393957999999884,
+      "totalMs": 47.12304099999983
+    },
+    {
+      "prepareMs": 26.09637500000008,
+      "pauseMs": 46.991791999999805,
+      "semanticMs": 2.310041999999612,
+      "copyMs": 44.68175000000019,
+      "totalMs": 76.30658300000005
+    },
+    {
+      "prepareMs": 1.0554999999999382,
+      "pauseMs": 47.76166699999976,
+      "semanticMs": 1.987999999999829,
+      "copyMs": 45.77366699999993,
+      "totalMs": 50.54895899999974
+    },
+    {
+      "prepareMs": 8.787708000000293,
+      "pauseMs": 46.99529100000018,
+      "semanticMs": 6.798499999999876,
+      "copyMs": 40.1967910000003,
+      "totalMs": 60.495416000000205
+    },
+    {
+      "prepareMs": 2.275249999999687,
+      "pauseMs": 35.692375000000084,
+      "semanticMs": 1.7734159999999974,
+      "copyMs": 33.918959000000086,
+      "totalMs": 42.10083399999985
+    },
+    {
+      "prepareMs": 0.9546249999998508,
+      "pauseMs": 30.503583000000162,
+      "semanticMs": 1.8312919999998485,
+      "copyMs": 28.672291000000314,
+      "totalMs": 32.68645800000013
+    },
+    {
+      "prepareMs": 2.8456670000000486,
+      "pauseMs": 37.93274999999994,
+      "semanticMs": 1.828125,
+      "copyMs": 36.10462499999994,
+      "totalMs": 44.05662500000017
+    },
+    {
+      "prepareMs": 1.4079169999999976,
+      "pauseMs": 24.947333999999955,
+      "semanticMs": 1.8756250000001273,
+      "copyMs": 23.071708999999828,
+      "totalMs": 27.582083999999668
+    },
+    {
+      "prepareMs": 1.06775000000016,
+      "pauseMs": 25.786790999999994,
+      "semanticMs": 2.075333000000228,
+      "copyMs": 23.711457999999766,
+      "totalMs": 28.85091599999987
+    },
+    {
+      "prepareMs": 1.2229160000001684,
+      "pauseMs": 27.72508400000015,
+      "semanticMs": 1.8796250000000327,
+      "copyMs": 25.84545900000012,
+      "totalMs": 30.091125000000375
+    },
+    {
+      "prepareMs": 0.9198750000000473,
+      "pauseMs": 28.248833999999988,
+      "semanticMs": 1.7755839999999807,
+      "copyMs": 26.473250000000007,
+      "totalMs": 30.153167000000394
+    }
+  ],
+  "elapsedMs": 2567
+}

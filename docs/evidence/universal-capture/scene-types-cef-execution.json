@@ -1,0 +1,430 @@
+{
+  "measuredAt": "2026-10-08T22:00:00.346Z",
+  "status": "material-production-flow-passed",
+  "engines": [
+    "Chrome channel",
+    "project Firefox engine"
+  ],
+  "results": [
+    {
+      "engine": "chromium",
+      "browser": "154.0.8037.98",
+      "client": {
+        "brand": "Google Chrome",
+        "executable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "headless": true,
+        "isolatedProfile": true,
+        "profileDirectory": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/playwright_chromiumdev_profile-USJCN8"
+      },
+      "kind": "image",
+      "sourceMode": "scene-bitmap",
+      "frame": 49,
+      "comparison": {
+        "seq": 49,
+        "width": 492,
+        "height": 372,
+        "channels": 732096,
+        "mismatches": 0
+      }
+    },
+    {
+      "engine": "chromium",
+      "browser": "154.0.8037.98",
+      "client": {
+        "brand": "Google Chrome",
+        "executable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "headless": true,
+        "isolatedProfile": true,
+        "profileDirectory": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/playwright_chromiumdev_profile-USJCN8"
+      },
+      "kind": "file",
+      "sourceMode": "scene-bitmap",
+      "frame": 93,
+      "comparison": {
+        "seq": 93,
+        "width": 492,
+        "height": 372,
+        "channels": 732096,
+        "mismatches": 0
+      }
+    },
+    {
+      "engine": "chromium",
+      "browser": "154.0.8037.98",
+      "client": {
+        "brand": "Google Chrome",
+        "executable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "headless": true,
+        "isolatedProfile": true,
+        "profileDirectory": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/playwright_chromiumdev_profile-USJCN8"
+      },
+      "kind": "markdown",
+      "sourceMode": "scene-bitmap",
+      "frame": 140,
+      "comparison": {
+        "seq": 140,
+        "width": 492,
+        "height": 432,
+        "channels": 850176,
+        "mismatches": 0
+      }
+    },
+    {
+      "engine": "chromium",
+      "browser": "154.0.8037.98",
+      "client": {
+        "brand": "Google Chrome",
+        "executable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "headless": true,
+        "isolatedProfile": true,
+        "profileDirectory": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/playwright_chromiumdev_profile-USJCN8"
+      },
+      "kind": "audio",
+      "sourceMode": "scene-bitmap",
+      "frame": 189,
+      "comparison": {
+        "seq": 189,
+        "width": 532,
+        "height": 292,
+        "channels": 621376,
+        "mismatches": 0
+      },
+      "media": {
+        "objectId": "f4208a26-769d-4aea-8f37-2923cbb7d7fd",
+        "playbackTime": 0,
+        "presentedTime": 0,
+        "timePrecision": "playback-sampled"
+      }
+    },
+    {
+      "engine": "chromium",
+      "browser": "154.0.8037.98",
+      "client": {
+        "brand": "Google Chrome",
+        "executable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "headless": true,
+        "isolatedProfile": true,
+        "profileDirectory": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/playwright_chromiumdev_profile-USJCN8"
+      },
+      "kind": "gif",
+      "sourceMode": "scene-bitmap",
+      "frame": 237,
+      "comparison": {
+        "seq": 237,
+        "width": 372,
+        "height": 372,
+        "channels": 553536,
+        "mismatches": 0
+      },
+      "media": {
+        "objectId": "c4869fd6-0d10-4575-8256-92fca7c7d868",
+        "presentedTime": 0.05,
+        "playbackTime": 2.118600000143051,
+        "timePrecision": "decoded-pts",
+        "frameIndex": 1
+      }
+    },
+    {
+      "engine": "chromium",
+      "browser": "154.0.8037.98",
+      "client": {
+        "brand": "Google Chrome",
+        "executable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "headless": true,
+        "isolatedProfile": true,
+        "profileDirectory": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/playwright_chromiumdev_profile-USJCN8"
+      },
+      "kind": "video",
+      "sourceMode": "scene-bitmap",
+      "frame": 287,
+      "comparison": {
+        "seq": 287,
+        "width": 492,
+        "height": 362,
+        "channels": 712416,
+        "mismatches": 0
+      },
+      "media": {
+        "objectId": "563f364e-f1bf-4057-bd7b-a5a0b5f7918f",
+        "playbackTime": 0.7,
+        "presentedTime": 0.7,
+        "timePrecision": "playback-sampled",
+        "selectedRange": {
+          "start": 0,
+          "end": 2
+        },
+        "representativeTime": 0
+      }
+    },
+    {
+      "engine": "chromium",
+      "browser": "154.0.8037.98",
+      "client": {
+        "brand": "Google Chrome",
+        "executable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "headless": true,
+        "isolatedProfile": true,
+        "profileDirectory": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/playwright_chromiumdev_profile-USJCN8"
+      },
+      "kind": "html",
+      "sourceMode": "scene-bitmap",
+      "frame": 335,
+      "comparison": {
+        "seq": 335,
+        "width": 492,
+        "height": 392,
+        "channels": 771456,
+        "mismatches": 0
+      }
+    },
+    {
+      "engine": "firefox",
+      "browser": "141.0",
+      "client": {
+        "brand": "project Firefox engine",
+        "executable": "/private/tmp/acanvas-scene-browser-runtime/firefox-1490/firefox/Nightly.app/Contents/MacOS/firefox",
+        "headless": true,
+        "isolatedContext": true
+      },
+      "kind": "image",
+      "sourceMode": "scene-bitmap",
+      "frame": 45,
+      "comparison": {
+        "seq": 45,
+        "width": 492,
+        "height": 372,
+        "channels": 732096,
+        "mismatches": 0
+      }
+    },
+    {
+      "engine": "firefox",
+      "browser": "141.0",
+      "client": {
+        "brand": "project Firefox engine",
+        "executable": "/private/tmp/acanvas-scene-browser-runtime/firefox-1490/firefox/Nightly.app/Contents/MacOS/firefox",
+        "headless": true,
+        "isolatedContext": true
+      },
+      "kind": "file",
+      "sourceMode": "scene-bitmap",
+      "frame": 94,
+      "comparison": {
+        "seq": 94,
+        "width": 492,
+        "height": 372,
+        "channels": 732096,
+        "mismatches": 0
+      }
+    },
+    {
+      "engine": "firefox",
+      "browser": "141.0",
+      "client": {
+        "brand": "project Firefox engine",
+        "executable": "/private/tmp/acanvas-scene-browser-runtime/firefox-1490/firefox/Nightly.app/Contents/MacOS/firefox",
+        "headless": true,
+        "isolatedContext": true
+      },
+      "kind": "markdown",
+      "sourceMode": "scene-bitmap",
+      "frame": 144,
+      "comparison": {
+        "seq": 144,
+        "width": 492,
+        "height": 432,
+        "channels": 850176,
+        "mismatches": 0
+      }
+    },
+    {
+      "engine": "firefox",
+      "browser": "141.0",
+      "client": {
+        "brand": "project Firefox engine",
+        "executable": "/private/tmp/acanvas-scene-browser-runtime/firefox-1490/firefox/Nightly.app/Contents/MacOS/firefox",
+        "headless": true,
+        "isolatedContext": true
+      },
+      "kind": "audio",
+      "sourceMode": "scene-bitmap",
+      "frame": 197,
+      "comparison": {
+        "seq": 197,
+        "width": 532,
+        "height": 292,
+        "channels": 621376,
+        "mismatches": 0
+      },
+      "media": {
+        "objectId": "47800f1d-66fe-4cb0-9dd1-cdf30c364048",
+        "playbackTime": 0,
+        "presentedTime": 0,
+        "timePrecision": "playback-sampled"
+      }
+    },
+    {
+      "engine": "firefox",
+      "browser": "141.0",
+      "client": {
+        "brand": "project Firefox engine",
+        "executable": "/private/tmp/acanvas-scene-browser-runtime/firefox-1490/firefox/Nightly.app/Contents/MacOS/firefox",
+        "headless": true,
+        "isolatedContext": true
+      },
+      "kind": "gif",
+      "sourceMode": "scene-bitmap",
+      "frame": 245,
+      "comparison": {
+        "seq": 245,
+        "width": 372,
+        "height": 372,
+        "channels": 553536,
+        "mismatches": 0
+      },
+      "media": {
+        "objectId": "09e554ee-e4f5-4c86-b802-735f992f78c9",
+        "presentedTime": 0.05,
+        "playbackTime": 2.102,
+        "timePrecision": "decoded-pts",
+        "frameIndex": 1
+      }
+    },
+    {
+      "engine": "firefox",
+      "browser": "141.0",
+      "client": {
+        "brand": "project Firefox engine",
+        "executable": "/private/tmp/acanvas-scene-browser-runtime/firefox-1490/firefox/Nightly.app/Contents/MacOS/firefox",
+        "headless": true,
+        "isolatedContext": true
+      },
+      "kind": "video",
+      "sourceMode": "scene-bitmap",
+      "frame": 300,
+      "comparison": {
+        "seq": 300,
+        "width": 492,
+        "height": 362,
+        "channels": 712416,
+        "mismatches": 0
+      },
+      "media": {
+        "objectId": "c344de33-d820-4246-ab14-2faf56e705d4",
+        "playbackTime": 0.7,
+        "presentedTime": 0.7,
+        "timePrecision": "playback-sampled",
+        "selectedRange": {
+          "start": 0,
+          "end": 2
+        },
+        "representativeTime": 0
+      }
+    },
+    {
+      "engine": "firefox",
+      "browser": "141.0",
+      "client": {
+        "brand": "project Firefox engine",
+        "executable": "/private/tmp/acanvas-scene-browser-runtime/firefox-1490/firefox/Nightly.app/Contents/MacOS/firefox",
+        "headless": true,
+        "isolatedContext": true
+      },
+      "kind": "html",
+      "sourceMode": "scene-bitmap",
+      "frame": 348,
+      "comparison": {
+        "seq": 348,
+        "width": 492,
+        "height": 392,
+        "channels": 771456,
+        "mismatches": 0
+      }
+    }
+  ],
+  "htmlSurfaceEngine": "cef",
+  "performance": [
+    {
+      "engine": "chromium",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "deviceScaleFactor": 1,
+      "copyMilliseconds": {
+        "samples": 7,
+        "p50": 0.09999990463256836,
+        "p95": 0.10000014305114746
+      },
+      "pngEncodeMilliseconds": {
+        "samples": 7,
+        "p50": 37.200000047683716,
+        "p95": 80.5
+      },
+      "pointerdownToNextAnimationFrameMilliseconds": {
+        "samples": 15,
+        "p50": 31.5,
+        "p95": 80.09999990463257
+      },
+      "captureUploadHTTPMilliseconds": {
+        "samples": 7,
+        "p50": 14.547,
+        "p95": 19.18
+      },
+      "rendererTaskCPUPercent": {
+        "samples": 14,
+        "p50": 70.55440246384558,
+        "p95": 98.88248957721216
+      },
+      "rendererJSHeapMiB": {
+        "samples": 15,
+        "p50": 8.77664566040039,
+        "p95": 14.476913452148438
+      },
+      "ownedFrontendBrowserProcessRSSMiB": {
+        "samples": 15,
+        "p50": 916.5,
+        "p95": 957.671875
+      },
+      "measurementScope": "short isolated seven-material production capture run; copy drawImage call duration excludes pixel-oracle readback; CPU is frontend page TaskDuration/wall interval; RSS sums only PIDs reported by its owned Chrome CDP; backend render process and service memory excluded; screenshot tracing and pixel-oracle readback are active, so these are instrumented-run samples rather than steady-state product measurements"
+    },
+    {
+      "engine": "firefox",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "deviceScaleFactor": 1,
+      "copyMilliseconds": {
+        "samples": 7,
+        "p50": 0,
+        "p95": 1
+      },
+      "pngEncodeMilliseconds": {
+        "samples": 7,
+        "p50": 19,
+        "p95": 29
+      },
+      "pointerdownToNextAnimationFrameMilliseconds": {
+        "samples": 15,
+        "p50": 14,
+        "p95": 23
+      },
+      "captureUploadHTTPMilliseconds": {
+        "samples": 7,
+        "p50": 12.9970703125,
+        "p95": 15.614013671875
+      },
+      "measurementScope": "short isolated seven-material production capture run; copy drawImage call duration excludes pixel-oracle readback; CPU is frontend page TaskDuration/wall interval; RSS sums only PIDs reported by its owned Chrome CDP; backend render process and service memory excluded; screenshot tracing and pixel-oracle readback are active, so these are instrumented-run samples rather than steady-state product measurements"
+    }
+  ],
+  "defaultDoneToThumbnailToSend": true,
+  "nativeProvider": false,
+  "openedCaptureWindows": 0,
+  "output": "/private/tmp/acanvas-scene-types-20261009-cef-run1",
+  "pending": [
+    "actual Safari/Edge and embedded App matrix",
+    "native HTML widget/audio/clipboard policy",
+    "sustained workload and native HTML backend performance"
+  ]
+}

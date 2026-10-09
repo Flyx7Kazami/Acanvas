@@ -3,7 +3,7 @@ import { acquireAudioWaveform } from './audioWaveformData';
 
 const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
-type DisplayRefs = { wave: RefObject<HTMLCanvasElement | null>; slider: RefObject<HTMLDivElement | null>; current: RefObject<HTMLSpanElement | null>; total: RefObject<HTMLSpanElement | null> };
+type DisplayRefs = { wave: RefObject<HTMLCanvasElement | null>; slider: RefObject<HTMLDivElement | null>; current: RefObject<HTMLSpanElement | null>; total: RefObject<HTMLSpanElement | null>; onFrame?: (frame: { time: number; duration: number }) => void };
 
 /** The full-file amplitude envelope and native playback share the same time axis. */
 export function useAudioWaveform(audio: RefObject<HTMLAudioElement | null>, display: DisplayRefs, src: string, onError?: (error: unknown) => void) {
@@ -11,6 +11,7 @@ export function useAudioWaveform(audio: RefObject<HTMLAudioElement | null>, disp
   const [playbackError, setPlaybackError] = useState(''), [waveformStatus, setWaveformStatus] = useState('Loading waveform…');
   const draw = useRef(() => {}), frame = useRef(0), active = useRef(false), intent = useRef(0);
   const reportError = useRef(onError); reportError.current = onError;
+  const notifyFrame = useRef(display.onFrame); notifyFrame.current = display.onFrame;
   useEffect(() => {
     const media = audio.current, canvas = display.wave.current, slider = display.slider.current;
     if (!media || !canvas || !slider) return;
@@ -54,6 +55,7 @@ export function useAudioWaveform(audio: RefObject<HTMLAudioElement | null>, disp
       slider!.setAttribute('aria-valuemax', String(duration)); slider!.setAttribute('aria-valuenow', String(time)); slider!.setAttribute('aria-valuetext', `${clock(time)} of ${clock(duration)}`);
       if (display.current.current) display.current.current.textContent = clock(time);
       if (display.total.current) display.total.current.textContent = clock(duration);
+      notifyFrame.current?.({ time, duration });
     }
     draw.current = paint;
     const sync = () => { const duration = Number.isFinite(media.duration) ? media.duration : 0; setState({ playing: !media.paused && !media.ended, ready: media.readyState >= 1 && duration > 0 && !media.error, duration, failed: !!media.error }); paint(); };

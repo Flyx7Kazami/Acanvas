@@ -1,0 +1,44 @@
+{
+  "measuredAt": "2026-10-08T18:32:10.091Z",
+  "status": "ephemeral-native-startup-trial-passed",
+  "effectiveDisabledFeatures": [
+    "--disable-features=GlicActorUi,AutofillActorMode,LensOverlay,KillOnInvalidNavigationHeaders",
+    "--disable-features=UseKeychainKeyProvider"
+  ],
+  "mockKeychain": false,
+  "basicPasswordStore": false,
+  "sandboxEnabled": true,
+  "windowless": true,
+  "product": "Chrome/154.0.8037.98",
+  "protocolVersion": "1.3",
+  "pcm": {
+    "packets": 16,
+    "sampleRate": 48000,
+    "channels": 2,
+    "rms": 0.1668894068018946,
+    "ptsFirst": 1068017687,
+    "ptsLast": 1068018003
+  },
+  "png": {
+    "width": 480,
+    "height": 260,
+    "bytes": 1822
+  },
+  "credentialDatabaseFileNames": [
+    "Default/Cookies",
+    "Default/Cookies-journal",
+    "Default/Login Data",
+    "Default/Login Data-journal",
+    "Default/Web Data",
+    "Default/Web Data-journal"
+  ],
+  "elapsedMs": 3590,
+  "ownedBrowserExited": true,
+  "temporaryProfileRemoved": true,
+  "credentialDatabaseRemains": false,
+  "limitations": [
+    "No Keychain content or Keychain API was accessed by test code.",
+    "No system prompt was observed in this authorized cold startup; provider exclusion is independently source-backed.",
+    "This trial measures PCM and PNG initialization only; full native product interaction remains separate."
+  ]
+}

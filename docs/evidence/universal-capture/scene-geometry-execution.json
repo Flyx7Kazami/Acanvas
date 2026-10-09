@@ -1,0 +1,147 @@
+{
+  "measuredAt": "2026-10-08T21:56:12.501Z",
+  "status": "geometry-focus-production-passed",
+  "results": [
+    {
+      "engine": "chromium",
+      "browser": "154.0.8037.98",
+      "dpr": 2,
+      "articleFocusPixelDifference": 24000,
+      "linkFocusPixelDifference": 30042,
+      "pinFocusPixelDifference": 43200,
+      "download": "File.zip",
+      "resizedFileScrollPixelDifference": 22647,
+      "focusedLink": {
+        "rect": {
+          "x": 630.25,
+          "y": 223,
+          "width": 79.5,
+          "height": 19
+        },
+        "focusPixel": [
+          32,
+          32,
+          32,
+          255
+        ],
+        "outline": "2px"
+      },
+      "point": {
+        "x": 210,
+        "y": 187.5
+      },
+      "actualPointer": {
+        "x": 210,
+        "y": 187.5
+      },
+      "expectedWorld": {
+        "x": 128,
+        "y": 120
+      },
+      "worldBounds": {
+        "x": 128,
+        "y": 120,
+        "width": 0,
+        "height": 0
+      },
+      "objectBound": true,
+      "cssViewport": {
+        "x": 50,
+        "y": 37.5,
+        "width": 1125,
+        "height": 1000
+      },
+      "camera": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1.25
+      },
+      "comparison": {
+        "frameSeq": 48,
+        "width": 384,
+        "height": 384,
+        "channels": 589824,
+        "mismatches": 0
+      },
+      "send": true,
+      "narrowViewport": {
+        "width": 320,
+        "height": 740,
+        "bitmapWidth": 640,
+        "bodyOverflow": false
+      }
+    },
+    {
+      "engine": "firefox",
+      "browser": "141.0",
+      "dpr": 2,
+      "articleFocusPixelDifference": 24000,
+      "linkFocusPixelDifference": 30036,
+      "pinFocusPixelDifference": 43200,
+      "download": "File.zip",
+      "resizedFileScrollPixelDifference": 22662,
+      "focusedLink": {
+        "rect": {
+          "x": 630.25,
+          "y": 223.5,
+          "width": 79.48333740234375,
+          "height": 19
+        },
+        "focusPixel": [
+          32,
+          32,
+          32,
+          255
+        ],
+        "outline": "2px"
+      },
+      "point": {
+        "x": 210,
+        "y": 187.5
+      },
+      "actualPointer": {
+        "x": 210,
+        "y": 187
+      },
+      "expectedWorld": {
+        "x": 128,
+        "y": 119.6
+      },
+      "worldBounds": {
+        "x": 128,
+        "y": 119.6,
+        "width": 0,
+        "height": 0
+      },
+      "objectBound": true,
+      "cssViewport": {
+        "x": 50,
+        "y": 37.5,
+        "width": 1125,
+        "height": 1000
+      },
+      "camera": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1.25
+      },
+      "comparison": {
+        "frameSeq": 50,
+        "width": 384,
+        "height": 384,
+        "channels": 589824,
+        "mismatches": 0
+      },
+      "send": true,
+      "narrowViewport": {
+        "width": 320,
+        "height": 740,
+        "bitmapWidth": 640,
+        "bodyOverflow": false
+      }
+    }
+  ],
+  "output": "/private/tmp/acanvas-scene-geometry-20261009-run3",
+  "isolated": true,
+  "nativeProvider": false
+}

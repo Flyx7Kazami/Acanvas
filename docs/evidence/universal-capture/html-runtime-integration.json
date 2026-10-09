@@ -1,0 +1,63 @@
+{
+  "measuredAt": "2026-10-09",
+  "status": "native-production-candidate-executed-independent-final-review-pending",
+  "transport": {
+    "semanticModule": "src/shared/html-surface.ts",
+    "frameSemantics": "retained with frameSeq and deep copied",
+    "inputControls": "retained displayed controlId plus instance/viewport/inputSeq",
+    "inputJsonMaximumBytes": 12582912,
+    "selectedFileDecodedMaximumBytes": 8388608,
+    "selectedFileRetainedMaximumBytes": 33554432,
+    "selectedFileMaximumCount": 32,
+    "pcm": "scoped authenticated GET; up to retained 128 native packets; planar float32 base64",
+    "inputClipboard": "accepted typed operation returns canonical inputSeq and clipboardError on execution failure; validation rejection leaves sequence unchanged",
+    "resourceLifetime": "active surface holds original grant without reload until close; unheld previews retain 10min TTL",
+    "htmlSurfaceSource": "original HTML bytes under existing CSP/opaque origin; legacy preview bridges omitted"
+  },
+  "client": {
+    "producer": "SceneHtmlSurface publishes persistent same-instance PNG frames",
+    "controls": "frame-linked HtmlSurfaceControls integrated for CEF engine",
+    "audio": "actual production HtmlPcmPlayer realgesture graph RMS/instance switch silence/close measured",
+    "defaultEngine": "cef",
+    "chromiumUi": "read-only continuous preview",
+    "nativeEngine": "normal production helper, inner renderer sandbox, true headless private clipboard, credential provider disabled, test macros OFF"
+  },
+  "validation": {
+    "serverTypecheck": "passed with independent outDir",
+    "webTypecheck": "passed noEmit",
+    "visualAndSemantics": {
+      "passed": 5,
+      "failed": 0
+    },
+    "controlsPure": {
+      "passed": 6,
+      "failed": 0,
+      "browserCase": "skipped in this pure run"
+    },
+    "profileRecoveryPure": {
+      "passed": 1,
+      "failed": 0
+    },
+    "liveDistWritten": false,
+    "nativeRuntimePolicyTrial": "4264ms instrumented full data path; details in virtual-clipboard-policy-trial.json",
+    "pairedSampling": "html-paired-sampling-execution.json: 16 multi-source samples and review-counter24/24 pair",
+    "rendererRecovery": "html-renderer-recovery-execution.json: actual OOP crash/new instance retained N/explicit stop",
+    "clientControls": "actual Chrome140 and Firefox141 client controls plus Chrome rich clipboard independently passed"
+  },
+  "remaining": [
+    "Independent final reviewer original-counterexample/recovery/source-boundary retest",
+    "Final scoped project checks and main-agent controlled deployment/commit"
+  ],
+  "limits": {
+    "platform": "macOS arm64 server",
+    "actualSafariEdge": "unmeasured",
+    "fileSelectionAggregateDecodedBytes": 8388608,
+    "fileRetainedBytes": 33554432,
+    "fileRequestJsonBytes": 12582912,
+    "fileMaximumCount": 32,
+    "clipboardTextMaximumUtf16UnitsPerMime": 65536,
+    "clipboardPngMaximumBytes": 1048576,
+    "scriptStateAfterRendererCrash": "fresh instance; retained old scene pixels continue until new instance ready",
+    "platformMetadata": "NSApplication initialization/CF opaque handles and accessBehavior are platform metadata domains, not evidence of zero AppKit OS calls"
+  }
+}

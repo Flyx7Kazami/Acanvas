@@ -1,3 +1,4 @@
+import type {HtmlSemanticSnapshot,HtmlControlInput,HtmlClipboardAction,HtmlSurfacePopup} from './html-surface.js';
 export type AssetKind = 'image' | 'video' | 'file';
 export type TaskStatus = 'queued' | 'editing' | 'running' | 'blocked' | 'interrupted' | 'completed' | 'cancelled';
 export interface Project { id: string; name: string; root: string }
@@ -7,10 +8,29 @@ export interface Bounds { x: number; y: number; width: number; height: number }
 export interface BoardObject extends Bounds { id: string; assetId: string; type: AssetKind; version: number; createdAt: string; updatedAt: string; sourceTaskId?: string; sourceRunId?: string }
 export interface ContentAnchor { kind: 'visual' | 'text'; scroll?: { x: number; y: number }; quote?: string; context?: string; path?: string; start?: number; end?: number }
 export interface CaptureState { version: number; status: 'incomplete' | 'complete'; captureId?: string }
-export interface AnnotationInput { id: string; scope: 'object' | 'group' | 'region'; objectId?: string; objectIds: string[]; assetId?: string; bounds: Bounds; coordinateSpace: 'normalized' | 'world'; text: string; timeStart?: number; timeEnd?: number; snapshotAssetId?: string; geometry?: 'point' | 'rect'; contentAnchor?: ContentAnchor; captureState?: CaptureState; capture?: AnnotationCapture }
+export interface AnnotationInput { id: string; scope: 'object' | 'group' | 'region'; objectId?: string; objectIds: string[]; assetId?: string; bounds: Bounds; coordinateSpace: 'normalized' | 'world'; text: string; timeStart?: number; timeEnd?: number; snapshotAssetId?: string; geometry?: 'point' | 'rect'; contentAnchor?: ContentAnchor; captureState?: CaptureState; capture?: AnnotationCapture; sceneSource?: SceneSource }
 export type AnnotationTarget = Pick<AnnotationInput, 'scope' | 'objectId' | 'objectIds' | 'assetId' | 'bounds' | 'coordinateSpace' | 'timeStart' | 'timeEnd' | 'snapshotAssetId' | 'geometry' | 'contentAnchor'>;
-export interface CaptureSceneObject { object: BoardObject; renderedBounds: Bounds; layer: number; visibleBounds?: Bounds; media?: { playbackTime?: number; presentedTime?: number; representativeTime?: number }; scroll?: { x: number; y: number } }
-export interface AnnotationCaptureInput { capturedAt: string; target: AnnotationTarget; worldBounds: Bounds; viewport: { x: number; y: number; zoom: number; width: number; height: number; devicePixelRatio: number }; mapping: { crop: Bounds; pixelWidth: number; pixelHeight: number; scaleX: number; scaleY: number }; scene: { objects: CaptureSceneObject[]; assets: Asset[]; omittedCount: number }; image: { mime: 'image/png'; width: number; height: number; bytes: number } }
+export interface MediaPresentationPosition { playbackTime?: number; presentedTime?: number; representativeTime?: number; timePrecision?: 'decoded-pts' | 'rvfc-observed' | 'playback-sampled'; frameIndex?: number }
+export interface CaptureSceneObject { object: BoardObject; renderedBounds: Bounds; layer: number; visibleBounds?: Bounds; media?: MediaPresentationPosition; scroll?: { x: number; y: number }; contentAnchor?: ContentAnchor }
+export interface CaptureView { projectId: string; sessionId: string; documentId: string; viewId: string; viewGeneration: number }
+export interface CaptureViewOperation { documentId: string; viewGeneration: number; operationSeq: number }
+/** Complete service-delivered render input; capture.scene remains bounded reference metadata. */
+export interface BaseSceneSnapshot { id: string; view: CaptureView; operationSeq: number; createdAt: string; expiresAt: string; objects: BoardObject[]; assets: Asset[] }
+export interface HtmlSurfaceReference { surfaceId: string; instanceId: string; frameSeq: number; inputSeq: number; viewport: { width: number; height: number } }
+export interface ProjectHtmlSurface extends CaptureView { surfaceId: string; instanceId: string; objectId: string; assetId: string; viewport: { width: number; height: number }; deviceScaleFactor: number;engine:'chromium'|'cef' }
+export interface HtmlSurfaceFrameMetadata extends HtmlSurfaceReference { owner: CaptureView & { objectId: string; assetId: string }; bitmap: { width: number; height: number }; capturedAt: string; semantics:HtmlSemanticSnapshot;popup?:HtmlSurfacePopup;contentUrl: string }
+export type ProjectHtmlSurfaceInput = { instanceId: string; inputSeq: number; viewport: { width: number; height: number };frameSeq?:number } & (
+  | { type: 'pointer'; action: 'move' | 'down' | 'up' | 'click'; x: number; y: number; button?: 'left' | 'middle' | 'right' }
+  | { type: 'wheel'; x: number; y: number; deltaX: number; deltaY: number }
+  | { type: 'key'; action: 'down' | 'up' | 'press'; key: string;emitText?:boolean;character?:string }
+  | { type: 'text'; text: string } | HtmlControlInput | HtmlClipboardAction);
+export interface RenderedLayer { objectId: string; assetId?: string; objectVersion: number; worldBounds: Bounds; contentWorldBounds?: Bounds; renderedBounds: Bounds; clipCSS?: Bounds; layer: number; surface?: HtmlSurfaceReference; contentAnchor?: ContentAnchor }
+export interface PresentedMedia extends MediaPresentationPosition { objectId: string; selectedTime?: number; selectedRange?: { start: number; end: number }; surfaceFrameSeq?: number }
+export interface ScenePresentation { documentId: string; viewId: string; frameSeq: number; baseSceneId: string; camera: { x: number; y: number; zoom: number }; cssViewport: Bounds; bitmap: { width: number; height: number }; layers: RenderedLayer[]; media: PresentedMedia[] }
+export interface ScenePresentationOperation extends CaptureViewOperation { presentation: ScenePresentation }
+/** Service-issued Done source; pixels remain owned by the presenting client. */
+export interface SceneSource extends CaptureView { id: string; baseSceneId: string; frameSeq: number; operationSeq: number; sourceMode: 'scene-bitmap'; createdAt: string }
+export interface AnnotationCaptureInput { capturedAt: string; target: AnnotationTarget; worldBounds: Bounds; viewport: { x: number; y: number; zoom: number; width: number; height: number; devicePixelRatio: number }; mapping: { crop: Bounds; pixelWidth: number; pixelHeight: number; scaleX: number; scaleY: number }; scene: { objects: CaptureSceneObject[]; assets: Asset[]; omittedCount: number }; image: { mime: 'image/png'; width: number; height: number; bytes: number }; sourceMode?: 'scene-bitmap'; sceneSource?: SceneSource; presentation?: ScenePresentation }
 export interface AnnotationCapture extends AnnotationCaptureInput { id: string; sessionId: string; draftId: string; annotationId: string; version: number; screenshotAssetId: string; source: 'reference_content' }
 export interface CaptureResult { status: 'prepared' | 'committed'; capture: AnnotationCapture; draft?: Draft }
 export interface CaptureRetryResult { version: number; draft: Draft }

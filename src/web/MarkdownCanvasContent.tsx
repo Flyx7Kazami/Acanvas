@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { renderMarkdown } from './markdown';
+import { useControlledScenePanel } from './scene-renderer/media/use-controlled-panel.js';
+import { readMarkdownContentAnchor } from './scene-renderer/media/markdown-anchor.js';
 
 const maximumTextBytes = 2 * 1024 * 1024;
 export function MarkdownCanvasContent({ src, title }: { src: string; title: string }) {
+  const root = useRef<HTMLDivElement>(null);
+  useControlledScenePanel(root, { resolveRoot: element => element.closest<HTMLElement>('.content-shell') ?? element, textRoot: element => element.querySelector<HTMLElement>('.markdown-body') ?? undefined, metadata: () => { const contentAnchor = root.current && readMarkdownContentAnchor(root.current); return contentAnchor ? { scroll: contentAnchor.scroll, contentAnchor } : {}; } });
   const [content, setContent] = useState<{ src: string; html?: string; error?: string }>();
   useEffect(() => {
     const controller = new AbortController();
@@ -29,7 +33,7 @@ export function MarkdownCanvasContent({ src, title }: { src: string; title: stri
     void load(); return () => controller.abort();
   }, [src]);
   const current = content?.src === src ? content : undefined;
-  return <div className="markdown-content" data-canvas-wheel="content" role="document" aria-label={title} tabIndex={0}>
+  return <div ref={root} className="markdown-content" data-canvas-wheel="content" role="document" aria-label={title} tabIndex={0}>
     {current?.error ? <p className="content-message">{current.error}</p> : current?.html !== undefined ? <div className="markdown-body" dangerouslySetInnerHTML={{ __html: current.html }}/> : <p className="content-message">Loading document…</p>}
   </div>;
 }

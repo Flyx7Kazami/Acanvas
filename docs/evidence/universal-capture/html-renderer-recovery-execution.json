@@ -1,0 +1,11 @@
+{
+  "measuredAt": "2026-10-08T23:49:14.643Z",
+  "status": "actual-renderer-recovery-passed",
+  "sourceOopRendererCrash": true,
+  "newInstanceAutomatic": true,
+  "lastNBytesRetained": true,
+  "crashedProfileRemoved": true,
+  "explicitStopResurrected": false,
+  "sourceStateRestart": "fresh instance",
+  "elapsedMs": 7137
+}

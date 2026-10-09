@@ -1,0 +1,26 @@
+{
+  "measuredAt": "2026-10-08T22:12:10.235Z",
+  "result": "measured",
+  "browser": "140.0.7339.186",
+  "nativeRequested": {
+    "kind": "text",
+    "scroll": {
+      "x": 0,
+      "y": 220
+    },
+    "quote": "paragrap",
+    "context": "Frame context\nA paragraph with selected text and a link.\nParagraph 0 gives another viewport line.\nParagraph 1 gives another ",
+    "path": "rendered-dom:p[0]",
+    "start": 16,
+    "end": 24
+  },
+  "displayedSourceScroll": {
+    "x": 0,
+    "y": 0
+  },
+  "immutableSourceRunsPreserved": true,
+  "exactPNGChannels": 307200,
+  "persistedTargetIntentScroll": 220,
+  "persistedSceneScroll": 0,
+  "output": "/private/tmp/acanvas-markdown-anchor-TBAVX6"
+}
