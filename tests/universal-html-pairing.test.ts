@@ -24,9 +24,11 @@ test('production sampler pairs timer/network/rAF/CSS/WebGL pixels with frozen se
   const runtime=(manager as any).entries.get(info.surfaceId).native as NativeHtmlRuntime;
   const before=await runtime.documentEvaluate('({seed,ticks})',false);assert.equal(await runtime.documentEvaluate('window.preserve',false),false);
   await manager.input(info.surfaceId,{type:'pointer',action:'click',x:27,y:210,instanceId:info.instanceId,inputSeq:1,viewport:info.viewport});
-  const frames:NativePairedFrame[]=[];for(let i=0;i<16;i++){
+  const sampleCount=Number(process.env.ACANVAS_HTML_PAIR_SAMPLES??16);assert(Number.isSafeInteger(sampleCount)&&sampleCount>0);
+  const frames:NativePairedFrame[]=[];for(let i=0;i<sampleCount;i++){
     const frame=await runtime.samplePair(readHtmlSemantics),at=pixels(frame.png),value=(id:string)=>Number(frame.semantics.controls.find(control=>control.id===id)!.value),moving=frame.semantics.controls.find(control=>control.id==='#moving')!;
-    assert.equal(at(420,245)[0],value('#raf'));assert.equal(at(270,190)[1],value('#timer'));assert.equal(at(310,190)[2],value('#network'));assert.deepEqual(at(moving.bounds.x+5,moving.bounds.y+5),[0,255,0]);assert(at(275,115)[2]>150);frames.push(frame);
+    try{assert.equal(at(420,245)[0],value('#raf'));assert.equal(at(270,190)[1],value('#timer'),JSON.stringify({sample:i,source:'timer',metadata:value('#timer'),pixel:at(270,190),timing:frame.timing}));assert.equal(at(310,190)[2],value('#network'));assert.deepEqual(at(moving.bounds.x+5,moving.bounds.y+5),[0,255,0]);assert(at(275,115)[2]>150);}
+    catch(error){const evidence=process.env.ACANVAS_HTML_PAIR_EVIDENCE;if(evidence){await writeFile(evidence+'.failed-frame.png',frame.png);await writeFile(evidence+'.failed-frame.json',JSON.stringify({sample:i,semantics:frame.semantics,timing:frame.timing,error:String(error)},null,2)+'\n')}throw error;}frames.push(frame);
   }
   const saved=await manager.sample(info.surfaceId);manager.retainSurface(saved.owner,saved);for(let i=0;i<5;i++)await manager.sample(info.surfaceId);assert(manager.frame(info.surfaceId,saved.frameSeq).png.equals(saved.png));manager.releaseSurface(saved.owner,saved);
   const after=await runtime.documentEvaluate('({seed,ticks,audio:audio.state})',false);assert.equal(after.seed,before.seed);assert(after.ticks>before.ticks);assert.equal(after.audio,'running');

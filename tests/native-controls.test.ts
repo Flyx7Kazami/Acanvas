@@ -79,7 +79,7 @@ import React from 'react';import{createRoot}from'react-dom/client';import{HtmlSu
 const w=window;w.actions=[];w.errors=[];
 const c=(id,type,x,y,value='')=>({id,tag:type==='select'?'select':type==='contenteditable'?'div':type==='textarea'?'textarea':'input',type,role:type==='select'?'combobox':'textbox',label:id,disabled:false,readOnly:false,focused:false,value,bounds:{x,y,width:180,height:32}});
 const controls=[c('#text','text',0,0),c('#edit','contenteditable',0,40),{...c('#select','select',0,80,'one'),options:[{value:'one',label:'One',disabled:false},{value:'two',label:'Two',disabled:false}]},c('#date','date',0,120,'2026-10-09'),c('#color','color',0,160,'#123456'),c('#file','file',0,200)];
-w.render=(focused)=>createRoot(document.querySelector('#root')).render(React.createElement(HtmlSurfaceControls,{snapshot:{controls:controls.map(c=>({...c,focused:c.id===focused})),selection:'',scroll:{x:0,y:0},title:'Fixture',omittedControls:0,readingOrder:[{id:'heading',role:'heading',level:1,text:'Document heading',bounds:{x:0,y:0,width:180,height:20}},...controls.map(c=>({id:c.id,role:c.role,text:c.label,bounds:c.bounds}))]},surface:{instanceId:'fixture',inputSeq:0,viewport:{width:360,height:260}},frameSeq:1,onInput:async action=>{w.actions.push(action)},onError:error=>w.errors.push(String(error))}));w.render();
+w.render=(focused)=>createRoot(document.querySelector('#root')).render(React.createElement(HtmlSurfaceControls,{snapshot:{controls:controls.map(c=>({...c,focused:c.id===focused})),selection:'',scroll:{x:0,y:0},title:'Fixture',omittedControls:0,readingOrder:[{id:'heading',role:'heading',level:1,text:'Document heading',bounds:{x:0,y:0,width:180,height:20}},...controls.map(c=>({id:c.id,role:c.role,text:c.label,bounds:c.bounds}))]},surface:{instanceId:'fixture',inputSeq:0,viewport:{width:360,height:260}},frameSeq:1,clientFocus:{owns:()=>true,focus:()=>{},popup:()=>false},canProject:()=>true,onInput:async action=>{w.actions.push(action);return{inputSeq:w.actions.length}},onError:error=>w.errors.push(String(error))}));w.render();
 ` : undefined }], build: { write: false, minify: false, rollupOptions: { input: 'controls-entry', output: { inlineDynamicImports: true } } } });
   const output = Array.isArray(bundle) ? bundle[0] : bundle; if (!('output' in output)) throw new Error('Expected a browser bundle');
   const code = output.output.find(item => item.type === 'chunk')!; if (code.type !== 'chunk') throw new Error('Expected browser JavaScript');
@@ -141,4 +141,29 @@ w.render=(focused)=>createRoot(document.querySelector('#root')).render(React.cre
     await writeFile(evidence, JSON.stringify({ measuredAt: new Date().toISOString(), status: 'ordinary-browser-controls-passed', engine: await browser.version(), source: { sandbox: 'allow-scripts', origin: 'null', world: 'isolated', permissionsExpanded: false }, proxy: { ordinaryText: 'native', compositionValue: '日本', compositionCommitCount: 1, compositionStartTrusted: true, compositionUpdateTrusted: true, compositionEndTrusted: false, semanticReadingOrder: true, sourceTabAction: true, chosenFileBytes: 'client chosen 世界', chosenFilePathAccepted: false }, sourceValues: { text: 'Trusted text', contenteditable: '日本', select: 'two', date: '2027-01-02', color: '#abcdef', file: 'Selected bytes 世界' }, sourceEvents: { textInputTrusted: sourceEvents.filter((event: any) => event.id === 'text' && event.type === 'input').every((event: any) => event.trusted), compositionStartTrusted: true, compositionUpdateTrusted: true, compositionEndTrusted: false, fileChangeTrusted: true, selectChangeTrusted: false, dateChangeTrusted: false, colorChangeTrusted: false }, protocols: { compositionCommit: 'Input.insertText', ordinaryBrowserAdapter: 'Input.insertText', fileInput: 'DOM.setFileInputFiles', valueEvents: 'input/change with isTrusted false' }, sourcePngBytes: sourcePng.length, limitations: ['CEF public ImeCommitText route requires its separate native integration test.', 'Actual OS IME candidate UI and native CEF popup widgets are separate acceptance.', 'Source frame/current-view scope enforcement belongs to ProjectHtmlSurfaces and SceneHtmlSurface integration.', 'Mac headless select keyboard trials kept the original value; the value channel provides select changes.', 'No CEF runtime or user service was launched by this test.'] }, null, 2) + '\n');
     await writeFile(evidence.replace(/\.json$/u, '') + '-source.png', sourcePng);
   }
+});
+
+test('HTML edit ownership starts before dispatch and lasts until the accepted sequence is presented', async () => {
+  let accept!:(value:{inputSeq:number})=>void;
+  const proxy=new HtmlInputProxy(input=>new Promise(resolve=>{accept=resolve}));proxy.present(frame);
+  const editing=proxy.input({type:'text-selection',controlId:'#field',start:0,end:2});
+  assert.equal(proxy.canProjectEdits(frame),false);
+  await Promise.resolve();accept({inputSeq:5});assert.deepEqual(await editing,{inputSeq:5});
+  assert.equal(proxy.canProjectEdits(frame),false);
+  assert.equal(proxy.canProjectEdits({...frame,inputSeq:5}),true);
+  assert.equal(proxy.canProjectEdits({...frame,inputSeq:6}),true);
+});
+
+test('HTML rejected edits and owner invalidation release local projection ownership', async () => {
+  const proxy=new HtmlInputProxy(async()=>{throw new Error('owned rejection')});proxy.present(frame);
+  await assert.rejects(proxy.input({type:'text',text:'a'}),/owned rejection/);assert.equal(proxy.canProjectEdits(frame),true);
+  let release!:()=>void;const pending=new HtmlInputProxy(async input=>{await new Promise<void>(resolve=>release=resolve);return{inputSeq:input.inputSeq}});pending.present(frame);
+  const editing=pending.input({type:'key',action:'press',key:'x'});await Promise.resolve();pending.clear();pending.present({...frame,instanceId:'replacement'});
+  assert.equal(pending.canProjectEdits({...frame,instanceId:'replacement'}),true);release();assert.equal(await editing,undefined);
+  assert.equal(pending.canProjectEdits({...frame,instanceId:'replacement'}),true);
+});
+
+test('HTML pure pointer movement leaves edit projection available while the movement is in flight', async () => {
+  let release!:()=>void;const proxy=new HtmlInputProxy(async input=>{await new Promise<void>(resolve=>release=resolve);return{inputSeq:input.inputSeq}});proxy.present(frame);
+  const movement=proxy.input({type:'pointer',action:'move',x:20,y:25});assert.equal(proxy.canProjectEdits(frame),true);await Promise.resolve();release();await movement;assert.equal(proxy.canProjectEdits(frame),true);
 });

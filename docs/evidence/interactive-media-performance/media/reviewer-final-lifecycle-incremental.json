@@ -1,0 +1,64 @@
+{
+  "status": "PASS",
+  "sourceSnapshot": "/private/tmp/acanvas-interactive-media-build-4TftKl",
+  "productionAppTests": {
+    "durationMs": 11551.311792,
+    "pass": 4,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "managed React saves independent video/audio selections and actual playback positions",
+        "milliseconds": 5055.04475,
+        "evidence": "/private/tmp/acanvas-chatbox-evidence-JiWRu6",
+        "checks": [
+          "original audio whole capture playbackTime >= .2 assertion",
+          "two native Start ArrowRight presses produce .2",
+          "native temporal selection and actual playback stay independent",
+          "Done PNG channels and frameSeq match synchronous visible scene copy"
+        ]
+      },
+      {
+        "name": "refinement Mark hover and clicks share displayed content ownership and clear their guides",
+        "milliseconds": 2461.438166,
+        "evidence": "/private/tmp/acanvas-chatbox-evidence-dY7KlS"
+      },
+      {
+        "name": "Mark stationary hover follows committed deletion, overlap, camera and resize ownership",
+        "milliseconds": 1782.665834,
+        "evidence": "/private/tmp/acanvas-chatbox-evidence-BDuwYK",
+        "checks": [
+          "top deletion changes owner after presented frameSeq increases",
+          "new overlapping top becomes owner",
+          "moving new top restores lower owner",
+          "wheel pan clears and reverse pan restores owner at stationary pointer",
+          "resizing lower object clears guide"
+        ]
+      },
+      {
+        "name": "annotation focus follows the active editor when a pending reader is closed or replaced",
+        "milliseconds": 1833.043417,
+        "evidence": "/private/tmp/acanvas-chatbox-evidence-Q2Dixi"
+      }
+    ]
+  },
+  "audioPipeline": {
+    "durationMs": 11489.976875,
+    "pass": 1,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "case": "audio cached commands match full panel raster and copied drawing sources retain exportable frame ownership",
+    "evidence": [
+      "reviewer-final-seeking-publication.json",
+      "reviewer-final-incremental-composition.json"
+    ],
+    "checks": [
+      "real native audio.seeking publication at currentTime 2.5 has playbackTime and presentedTime 2.5, playback-sampled",
+      "eight full-panel same-GPU comparisons exact",
+      "private image/command/path/metadata immutability, origin and typed negative checks"
+    ]
+  },
+  "teardown": "All owned browser and fixture servers closed before native startup timing resumed. No user board, source file or shared build was modified."
+}

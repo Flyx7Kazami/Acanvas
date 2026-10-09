@@ -1,0 +1,3370 @@
+{
+  "status": "passed",
+  "version": "working-tree",
+  "measuredAt": "2026-10-09T10:56:19.598Z",
+  "viewport": {
+    "width": 1440,
+    "height": 1000,
+    "dpr": 2
+  },
+  "surface": {
+    "width": 740,
+    "height": 248,
+    "dpr": 2
+  },
+  "root": "/private/tmp/acanvas-html-response-project-gAsGbs",
+  "output": "/private/tmp/acanvas-html-independent-final-client-20261009-01",
+  "inputs": [
+    {
+      "at": 1791543382101,
+      "input": {
+        "type": "focus",
+        "controlId": "#advance",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 1,
+        "frameSeq": 1,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543382109
+    },
+    {
+      "at": 1791543382115,
+      "input": {
+        "type": "pointer",
+        "action": "click",
+        "x": 55.1328125,
+        "y": 36.25,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 2,
+        "frameSeq": 1,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543382118
+    },
+    {
+      "at": 1791543382318,
+      "input": {
+        "type": "pointer",
+        "action": "click",
+        "x": 55.1328125,
+        "y": 36.25,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 3,
+        "frameSeq": 2,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543382319
+    },
+    {
+      "at": 1791543383011,
+      "input": {
+        "type": "pointer",
+        "action": "click",
+        "x": 55.1328125,
+        "y": 36.25,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 4,
+        "frameSeq": 4,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383016
+    },
+    {
+      "at": 1791543383036,
+      "input": {
+        "type": "pointer",
+        "action": "click",
+        "x": 55.1328125,
+        "y": 36.25,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 5,
+        "frameSeq": 4,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383038
+    },
+    {
+      "at": 1791543383055,
+      "input": {
+        "type": "pointer",
+        "action": "click",
+        "x": 55.1328125,
+        "y": 36.25,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 6,
+        "frameSeq": 4,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383060
+    },
+    {
+      "at": 1791543383078,
+      "input": {
+        "type": "pointer",
+        "action": "click",
+        "x": 55.1328125,
+        "y": 36.25,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 7,
+        "frameSeq": 4,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383079
+    },
+    {
+      "at": 1791543383092,
+      "input": {
+        "type": "pointer",
+        "action": "click",
+        "x": 55.1328125,
+        "y": 36.25,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 8,
+        "frameSeq": 4,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383094
+    },
+    {
+      "at": 1791543383112,
+      "input": {
+        "type": "pointer",
+        "action": "click",
+        "x": 55.1328125,
+        "y": 36.25,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 9,
+        "frameSeq": 4,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383113
+    },
+    {
+      "at": 1791543383140,
+      "input": {
+        "type": "pointer",
+        "action": "click",
+        "x": 55.1328125,
+        "y": 36.25,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 10,
+        "frameSeq": 4,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383145
+    },
+    {
+      "at": 1791543383163,
+      "input": {
+        "type": "pointer",
+        "action": "click",
+        "x": 55.1328125,
+        "y": 36.25,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 11,
+        "frameSeq": 4,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383167
+    },
+    {
+      "at": 1791543383190,
+      "input": {
+        "type": "pointer",
+        "action": "click",
+        "x": 55.1328125,
+        "y": 36.25,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 12,
+        "frameSeq": 4,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383193
+    },
+    {
+      "at": 1791543383211,
+      "input": {
+        "type": "pointer",
+        "action": "click",
+        "x": 55.1328125,
+        "y": 36.25,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 13,
+        "frameSeq": 4,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383214
+    },
+    {
+      "at": 1791543383391,
+      "input": {
+        "type": "focus",
+        "controlId": "#field",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 14,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383396
+    },
+    {
+      "at": 1791543383400,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "MetaLeft",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 15,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383401
+    },
+    {
+      "at": 1791543383416,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "KeyA",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 16,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383417
+    },
+    {
+      "at": 1791543383420,
+      "input": {
+        "type": "text-selection",
+        "controlId": "#field",
+        "start": 0,
+        "end": 5,
+        "direction": "none",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 17,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383422
+    },
+    {
+      "at": 1791543383424,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "KeyA",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 18,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383424
+    },
+    {
+      "at": 1791543383425,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "MetaLeft",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 19,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383425
+    },
+    {
+      "at": 1791543383426,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "KeyE",
+        "character": "E",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 20,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383428
+    },
+    {
+      "at": 1791543383429,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "KeyE",
+        "character": "E",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 21,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383429
+    },
+    {
+      "at": 1791543383431,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "KeyD",
+        "character": "d",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 22,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383486
+    },
+    {
+      "at": 1791543383487,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "KeyD",
+        "character": "d",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 23,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383488
+    },
+    {
+      "at": 1791543383490,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "KeyI",
+        "character": "i",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 24,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383491
+    },
+    {
+      "at": 1791543383497,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "KeyI",
+        "character": "i",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 25,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383498
+    },
+    {
+      "at": 1791543383499,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "KeyT",
+        "character": "t",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 26,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383499
+    },
+    {
+      "at": 1791543383501,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "KeyT",
+        "character": "t",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 27,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383502
+    },
+    {
+      "at": 1791543383505,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "KeyE",
+        "character": "e",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 28,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383505
+    },
+    {
+      "at": 1791543383507,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "KeyE",
+        "character": "e",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 29,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383507
+    },
+    {
+      "at": 1791543383508,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "KeyD",
+        "character": "d",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 30,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383509
+    },
+    {
+      "at": 1791543383510,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "KeyD",
+        "character": "d",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 31,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383511
+    },
+    {
+      "at": 1791543383512,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "Space",
+        "character": " ",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 32,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383512
+    },
+    {
+      "at": 1791543383513,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "Space",
+        "character": " ",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 33,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383514
+    },
+    {
+      "at": 1791543383515,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "KeyN",
+        "character": "n",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 34,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383515
+    },
+    {
+      "at": 1791543383517,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "KeyN",
+        "character": "n",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 35,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383517
+    },
+    {
+      "at": 1791543383520,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "KeyO",
+        "character": "o",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 36,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383521
+    },
+    {
+      "at": 1791543383523,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "KeyO",
+        "character": "o",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 37,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383523
+    },
+    {
+      "at": 1791543383525,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "KeyT",
+        "character": "t",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 38,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383526
+    },
+    {
+      "at": 1791543383527,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "KeyT",
+        "character": "t",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 39,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383528
+    },
+    {
+      "at": 1791543383529,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "KeyE",
+        "character": "e",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 40,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383529
+    },
+    {
+      "at": 1791543383530,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "KeyE",
+        "character": "e",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 41,
+        "frameSeq": 6,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383531
+    },
+    {
+      "at": 1791543383532,
+      "input": {
+        "type": "text-selection",
+        "controlId": "#field",
+        "start": 1,
+        "end": 1,
+        "direction": "none",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 42,
+        "frameSeq": 7,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383533
+    },
+    {
+      "at": 1791543383623,
+      "input": {
+        "type": "pointer",
+        "action": "move",
+        "x": 600,
+        "y": 200,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 43,
+        "frameSeq": 8,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383625
+    },
+    {
+      "at": 1791543383681,
+      "input": {
+        "type": "text-selection",
+        "controlId": "#field",
+        "start": 1,
+        "end": 1,
+        "direction": "none",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 44,
+        "frameSeq": 9,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543383686
+    },
+    {
+      "at": 1791543384099,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "ControlLeft",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 45,
+        "frameSeq": 11,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543384099
+    },
+    {
+      "at": 1791543384119,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "ControlLeft",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 46,
+        "frameSeq": 11,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543384157
+    },
+    {
+      "at": 1791543384174,
+      "input": {
+        "type": "key",
+        "action": "down",
+        "key": "MetaLeft",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 47,
+        "frameSeq": 12,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543384227
+    },
+    {
+      "at": 1791543384231,
+      "input": {
+        "type": "key",
+        "action": "up",
+        "key": "MetaLeft",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 48,
+        "frameSeq": 12,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543384234
+    },
+    {
+      "at": 1791543384247,
+      "input": {
+        "type": "pointer",
+        "action": "down",
+        "x": 486.3306788354888,
+        "y": 173.59999585798315,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 49,
+        "frameSeq": 12,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543384259
+    },
+    {
+      "at": 1791543384262,
+      "input": {
+        "type": "pointer",
+        "action": "down",
+        "x": 549.6692935510666,
+        "y": 173.59999585798315,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 50,
+        "frameSeq": 12,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543384264
+    },
+    {
+      "at": 1791543384265,
+      "input": {
+        "type": "pointer",
+        "action": "move",
+        "x": 565.503947229961,
+        "y": 173.59999585798315,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 51,
+        "frameSeq": 12,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543384266
+    },
+    {
+      "at": 1791543384267,
+      "input": {
+        "type": "pointer",
+        "action": "move",
+        "x": 470.4960251565943,
+        "y": 173.59999585798315,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 52,
+        "frameSeq": 12,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543384267
+    },
+    {
+      "at": 1791543384270,
+      "input": {
+        "type": "pointer",
+        "action": "up",
+        "x": 470.4960251565943,
+        "y": 173.59999585798315,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 53,
+        "frameSeq": 13,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543384337
+    },
+    {
+      "at": 1791543384340,
+      "input": {
+        "type": "pointer",
+        "action": "up",
+        "x": 565.503947229961,
+        "y": 173.59999585798315,
+        "button": "left",
+        "instanceId": "cbad6d43-1c78-4cd3-91f1-0b8363b18e2a",
+        "inputSeq": 54,
+        "frameSeq": 13,
+        "viewport": {
+          "width": 740,
+          "height": 248
+        }
+      },
+      "end": 1791543384342
+    }
+  ],
+  "samples": [
+    {
+      "at": 1791543381309,
+      "end": 1791543381403,
+      "frameSeq": 1,
+      "inputSeq": 0,
+      "count": "0"
+    },
+    {
+      "at": 1791543382144,
+      "end": 1791543382202,
+      "frameSeq": 2,
+      "inputSeq": 2,
+      "count": "1"
+    },
+    {
+      "at": 1791543382324,
+      "end": 1791543382368,
+      "frameSeq": 3,
+      "inputSeq": 3,
+      "count": "2"
+    },
+    {
+      "at": 1791543382630,
+      "end": 1791543382669,
+      "frameSeq": 4,
+      "inputSeq": 3,
+      "count": "2"
+    },
+    {
+      "at": 1791543382931,
+      "end": 1791543382975,
+      "frameSeq": 5,
+      "inputSeq": 3,
+      "count": "2"
+    },
+    {
+      "at": 1791543383227,
+      "end": 1791543383270,
+      "frameSeq": 6,
+      "inputSeq": 13,
+      "count": "12"
+    },
+    {
+      "at": 1791543383430,
+      "end": 1791543383485,
+      "frameSeq": 7,
+      "inputSeq": 21,
+      "count": "12"
+    },
+    {
+      "at": 1791543383535,
+      "end": 1791543383586,
+      "frameSeq": 8,
+      "inputSeq": 42,
+      "count": "12"
+    },
+    {
+      "at": 1791543383627,
+      "end": 1791543383669,
+      "frameSeq": 9,
+      "inputSeq": 43,
+      "count": "12"
+    },
+    {
+      "at": 1791543383689,
+      "end": 1791543383739,
+      "frameSeq": 10,
+      "inputSeq": 44,
+      "count": "12"
+    },
+    {
+      "at": 1791543384002,
+      "end": 1791543384063,
+      "frameSeq": 11,
+      "inputSeq": 44,
+      "count": "12"
+    },
+    {
+      "at": 1791543384101,
+      "end": 1791543384157,
+      "frameSeq": 12,
+      "inputSeq": 45,
+      "count": "12"
+    },
+    {
+      "at": 1791543384172,
+      "end": 1791543384227,
+      "frameSeq": 13,
+      "inputSeq": 46,
+      "count": "12"
+    },
+    {
+      "at": 1791543384270,
+      "end": 1791543384333,
+      "frameSeq": 14,
+      "inputSeq": 52,
+      "count": "12"
+    },
+    {
+      "at": 1791543384357,
+      "end": 1791543384405,
+      "frameSeq": 15,
+      "inputSeq": 54,
+      "count": "12"
+    }
+  ],
+  "pairs": [
+    {
+      "at": 1791543381309,
+      "end": 1791543381403,
+      "prepareMs": 5.102499999999964,
+      "pauseMs": 86.13912499999992,
+      "semanticMs": 3.8167499999999563,
+      "copyMs": 82.32237499999997,
+      "totalMs": 92.23866599999997
+    },
+    {
+      "at": 1791543382144,
+      "end": 1791543382202,
+      "prepareMs": 0.9875419999998485,
+      "pauseMs": 53.341499999999996,
+      "semanticMs": 2.010790999999699,
+      "copyMs": 51.3307090000003,
+      "totalMs": 56.660709000000224
+    },
+    {
+      "at": 1791543382324,
+      "end": 1791543382368,
+      "prepareMs": 0.6416670000003251,
+      "pauseMs": 42.62320799999998,
+      "semanticMs": 1.4858749999998508,
+      "copyMs": 41.137333000000126,
+      "totalMs": 43.81179200000042
+    },
+    {
+      "at": 1791543382631,
+      "end": 1791543382669,
+      "prepareMs": 1.062249999999949,
+      "pauseMs": 35.366291000000274,
+      "semanticMs": 1.5837910000000193,
+      "copyMs": 33.782500000000255,
+      "totalMs": 37.31579099999999
+    },
+    {
+      "at": 1791543382931,
+      "end": 1791543382975,
+      "prepareMs": 0.9859160000000884,
+      "pauseMs": 40.291541999999936,
+      "semanticMs": 2.302291999999852,
+      "copyMs": 37.989250000000084,
+      "totalMs": 42.16362500000014
+    },
+    {
+      "at": 1791543383227,
+      "end": 1791543383270,
+      "prepareMs": 1.372874999999567,
+      "pauseMs": 37.09216599999991,
+      "semanticMs": 1.7998750000001564,
+      "copyMs": 35.29229099999975,
+      "totalMs": 41.6826659999997
+    },
+    {
+      "at": 1791543383430,
+      "end": 1791543383485,
+      "prepareMs": 9.3054589999997,
+      "pauseMs": 43.52649999999994,
+      "semanticMs": 1.4103749999999309,
+      "copyMs": 42.11612500000001,
+      "totalMs": 53.915833999999904
+    },
+    {
+      "at": 1791543383535,
+      "end": 1791543383586,
+      "prepareMs": 0.925375000000713,
+      "pauseMs": 46.65483300000051,
+      "semanticMs": 1.9082500000004075,
+      "copyMs": 44.7465830000001,
+      "totalMs": 49.74629200000072
+    },
+    {
+      "at": 1791543383627,
+      "end": 1791543383669,
+      "prepareMs": 1.069666999999754,
+      "pauseMs": 38.43041699999958,
+      "semanticMs": 1.7047089999996388,
+      "copyMs": 36.72570799999994,
+      "totalMs": 40.78729199999998
+    },
+    {
+      "at": 1791543383689,
+      "end": 1791543383739,
+      "prepareMs": 1.0438750000002983,
+      "pauseMs": 46.379165999999714,
+      "semanticMs": 1.6607909999993353,
+      "copyMs": 44.71837500000038,
+      "totalMs": 48.28733300000022
+    },
+    {
+      "at": 1791543384002,
+      "end": 1791543384063,
+      "prepareMs": 1.3207920000004378,
+      "pauseMs": 57.148833000000195,
+      "semanticMs": 1.6107499999998254,
+      "copyMs": 55.53808300000037,
+      "totalMs": 59.879249999999956
+    },
+    {
+      "at": 1791543384101,
+      "end": 1791543384157,
+      "prepareMs": 0.6727499999997235,
+      "pauseMs": 50.746000000000095,
+      "semanticMs": 2.016958000000159,
+      "copyMs": 48.729041999999936,
+      "totalMs": 54.96404199999961
+    },
+    {
+      "at": 1791543384172,
+      "end": 1791543384227,
+      "prepareMs": 1.3920420000004015,
+      "pauseMs": 49.06174999999985,
+      "semanticMs": 1.771708000000217,
+      "copyMs": 47.29004199999963,
+      "totalMs": 52.5170420000004
+    },
+    {
+      "at": 1791543384270,
+      "end": 1791543384333,
+      "prepareMs": 1.962916999999834,
+      "pauseMs": 57.67491700000028,
+      "semanticMs": 2.502667000000656,
+      "copyMs": 55.17224999999962,
+      "totalMs": 61.581709000000046
+    },
+    {
+      "at": 1791543384357,
+      "end": 1791543384405,
+      "prepareMs": 4.064374999999927,
+      "pauseMs": 41.703207999999904,
+      "semanticMs": 1.7757080000001224,
+      "copyMs": 39.92749999999978,
+      "totalMs": 46.82679199999984
+    }
+  ],
+  "protocols": [
+    {
+      "at": 1791543380971,
+      "method": "Page.getFrameTree",
+      "end": 1791543381142
+    },
+    {
+      "at": 1791543381142,
+      "method": "Runtime.enable",
+      "end": 1791543381169
+    },
+    {
+      "at": 1791543381169,
+      "method": "Target.setDiscoverTargets",
+      "end": 1791543381186
+    },
+    {
+      "at": 1791543381309,
+      "method": "Page.getFrameTree",
+      "end": 1791543381310
+    },
+    {
+      "at": 1791543381310,
+      "method": "Target.getTargets",
+      "end": 1791543381310
+    },
+    {
+      "at": 1791543381310,
+      "method": "Target.attachToTarget",
+      "end": 1791543381310
+    },
+    {
+      "at": 1791543381310,
+      "method": "Runtime.enable",
+      "end": 1791543381311
+    },
+    {
+      "at": 1791543381311,
+      "method": "Page.getFrameTree",
+      "end": 1791543381311
+    },
+    {
+      "at": 1791543381311,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543381312
+    },
+    {
+      "at": 1791543381312,
+      "method": "Debugger.enable",
+      "end": 1791543381313
+    },
+    {
+      "at": 1791543381313,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543381313
+    },
+    {
+      "at": 1791543381313,
+      "method": "Animation.enable",
+      "end": 1791543381314
+    },
+    {
+      "at": 1791543381314,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543381314
+    },
+    {
+      "at": 1791543381314,
+      "method": "Runtime.compileScript",
+      "end": 1791543381314
+    },
+    {
+      "at": 1791543381314,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543381314
+    },
+    {
+      "at": 1791543381314,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543381315
+    },
+    {
+      "at": 1791543381315,
+      "method": "Runtime.runScript",
+      "end": 1791543381315
+    },
+    {
+      "at": 1791543381315,
+      "method": "Runtime.evaluate",
+      "end": 1791543381319
+    },
+    {
+      "at": 1791543381319,
+      "method": "Page.captureScreenshot",
+      "end": 1791543381400
+    },
+    {
+      "at": 1791543381400,
+      "method": "Surface.composePopup",
+      "end": 1791543381401
+    },
+    {
+      "at": 1791543381401,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543381402
+    },
+    {
+      "at": 1791543381402,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543381402
+    },
+    {
+      "at": 1791543381402,
+      "method": "Debugger.resume",
+      "end": 1791543381403
+    },
+    {
+      "at": 1791543381537,
+      "method": "Browser.getBrowserCommandLine",
+      "end": 1791543381538
+    },
+    {
+      "at": 1791543382101,
+      "method": "Surface.focus",
+      "end": 1791543382103
+    },
+    {
+      "at": 1791543382103,
+      "method": "Page.getFrameTree",
+      "end": 1791543382105
+    },
+    {
+      "at": 1791543382105,
+      "method": "Page.getFrameTree",
+      "end": 1791543382106
+    },
+    {
+      "at": 1791543382106,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543382106
+    },
+    {
+      "at": 1791543382106,
+      "method": "Runtime.evaluate",
+      "end": 1791543382109
+    },
+    {
+      "at": 1791543382115,
+      "method": "Surface.focus",
+      "end": 1791543382116
+    },
+    {
+      "at": 1791543382116,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543382117
+    },
+    {
+      "at": 1791543382117,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543382117
+    },
+    {
+      "at": 1791543382117,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543382118
+    },
+    {
+      "at": 1791543382144,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543382145
+    },
+    {
+      "at": 1791543382145,
+      "method": "Runtime.compileScript",
+      "end": 1791543382145
+    },
+    {
+      "at": 1791543382145,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543382147
+    },
+    {
+      "at": 1791543382147,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543382147
+    },
+    {
+      "at": 1791543382147,
+      "method": "Runtime.runScript",
+      "end": 1791543382147
+    },
+    {
+      "at": 1791543382148,
+      "method": "Runtime.evaluate",
+      "end": 1791543382150
+    },
+    {
+      "at": 1791543382150,
+      "method": "Page.captureScreenshot",
+      "end": 1791543382200
+    },
+    {
+      "at": 1791543382200,
+      "method": "Surface.composePopup",
+      "end": 1791543382201
+    },
+    {
+      "at": 1791543382201,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543382201
+    },
+    {
+      "at": 1791543382201,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543382202
+    },
+    {
+      "at": 1791543382202,
+      "method": "Debugger.resume",
+      "end": 1791543382202
+    },
+    {
+      "at": 1791543382318,
+      "method": "Surface.focus",
+      "end": 1791543382319
+    },
+    {
+      "at": 1791543382319,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543382319
+    },
+    {
+      "at": 1791543382319,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543382319
+    },
+    {
+      "at": 1791543382319,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543382319
+    },
+    {
+      "at": 1791543382324,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543382324
+    },
+    {
+      "at": 1791543382324,
+      "method": "Runtime.compileScript",
+      "end": 1791543382324
+    },
+    {
+      "at": 1791543382324,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543382325
+    },
+    {
+      "at": 1791543382325,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543382325
+    },
+    {
+      "at": 1791543382325,
+      "method": "Runtime.runScript",
+      "end": 1791543382325
+    },
+    {
+      "at": 1791543382325,
+      "method": "Runtime.evaluate",
+      "end": 1791543382326
+    },
+    {
+      "at": 1791543382326,
+      "method": "Page.captureScreenshot",
+      "end": 1791543382367
+    },
+    {
+      "at": 1791543382367,
+      "method": "Surface.composePopup",
+      "end": 1791543382368
+    },
+    {
+      "at": 1791543382368,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543382368
+    },
+    {
+      "at": 1791543382368,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543382368
+    },
+    {
+      "at": 1791543382368,
+      "method": "Debugger.resume",
+      "end": 1791543382368
+    },
+    {
+      "at": 1791543382631,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543382631
+    },
+    {
+      "at": 1791543382631,
+      "method": "Runtime.compileScript",
+      "end": 1791543382632
+    },
+    {
+      "at": 1791543382632,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543382632
+    },
+    {
+      "at": 1791543382632,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543382632
+    },
+    {
+      "at": 1791543382632,
+      "method": "Runtime.runScript",
+      "end": 1791543382632
+    },
+    {
+      "at": 1791543382633,
+      "method": "Runtime.evaluate",
+      "end": 1791543382634
+    },
+    {
+      "at": 1791543382634,
+      "method": "Page.captureScreenshot",
+      "end": 1791543382667
+    },
+    {
+      "at": 1791543382667,
+      "method": "Surface.composePopup",
+      "end": 1791543382668
+    },
+    {
+      "at": 1791543382668,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543382668
+    },
+    {
+      "at": 1791543382668,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543382668
+    },
+    {
+      "at": 1791543382668,
+      "method": "Debugger.resume",
+      "end": 1791543382669
+    },
+    {
+      "at": 1791543382847,
+      "method": "Page.getFrameTree",
+      "end": 1791543382848
+    },
+    {
+      "at": 1791543382848,
+      "method": "Page.getFrameTree",
+      "end": 1791543382848
+    },
+    {
+      "at": 1791543382848,
+      "method": "Runtime.evaluate",
+      "end": 1791543382849
+    },
+    {
+      "at": 1791543382851,
+      "method": "Surface.instrumentation",
+      "end": 1791543382851
+    },
+    {
+      "at": 1791543382851,
+      "method": "Page.getFrameTree",
+      "end": 1791543382852
+    },
+    {
+      "at": 1791543382852,
+      "method": "Page.getFrameTree",
+      "end": 1791543382852
+    },
+    {
+      "at": 1791543382852,
+      "method": "Runtime.evaluate",
+      "end": 1791543382852
+    },
+    {
+      "at": 1791543382931,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543382932
+    },
+    {
+      "at": 1791543382932,
+      "method": "Runtime.compileScript",
+      "end": 1791543382932
+    },
+    {
+      "at": 1791543382932,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543382932
+    },
+    {
+      "at": 1791543382932,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543382933
+    },
+    {
+      "at": 1791543382933,
+      "method": "Runtime.runScript",
+      "end": 1791543382933
+    },
+    {
+      "at": 1791543382933,
+      "method": "Runtime.evaluate",
+      "end": 1791543382935
+    },
+    {
+      "at": 1791543382935,
+      "method": "Page.captureScreenshot",
+      "end": 1791543382972
+    },
+    {
+      "at": 1791543382972,
+      "method": "Surface.composePopup",
+      "end": 1791543382973
+    },
+    {
+      "at": 1791543382973,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543382974
+    },
+    {
+      "at": 1791543382974,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543382974
+    },
+    {
+      "at": 1791543382974,
+      "method": "Debugger.resume",
+      "end": 1791543382975
+    },
+    {
+      "at": 1791543382985,
+      "method": "Page.getFrameTree",
+      "end": 1791543382986
+    },
+    {
+      "at": 1791543382986,
+      "method": "Page.getFrameTree",
+      "end": 1791543382987
+    },
+    {
+      "at": 1791543382987,
+      "method": "Runtime.evaluate",
+      "end": 1791543382988
+    },
+    {
+      "at": 1791543383011,
+      "method": "Surface.focus",
+      "end": 1791543383012
+    },
+    {
+      "at": 1791543383012,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383013
+    },
+    {
+      "at": 1791543383013,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383013
+    },
+    {
+      "at": 1791543383013,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383016
+    },
+    {
+      "at": 1791543383036,
+      "method": "Surface.focus",
+      "end": 1791543383037
+    },
+    {
+      "at": 1791543383037,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383038
+    },
+    {
+      "at": 1791543383038,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383038
+    },
+    {
+      "at": 1791543383038,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383038
+    },
+    {
+      "at": 1791543383055,
+      "method": "Surface.focus",
+      "end": 1791543383056
+    },
+    {
+      "at": 1791543383056,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383058
+    },
+    {
+      "at": 1791543383058,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383060
+    },
+    {
+      "at": 1791543383060,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383060
+    },
+    {
+      "at": 1791543383078,
+      "method": "Surface.focus",
+      "end": 1791543383078
+    },
+    {
+      "at": 1791543383078,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383078
+    },
+    {
+      "at": 1791543383078,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383079
+    },
+    {
+      "at": 1791543383079,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383079
+    },
+    {
+      "at": 1791543383093,
+      "method": "Surface.focus",
+      "end": 1791543383093
+    },
+    {
+      "at": 1791543383093,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383093
+    },
+    {
+      "at": 1791543383093,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383094
+    },
+    {
+      "at": 1791543383094,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383094
+    },
+    {
+      "at": 1791543383112,
+      "method": "Surface.focus",
+      "end": 1791543383112
+    },
+    {
+      "at": 1791543383112,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383113
+    },
+    {
+      "at": 1791543383113,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383113
+    },
+    {
+      "at": 1791543383113,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383113
+    },
+    {
+      "at": 1791543383140,
+      "method": "Surface.focus",
+      "end": 1791543383141
+    },
+    {
+      "at": 1791543383141,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383143
+    },
+    {
+      "at": 1791543383143,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383144
+    },
+    {
+      "at": 1791543383144,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383145
+    },
+    {
+      "at": 1791543383163,
+      "method": "Surface.focus",
+      "end": 1791543383164
+    },
+    {
+      "at": 1791543383164,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383164
+    },
+    {
+      "at": 1791543383164,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383166
+    },
+    {
+      "at": 1791543383166,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383167
+    },
+    {
+      "at": 1791543383190,
+      "method": "Surface.focus",
+      "end": 1791543383191
+    },
+    {
+      "at": 1791543383191,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383192
+    },
+    {
+      "at": 1791543383192,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383192
+    },
+    {
+      "at": 1791543383192,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383193
+    },
+    {
+      "at": 1791543383211,
+      "method": "Surface.focus",
+      "end": 1791543383212
+    },
+    {
+      "at": 1791543383211,
+      "method": "Page.getFrameTree",
+      "end": 1791543383212
+    },
+    {
+      "at": 1791543383212,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383213
+    },
+    {
+      "at": 1791543383212,
+      "method": "Page.getFrameTree",
+      "end": 1791543383213
+    },
+    {
+      "at": 1791543383213,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383213
+    },
+    {
+      "at": 1791543383213,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543383214
+    },
+    {
+      "at": 1791543383213,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383214
+    },
+    {
+      "at": 1791543383214,
+      "method": "Runtime.evaluate",
+      "end": 1791543383215
+    },
+    {
+      "at": 1791543383215,
+      "method": "Page.getFrameTree",
+      "end": 1791543383217
+    },
+    {
+      "at": 1791543383217,
+      "method": "Page.getFrameTree",
+      "end": 1791543383218
+    },
+    {
+      "at": 1791543383218,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543383219
+    },
+    {
+      "at": 1791543383219,
+      "method": "Runtime.evaluate",
+      "end": 1791543383220
+    },
+    {
+      "at": 1791543383227,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543383228
+    },
+    {
+      "at": 1791543383228,
+      "method": "Runtime.compileScript",
+      "end": 1791543383229
+    },
+    {
+      "at": 1791543383229,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543383229
+    },
+    {
+      "at": 1791543383229,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543383231
+    },
+    {
+      "at": 1791543383231,
+      "method": "Runtime.runScript",
+      "end": 1791543383232
+    },
+    {
+      "at": 1791543383232,
+      "method": "Runtime.evaluate",
+      "end": 1791543383234
+    },
+    {
+      "at": 1791543383234,
+      "method": "Page.captureScreenshot",
+      "end": 1791543383268
+    },
+    {
+      "at": 1791543383268,
+      "method": "Surface.composePopup",
+      "end": 1791543383269
+    },
+    {
+      "at": 1791543383269,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543383269
+    },
+    {
+      "at": 1791543383269,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543383270
+    },
+    {
+      "at": 1791543383270,
+      "method": "Debugger.resume",
+      "end": 1791543383270
+    },
+    {
+      "at": 1791543383297,
+      "method": "Page.getFrameTree",
+      "end": 1791543383297
+    },
+    {
+      "at": 1791543383297,
+      "method": "Page.getFrameTree",
+      "end": 1791543383297
+    },
+    {
+      "at": 1791543383297,
+      "method": "Runtime.evaluate",
+      "end": 1791543383298
+    },
+    {
+      "at": 1791543383383,
+      "method": "Page.getFrameTree",
+      "end": 1791543383383
+    },
+    {
+      "at": 1791543383383,
+      "method": "Page.getFrameTree",
+      "end": 1791543383384
+    },
+    {
+      "at": 1791543383384,
+      "method": "Runtime.evaluate",
+      "end": 1791543383384
+    },
+    {
+      "at": 1791543383391,
+      "method": "Surface.focus",
+      "end": 1791543383392
+    },
+    {
+      "at": 1791543383392,
+      "method": "Page.getFrameTree",
+      "end": 1791543383393
+    },
+    {
+      "at": 1791543383393,
+      "method": "Page.getFrameTree",
+      "end": 1791543383393
+    },
+    {
+      "at": 1791543383393,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543383393
+    },
+    {
+      "at": 1791543383393,
+      "method": "Runtime.evaluate",
+      "end": 1791543383396
+    },
+    {
+      "at": 1791543383400,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383401
+    },
+    {
+      "at": 1791543383411,
+      "method": "Page.getFrameTree",
+      "end": 1791543383411
+    },
+    {
+      "at": 1791543383411,
+      "method": "Page.getFrameTree",
+      "end": 1791543383411
+    },
+    {
+      "at": 1791543383411,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543383412
+    },
+    {
+      "at": 1791543383412,
+      "method": "Runtime.evaluate",
+      "end": 1791543383412
+    },
+    {
+      "at": 1791543383416,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383417
+    },
+    {
+      "at": 1791543383420,
+      "method": "Page.getFrameTree",
+      "end": 1791543383421
+    },
+    {
+      "at": 1791543383421,
+      "method": "Page.getFrameTree",
+      "end": 1791543383421
+    },
+    {
+      "at": 1791543383421,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543383422
+    },
+    {
+      "at": 1791543383422,
+      "method": "Runtime.evaluate",
+      "end": 1791543383422
+    },
+    {
+      "at": 1791543383424,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383424
+    },
+    {
+      "at": 1791543383425,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383425
+    },
+    {
+      "at": 1791543383426,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383426
+    },
+    {
+      "at": 1791543383426,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383428
+    },
+    {
+      "at": 1791543383429,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383429
+    },
+    {
+      "at": 1791543383430,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543383438
+    },
+    {
+      "at": 1791543383433,
+      "method": "Page.getFrameTree",
+      "end": 1791543383437
+    },
+    {
+      "at": 1791543383437,
+      "method": "Page.getFrameTree",
+      "end": 1791543383439
+    },
+    {
+      "at": 1791543383438,
+      "method": "Runtime.compileScript",
+      "end": 1791543383440
+    },
+    {
+      "at": 1791543383439,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543383440
+    },
+    {
+      "at": 1791543383440,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543383440
+    },
+    {
+      "at": 1791543383440,
+      "method": "Runtime.evaluate",
+      "end": 1791543383440
+    },
+    {
+      "at": 1791543383440,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543383440
+    },
+    {
+      "at": 1791543383440,
+      "method": "Runtime.runScript",
+      "end": 1791543383441
+    },
+    {
+      "at": 1791543383441,
+      "method": "Runtime.evaluate",
+      "end": 1791543383442
+    },
+    {
+      "at": 1791543383442,
+      "method": "Page.captureScreenshot",
+      "end": 1791543383483
+    },
+    {
+      "at": 1791543383461,
+      "method": "Page.getFrameTree",
+      "end": 1791543383462
+    },
+    {
+      "at": 1791543383462,
+      "method": "Page.getFrameTree",
+      "end": 1791543383462
+    },
+    {
+      "at": 1791543383462,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543383462
+    },
+    {
+      "at": 1791543383462,
+      "method": "Runtime.evaluate",
+      "end": 1791543383485
+    },
+    {
+      "at": 1791543383483,
+      "method": "Surface.composePopup",
+      "end": 1791543383484
+    },
+    {
+      "at": 1791543383484,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543383485
+    },
+    {
+      "at": 1791543383485,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543383485
+    },
+    {
+      "at": 1791543383485,
+      "method": "Debugger.resume",
+      "end": 1791543383485
+    },
+    {
+      "at": 1791543383485,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383485
+    },
+    {
+      "at": 1791543383485,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383486
+    },
+    {
+      "at": 1791543383487,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383488
+    },
+    {
+      "at": 1791543383490,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383491
+    },
+    {
+      "at": 1791543383491,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383491
+    },
+    {
+      "at": 1791543383497,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383498
+    },
+    {
+      "at": 1791543383499,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383499
+    },
+    {
+      "at": 1791543383499,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383499
+    },
+    {
+      "at": 1791543383501,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383502
+    },
+    {
+      "at": 1791543383505,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383505
+    },
+    {
+      "at": 1791543383505,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383505
+    },
+    {
+      "at": 1791543383505,
+      "method": "Page.getFrameTree",
+      "end": 1791543383505
+    },
+    {
+      "at": 1791543383505,
+      "method": "Page.getFrameTree",
+      "end": 1791543383506
+    },
+    {
+      "at": 1791543383506,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543383507
+    },
+    {
+      "at": 1791543383507,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383507
+    },
+    {
+      "at": 1791543383507,
+      "method": "Runtime.evaluate",
+      "end": 1791543383507
+    },
+    {
+      "at": 1791543383508,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383508
+    },
+    {
+      "at": 1791543383508,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383509
+    },
+    {
+      "at": 1791543383510,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383511
+    },
+    {
+      "at": 1791543383512,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383512
+    },
+    {
+      "at": 1791543383512,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383512
+    },
+    {
+      "at": 1791543383513,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383514
+    },
+    {
+      "at": 1791543383515,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383515
+    },
+    {
+      "at": 1791543383515,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383515
+    },
+    {
+      "at": 1791543383517,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383517
+    },
+    {
+      "at": 1791543383520,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383520
+    },
+    {
+      "at": 1791543383520,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383521
+    },
+    {
+      "at": 1791543383523,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383523
+    },
+    {
+      "at": 1791543383525,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383525
+    },
+    {
+      "at": 1791543383525,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383526
+    },
+    {
+      "at": 1791543383527,
+      "method": "Page.getFrameTree",
+      "end": 1791543383527
+    },
+    {
+      "at": 1791543383527,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383528
+    },
+    {
+      "at": 1791543383527,
+      "method": "Page.getFrameTree",
+      "end": 1791543383528
+    },
+    {
+      "at": 1791543383528,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543383528
+    },
+    {
+      "at": 1791543383528,
+      "method": "Runtime.evaluate",
+      "end": 1791543383529
+    },
+    {
+      "at": 1791543383529,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383529
+    },
+    {
+      "at": 1791543383529,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383529
+    },
+    {
+      "at": 1791543383531,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543383531
+    },
+    {
+      "at": 1791543383532,
+      "method": "Page.getFrameTree",
+      "end": 1791543383532
+    },
+    {
+      "at": 1791543383532,
+      "method": "Page.getFrameTree",
+      "end": 1791543383533
+    },
+    {
+      "at": 1791543383533,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543383533
+    },
+    {
+      "at": 1791543383533,
+      "method": "Runtime.evaluate",
+      "end": 1791543383533
+    },
+    {
+      "at": 1791543383535,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543383536
+    },
+    {
+      "at": 1791543383536,
+      "method": "Runtime.compileScript",
+      "end": 1791543383536
+    },
+    {
+      "at": 1791543383536,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543383536
+    },
+    {
+      "at": 1791543383536,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543383536
+    },
+    {
+      "at": 1791543383536,
+      "method": "Runtime.runScript",
+      "end": 1791543383537
+    },
+    {
+      "at": 1791543383538,
+      "method": "Runtime.evaluate",
+      "end": 1791543383540
+    },
+    {
+      "at": 1791543383540,
+      "method": "Page.captureScreenshot",
+      "end": 1791543383584
+    },
+    {
+      "at": 1791543383549,
+      "method": "Page.getFrameTree",
+      "end": 1791543383558
+    },
+    {
+      "at": 1791543383558,
+      "method": "Page.getFrameTree",
+      "end": 1791543383559
+    },
+    {
+      "at": 1791543383559,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543383560
+    },
+    {
+      "at": 1791543383560,
+      "method": "Runtime.evaluate",
+      "end": 1791543383586
+    },
+    {
+      "at": 1791543383584,
+      "method": "Surface.composePopup",
+      "end": 1791543383585
+    },
+    {
+      "at": 1791543383585,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543383585
+    },
+    {
+      "at": 1791543383585,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543383586
+    },
+    {
+      "at": 1791543383586,
+      "method": "Debugger.resume",
+      "end": 1791543383586
+    },
+    {
+      "at": 1791543383586,
+      "method": "Page.getFrameTree",
+      "end": 1791543383587
+    },
+    {
+      "at": 1791543383587,
+      "method": "Page.getFrameTree",
+      "end": 1791543383589
+    },
+    {
+      "at": 1791543383589,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543383589
+    },
+    {
+      "at": 1791543383589,
+      "method": "Runtime.evaluate",
+      "end": 1791543383590
+    },
+    {
+      "at": 1791543383623,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543383625
+    },
+    {
+      "at": 1791543383627,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543383628
+    },
+    {
+      "at": 1791543383628,
+      "method": "Runtime.compileScript",
+      "end": 1791543383628
+    },
+    {
+      "at": 1791543383628,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543383629
+    },
+    {
+      "at": 1791543383629,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543383629
+    },
+    {
+      "at": 1791543383629,
+      "method": "Runtime.runScript",
+      "end": 1791543383629
+    },
+    {
+      "at": 1791543383630,
+      "method": "Runtime.evaluate",
+      "end": 1791543383631
+    },
+    {
+      "at": 1791543383631,
+      "method": "Page.captureScreenshot",
+      "end": 1791543383667
+    },
+    {
+      "at": 1791543383667,
+      "method": "Surface.composePopup",
+      "end": 1791543383668
+    },
+    {
+      "at": 1791543383668,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543383668
+    },
+    {
+      "at": 1791543383668,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543383669
+    },
+    {
+      "at": 1791543383669,
+      "method": "Debugger.resume",
+      "end": 1791543383669
+    },
+    {
+      "at": 1791543383681,
+      "method": "Page.getFrameTree",
+      "end": 1791543383684
+    },
+    {
+      "at": 1791543383684,
+      "method": "Page.getFrameTree",
+      "end": 1791543383685
+    },
+    {
+      "at": 1791543383685,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543383685
+    },
+    {
+      "at": 1791543383685,
+      "method": "Runtime.evaluate",
+      "end": 1791543383686
+    },
+    {
+      "at": 1791543383689,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543383689
+    },
+    {
+      "at": 1791543383689,
+      "method": "Runtime.compileScript",
+      "end": 1791543383690
+    },
+    {
+      "at": 1791543383690,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543383690
+    },
+    {
+      "at": 1791543383690,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543383691
+    },
+    {
+      "at": 1791543383691,
+      "method": "Runtime.runScript",
+      "end": 1791543383691
+    },
+    {
+      "at": 1791543383691,
+      "method": "Runtime.evaluate",
+      "end": 1791543383693
+    },
+    {
+      "at": 1791543383693,
+      "method": "Page.captureScreenshot",
+      "end": 1791543383736
+    },
+    {
+      "at": 1791543383736,
+      "method": "Surface.composePopup",
+      "end": 1791543383737
+    },
+    {
+      "at": 1791543383737,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543383738
+    },
+    {
+      "at": 1791543383738,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543383738
+    },
+    {
+      "at": 1791543383738,
+      "method": "Debugger.resume",
+      "end": 1791543383739
+    },
+    {
+      "at": 1791543384002,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543384003
+    },
+    {
+      "at": 1791543384003,
+      "method": "Runtime.compileScript",
+      "end": 1791543384003
+    },
+    {
+      "at": 1791543384003,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543384004
+    },
+    {
+      "at": 1791543384004,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543384004
+    },
+    {
+      "at": 1791543384004,
+      "method": "Runtime.runScript",
+      "end": 1791543384005
+    },
+    {
+      "at": 1791543384005,
+      "method": "Runtime.evaluate",
+      "end": 1791543384006
+    },
+    {
+      "at": 1791543384006,
+      "method": "Page.captureScreenshot",
+      "end": 1791543384060
+    },
+    {
+      "at": 1791543384050,
+      "method": "Page.getFrameTree",
+      "end": 1791543384061
+    },
+    {
+      "at": 1791543384060,
+      "method": "Surface.composePopup",
+      "end": 1791543384062
+    },
+    {
+      "at": 1791543384061,
+      "method": "Page.getFrameTree",
+      "end": 1791543384062
+    },
+    {
+      "at": 1791543384062,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543384062
+    },
+    {
+      "at": 1791543384062,
+      "method": "Page.createIsolatedWorld",
+      "end": 1791543384062
+    },
+    {
+      "at": 1791543384062,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543384063
+    },
+    {
+      "at": 1791543384062,
+      "method": "Runtime.evaluate",
+      "end": 1791543384063
+    },
+    {
+      "at": 1791543384063,
+      "method": "Debugger.resume",
+      "end": 1791543384063
+    },
+    {
+      "at": 1791543384099,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543384099
+    },
+    {
+      "at": 1791543384101,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543384101
+    },
+    {
+      "at": 1791543384101,
+      "method": "Runtime.compileScript",
+      "end": 1791543384101
+    },
+    {
+      "at": 1791543384101,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543384102
+    },
+    {
+      "at": 1791543384102,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543384102
+    },
+    {
+      "at": 1791543384102,
+      "method": "Runtime.runScript",
+      "end": 1791543384102
+    },
+    {
+      "at": 1791543384105,
+      "method": "Runtime.evaluate",
+      "end": 1791543384107
+    },
+    {
+      "at": 1791543384107,
+      "method": "Page.captureScreenshot",
+      "end": 1791543384154
+    },
+    {
+      "at": 1791543384154,
+      "method": "Surface.composePopup",
+      "end": 1791543384156
+    },
+    {
+      "at": 1791543384156,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543384156
+    },
+    {
+      "at": 1791543384156,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543384156
+    },
+    {
+      "at": 1791543384156,
+      "method": "Debugger.resume",
+      "end": 1791543384157
+    },
+    {
+      "at": 1791543384157,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543384157
+    },
+    {
+      "at": 1791543384172,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543384173
+    },
+    {
+      "at": 1791543384173,
+      "method": "Runtime.compileScript",
+      "end": 1791543384173
+    },
+    {
+      "at": 1791543384173,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543384174
+    },
+    {
+      "at": 1791543384174,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543384175
+    },
+    {
+      "at": 1791543384175,
+      "method": "Runtime.runScript",
+      "end": 1791543384175
+    },
+    {
+      "at": 1791543384176,
+      "method": "Runtime.evaluate",
+      "end": 1791543384177
+    },
+    {
+      "at": 1791543384177,
+      "method": "Page.captureScreenshot",
+      "end": 1791543384222
+    },
+    {
+      "at": 1791543384222,
+      "method": "Surface.composePopup",
+      "end": 1791543384225
+    },
+    {
+      "at": 1791543384225,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543384226
+    },
+    {
+      "at": 1791543384226,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543384226
+    },
+    {
+      "at": 1791543384226,
+      "method": "Debugger.resume",
+      "end": 1791543384227
+    },
+    {
+      "at": 1791543384227,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543384227
+    },
+    {
+      "at": 1791543384231,
+      "method": "Surface.sendKeyEvent",
+      "end": 1791543384234
+    },
+    {
+      "at": 1791543384247,
+      "method": "Surface.focus",
+      "end": 1791543384253
+    },
+    {
+      "at": 1791543384253,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543384258
+    },
+    {
+      "at": 1791543384258,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543384259
+    },
+    {
+      "at": 1791543384262,
+      "method": "Surface.focus",
+      "end": 1791543384262
+    },
+    {
+      "at": 1791543384262,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543384263
+    },
+    {
+      "at": 1791543384263,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543384264
+    },
+    {
+      "at": 1791543384265,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543384266
+    },
+    {
+      "at": 1791543384267,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543384267
+    },
+    {
+      "at": 1791543384270,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543384271
+    },
+    {
+      "at": 1791543384271,
+      "method": "Runtime.compileScript",
+      "end": 1791543384272
+    },
+    {
+      "at": 1791543384272,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543384272
+    },
+    {
+      "at": 1791543384272,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543384273
+    },
+    {
+      "at": 1791543384273,
+      "method": "Runtime.runScript",
+      "end": 1791543384273
+    },
+    {
+      "at": 1791543384274,
+      "method": "Runtime.evaluate",
+      "end": 1791543384276
+    },
+    {
+      "at": 1791543384276,
+      "method": "Page.captureScreenshot",
+      "end": 1791543384329
+    },
+    {
+      "at": 1791543384329,
+      "method": "Surface.composePopup",
+      "end": 1791543384331
+    },
+    {
+      "at": 1791543384332,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543384332
+    },
+    {
+      "at": 1791543384332,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543384333
+    },
+    {
+      "at": 1791543384333,
+      "method": "Debugger.resume",
+      "end": 1791543384333
+    },
+    {
+      "at": 1791543384333,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543384337
+    },
+    {
+      "at": 1791543384337,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543384337
+    },
+    {
+      "at": 1791543384340,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543384341
+    },
+    {
+      "at": 1791543384341,
+      "method": "Surface.sendMouseEvent",
+      "end": 1791543384342
+    },
+    {
+      "at": 1791543384357,
+      "method": "Animation.getPlaybackRate",
+      "end": 1791543384361
+    },
+    {
+      "at": 1791543384361,
+      "method": "Runtime.compileScript",
+      "end": 1791543384361
+    },
+    {
+      "at": 1791543384361,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543384361
+    },
+    {
+      "at": 1791543384361,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543384362
+    },
+    {
+      "at": 1791543384362,
+      "method": "Runtime.runScript",
+      "end": 1791543384362
+    },
+    {
+      "at": 1791543384362,
+      "method": "Runtime.evaluate",
+      "end": 1791543384364
+    },
+    {
+      "at": 1791543384364,
+      "method": "Page.captureScreenshot",
+      "end": 1791543384403
+    },
+    {
+      "at": 1791543384403,
+      "method": "Surface.composePopup",
+      "end": 1791543384404
+    },
+    {
+      "at": 1791543384404,
+      "method": "Animation.setPlaybackRate",
+      "end": 1791543384404
+    },
+    {
+      "at": 1791543384404,
+      "method": "Debugger.setSkipAllPauses",
+      "end": 1791543384404
+    },
+    {
+      "at": 1791543384404,
+      "method": "Debugger.resume",
+      "end": 1791543384405
+    }
+  ],
+  "boundaries": "Isolated production App / loopback port 0 / real normal CEF. Native handler and client timestamps use Date.now at millisecond resolution. Display means committed scene Canvas drawImage after its semantic frame has been installed, excluding compositor/display and physical trackpad. Wrappers add microtiming overhead. Dynamic source rAF remains active.",
+  "processSamples": [
+    {
+      "at": 1791543381537,
+      "note": "Independent functionality run omits broad process enumeration; lifecycle checks use only owned parent/PID lists.",
+      "processes": []
+    },
+    {
+      "at": 1791543382849,
+      "note": "Independent functionality run omits broad process enumeration; lifecycle checks use only owned parent/PID lists.",
+      "processes": []
+    }
+  ],
+  "nativeClicks": [
+    {
+      "count": 1,
+      "at": 1791543382130,
+      "trusted": true
+    },
+    {
+      "count": 2,
+      "at": 1791543382319,
+      "trusted": true
+    }
+  ],
+  "client": {
+    "clicks": [
+      {
+        "at": 1791543382100,
+        "trusted": true
+      },
+      {
+        "at": 1791543382317,
+        "trusted": true
+      }
+    ],
+    "frameRequests": [
+      {
+        "at": 1791543381404,
+        "end": 1791543381406,
+        "url": "/api/sessions/9b5abdaa-884e-4c96-94bb-466fafc9ac67/capture-views/e51efe5f-d13e-4e69-801a-a517b1cda589/html-surfaces/212084f8-0693-437e-8b92-34e97b2ac780/frames/1/content?documentId=1fc73ad9-095f-4034-8a6a-f503d42fd210&viewGeneration=1"
+      },
+      {
+        "at": 1791543382203,
+        "end": 1791543382205,
+        "url": "/api/sessions/9b5abdaa-884e-4c96-94bb-466fafc9ac67/capture-views/e51efe5f-d13e-4e69-801a-a517b1cda589/html-surfaces/212084f8-0693-437e-8b92-34e97b2ac780/frames/2/content?documentId=1fc73ad9-095f-4034-8a6a-f503d42fd210&viewGeneration=1"
+      },
+      {
+        "at": 1791543382370,
+        "end": 1791543382371,
+        "url": "/api/sessions/9b5abdaa-884e-4c96-94bb-466fafc9ac67/capture-views/e51efe5f-d13e-4e69-801a-a517b1cda589/html-surfaces/212084f8-0693-437e-8b92-34e97b2ac780/frames/3/content?documentId=1fc73ad9-095f-4034-8a6a-f503d42fd210&viewGeneration=1"
+      },
+      {
+        "at": 1791543382670,
+        "end": 1791543382671,
+        "url": "/api/sessions/9b5abdaa-884e-4c96-94bb-466fafc9ac67/capture-views/e51efe5f-d13e-4e69-801a-a517b1cda589/html-surfaces/212084f8-0693-437e-8b92-34e97b2ac780/frames/4/content?documentId=1fc73ad9-095f-4034-8a6a-f503d42fd210&viewGeneration=1"
+      }
+    ],
+    "metadataRequests": [
+      {
+        "at": 1791543381307,
+        "end": 1791543381404,
+        "url": "/api/sessions/9b5abdaa-884e-4c96-94bb-466fafc9ac67/capture-views/e51efe5f-d13e-4e69-801a-a517b1cda589/html-surfaces/212084f8-0693-437e-8b92-34e97b2ac780/sample",
+        "frameSeq": 1,
+        "inputSeq": 0,
+        "count": "0"
+      },
+      {
+        "at": 1791543382143,
+        "end": 1791543382203,
+        "url": "/api/sessions/9b5abdaa-884e-4c96-94bb-466fafc9ac67/capture-views/e51efe5f-d13e-4e69-801a-a517b1cda589/html-surfaces/212084f8-0693-437e-8b92-34e97b2ac780/sample",
+        "frameSeq": 2,
+        "inputSeq": 2,
+        "count": "1"
+      },
+      {
+        "at": 1791543382323,
+        "end": 1791543382369,
+        "url": "/api/sessions/9b5abdaa-884e-4c96-94bb-466fafc9ac67/capture-views/e51efe5f-d13e-4e69-801a-a517b1cda589/html-surfaces/212084f8-0693-437e-8b92-34e97b2ac780/sample",
+        "frameSeq": 3,
+        "inputSeq": 3,
+        "count": "2"
+      },
+      {
+        "at": 1791543382629,
+        "end": 1791543382669,
+        "url": "/api/sessions/9b5abdaa-884e-4c96-94bb-466fafc9ac67/capture-views/e51efe5f-d13e-4e69-801a-a517b1cda589/html-surfaces/212084f8-0693-437e-8b92-34e97b2ac780/sample",
+        "frameSeq": 4,
+        "inputSeq": 3,
+        "count": "2"
+      }
+    ],
+    "decodes": [
+      {
+        "at": 1791543381407,
+        "end": 1791543381410
+      },
+      {
+        "at": 1791543382205,
+        "end": 1791543382207
+      },
+      {
+        "at": 1791543382371,
+        "end": 1791543382373
+      },
+      {
+        "at": 1791543382671,
+        "end": 1791543382674
+      }
+    ],
+    "commits": [
+      {
+        "at": 1791543381419,
+        "frameSeq": 1,
+        "count": "0"
+      },
+      {
+        "at": 1791543382101,
+        "frameSeq": 1,
+        "count": "0"
+      },
+      {
+        "at": 1791543382215,
+        "frameSeq": 2,
+        "count": "1"
+      },
+      {
+        "at": 1791543382378,
+        "frameSeq": 3,
+        "count": "1"
+      },
+      {
+        "at": 1791543382680,
+        "frameSeq": 4,
+        "count": "2"
+      }
+    ],
+    "wheels": [],
+    "touches": []
+  },
+  "response": [
+    {
+      "count": 1,
+      "clickAt": 1791543382100,
+      "nativeProcessedAt": 1791543382130,
+      "consistentPairAt": 1791543382202,
+      "displayAt": 1791543382215,
+      "clickToNativeMs": 30,
+      "nativeToPairMs": 72,
+      "pairToDisplayMs": 13,
+      "clickToDisplayMs": 115,
+      "inputTrusted": true,
+      "clientTrusted": true
+    },
+    {
+      "count": 2,
+      "clickAt": 1791543382317,
+      "nativeProcessedAt": 1791543382319,
+      "consistentPairAt": 1791543382368,
+      "displayAt": 1791543382378,
+      "clickToNativeMs": 2,
+      "nativeToPairMs": 49,
+      "pairToDisplayMs": 10,
+      "clickToDisplayMs": 61,
+      "inputTrusted": true,
+      "clientTrusted": true
+    }
+  ],
+  "security": {
+    "normalCef": true,
+    "headless": true,
+    "rendererSandbox": true,
+    "keychainProviderDisabled": true,
+    "clipboardTripwire": false
+  },
+  "errors": [],
+  "stress": {
+    "inputsDuringInFlightFrameDelivery": 10,
+    "acceptedInputSeq": 13,
+    "displayedInputSeq": 13,
+    "displayedCount": "12",
+    "count": 12,
+    "elapsedMs": 400,
+    "rAfTicksDuringBurst": 10,
+    "maxConcurrentSampleRequests": 1,
+    "nativeAudioRunning": true,
+    "pcmPackets": 3,
+    "maxPcmPtsGapMs": 22,
+    "finalDisplay": {
+      "at": 1791543383289,
+      "frameSeq": 6
+    },
+    "invisibleTextProxyValueAtCommit": "12"
+  },
+  "nativeTextInput": true,
+  "wheel": {
+    "before": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    },
+    "targets": [
+      {
+        "before": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        },
+        "after": {
+          "x": -3.5,
+          "y": -5.5,
+          "zoom": 1
+        },
+        "event": {
+          "at": 1791543383646,
+          "ctrlKey": false,
+          "metaKey": false,
+          "deltaX": 3.5,
+          "deltaY": 5.5
+        }
+      },
+      {
+        "before": {
+          "x": -3.5,
+          "y": -5.5,
+          "zoom": 1
+        },
+        "after": {
+          "x": -7,
+          "y": -11,
+          "zoom": 1
+        },
+        "event": {
+          "at": 1791543383804,
+          "ctrlKey": false,
+          "metaKey": false,
+          "deltaX": 3.5,
+          "deltaY": 5.5
+        }
+      },
+      {
+        "before": {
+          "x": -7,
+          "y": -11,
+          "zoom": 1
+        },
+        "after": {
+          "x": -10.5,
+          "y": -16.5,
+          "zoom": 1
+        },
+        "event": {
+          "at": 1791543383939,
+          "ctrlKey": false,
+          "metaKey": false,
+          "deltaX": 3.5,
+          "deltaY": 5.5
+        }
+      }
+    ],
+    "sourceScrollY": 0,
+    "Control": {
+      "before": {
+        "x": -10.5,
+        "y": -16.5,
+        "zoom": 1
+      },
+      "after": {
+        "x": -24.5739,
+        "y": -25.4981,
+        "zoom": 1.05127
+      },
+      "event": {
+        "at": 1791543384114,
+        "ctrlKey": true,
+        "metaKey": false,
+        "deltaX": 0,
+        "deltaY": -10
+      }
+    },
+    "Meta": {
+      "before": {
+        "x": -24.5739,
+        "y": -25.4981,
+        "zoom": 1.05127
+      },
+      "after": {
+        "x": -39.3694,
+        "y": -34.9575,
+        "zoom": 1.10517
+      },
+      "event": {
+        "at": 1791543384189,
+        "ctrlKey": false,
+        "metaKey": true,
+        "deltaX": 0,
+        "deltaY": -10
+      }
+    },
+    "touchPinch": {
+      "before": {
+        "x": -39.3694,
+        "y": -34.9575,
+        "zoom": 1.10517
+      },
+      "after": {
+        "x": -39.3694,
+        "y": -34.9575,
+        "zoom": 1.10517
+      },
+      "point": {
+        "x": 776.2467697143554,
+        "y": 311.62412490844724
+      },
+      "touches": [
+        {
+          "type": "pointerdown",
+          "at": 1791543384218,
+          "id": 2,
+          "x": 741.2467651367188,
+          "y": 311.6241149902344,
+          "target": "CANVAS.",
+          "control": "<div class=\"content-shell\" data-content-kind=\"html\" data-canvas-control=\"true\"><div class=\"html-content\" data-preview-state=\"live\" aria-label=\"HTML preview: Owned.html\" data-preview-ready=\"true\"><canvas data-canvas-wheel=\"canvas\" aria-label=\"Owned.html\" width=\"1480\" height=\"496\" style=\"width: 100%; "
+        },
+        {
+          "type": "pointerdown",
+          "at": 1791543384220,
+          "id": 3,
+          "x": 811.2467651367188,
+          "y": 311.6241149902344,
+          "target": "CANVAS.",
+          "control": "<div class=\"content-shell\" data-content-kind=\"html\" data-canvas-control=\"true\"><div class=\"html-content\" data-preview-state=\"live\" aria-label=\"HTML preview: Owned.html\" data-preview-ready=\"true\"><canvas data-canvas-wheel=\"canvas\" aria-label=\"Owned.html\" width=\"1480\" height=\"496\" style=\"width: 100%; "
+        },
+        {
+          "type": "pointermove",
+          "at": 1791543384231,
+          "id": 3,
+          "x": 828.7467651367188,
+          "y": 311.6241149902344,
+          "target": "CANVAS.",
+          "control": "<div class=\"content-shell\" data-content-kind=\"html\" data-canvas-control=\"true\"><div class=\"html-content\" data-preview-state=\"live\" aria-label=\"HTML preview: Owned.html\" data-preview-ready=\"true\"><canvas data-canvas-wheel=\"canvas\" aria-label=\"Owned.html\" width=\"1480\" height=\"496\" style=\"width: 100%; "
+        },
+        {
+          "type": "pointermove",
+          "at": 1791543384231,
+          "id": 2,
+          "x": 723.7467651367188,
+          "y": 311.6241149902344,
+          "target": "CANVAS.",
+          "control": "<div class=\"content-shell\" data-content-kind=\"html\" data-canvas-control=\"true\"><div class=\"html-content\" data-preview-state=\"live\" aria-label=\"HTML preview: Owned.html\" data-preview-ready=\"true\"><canvas data-canvas-wheel=\"canvas\" aria-label=\"Owned.html\" width=\"1480\" height=\"496\" style=\"width: 100%; "
+        },
+        {
+          "type": "pointerup",
+          "at": 1791543384243,
+          "id": 2,
+          "x": 723.7467651367188,
+          "y": 311.6241149902344,
+          "target": "CANVAS.",
+          "control": "<div class=\"content-shell\" data-content-kind=\"html\" data-canvas-control=\"true\"><div class=\"html-content\" data-preview-state=\"live\" aria-label=\"HTML preview: Owned.html\" data-preview-ready=\"true\"><canvas data-canvas-wheel=\"canvas\" aria-label=\"Owned.html\" width=\"1480\" height=\"496\" style=\"width: 100%; "
+        },
+        {
+          "type": "pointerup",
+          "at": 1791543384243,
+          "id": 3,
+          "x": 828.7467651367188,
+          "y": 311.6241149902344,
+          "target": "CANVAS.",
+          "control": "<div class=\"content-shell\" data-content-kind=\"html\" data-canvas-control=\"true\"><div class=\"html-content\" data-preview-state=\"live\" aria-label=\"HTML preview: Owned.html\" data-preview-ready=\"true\"><canvas data-canvas-wheel=\"canvas\" aria-label=\"Owned.html\" width=\"1480\" height=\"496\" style=\"width: 100%; "
+        }
+      ],
+      "via": "Chrome CDP touch pointer events on HTML canvas",
+      "passed": false
+    },
+    "webkitGesture": {
+      "before": {
+        "x": -39.3694,
+        "y": -34.9575,
+        "zoom": 1.10517
+      },
+      "after": {
+        "x": -243.273,
+        "y": -121.603,
+        "zoom": 1.38146
+      },
+      "via": "Synthetic WebKit gesture capability path on HTML canvas; physical Safari/trackpad remains outside this automation."
+    }
+  }
+}

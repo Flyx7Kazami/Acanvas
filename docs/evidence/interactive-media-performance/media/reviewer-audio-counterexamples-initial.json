@@ -1,0 +1,331 @@
+{
+  "status": "FAIL",
+  "results": [
+    {
+      "name": "loading",
+      "changed": 12084,
+      "max": 62,
+      "channels": 732160,
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 0,
+          "presentedTime": 0,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 5
+      },
+      "disabled": "true",
+      "opacity": "0.4",
+      "readyState": 0,
+      "selection": ""
+    },
+    {
+      "name": "ready",
+      "changed": 0,
+      "max": 0,
+      "channels": 732160,
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 0,
+          "presentedTime": 0,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 10
+      },
+      "disabled": "false",
+      "opacity": "1",
+      "readyState": 4,
+      "selection": ""
+    },
+    {
+      "name": "disabled",
+      "changed": 44082,
+      "max": 119,
+      "channels": 732160,
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 0,
+          "presentedTime": 0,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 11
+      },
+      "disabled": "true",
+      "opacity": "0.4",
+      "readyState": 4,
+      "selection": ""
+    },
+    {
+      "name": "dynamic-visibility-hidden",
+      "changed": 44439,
+      "max": 199,
+      "channels": 732160,
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 0,
+          "presentedTime": 0,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 12
+      },
+      "disabled": "false",
+      "opacity": "1",
+      "readyState": 4,
+      "selection": ""
+    },
+    {
+      "name": "title-clock-selection",
+      "changed": 163157,
+      "max": 101,
+      "channels": 732160,
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 0,
+          "presentedTime": 0,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 14
+      },
+      "disabled": "false",
+      "opacity": "1",
+      "readyState": 4,
+      "selection": "cean\nAvery · Night drive\n\n0:"
+    },
+    {
+      "name": "theme",
+      "changed": 0,
+      "max": 0,
+      "channels": 732160,
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 0,
+          "presentedTime": 0,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 15
+      },
+      "disabled": "false",
+      "opacity": "1",
+      "readyState": 4,
+      "selection": ""
+    },
+    {
+      "name": "stack",
+      "changed": 0,
+      "max": 0,
+      "channels": 1003520,
+      "bitmap": {
+        "width": 448,
+        "height": 560
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 448,
+          "height": 560
+        },
+        "cssSize": {
+          "width": 224,
+          "height": 280
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 0,
+          "presentedTime": 0,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 21
+      },
+      "disabled": "false",
+      "opacity": "1",
+      "readyState": 4,
+      "selection": ""
+    },
+    {
+      "name": "waveform-error-visible-status",
+      "changed": 1329,
+      "max": 129,
+      "channels": 1003520,
+      "bitmap": {
+        "width": 448,
+        "height": 560
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 448,
+          "height": 560
+        },
+        "cssSize": {
+          "width": 224,
+          "height": 280
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 0,
+          "presentedTime": 0,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 8
+      },
+      "disabled": "false",
+      "opacity": "1",
+      "readyState": 4,
+      "waveStatus": "Unable to decode audio data",
+      "selection": ""
+    },
+    {
+      "name": "error",
+      "changed": 8556,
+      "max": 82,
+      "channels": 1003520,
+      "bitmap": {
+        "width": 448,
+        "height": 560
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 448,
+          "height": 560
+        },
+        "cssSize": {
+          "width": 224,
+          "height": 280
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 0,
+          "presentedTime": 0,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 6
+      },
+      "disabled": "true",
+      "opacity": "0.4",
+      "error": 4,
+      "readyState": 0,
+      "waveStatus": "Unable to decode audio data",
+      "selection": ""
+    },
+    {
+      "name": "pause-transition-terminal",
+      "changed": 0,
+      "max": 0,
+      "channels": 1003520,
+      "bitmap": {
+        "width": 448,
+        "height": 560
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 448,
+          "height": 560
+        },
+        "cssSize": {
+          "width": 224,
+          "height": 280
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 0,
+          "presentedTime": 0,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 47
+      },
+      "disabled": "false",
+      "opacity": "1",
+      "readyState": 4,
+      "selection": ""
+    }
+  ],
+  "errors": [],
+  "browser": "155.0.8059.39",
+  "boundary": "Independent isolated production component and real Canvas; full-panel raster is the uncached rendering oracle. Selection is a controlled DOM boundary."
+}

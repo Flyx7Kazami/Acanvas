@@ -1,20 +1,37 @@
 import type { ContentTextRun } from '../content.js';
+import { scenePaintMethods, scenePaintNumbers, scenePaintStrings, type ScenePaintArgument, type ScenePaintCommand, type ScenePaintMethod, type ScenePaintProperty } from '../paint-commands.js';
 import type { Bounds } from '../../../shared/types.js';
 
+export interface CompiledPanel { frame: Omit<PaintedPanel, 'pixels'>; commands: () => ScenePaintCommand[] }
 export interface PaintedPanel { pixels: HTMLCanvasElement; bitmap: { width: number; height: number }; cssSize: { width: number; height: number }; textRuns: ContentTextRun[] }
 const visible = (box: Bounds, clip: Bounds) => box.x < clip.x + clip.width && box.y < clip.y + clip.height && box.x + box.width > clip.x && box.y + box.height > clip.y;
 const length = (value: string) => Number.parseFloat(value) || 0;
 const transparent = (color: string) => !color || color === 'transparent' || color === 'rgba(0, 0, 0, 0)';
 function font(style: CSSStyleDeclaration) { return `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`; }
 
-/** Paint controlled project content continuously; this bitmap is the board display source. */
-export function paintControlledPanel(root: HTMLElement, options: { pixelRatio?: number; textRoot?: HTMLElement } = {}): PaintedPanel {
+function readControlledPanel(root: HTMLElement, options: { pixelRatio?: number; textRoot?: HTMLElement; gpu?: boolean; dynamicElements?: HTMLElement[] } = {}): { frame: PaintedPanel; commands: () => ScenePaintCommand[] } {
   const width = root.clientWidth, height = root.clientHeight, ratio = Math.min(3, Math.max(1, options.pixelRatio ?? window.devicePixelRatio ?? 1));
   if (width < 1 || height < 1 || width * height * ratio * ratio > 8_000_000) throw new Error('The content panel exceeds the supported bitmap size.');
   const area = root.getBoundingClientRect(), scaleX = area.width / width, scaleY = area.height / height;
   if (!scaleX || !scaleY) throw new Error('The content panel is outside the presented layout.');
   const pixels = root.ownerDocument.createElement('canvas'); pixels.width = Math.round(width * ratio); pixels.height = Math.round(height * ratio);
-  const context = pixels.getContext('2d', { willReadFrequently: true })!; context.setTransform(pixels.width / width, 0, 0, pixels.height / height, 0, 0);
+  const recorded: (ScenePaintCommand | (() => ScenePaintCommand))[] = [];
+  const native = pixels.getContext('2d', options.gpu ? undefined : { willReadFrequently: true })!;
+  const context = options.dynamicElements ? new Proxy(native, {
+    get(target, property) {
+      const value = Reflect.get(target, property, target);
+      if (typeof property === 'string' && (scenePaintMethods as readonly string[]).includes(property)) return (...args: ScenePaintArgument[]) => {
+        recorded.push({ op: 'call', method: property as ScenePaintMethod, args });
+        if (['save', 'restore', 'setTransform', 'translate', 'scale', 'transform', 'setLineDash'].includes(property)) Reflect.apply(value, target, args);
+      };
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+    set(target, property, value) {
+      if (typeof property !== 'string' || ![...scenePaintStrings, ...scenePaintNumbers].includes(property as ScenePaintProperty)) throw new TypeError('Use a supported panel paint property.');
+      recorded.push({ op: 'set', property: property as ScenePaintProperty, value }); return Reflect.set(target, property, value, target);
+    },
+  }) : native;
+  context.setTransform(pixels.width / width, 0, 0, pixels.height / height, 0, 0);
   const clip: Bounds = { x: 0, y: 0, width, height }, textRuns: ContentTextRun[] = [];
   const local = (rect: DOMRect): Bounds => ({ x: (rect.x - area.x) / scaleX, y: (rect.y - area.y) / scaleY, width: rect.width / scaleX, height: rect.height / scaleY });
   const round = (bounds: Bounds, radius: number) => { context.beginPath(); context.roundRect(bounds.x, bounds.y, bounds.width, bounds.height, Math.max(0, Math.min(radius, bounds.width / 2, bounds.height / 2))); };
@@ -89,6 +106,12 @@ export function paintControlledPanel(root: HTMLElement, options: { pixelRatio?: 
         }
       }
       context.fillText(rendered, line.bounds.x, line.bounds.y + ascent);
+      if (options.dynamicElements?.includes(parent)) {
+        const position = recorded.length - 1, command = recorded[position];
+        if (typeof command === 'function' || command.op !== 'call' || command.method !== 'fillText') throw new Error('The panel text command must follow its native paint order.');
+        const start = line.start, end = line.end === value.length ? undefined : line.end, whitespace = style.whiteSpace;
+        recorded[position] = () => { const value = (parent.textContent ?? '').slice(start, end), text = ['normal', 'nowrap', 'pre-line'].includes(whitespace) ? value.replace(/[\t\n\r ]+/g, ' ') : value; return { ...command, args: [text, ...command.args.slice(1)] }; };
+      }
       if (style.textDecorationLine.includes('underline')) { context.save(); context.strokeStyle = style.color; context.lineWidth = 1; context.beginPath(); context.moveTo(line.bounds.x, line.bounds.y + ascent + Math.max(1, length(style.textUnderlineOffset))); context.lineTo(line.bounds.x + line.bounds.width, line.bounds.y + ascent + Math.max(1, length(style.textUnderlineOffset))); context.stroke(); context.restore(); }
       if (record) textRuns.push({ text: value.slice(line.start, line.end), start: startOffset + line.start, end: startOffset + line.end, bounds: { ...line.bounds }, ...(parent.closest('a')?.getAttribute('href') ? { href: parent.closest('a')!.getAttribute('href')! } : {}) });
     }
@@ -117,6 +140,15 @@ export function paintControlledPanel(root: HTMLElement, options: { pixelRatio?: 
     context.restore();
   }
   context.save(); context.beginPath(); context.rect(0, 0, width, height); context.clip(); paint(root, options.textRoot === root); context.restore();
-  context.getImageData(0, 0, 1, 1);
-  return { pixels, bitmap: { width: pixels.width, height: pixels.height }, cssSize: { width, height }, textRuns };
+  if (!options.dynamicElements) context.getImageData(0, 0, 1, 1);
+  return { frame: { pixels, bitmap: { width: pixels.width, height: pixels.height }, cssSize: { width, height }, textRuns }, commands: () => recorded.map(command => typeof command === 'function' ? command() : command) };
+}
+
+/** Full panel and cached commands share one traversal and drawing vocabulary. */
+export function paintControlledPanel(root: HTMLElement, options: { pixelRatio?: number; textRoot?: HTMLElement; gpu?: boolean } = {}): PaintedPanel { return readControlledPanel(root, options).frame; }
+
+/** Layout is read once; native image sources and clock text are consumed in paint order. */
+export function compileControlledPanel(root: HTMLElement, dynamicElements: HTMLElement[], textRoot?: HTMLElement): CompiledPanel {
+  const result = readControlledPanel(root, { dynamicElements, textRoot }); const { pixels, ...frame } = result.frame;
+  return { frame, commands: result.commands };
 }

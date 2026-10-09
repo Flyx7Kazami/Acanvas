@@ -1,0 +1,6 @@
+✔ view presence preserves reconnecting native sources, counts owners and retires only the departed generation (23732.860709ms)
+ℹ tests1
+ℹ pass1
+ℹ fail0
+ℹ cancelled0
+ℹ duration_ms24002.131875

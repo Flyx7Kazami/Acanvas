@@ -1,0 +1,84 @@
+{
+  "measuredAt": "2026-10-09T12:05:27.438Z",
+  "status": "production-client-controls-passed",
+  "engine": {
+    "client": "140.0.7339.186",
+    "source": "normal production CEF",
+    "nativeRuntimeTripwire": false,
+    "innerSandbox": true
+  },
+  "input": {
+    "sourceKeydownCancellation": true,
+    "acceptedCharacterInsertedOnce": true,
+    "keydownAndKeyupTrusted": true,
+    "sourcePasswordValueOmitted": true,
+    "clientPasswordRetained": true,
+    "contenteditableCaret": "漢字Z候補😀",
+    "utf16Replacement": true,
+    "compositionCommittedOnBlur": true,
+    "compositionStartTrusted": true,
+    "compositionUpdateTrusted": true,
+    "compositionEndTrusted": false
+  },
+  "clipboard": {
+    "store": "installed headless ClipboardNonBacked in own client/source processes",
+    "generatedMarkerOnly": true,
+    "sourceCopyCutPasteTrusted": true,
+    "richHtmlPreserved": true,
+    "cutDefaultAction": true,
+    "sourceCanceledPasteRespected": true,
+    "generatedPngPaste": {
+      "width": 2,
+      "height": 2
+    }
+  },
+  "controls": {
+    "select": "b",
+    "clientSelectChangeTrusted": true,
+    "date": "2027-02-02",
+    "clientDateInputTrusted": true,
+    "color": "#abcdef",
+    "sourceValueEventsTrusted": false,
+    "fileChooser": true,
+    "selectedBytes": "Client selected bytes 世界",
+    "eightMiBAccepted": true,
+    "overLimitMessageRetained": true,
+    "clientMachinePathAccepted": false
+  },
+  "semantics": {
+    "currentPresentedFrameSeq": 35,
+    "readingOrder": true,
+    "headingAndLink": true,
+    "linkClickTrusted": true,
+    "tabScrolledFocusedField": true,
+    "scroll": {
+      "x": 0,
+      "y": 565
+    }
+  },
+  "pixels": {
+    "comparedChannels": 1036800,
+    "mismatches": 0,
+    "feedbackChannels": 47297,
+    "feedbackPixel": [
+      255,
+      248,
+      230,
+      255
+    ],
+    "actualFeedbackPixel": [
+      255,
+      248,
+      230,
+      255
+    ],
+    "frameSeq": 33
+  },
+  "sourceEventCount": 187,
+  "limitations": [
+    "Client color automation dispatches its own synthetic input/change to the native client input; no OS color dialog is opened.",
+    "Native OS IME candidate UI remains separate from the measured browser composition event lifecycle.",
+    "This fixture uses generated HTML, files and an isolated service/profile."
+  ],
+  "output": "/private/tmp/acanvas-html-f4-20261009/full-client-controls"
+}

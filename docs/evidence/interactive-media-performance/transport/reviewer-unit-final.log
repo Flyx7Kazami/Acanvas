@@ -1,0 +1,14 @@
+✔ one page shares events and view transport, ignores canceled acknowledgements and releases each owner (35.648ms)
+✔ view errors isolate their subscriber and instance changes reject the old connection (1.101416ms)
+✔ board connection authenticates its upgrade with the same origin and bootstrap cookie (90.203333ms)
+✔ typed view acknowledgements preserve ownership and operation sequence for invalid identities (78.762833ms)
+✔ board connection rejects malformed, binary and oversized messages (27.179833ms)
+✔ shared websocket view owners preserve the five second disconnect grace and isolate new generations (15651.735583ms)
+✔ two project ports keep native media and SSE authentication in one browser cookie jar (2133.397916ms)
+✔ port-scoped cookies retain token, source, host and read-only authentication boundaries (96.436417ms)
+✔ a same-port restart renews its native cookie while another project remains readable (1089.788417ms)
+ℹ tests 9
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ duration_ms 16201.7825

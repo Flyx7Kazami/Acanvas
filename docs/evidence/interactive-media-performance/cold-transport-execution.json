@@ -1,0 +1,471 @@
+{
+  "measuredAt": "2026-10-09T05:57:06.799223+00:00",
+  "status": "WS transport verified; parallel native startup work remains separately pending",
+  "baselineRevision": "f3269b8",
+  "sourceScope": [
+    "src/server/http.ts",
+    "src/server/board-connection.ts",
+    "src/shared/board-connection.ts",
+    "src/web/api.ts",
+    "src/web/board-connection.ts",
+    "src/web/useBoard.ts",
+    "vite.config.ts",
+    "package.json",
+    "package-lock.json"
+  ],
+  "actualReadOnlyMetadata": {
+    "scope": "Existing 4317 service API; dimensions and byte counts only. No actual canvas write, reload, Send/Done or capture-window action.",
+    "initialCounts": {
+      "objects": 12,
+      "assets": 44
+    },
+    "countsAreSnapshot": true,
+    "zoom": 0.2306084356121083,
+    "png": [
+      {
+        "bytes": 3258401,
+        "natural": [
+          1254,
+          1254
+        ],
+        "bounds": [
+          280.617348958953,
+          280.617348958953
+        ]
+      },
+      {
+        "bytes": 2835841,
+        "natural": [
+          1254,
+          1254
+        ],
+        "bounds": [
+          280,
+          280
+        ]
+      },
+      {
+        "bytes": 3116641,
+        "natural": [
+          1254,
+          1254
+        ],
+        "bounds": [
+          280,
+          280
+        ]
+      },
+      {
+        "bytes": 1831157,
+        "natural": [
+          960,
+          1280
+        ],
+        "bounds": [
+          210,
+          280
+        ]
+      },
+      {
+        "bytes": 701490,
+        "natural": [
+          735,
+          490
+        ],
+        "bounds": [
+          616.5399445352614,
+          411.0266296901743
+        ]
+      }
+    ],
+    "pngReadMethod": "Five API byte ranges 0-31, each HTTP206 and 32B; PNG IHDR dimensions only.",
+    "video": {
+      "mime": "video/mp4",
+      "bytes": 34192043,
+      "bounds": [
+        597.3473089987293,
+        797.8554966346665
+      ],
+      "duration": "unknown",
+      "codec": "unknown",
+      "naturalDimensions": "unknown"
+    },
+    "audio": [
+      {
+        "mime": "audio/x-m4a",
+        "bytes": 4076454,
+        "bounds": [
+          1087.4651525142685,
+          134.96565967074935
+        ]
+      },
+      {
+        "mime": "audio/mpeg",
+        "bytes": 7693824,
+        "bounds": [
+          1087.4651525142685,
+          439.63209800891445
+        ]
+      }
+    ],
+    "html": [
+      {
+        "bytes": 175405,
+        "bounds": [
+          740,
+          247.8823083343793
+        ]
+      },
+      {
+        "bytes": 175407,
+        "bounds": [
+          740,
+          247.88230833437933
+        ]
+      },
+      {
+        "bytes": 175411,
+        "bounds": [
+          740,
+          247.88230833437933
+        ]
+      }
+    ],
+    "markdown": {
+      "bytes": 3027,
+      "bounds": [
+        868.5630881350846,
+        878.8893242066547
+      ]
+    },
+    "clientObservation": {
+      "edgeExistingPagesSameOrigin": 3,
+      "sameProfile": true,
+      "scopes": 2,
+      "currentTabBinding": "Cua CDP Emulation.setFocusEmulationEnabled timed out; no page operation performed",
+      "actualIabNetworkPartition": "unverified; Edge background pages cannot establish IAB pool saturation"
+    },
+    "processAggregate": {
+      "measuredAt": "2026-10-09T05:52:39.998Z",
+      "scope": "Existing 4317 service descendants only, API service PID plus ps metadata; no command arguments or paths printed",
+      "descendants": 22,
+      "cefProcesses": 21,
+      "cefInstantCpuPercent": 6.8,
+      "cefMemoryPercent": 4.2,
+      "nodeInstantCpuPercent": 2.8,
+      "activeSurfaceCount": "unknown; process count does not equal surface count"
+    },
+    "rejectedRead": {
+      "status": "automatic approval review rejected; no full media body read",
+      "requestedAction": "music-metadata duration/codec extraction from actual audio/video API streams",
+      "reason": "A full stream can expose private media beyond non-content summary authorization.",
+      "safeAlternative": "Keep actual duration/codec unknown; validate generated media with declared durations/codecs and confirmed original transfer sizes/bounds."
+    }
+  },
+  "confirmedHttp1Failure": {
+    "fixture": "Owned empty real App; same Chromium140 context, same origin and network partition; no CEF or media",
+    "pages": 3,
+    "streamsPerPage": 2,
+    "streams": [
+      "project events SSE",
+      "view presence SSE"
+    ],
+    "openHttp1Connections": 6,
+    "probePendingMs": 3501.944292,
+    "browserQueueMs": 3508.0,
+    "actualNetworkMs": 1.2999999523162842,
+    "directNodeControlMs": 2.5102499999993597,
+    "closeOnePageReleaseToCompleteMs": 7.99554100000023,
+    "twoRemainingPagesReloadProbeMs": 2,
+    "conclusion": "Persistent HTTP/1 stream saturation independently reproduces indefinite ordinary HTTP request queuing."
+  },
+  "implementation": {
+    "browserTopology": "One authenticated same-origin WebSocket per BoardApi/document, multiplexing project events and typed view ownership. Business HTTP and existing SSE endpoints remain available.",
+    "authentication": "Bootstrap HttpOnly port-scoped cookie; no token URL. Host and exact Origin validation, with existing explicit development-origin configuration retained.",
+    "protocol": "Typed event ready and complete view identity acknowledgement; safe integer subscription IDs; strict message schema; 16KiB inbound maxPayload; compression disabled; unknown/duplicate/malformed messages handled.",
+    "lifecycle": "All view owners share existing presence records, 5000ms last-owner disconnect grace, reconnect cancellation, exact sameView check, explicit DELETE/pagehide behavior, generation isolation, and service shutdown. Ping/pong detects silent broken transports before grace begins.",
+    "clientCancellation": "Abort unsubscribes only that owner, late acknowledgements cannot reconnect a canceled view, instance changes close prior connection.",
+    "dependencies": {
+      "ws": "8.22.0",
+      "@types/ws": "8.18.2"
+    }
+  },
+  "sixPageNonCef": {
+    "status": "passed",
+    "fixture": "Six real App documents, two task scopes, same origin/context; five generated 1px PNGs with 200KB owned padding and Markdown per document; no CEF/media",
+    "coldAllResourcesMs": 2323.085,
+    "warmStateElapsedMs": [
+      5.299999952316284,
+      6.200000047683716,
+      4.200000047683716,
+      4.299999952316284,
+      2.799999952316284,
+      3.1000001430511475
+    ],
+    "warmStateQueueMs": [
+      0.7999999523162842,
+      0.6000001430511475,
+      1.7000000476837158,
+      0.3000001907348633,
+      0.2999999523162842,
+      0.7000000476837158
+    ],
+    "reloadFirstPageMs": 204.26729199999954,
+    "streamsRequested": 0,
+    "websocketCountNote": "One socket per cold document. First document accumulated a second socket on reload.",
+    "readinessBoundary": "First six-page run checked all object mounts and five decoded images; later harness also explicitly checks rendered Markdown. Completed resource timing includes the Markdown request."
+  },
+  "threePageWsOnlyMixedBeforeParallelStartup": {
+    "status": "passed",
+    "client": "155.0.8059.39",
+    "fixture": "Owned synthetic media, 12 objects/page, actual bounds/zoom and PNG dimensions except final image was 734x490 due testsrc2 rounding; original actual image is 735x490. Actual duration/codec remain unknown.",
+    "materialBytes": [
+      {
+        "mime": "image/png",
+        "bytes": 3506295
+      },
+      {
+        "mime": "image/png",
+        "bytes": 3506295
+      },
+      {
+        "mime": "image/png",
+        "bytes": 3506295
+      },
+      {
+        "mime": "image/png",
+        "bytes": 2740274
+      },
+      {
+        "mime": "image/png",
+        "bytes": 803268
+      },
+      {
+        "mime": "video/mp4",
+        "bytes": 34192043
+      },
+      {
+        "mime": "audio/x-m4a",
+        "bytes": 4150436
+      },
+      {
+        "mime": "audio/mpeg",
+        "bytes": 7681296
+      },
+      {
+        "mime": "text/html",
+        "bytes": 175168
+      },
+      {
+        "mime": "text/html",
+        "bytes": 175168
+      },
+      {
+        "mime": "text/html",
+        "bytes": 175168
+      },
+      {
+        "mime": "text/markdown",
+        "bytes": 2898
+      }
+    ],
+    "coldAllResourcesReadyMs": [
+      12354.4715,
+      9156.641833,
+      8945.044667
+    ],
+    "warmStateElapsedMs": [
+      5.3999998569488525,
+      3.3999998569488525,
+      2.700000047683716
+    ],
+    "warmStateQueueMs": [
+      0.2999999523162842,
+      0.40000009536743164,
+      0.2999999523162842
+    ],
+    "reloadFirstPageMs": 4393.480042000001,
+    "nativeOpenColdFirstNineMs": [
+      1563.3501660000002,
+      1223.6804160000002,
+      1020.2984999999999,
+      983.6982079999998,
+      1570.1512080000002,
+      2131.7190840000003,
+      1160.0647499999995,
+      950.5055829999983,
+      1223.394542
+    ],
+    "surfaceCreateColdFirstNineMs": [
+      1580.3942079999997,
+      2747.375625,
+      3521.180417,
+      4493.3231670000005,
+      5551.626625000001,
+      7608.0105,
+      7905.354667,
+      7924.600749999999,
+      8129.371792000001
+    ],
+    "nativeOpenReloadThreeMs": [
+      1613.3835830000025,
+      1073.8193749999991,
+      1100.1373329999988
+    ],
+    "phaseSegmentation": "First nine creates/opens precede cold-readiness; final three occur during the first document reload, by controlled harness order. Final harness stores explicit phase labels.",
+    "coldQueuedAssetMaxMs": [
+      7454.399999856949,
+      8110.299999952316,
+      7314.600000143051
+    ],
+    "coldQueuedHtmlMaxMs": [
+      2899,
+      2493.199999809265,
+      3252.399999856949
+    ],
+    "clientImageDecodeElapsedMs": [
+      [
+        2.5,
+        4.700000047683716,
+        2.0999999046325684,
+        1.8999998569488525,
+        2.799999952316284,
+        7.900000095367432,
+        5.200000047683716,
+        14.900000095367432,
+        1.7999999523162842,
+        1.3999998569488525
+      ],
+      [
+        3.9000000953674316,
+        5.5,
+        28.299999952316284,
+        5.8999998569488525,
+        4,
+        2,
+        8.600000143051147,
+        2.700000047683716,
+        4,
+        6.3999998569488525,
+        4.099999904632568,
+        2.299999952316284,
+        1.9000000953674316,
+        10.599999904632568,
+        3,
+        6,
+        2.299999952316284,
+        1.5,
+        2.0999999046325684,
+        2.200000047683716,
+        5.200000047683716,
+        2.6000001430511475,
+        2.5999999046325684,
+        1.7999999523162842,
+        4,
+        7.599999904632568,
+        2.5,
+        2.0999999046325684,
+        2.1999998092651367
+      ],
+      [
+        2.3999998569488525,
+        8.700000047683716,
+        83.5,
+        5.3999998569488525,
+        2.1000001430511475,
+        28.299999952316284,
+        2.4000000953674316,
+        5,
+        10.5,
+        2.3000001907348633,
+        6.200000047683716,
+        12.100000143051147,
+        7.5,
+        11.199999809265137,
+        12.799999952316284,
+        6.3999998569488525,
+        6.700000047683716,
+        2.200000047683716,
+        2.1000001430511475,
+        3.200000047683716,
+        14.799999952316284,
+        3,
+        1.5,
+        2.5999999046325684,
+        1.8000001907348633,
+        2.200000047683716,
+        1.6000001430511475,
+        7.6000001430511475,
+        3.6999998092651367,
+        4.700000047683716,
+        14.299999952316284,
+        2.200000047683716,
+        2.8999998569488525,
+        2.5999999046325684,
+        2.200000047683716
+      ]
+    ],
+    "clientAudioDecodeElapsedMs": [
+      [
+        225.29999995231628,
+        332.7000000476837
+      ],
+      [
+        286.7000000476837,
+        311
+      ],
+      [
+        314,
+        412.89999985694885
+      ]
+    ],
+    "interpretation": "WS removes permanent SSE pool starvation. This WS-only cold run still has 7-8s queued assets and 1.58-8.13s create waits; source confirms the entire native.open path is serialized through ProjectHtmlSurfaces.creating. Native startup/admission is a separate next-stage change. Warm HTTP probes cannot stand in for cold all-resource latency. Decode intervals include wait/CPU; neither these nor create timings measure isolated CEF CPU."
+  },
+  "validation": {
+    "nodeTransportAndCookie": {
+      "status": "passed",
+      "tests": 9,
+      "failed": 0,
+      "canceled": 0,
+      "durationMs": 16202.608417
+    },
+    "clientStrictResponseSchema": {
+      "status": "passed",
+      "tests": 2,
+      "failed": 0
+    },
+    "typescriptServerPrivateCompile": "passed",
+    "typescriptClient": "passed",
+    "diffCheck": "passed",
+    "privateBuildRoot": "/private/tmp/acanvas-cold-transport-20261009",
+    "normalCefNativeLifecycleAndThreePageBaseline": "pending shared benchmark window; existing native/SSE lifecycle tests remain separately applicable",
+    "physicalTrackpadSafariActualIab": "unverified"
+  },
+  "preservedFailures": [
+    {
+      "path": "transport/three-page-project-chromium-incomplete.json",
+      "status": "incomplete",
+      "reason": "Project Chromium did not satisfy mixed-media readiness; warm probe then hit the default ResourceTiming250 buffer and missing entry. Codec support remains a client boundary, not a transport conclusion.",
+      "correction": "Owned Chrome client same as media benchmark, 10000-entry buffer, explicit readiness metadata, optional timing handling. No actual media substituted."
+    },
+    {
+      "status": "compile failed then repaired",
+      "diagnostic": "tests/board-connection-client.test.ts:33:60 TS2532 Object is possibly undefined; at(-1) access made optional.",
+      "subsequentCompileAndTest": "passed"
+    },
+    {
+      "status": "read-only ps unavailable inside sandbox",
+      "reason": "ps operation not permitted; awk downstream zero output was not treated as a measured zero.",
+      "correction": "Authorized controlled process read subsequently returned aggregate actual-service descendant metadata."
+    }
+  ],
+  "artifacts": {
+    "http1-empty-app-baseline.json": "docs/evidence/interactive-media-performance/transport/http1-empty-app-baseline.json",
+    "six-page-ws-candidate.json": "docs/evidence/interactive-media-performance/transport/six-page-ws-candidate.json",
+    "three-page-ws-only-mixed-chrome.json": "docs/evidence/interactive-media-performance/transport/three-page-ws-only-mixed-chrome.json",
+    "three-page-project-chromium-incomplete.json": "docs/evidence/interactive-media-performance/transport/three-page-project-chromium-incomplete.json",
+    "node-transport-final.log": "docs/evidence/interactive-media-performance/transport/node-transport-final.log",
+    "client-schema-final.log": "docs/evidence/interactive-media-performance/transport/client-schema-final.log"
+  },
+  "remaining": "Parallel native startup benchmark and full browser/native lifecycle acceptance remain with coordinated follow-up; production service remains unchanged and existing user tabs retain their original JS until ordinary refresh."
+}

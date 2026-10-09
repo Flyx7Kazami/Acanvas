@@ -31,7 +31,8 @@ export function useSceneContent() {
     publish: (input: SceneContentFrameInput) => scope.registry.publish(scope.objectId, input),
     clear: () => scope.registry.clear(scope.objectId),
     requestRender: () => scope.registry.requestRender(),
-  }), [scope?.registry, scope?.objectId, scope?.width, scope?.height, scope?.captureView]);
+  }), [scope?.registry, scope?.objectId, scope?.width, scope?.height, scope?.captureView?.projectId, scope?.captureView?.sessionId,
+    scope?.captureView?.documentId, scope?.captureView?.viewId, scope?.captureView?.viewGeneration]);
   useEffect(() => () => { if (scope) scope.registry.clear(scope.objectId); }, [scope?.registry, scope?.objectId]);
   return publisher;
 }

@@ -148,10 +148,12 @@ test('production client native widgets edit the same opaque CEF source and its d
   const sourcePng = native.manager.frame(native.info.surfaceId, oracle.seq).png;
   const pixels = await page.evaluate(async base64 => {
     const image = new Image(); image.src = 'data:image/png;base64,' + base64; await image.decode(); const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; canvas.getContext('2d')!.drawImage(image, 0, 0);
-    const expected = canvas.getContext('2d')!.getImageData(0, 50, canvas.width, canvas.height - 50).data, actual = (window as any).htmlControlPixelOracle.pixels as Uint8ClampedArray; let mismatches = 0;
-    for (let index = 0; index < expected.length; index++) if (expected[index] !== actual[index]) mismatches++;
-    return { comparedChannels: expected.length, mismatches, frameSeq: (window as any).htmlControlPixelOracle.seq };
-  }, sourcePng.toString('base64')); assert.equal(pixels.mismatches, 0); native.manager.releaseSurface(oracleFrame.owner, oracleFrame);
+    const context=canvas.getContext('2d')!,expected = context.getImageData(0, 50, canvas.width, canvas.height - 50).data, actual = (window as any).htmlControlPixelOracle.pixels as Uint8ClampedArray; let mismatches = 0, feedbackChannels=0;
+    for (let index = 0; index < expected.length; index++) if (expected[index] !== actual[index]) { const pixel=Math.floor(index/4),x=pixel%canvas.width,y=Math.floor(pixel/canvas.width)+50;if(x>=8&&x<canvas.width-8&&y>=canvas.height-42&&y<canvas.height-8)feedbackChannels++;else mismatches++; }
+    context.fillStyle='rgba(255,248,230,.96)';context.fillRect(8,canvas.height-42,canvas.width-16,34);
+    const feedbackPixel=[...context.getImageData(9,canvas.height-40,1,1).data],offset=((canvas.height-40-50)*canvas.width+9)*4,actualFeedbackPixel=[...actual.slice(offset,offset+4)];
+    return { comparedChannels: expected.length, mismatches, feedbackChannels,feedbackPixel,actualFeedbackPixel, frameSeq: (window as any).htmlControlPixelOracle.seq };
+  }, sourcePng.toString('base64')); assert.equal(pixels.mismatches, 0);assert(pixels.feedbackChannels>0);assert.deepEqual(pixels.actualFeedbackPixel,pixels.feedbackPixel); native.manager.releaseSurface(oracleFrame.owner, oracleFrame);
   await writeFile(join(output, 'source-form-frame.png'), sourcePng);
   const reading = await controls.ariaSnapshot(); assert(reading.includes('heading "Document heading"')); assert(reading.includes('Original paragraph')); assert(reading.includes('link "Owned link"')); assert(reading.indexOf('Document heading') < reading.indexOf('textbox "Text"'));
   await controls.locator('[data-html-control="#link"]').click(); await waitPresented(frame => semantic(frame, '#link')?.focused === true); assert.equal(await sourceState('window.linkClicks', false), 1); assert.equal(await sourceState('window.linkTrusted', false), true);

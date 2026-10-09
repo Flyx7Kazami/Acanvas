@@ -1,0 +1,8 @@
+{
+  "status": "failed test assertion; product outcome later passed",
+  "test": "ping timeout retires exact owners",
+  "actual": 1,
+  "expected": 2,
+  "reason": "The initial assertion ran at the client close event before the server close callback had executed. The corrected assertion waits for server ownership cleanup, preserving a one second timeout.",
+  "subsequent": "reviewer-counterexamples-final.log: 5/5 passed"
+}

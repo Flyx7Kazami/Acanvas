@@ -85,6 +85,7 @@ export interface BoardSceneInput {
   guides: { axis: 'x' | 'y'; position: number; start: number; end: number }[];
   theme: 'light' | 'dark';
   onError: (cause: unknown) => void;
+  onPresented?: () => void;
 }
 const fontFamily = '"Google Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
 function contain(bounds: SceneBounds, size: { width: number; height: number }): SceneBounds {
@@ -201,11 +202,12 @@ export function useBoardScene(input: BoardSceneInput) {
         }
       };
       const animateInputs = () => { markerAnimation = 0; if (!active) return; alignMarkers(); const moving = Array.from(board.querySelectorAll('.canvas-annotation-group,.canvas-annotation-note')).some(group => group.getAnimations().some(animation => animation.playState === 'running')); if (moving || animatedNotes) { animatedNotes = moving; requestRender(); } };
+      let presentedThisFrame = false;
       try { if (!renderer.current!.renderContent(scene, bitmap)) return; const frame = renderer.current!.presented!; presentation.current = frame; layout.current = { objects: structuredClone(current.objects), contentBounds, snapshot: base, sources,
           markTargets: new Map(drawnMarks.map(mark => [mark.annotation.id, annotationTarget(mark.annotation)])),
-          markerBounds: new Map(drawnMarks.map((mark, index) => { const pin = scene.marks[index], size = pin.size ?? 28; return [mark.annotation.id, { x: cssViewport.x + pin.x * camera.zoom + camera.x - size / 2, y: cssViewport.y + pin.y * camera.zoom + camera.y - size / 2, width: size, height: size }]; })) }; display.dataset.frameSeq = String(frame.frameSeq); display.dataset.viewId = identity.viewId; display.dataset.viewGeneration = String(identity.viewGeneration); confirmLatest(frame); }
+          markerBounds: new Map(drawnMarks.map((mark, index) => { const pin = scene.marks[index], size = pin.size ?? 28; return [mark.annotation.id, { x: cssViewport.x + pin.x * camera.zoom + camera.x - size / 2, y: cssViewport.y + pin.y * camera.zoom + camera.y - size / 2, width: size, height: size }]; })) }; display.dataset.frameSeq = String(frame.frameSeq); display.dataset.viewId = identity.viewId; display.dataset.viewGeneration = String(identity.viewGeneration); confirmLatest(frame); presentedThisFrame = true; }
       catch (cause) { current.onError(cause); }
-      alignMarkers(); if (!markerAnimation) markerAnimation = requestAnimationFrame(animateInputs);
+      alignMarkers(); if (presentedThisFrame) current.onPresented?.(); if (!markerAnimation) markerAnimation = requestAnimationFrame(animateInputs);
     };
     // Each display frame consumes the latest complete React input and copied producer textures.
     const requestRender = () => { if (active && !renderRequest) renderRequest = requestAnimationFrame(() => { renderRequest = 0; if (active) render(); }); };

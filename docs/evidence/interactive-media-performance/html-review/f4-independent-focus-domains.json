@@ -1,0 +1,47 @@
+{
+  "status": "PASS",
+  "rows": [
+    {
+      "name": "mount and initial source-focused frames preserve an existing external editor",
+      "status": "PASS"
+    },
+    {
+      "name": "annotation, composer, contenteditable and ordinary external button keep focus across ongoing samples while source values/geometry update",
+      "status": "PASS"
+    },
+    {
+      "name": "inactive HTML A script focus cannot steal active HTML B",
+      "status": "PASS"
+    },
+    {
+      "name": "genuine return to HTML enables source script and Tab focus transitions",
+      "status": "PASS"
+    },
+    {
+      "name": "source blur routes keyboard to its Canvas and later source focus remains in the active HTML domain",
+      "status": "PASS"
+    },
+    {
+      "name": "late popup cannot claim an external domain; genuine popup entry owns keys and close restores active HTML source focus",
+      "status": "PASS"
+    },
+    {
+      "name": "popup opened from source BODY closes to its Canvas receiver and keeps source keyboard routing",
+      "status": "PASS"
+    },
+    {
+      "name": "real client IME leaving to an external editor completes/cancels once and periodic source frames preserve external focus",
+      "status": "PASS",
+      "detail": [
+        "update",
+        "commit"
+      ]
+    },
+    {
+      "name": "old-owner late receipt and replacement source frames preserve the external focus owner and new input sequence",
+      "status": "PASS"
+    }
+  ],
+  "boundary": "Independent real Chromium runs production SceneHtmlSurface/Controls/InputProxy with two controlled periodic semantic sources and their real Canvas/Popup receivers. Backend receipts/pixels are synthetic. No product edits, delayed corrections or assertion tolerance. Production CEF integration is validated separately.",
+  "cases": 9
+}

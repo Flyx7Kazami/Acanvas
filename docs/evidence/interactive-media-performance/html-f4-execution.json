@@ -1,0 +1,153 @@
+{
+  "status": "PASS_WITH_KNOWN_F2_LIMITATION",
+  "sourceFrozenAt": "2026-10-09T12:10:44.378Z",
+  "scope": "F4 client interaction focus ownership. Current style/performance scope; native compositor smooth-scroll F2 stays a known limitation.",
+  "failure": {
+    "evidence": "docs/evidence/interactive-media-performance/media/mark-html-focus-regression.json",
+    "raw": "/private/tmp/acanvas-chatbox-evidence-lXfnMD/mark-html-events.json",
+    "fact": "Mark correctly created the HTML annotation. External Add-a-comment textarea received focus, then the next canonical HTML projection focused the native proxy again; comment text reached the source field, annotation stayed empty and Done correctly cancelled. An older Markdown annotation read by the helper was a separate waiting-identity issue."
+  },
+  "source": [
+    "src/web/html-surface/InputProxy.ts",
+    "src/web/html-surface/Controls.tsx",
+    "src/web/html-surface/SceneHtmlSurface.tsx"
+  ],
+  "logic": [
+    "One Scene-owned focus domain coordinates both source canonical control focus and source popup entry. Its native client elements are the canvas, that surface controls root and native popup receiver; download/product tools, annotations, composer and other HTML surfaces are external.",
+    "Focusin, trusted pointerdown and trusted keydown change this ordinary local ownership. Pointermove and paired frame presentation do not create ownership or React state updates. Explicit external pointer interaction retires ownership even while the previous native input remains active.",
+    "Canonical control values, selection bookkeeping, geometry and Canvas publication continue according to F3 input-sequence confirmation. DOM focus follows the source only while this HTML domain remains active and the current active element belongs to it or is its temporary document-body state. External active elements preserve focus.",
+    "Source blur and popup receiver removal preserve the existing HTML domain. With no source-focused control, its client canvas receives keys; a later source-script focus change can follow inside that active domain. Actual focus calls occur only when the receiver differs.",
+    "An active source popup keeps its client keyboard receiver. A popup arriving after the user moved to an external editor does not call focus. No synthetic source-native focus/blur action is sent on client domain departure."
+  ],
+  "tests": {
+    "typecheck": "PASS frontend and server private outDir",
+    "build": "PASS private Vite output, final main-OJhRrWqH.js",
+    "combined": {
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "nodeTests": 11,
+      "browserTests": 3,
+      "scope": "F4 generic external editor/multiHTML/internal blur focus fixture, F3 preACK/late frame/canonical/selection/IME/owner fixture, existing native controls/browser and Node cases."
+    },
+    "fullProductionClient": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 1,
+      "elapsedMs": 9788.877458,
+      "optionalSkipped": "Firefox optional client suite",
+      "facts": "docs/evidence/interactive-media-performance/html-f4-client-controls.json",
+      "raw": "/private/tmp/acanvas-html-f4-20261009/full-client-controls/client-controls-execution.json",
+      "scope": "Normal sandboxed CEF; original selection/IME, password omission/client retention, source keyboard cancellation, trusted private clipboard/rich HTML/PNG, select/date/color,8MiB file staging/oversize feedback, reading order/focus/scroll and existing pixel oracle scope all pass."
+    },
+    "managedActualChain": {
+      "passed": 5,
+      "failed": 0,
+      "elapsedMs": 17250,
+      "raw": "/private/tmp/acanvas-f4-managed-lifecycle.log",
+      "owner": "loading_playback_execution",
+      "scope": "Original managed Markdown→HTML assertions retained, actual comment/composer input and next native sample focus retained, return to same native instance continues typing; four original media/Mark/stationary/reader-close cases pass. Helper completion binds current annotation ID/version and asserts actual editor value."
+    }
+  },
+  "artifacts": {
+    "compiled": "/private/tmp/acanvas-html-f4-20261009/compiled",
+    "web": "/private/tmp/acanvas-html-f4-20261009/web-owner",
+    "native": "/private/tmp/acanvas-html-response-20261009/native-clock-build/Release/acanvas-surface.app/Contents/MacOS/acanvas-surface",
+    "nativeOverride": "/private/tmp/acanvas-html-f4-20261009/native-override.mjs",
+    "focusTest": "tests/html-focus-ownership.test.ts"
+  },
+  "boundaries": [
+    "Execution browser cases use generated local client widgets; source-native input and the actual annotation/composer capture chain are separately covered by production App tests.",
+    "The first component-only functional run overlapped the beginning of the media actor ordinary functional window before the updated exclusive ordering message arrived. These are correctness cases, not numeric samples. All passed and closed; full native controls ran after media explicitly released.",
+    "No source frame clock, FPS/DPR, authentication, clipboard permission, live4317 service, installed runtime/shared dist or Git commit changes.",
+    "F1, F2, F3 and F4 failed artifacts remain retained; repeated passing runs do not replace the failure explanation."
+  ],
+  "pending": [
+    "Root-owned final overall default validation and runtime delivery."
+  ],
+  "independentReview": {
+    "status": "PASS_WITH_KNOWN_F2_LIMITATION",
+    "report": "docs/evidence/interactive-media-performance/html-review.json",
+    "productionSceneFocusCasesPassed": 9,
+    "actualManagedCasesPassed": 1,
+    "fullProductionControlsCasesPassed": 1,
+    "actualClientPopupCasesPassed": 1,
+    "genericRepoTestsPassed": 14,
+    "resourcesClosed": true
+  },
+  "finalResponseSanity": {
+    "status": "passed",
+    "summary": "docs/evidence/interactive-media-performance/html-response-final-f4-summary.json",
+    "rawArchive": "docs/evidence/interactive-media-performance/html-response-final-f4.json.gz",
+    "stages": {
+      "clickToNativeMs": {
+        "count": 12,
+        "p50": 3,
+        "p95": 37,
+        "max": 37
+      },
+      "nativeToConsistentPairMs": {
+        "count": 12,
+        "p50": 57.5,
+        "p95": 110,
+        "max": 110
+      },
+      "pairToCanvasCommitMs": {
+        "count": 12,
+        "p50": 10,
+        "p95": 16,
+        "max": 16
+      },
+      "clickToCanvasCommitMs": {
+        "count": 12,
+        "p50": 70,
+        "p95": 146,
+        "max": 146
+      },
+      "samplePauseMs": {
+        "count": 24,
+        "p50": 46.42583300000024,
+        "p95": 59.59229099999993,
+        "max": 82.55799999999999
+      },
+      "protocol": {
+        "Page.captureScreenshot": {
+          "count": 24,
+          "p50": 44,
+          "p95": 57,
+          "max": 76
+        },
+        "Surface.composePopup": {
+          "count": 24,
+          "p50": 1,
+          "p95": 3,
+          "max": 3
+        },
+        "Runtime.evaluate": {
+          "count": 43,
+          "p50": 2,
+          "p95": 4,
+          "max": 31
+        }
+      }
+    },
+    "burst": {
+      "inputsDuringInFlightFrameDelivery": 10,
+      "acceptedInputSeq": 23,
+      "displayedInputSeq": 23,
+      "displayedCount": "22",
+      "count": 22,
+      "elapsedMs": 355,
+      "rAfTicksDuringBurst": 10,
+      "maxConcurrentSampleRequests": 1,
+      "nativeAudioRunning": true,
+      "pcmPackets": 3,
+      "maxPcmPtsGapMs": 22,
+      "finalDisplay": {
+        "at": 1791547907640,
+        "frameSeq": 17
+      },
+      "invisibleTextProxyValueAtCommit": "22"
+    }
+  }
+}

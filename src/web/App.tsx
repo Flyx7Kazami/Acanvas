@@ -494,7 +494,8 @@ export default function App() {
   function contentBounds(object: BoardObject): Rect { return renderedScene.current?.presentation.current?.layers.find(layer => layer.objectId === object.id)?.contentWorldBounds || candidateContentBounds(object); }
   function candidateContentBounds(object: BoardObject): Rect { const frame = sceneRegistry.get(object.id); return frame?.metadata.fit === 'contain' ? mediaContentRect(object, frame.metadata.bitmap) : frame?.metadata.contentBounds ? { x: object.x + frame.metadata.contentBounds.x, y: object.y + frame.metadata.contentBounds.y, width: frame.metadata.contentBounds.width, height: frame.metadata.contentBounds.height } : object; }
   const scene = useBoardScene({ canvas: sceneCanvas, board: canvas, registry: sceneRegistry, source: projectScene, objects, assets, view, theme,
-    marks: allAnnotations.flatMap((annotation, index) => { const bounds = annotationBounds(annotation); return bounds ? [{ annotation, bounds, number: index + 1 }] : []; }), editingBounds, selection: selectionRect, guides: snapGuides, onError: board.showError });
+    marks: allAnnotations.flatMap((annotation, index) => { const bounds = annotationBounds(annotation); return bounds ? [{ annotation, bounds, number: index + 1 }] : []; }), editingBounds, selection: selectionRect, guides: snapGuides, onError: board.showError,
+    onPresented: () => { if (mode === 'mark' && !spacePan && hoverPoint.current) updateMarkHover(hoverPoint.current); } });
   renderedScene.current = scene;
   function presentedView(): SessionView { const presentation = scene.presentation.current; if (!presentation || !canvas.current) return view; const scale = presentation.cssViewport.width / Math.max(1, canvas.current.clientWidth); return { ...view, x: presentation.camera.x / scale, y: presentation.camera.y / scale, zoom: presentation.camera.zoom / scale }; }
   function rememberMarkdownSelection() {
@@ -520,9 +521,7 @@ export default function App() {
   useEffect(() => {
     if (mode !== 'mark' || spacePan) { hoverPoint.current = null; setMarkHover(null); return; }
     updateMarkHover(hoverPoint.current);
-    const unsubscribe = sceneRegistry.subscribe(() => requestAnimationFrame(() => updateMarkHover(hoverPoint.current)));
-    return unsubscribe;
-  }, [mode, spacePan, view.x, view.y, view.zoom, projectScene?.snapshot, sceneRegistry]);
+  }, [mode, spacePan]);
   function applyMark(world: Rect, geometry: 'point' | 'rect', edit?: CommentEdit) {
     if (!state || !draft) return;
     const target = targetForWorld(world, geometry);
@@ -620,6 +619,7 @@ export default function App() {
 
   function focusAnnotation() {
     const input = annotationInput.current, boardBounds = canvas.current?.getBoundingClientRect(), rect = input?.getBoundingClientRect();
+    if (input?.closest('.annotation-full')?.contains(document.activeElement)) return;
     if (input && boardBounds && rect && !input.closest('[inert]') && rect.right > boardBounds.left && rect.left < boardBounds.right && rect.bottom > boardBounds.top && rect.top < boardBounds.bottom) input.focus({ preventScroll: true });
   }
 

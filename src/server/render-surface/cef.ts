@@ -30,6 +30,26 @@ export async function cleanNativeProfiles(directory:string):Promise<void>{
     await rm(path,{recursive:true,force:true});
   }
 }
+type NativeProcessQuery = (file:string,args:string[])=>Promise<{stdout:string}>;
+export async function collectNativeWorkerPids(parent:number,helperPrefix:string,query:NativeProcessQuery=execute):Promise<number[]> {
+  let parents=[parent];const visited=new Set(parents),workers:number[]=[];
+  while(parents.length){
+    const childOutput=(await query('/usr/bin/pgrep',['-P',parents.join(',')]).catch(()=>({stdout:''}))).stdout;
+    const children=[...new Set(childOutput.trim().split(/\s+/).filter(Boolean).map(Number).filter(pid=>Number.isSafeInteger(pid)&&pid>0))];
+    if(!children.length)break;
+    const requested=new Set(children),trusted=new Set(parents);
+    const output=(await query('/bin/ps',['-p',children.join(','),'-o','pid=,ppid=,command=']).catch(error=>({stdout:typeof error.stdout==='string'?error.stdout:''}))).stdout;
+    const next:number[]=[];
+    for(const line of output.split('\n')){
+      const row=line.match(/^\s*(\d+)\s+(\d+)\s+(.+)$/);if(!row)continue;
+      const pid=Number(row[1]),ppid=Number(row[2]);
+      if(!requested.has(pid)||!trusted.has(ppid)||!row[3].startsWith(helperPrefix)||visited.has(pid))continue;
+      visited.add(pid);workers.push(pid);next.push(pid);
+    }
+    parents=next;
+  }
+  return workers;
+}
 export interface HtmlAudioPacket { audioSeq: number; channels: number; sampleRate: number; frames: number; pts: number; pcm: Buffer }
 export interface NativeSurfaceFrame { png: Buffer; width: number; height: number; nativeFrameSeq: number }
 export interface NativePairedFrame {png:Buffer;semantics:HtmlSemanticSnapshot;popup?:HtmlSurfacePopup;timing:{prepareMs:number;pauseMs:number;semanticMs:number;copyMs:number;totalMs:number}}
@@ -41,6 +61,7 @@ export class NativeHtmlRuntime extends EventEmitter {
   private helperPrefix:string;
   constructor(private testClipboardTripwire:boolean|'fake'=false){super();this.executable=testClipboardTripwire?join(applicationDirectory,'.runtime',testClipboardTripwire==='fake'?'cef-fake-pasteboard-build':'cef-tripwire-build','Release','acanvas-surface.app','Contents','MacOS','acanvas-surface'):nativeSurfaceExecutable;this.helperPrefix=join(dirname(this.executable),'..','Frameworks','acanvas-surface Helper');}
   private process?: ChildProcessWithoutNullStreams;
+  private opening?: Promise<void>;
   private pending = new Map<number, Pending>();
   private id = 0;
   private audioSeq = 0;
@@ -60,8 +81,7 @@ export class NativeHtmlRuntime extends EventEmitter {
   private terminate(error:Error){if(this.closing)return;for(const pending of this.pending.values()){clearTimeout(pending.timer);pending.reject(error)}this.pending.clear();this.samplingTarget=undefined;this.emit('closed',error);void this.close();}
 
   private async recordWorkers(parent:number):Promise<void>{
-    const children=(await execute('/usr/bin/pgrep',['-P',String(parent)]).catch(()=>({stdout:''}))).stdout.trim().split(/\s+/).filter(Boolean).map(Number);
-    for(const pid of children){const command=(await execute('/bin/ps',['-p',String(pid),'-o','command=']).catch(()=>({stdout:''}))).stdout.trim();if(!command.startsWith(this.helperPrefix))continue;this.ownedWorkers.add(pid);await this.recordWorkers(pid)}
+    for(const pid of await collectNativeWorkerPids(parent,this.helperPrefix))this.ownedWorkers.add(pid);
   }
   private async reapWorkers():Promise<void>{
     for(const pid of this.ownedWorkers){const command=(await execute('/bin/ps',['-p',String(pid),'-o','command=']).catch(()=>({stdout:''}))).stdout.trim();if(!command.startsWith(this.helperPrefix))continue;try{process.kill(pid,'SIGTERM')}catch{}}
@@ -70,18 +90,30 @@ export class NativeHtmlRuntime extends EventEmitter {
   }
 
   async open(url: string, cacheDirectory: string, dimensions: SurfaceViewport & { deviceScaleFactor?:number }): Promise<void> {
-    if (this.process) throw new Error('native_surface_opened');
+    if (this.process || this.opening) throw new Error('native_surface_opened');
+    if (this.closing) throw new Error('native_surface_closed');
+    const pending = this.openNative(url, cacheDirectory, dimensions);this.opening=pending;
+    try { await pending; } finally { if(this.opening===pending)this.opening=undefined; }
+  }
+  private async openNative(url: string, cacheDirectory: string, dimensions: SurfaceViewport & { deviceScaleFactor?:number }): Promise<void> {
+    const active=()=>{if(this.closing)throw new Error('native_surface_closed')};
     if (process.platform !== 'darwin' || process.arch !== 'arm64') throw new Error('native_surface_platform');
     await access(this.executable).catch(() => { throw new Error('native_surface_missing:Run npm run install:html-runtime.'); });
+    active();
     await mkdir(cacheDirectory, { recursive: true, mode: 0o700 });
     cacheDirectory=await realpath(cacheDirectory);
+    active();
     await cleanNativeProfiles(cacheDirectory);
+    active();
     this.cacheDirectory = await mkdtemp(join(cacheDirectory, 'instance-'));
+    active();
     const record:NativeProfileRecord={controllerPid:process.pid,executable:this.executable};await writeFile(join(this.cacheDirectory,'acanvas-instance.json'),JSON.stringify(record),{mode:0o600,flag:'wx'});
+    active();
     const argv=[`--surface-url=${url}`, `--surface-cache=${this.cacheDirectory}`, `--surface-log=${join(this.cacheDirectory, 'engine.log')}`, `--surface-width=${dimensions.width}`, `--surface-height=${dimensions.height}`,`--surface-scale=${dimensions.deviceScaleFactor??1}`];
     const child = spawn(this.executable,argv, { stdio: ['pipe', 'pipe', 'pipe'] });
     this.process = child;
     if(child.pid){record.browserPid=child.pid;await writeFile(join(this.cacheDirectory,'acanvas-instance.json'),JSON.stringify(record),{mode:0o600});}
+    active();
     const lines = createInterface({ input: child.stdout });
     lines.on('line', line => {
       try {
@@ -128,6 +160,7 @@ export class NativeHtmlRuntime extends EventEmitter {
     await this.wait('document-load',()=>this.documentLoaded,10000);
     await this.wait('paint',()=>this.painted,8000);
     await this.recordWorkers(child.pid!);
+    active();
   }
   private wait(event: string, condition: () => boolean, timeout: number): Promise<void> {
     if (condition()) return Promise.resolve();
@@ -196,10 +229,12 @@ export class NativeHtmlRuntime extends EventEmitter {
     if (this.closeTask) return this.closeTask;
     this.closing = true;
     this.closeTask = (async () => {
+      const opening=this.opening;
       const child = this.process;
       if(child?.pid&&child.exitCode===null&&child.signalCode===null)await this.recordWorkers(child.pid);
       if (child?.pid && child.exitCode === null&&child.signalCode===null) await new Promise<void>(resolve => { const timer = setTimeout(() => { child.kill('SIGTERM'); }, 3000); const killTimer=setTimeout(()=>{child.kill('SIGKILL');},6000); child.once('close', () => { clearTimeout(timer); clearTimeout(killTimer); resolve(); }); child.stdin.end('quit\n'); });
       this.process = undefined;
+      await opening?.catch(()=>{});
       await this.reapWorkers();
       if (this.cacheDirectory) await rm(this.cacheDirectory, { recursive: true, force: true });
       this.cacheDirectory = undefined; this.audio.clear();

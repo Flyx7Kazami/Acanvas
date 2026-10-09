@@ -1,0 +1,521 @@
+{
+  "comparisons": [
+    {
+      "name": "ready",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 732160,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 0,
+          "presentedTime": 0,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 10
+      }
+    },
+    {
+      "name": "second-change-pause",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 732160,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 1.129909,
+          "presentedTime": 1.129909,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 131
+      }
+    },
+    {
+      "name": "seek",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 732160,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 2.5,
+          "presentedTime": 2.5,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 134
+      }
+    },
+    {
+      "name": "hover",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 732160,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 2.5,
+          "presentedTime": 2.5,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 134
+      }
+    },
+    {
+      "name": "focus",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 732160,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 2.5,
+          "presentedTime": 2.5,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 135
+      }
+    },
+    {
+      "name": "disabled-opacity",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 732160,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 2.5,
+          "presentedTime": 2.5,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 136
+      }
+    },
+    {
+      "name": "dynamic-hidden",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 732160,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 2.5,
+          "presentedTime": 2.5,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 137
+      }
+    },
+    {
+      "name": "ancestor-clip",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 732160,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 2.5,
+          "presentedTime": 2.5,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 138
+      }
+    },
+    {
+      "name": "cross-node-selection",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 732160,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 2.5,
+          "presentedTime": 2.5,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 140
+      }
+    },
+    {
+      "name": "ordered-foreground",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 732160,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 2.5,
+          "presentedTime": 2.5,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 142
+      }
+    },
+    {
+      "name": "dark",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 732160,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 1040,
+        "height": 176
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 1040,
+          "height": 176
+        },
+        "cssSize": {
+          "width": 520,
+          "height": 88
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 2.5,
+          "presentedTime": 2.5,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 144
+      }
+    },
+    {
+      "name": "stack",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 1003520,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 448,
+        "height": 560
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 448,
+          "height": 560
+        },
+        "cssSize": {
+          "width": 224,
+          "height": 280
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 2.5,
+          "presentedTime": 2.5,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 151
+      }
+    },
+    {
+      "name": "transformed",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 1003520,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 448,
+        "height": 560
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 448,
+          "height": 560
+        },
+        "cssSize": {
+          "width": 224,
+          "height": 280
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 2.5,
+          "presentedTime": 2.5,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 153
+      }
+    },
+    {
+      "name": "native-media-error",
+      "changed": 0,
+      "max": 0,
+      "total": 0,
+      "channels": 1003520,
+      "bounds": {
+        "left": null,
+        "top": null,
+        "right": 0,
+        "bottom": 0
+      },
+      "rows": {},
+      "bitmap": {
+        "width": 448,
+        "height": 560
+      },
+      "metadata": {
+        "bitmap": {
+          "width": 448,
+          "height": 560
+        },
+        "cssSize": {
+          "width": 224,
+          "height": 280
+        },
+        "textRuns": [],
+        "fit": "fill",
+        "media": {
+          "playbackTime": 0,
+          "presentedTime": 0,
+          "timePrecision": "playback-sampled"
+        },
+        "layoutSeq": 158
+      }
+    }
+  ],
+  "ownership": {
+    "stable": true,
+    "rejected": true,
+    "guarded": {
+      "nonfinite": true,
+      "callback": true,
+      "sourceCallback": true,
+      "contextProperty": true
+    },
+    "pathStable": true,
+    "forgedFrameRejected": true
+  },
+  "errors": []
+}

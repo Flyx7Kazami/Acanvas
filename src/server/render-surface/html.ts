@@ -31,6 +31,7 @@ interface SurfaceEntry {
   pending: Promise<unknown>; closed: boolean;
   termination?:'closed'|'renderer';
 }
+interface SurfaceCreation { owner: Omit<SurfaceOwner,'projectId'>; cancelled: boolean; pending?: Promise<HtmlSurfaceInfo>; entry?: SurfaceEntry }
 export interface HtmlSurfacesOptions { engine?:'chromium'|'cef'; engineDirectory?: string; maxSurfaces?: number; maxSurfacesPerView?: number; maxRetainedSurfaces?: number; maxFrames?: number; maxFrameBytes?: number; maxRetainedBytes?: number }
 
 function fail(status: number, code: string, message: string): never { throw new ApiFailure(status, code, message); }
@@ -48,7 +49,7 @@ export class ProjectHtmlSurfaces {
   private origin = '';
   private starting?: Promise<void>;
   private entries = new Map<string, SurfaceEntry>();
-  private creating: Promise<unknown> = Promise.resolve();
+  private creating = new Set<SurfaceCreation>();
   private stopped = false;
   private retainedBytes = 0;
 
@@ -83,7 +84,8 @@ export class ProjectHtmlSurfaces {
   }
 
   create(owner: Omit<SurfaceOwner, 'projectId'> & { assetId: string }, size: SurfaceViewport & { deviceScaleFactor?: number }): Promise<HtmlSurfaceInfo> {
-    const pending = this.creating.catch(() => undefined).then(async () => {
+    owner={...owner};const creation:SurfaceCreation={owner,cancelled:false};this.creating.add(creation);
+    const pending = (async () => {
       this.service.session(owner.sessionId);
       if (typeof owner.viewId !== 'string' || !owner.viewId || owner.viewId.length > 200) fail(400, 'surface_view', 'Open an HTML surface in the current view.');
       if (typeof owner.documentId !== 'string' || !owner.documentId || owner.documentId.length > 200 || !Number.isSafeInteger(owner.viewGeneration) || owner.viewGeneration < 1) fail(400, 'surface_document', 'Open an HTML surface in the current document generation.');
@@ -91,6 +93,11 @@ export class ProjectHtmlSurfaces {
       if (!object || object.assetId !== owner.assetId) fail(404, 'surface_object', 'Open the HTML asset belonging to this object.');
       const dimensions = viewport(size), deviceScaleFactor = size.deviceScaleFactor ?? 1;
       if (![1, 2].includes(deviceScaleFactor) || dimensions.width * dimensions.height * deviceScaleFactor ** 2 > 8_000_000) fail(400, 'surface_scale', 'Use a supported HTML surface pixel scale.');
+      await this.start();
+      if(this.stopped)fail(503,'surface_stopped','Connect to the running project renderer.');
+      if(creation.cancelled)fail(410,'surface_closed','Reconnect the HTML surface in this view.');
+      this.service.session(owner.sessionId);
+      if(!this.service.state(owner.sessionId).objects.some(object=>object.id===owner.objectId&&object.assetId===owner.assetId))fail(404,'surface_object','Open the HTML asset belonging to this object.');
       const live = [...this.entries.values()].filter(entry => !entry.closed);
       if (live.length >= (this.options.maxSurfaces ?? 16)) fail(429, 'surface_limit', 'Close an HTML surface before opening another.');
       const inView = live.filter(entry => entry.info.sessionId === owner.sessionId && entry.info.documentId === owner.documentId && entry.info.viewId === owner.viewId && entry.info.viewGeneration === owner.viewGeneration);
@@ -100,29 +107,33 @@ export class ProjectHtmlSurfaces {
         if (!candidate) fail(429, 'surface_retained_limit', 'Finish preparing evidence before opening another HTML surface.');
         this.retainedBytes -= candidate.bytes; this.entries.delete(candidate.info.surfaceId);
       }
-      await this.start();
       const grant = this.preview.issue(owner.assetId, this.origin,'surface'),releaseGrant=this.preview.hold(grant.id);
       const info: HtmlSurfaceInfo = { ...owner, projectId: this.service.project.id, surfaceId: randomUUID(), instanceId: randomUUID(), viewport: dimensions, deviceScaleFactor,engine:this.options.engine??'cef' };
       const entry: SurfaceEntry = { info, grant,releaseGrant, frameSeq: 0, inputSeq: 0, frames: new Map(), pins: new Map(), bytes: 0, pending: Promise.resolve(), closed: false };
-      this.entries.set(info.surfaceId, entry);
+      this.entries.set(info.surfaceId, entry);creation.entry=entry;
       try {
         if(this.options.engine==='cef'){
+          const directory=join(await runtimeDirectory(this.service.project.root),'html-surfaces');
+          if(entry.closed||creation.cancelled||this.stopped)fail(410,'surface_closed','Reconnect the HTML surface in this view.');
           entry.native=new NativeHtmlRuntime();entry.nativeInput=new NativeSurfaceInput(entry.native);
           entry.native.on('closed',()=>{if(!entry.closed)entry.termination='renderer';entry.closed=true;entry.releaseGrant();this.preview.revoke(entry.grant.id);void entry.native?.close()});
-          await entry.native.open(`${this.origin}/${info.surfaceId}`,join(await runtimeDirectory(this.service.project.root),'html-surfaces'),{...dimensions,deviceScaleFactor});
+          await entry.native.open(`${this.origin}/${info.surfaceId}`,directory,{...dimensions,deviceScaleFactor});
           if (entry.closed) { if (entry.termination === 'renderer') fail(503, 'surface_renderer_exit', 'The HTML renderer is reconnecting.'); fail(410, 'surface_closed', 'Reconnect the HTML surface in this view.'); }
           entry.nativeControls=new NativeSurfaceControls(entry.native,{directory:join(entry.native.directory(),'selected-files')});
           entry.nativeClipboard=new NativeSurfaceClipboard(entry.native,this.origin);
         }else{
-          entry.context=await this.browser!.newContext({viewport:dimensions,deviceScaleFactor,acceptDownloads:false,permissions:[]});entry.page=await entry.context.newPage();
+          entry.context=await this.browser!.newContext({viewport:dimensions,deviceScaleFactor,acceptDownloads:false,permissions:[]});
+          if(entry.closed||creation.cancelled||this.stopped){await entry.context.close();fail(410,'surface_closed','Reconnect the HTML surface in this view.');}
+          entry.page=await entry.context.newPage();
           entry.page.on('crash',()=>{entry.closed=true;this.preview.revoke(entry.grant.id)});entry.page.on('close',()=>{entry.closed=true;this.preview.revoke(entry.grant.id)});entry.page.on('dialog',dialog=>{void dialog.dismiss()});
           await entry.page.goto(`${this.origin}/${info.surfaceId}`,{waitUntil:'load',timeout:15_000});
           const frame=entry.page.frames().find(frame=>frame.url()===grant.url);if(!frame)fail(503,'surface_document','The HTML instance did not become ready.');
         }
+        if(entry.closed||creation.cancelled||this.stopped)fail(410,'surface_closed','Reconnect the HTML surface in this view.');
         return this.info(entry);
-      } catch (error) { const closed = entry.closed && entry.termination === 'closed'; await this.closeSurface(info.surfaceId); if (closed) fail(410, 'surface_closed', 'Reconnect the HTML surface in this view.'); throw error; }
-    });
-    this.creating = pending; return pending;
+      } catch (error) { const closed = entry.closed && entry.termination === 'closed'; await this.closeEntry(entry); if (closed) fail(410, 'surface_closed', 'Reconnect the HTML surface in this view.'); throw error; }
+    })().finally(()=>this.creating.delete(creation));
+    creation.pending = pending; return pending;
   }
 
   private info(entry: SurfaceEntry): HtmlSurfaceInfo { return { ...entry.info, viewport: { ...entry.info.viewport } }; }
@@ -236,14 +247,18 @@ export class ProjectHtmlSurfaces {
   semantics(id:string):Promise<HtmlSemanticSnapshot>{const entry=this.entry(id);return this.serial(entry,()=>this.readSemantics(entry))}
   async closeSurface(id: string): Promise<void> {
     const entry = this.entries.get(id); if (!entry) return;
+    await this.closeEntry(entry);
+  }
+  private async closeEntry(entry:SurfaceEntry):Promise<void>{
     entry.closed = true;entry.termination??='closed';entry.releaseGrant();this.preview.revoke(entry.grant.id);
     if(entry.native){await entry.pending.catch(()=>undefined);await entry.nativeControls?.close();await entry.native.close();}
     else{await entry.context?.close().catch(()=>{});await entry.pending.catch(()=>undefined);}
   }
-  async closeView(viewId: string): Promise<void> { await Promise.all([...this.entries.values()].filter(entry => entry.info.viewId === viewId).map(entry => this.closeSurface(entry.info.surfaceId))); }
+  async closeView(viewId: string): Promise<void> { const entries=new Set([...this.entries.values()].filter(entry=>entry.info.viewId===viewId));for(const creation of this.creating)if(creation.owner.viewId===viewId){creation.cancelled=true;if(creation.entry)entries.add(creation.entry)}await Promise.all([...entries].map(entry=>this.closeEntry(entry))); }
   async close(): Promise<void> {
-    this.stopped = true; await this.creating.catch(() => undefined); await this.starting?.catch(() => undefined);
-    await Promise.all([...this.entries.keys()].map(id => this.closeSurface(id))); await this.browser?.close();
+    this.stopped = true;for(const creation of this.creating)creation.cancelled=true;await this.starting?.catch(() => undefined);
+    const entries=new Set(this.entries.values());for(const creation of this.creating)if(creation.entry)entries.add(creation.entry);
+    await Promise.all([...entries].map(entry=>this.closeEntry(entry)));await Promise.allSettled([...this.creating].map(creation=>creation.pending!));await this.browser?.close();
     if (this.wrapper) await new Promise<void>((resolve, reject) => { this.wrapper!.close(error => error ? reject(error) : resolve()); this.wrapper!.closeAllConnections(); });
     this.entries.clear(); this.retainedBytes = 0; this.browser = undefined; this.wrapper = undefined;
   }

@@ -1,0 +1,92 @@
+import test from 'node:test';
+import { WebSocket } from 'ws';
+import assert from 'node:assert/strict';
+import { mkdtemp, rm, stat, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+const build=process.env.ACANVAS_CONNECTION_REVIEW_BUILD;if(!build)throw new Error('Set ACANVAS_CONNECTION_REVIEW_BUILD to a private compiled tree with node_modules symlink.');
+const {startServer}=await import(build+'/src/server/http.js');
+const {ProjectHtmlSurfaces}=await import(build+'/src/server/render-surface/html.js');
+const {nativeRetirementSnapshot,waitNativeRetired}=await import(build+'/tests/helpers/native-retirement.js');
+const enabled = process.env.ACANVAS_BOARD_HTML_TESTS === '1';
+const delay = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
+test('view presence preserves reconnecting native sources, counts owners and retires only the departed generation', { skip: !enabled, timeout: 65_000 }, async (t) => {
+    const began = Date.now(), root = await mkdtemp(join(tmpdir(), 'acanvas-html-presence-')), server = await startServer({ root, port: 0 });
+    const bootstrapResponse = await fetch(server.url + '/api/bootstrap'), cookie = bootstrapResponse.headers.get('set-cookie').split(';')[0], bootstrap = await bootstrapResponse.json();
+    const created = [], original = ProjectHtmlSurfaces.prototype.create;
+    ProjectHtmlSurfaces.prototype.create = async function (...args) { const info = await original.apply(this, args); if (this['service'].project.root === root)
+        created.push({ info, manager: this, runtime: this.entries.get(info.surfaceId).native }); return info; };
+    const controllers = [];
+    t.after(async () => { for (const controller of controllers)
+        controller.abort(); await server.close(); ProjectHtmlSurfaces.prototype.create = original; await rm(root, { recursive: true, force: true }); });
+    const request = async (path, method = 'GET', body, authenticate = true) => {
+        const response = await fetch(server.url + path, { method, headers: { ...(authenticate ? { Authorization: `Bearer ${bootstrap.token}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+        return { response, value: await response.json() };
+    };
+    const call = async (path, method = 'GET', body) => { const result = await request(path, method, body); assert(result.response.ok, JSON.stringify(result.value)); return result.value; };
+    const session = await call('/api/sessions', 'POST', { name: 'Owned native presence' });
+    const upload = await fetch(server.url + '/api/assets?name=Owned-presence.html&mime=text%2Fhtml', { method: 'POST', headers: { Authorization: `Bearer ${bootstrap.token}` }, body: '<!doctype html><input id="field" aria-label="Note"><script>window.sourceSeed=Math.random()</script>' });
+    assert(upload.ok);
+    const asset = await upload.json();
+    const board = await call('/api/board/operations', 'POST', { sessionId: session.id, operations: [{ type: 'create', object: { assetId: asset.id, x: 0, y: 0, width: 740, height: 248 } }] });
+    const views = `/api/sessions/${session.id}/capture-views`, view = await call(views, 'POST', { documentId: 'owned-presence-document' });
+    const identity = (view) => ({ documentId: view.documentId, viewGeneration: view.viewGeneration });
+    const presencePath = (view) => `${views}/${view.viewId}/presence?${new URLSearchParams({ documentId: view.documentId, viewGeneration: String(view.viewGeneration) })}`;
+    const connect = async (view) => {
+        const socket = new WebSocket(server.url.replace('http:', 'ws:') + '/api/connection', { origin: server.url, headers: { Cookie: cookie } });
+        socket.on('error', () => undefined);
+        const controller = new AbortController(); controllers.push(controller); controller.signal.addEventListener('abort', () => socket.terminate());
+        await new Promise((resolve, reject) => { socket.once('open', resolve); socket.once('error', reject); });
+        const ready = new Set();
+        const acknowledged = new Promise((resolve, reject) => { socket.on('message', raw => { const value = JSON.parse(raw); if (value.type === 'error') return reject(new Error(JSON.stringify(value))); if (value.type === 'ready') { assert.equal(value.instanceId, bootstrap.service.instanceId); ready.add('events'); } if (value.type === 'view-ready') { assert.deepEqual(value.view, view); ready.add('view'); } if (ready.size === 2) resolve(); }); });
+        socket.send(JSON.stringify({ type: 'events', id: 1 })); socket.send(JSON.stringify({ type: 'watch-view', id: 2, view })); await acknowledged;
+        return async () => { if (socket.readyState >= 2) return; const closed = new Promise(resolve => socket.once('close', resolve)); socket.close(); await closed; };
+    };
+    const a = await connect(view), b = await connect(view);
+    assert.equal((await request(presencePath(view), 'GET', undefined, false)).response.status, 401);
+    assert.equal((await request(presencePath({ ...view, documentId: 'other-document' }))).response.status, 409);
+    assert.equal((await request(presencePath({ ...view, viewGeneration: view.viewGeneration + 1 }))).response.status, 409);
+    await call(`${views}/${view.viewId}/scenes`, 'POST', { ...identity(view), operationSeq: 1 });
+    const surface = (view) => `${views}/${view.viewId}/html-surfaces`;
+    const first = await call(surface(view), 'POST', { ...identity(view), objectId: board.objects[0].id, assetId: asset.id, viewport: { width: 740, height: 248 } });
+    const entry = created[0], retirement = await nativeRetirementSnapshot(entry.runtime), profile = retirement.profile, seed = await entry.runtime.documentEvaluate('window.sourceSeed', false);
+    let frame = await call(surface(view) + '/' + first.surfaceId + '/sample', 'POST', identity(view));
+    for (const [inputSeq, action] of [[1, { type: 'focus', controlId: '#field' }], [2, { type: 'text', text: 'Owned retained value' }]])
+        await call(surface(view) + '/' + first.surfaceId + '/input', 'POST', { ...identity(view), input: { ...action, inputSeq, instanceId: first.instanceId, viewport: first.viewport, frameSeq: frame.frameSeq } });
+    frame = await call(surface(view) + '/' + first.surfaceId + '/sample', 'POST', identity(view));
+    const shown = entry.manager.frame(first.surfaceId, frame.frameSeq);
+    entry.manager.retainSurface(shown.owner, shown);
+    await a();
+    await delay(5200);
+    assert.equal(await entry.runtime.documentEvaluate('window.sourceSeed', false), seed);
+    await b();
+    await delay(800);
+    const c = await connect(view);
+    await delay(4500);
+    assert.equal(await entry.runtime.documentEvaluate('window.sourceSeed', false), seed);
+    assert.equal(await entry.runtime.documentEvaluate('document.querySelector("#field").value'), 'Owned retained value');
+    await stat(profile);
+    await c();
+    await call(`${views}/${view.viewId}`, 'DELETE', { ...identity(view), operationSeq: 2 });
+    await waitNativeRetired(retirement);
+    assert(entry.manager.frame(first.surfaceId, frame.frameSeq).png.equals(shown.png));
+    const next = await call(views, 'POST', { documentId: view.documentId });
+    assert.equal(next.viewGeneration, view.viewGeneration + 1);
+    const d = await connect(next), fresh = await call(surface(next), 'POST', { ...identity(next), objectId: board.objects[0].id, assetId: asset.id, viewport: first.viewport });
+    const replacement = created[1], freshRetirement = await nativeRetirementSnapshot(replacement.runtime), freshProfile = freshRetirement.profile;
+    await delay(5500);
+    assert.equal((await request(presencePath(view))).response.status, 409);
+    assert.equal((await request(presencePath({ ...next, viewGeneration: view.viewGeneration }))).response.status, 409);
+    assert.equal(await replacement.runtime.documentEvaluate('document.querySelector("#field").value'), '');
+    await stat(freshProfile);
+    await d();
+    const departed = Date.now();
+    await delay(5000);
+    await waitNativeRetired(freshRetirement);
+    assert(entry.manager.frame(first.surfaceId, frame.frameSeq).png.equals(shown.png));
+    entry.manager.releaseSurface(shown.owner, shown);
+    const evidence = process.env.ACANVAS_BOARD_HTML_PRESENCE_EVIDENCE;
+    if (evidence)
+        await writeFile(evidence, JSON.stringify({ status: 'passed', transport: 'authenticated shared events/view WebSocket', multipleConnections: true, shortDisconnectMs: 800, originalSourceSeedAndValuePreserved: true, presenceConsumesOperationSeq: false, staleGenerationRejected: true, oldDisconnectKeptNewGeneration: true, retainedNBytesAfterDeparture: true, departureCleanupMs: Date.now() - departed, graceMs: 5000, replacementInstance: fresh.instanceId !== first.instanceId, elapsedMs: Date.now() - began }, null, 2) + '\n');
+});
+//# sourceMappingURL=board-html-presence.test.js.map

@@ -1,0 +1,42 @@
+{
+  "status": "FAIL",
+  "output": "/private/tmp/acanvas-html-independent-scroll-clock-20261009-02",
+  "rows": [
+    {
+      "scale": 1,
+      "index": 0,
+      "scrollY": 0,
+      "controls": 3,
+      "timing": {
+        "prepareMs": 2.371667000000002,
+        "pauseMs": 11.161791999999991,
+        "semanticMs": 2.619457999999895,
+        "copyMs": 8.542334000000096,
+        "totalMs": 14.248084000000063
+      }
+    },
+    {
+      "scale": 1,
+      "index": 1,
+      "scrollY": 0,
+      "controls": 3,
+      "timing": {
+        "prepareMs": 0.6400830000000042,
+        "pauseMs": 56.82241700000009,
+        "semanticMs": 1.492458000000056,
+        "copyMs": 55.32995900000003,
+        "totalMs": 57.962375000000065
+      }
+    }
+  ],
+  "boundary": "Independent source smooth scrollIntoView, exact stripe bands and visible control bounds in same sole production root screenshot. No extra flags, tolerance, retries, sleeps or semantic rewrite.",
+  "requested": [
+    {
+      "scale": 1,
+      "before": 0,
+      "immediate": 0,
+      "events": []
+    }
+  ],
+  "error": "AssertionError [ERR_ASSERTION]: {\"scale\":1,\"index\":2,\"y\":5,\"scroll\":10}\n+ actual - expected\n\n  [\n+   255,\n+   255,\n+   255\n-   0,\n-   0,\n-   0\n  ]\n"
+}

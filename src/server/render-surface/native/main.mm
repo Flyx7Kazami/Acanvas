@@ -182,7 +182,9 @@ class SurfaceHandler : public CefClient, public CefRenderHandler,
     if (!request) return;
     const auto method=request->GetString("method").ToString();
     if(method=="Surface.composePopup"){
-      const auto params=request->GetDictionary("params");if(!params)return;auto bytes=CefBase64Decode(params->GetString("png"));if(!bytes)return;std::vector<unsigned char>raw(bytes->GetSize());bytes->GetData(raw.data(),raw.size(),0);auto image=CefImage::CreateImage();if(!image->AddPNG(1.f,raw.data(),raw.size()))return;auto bitmap=image->GetAsBitmap(1.f,CEF_COLOR_TYPE_BGRA_8888,CEF_ALPHA_TYPE_PREMULTIPLIED,composition_width_,composition_height_);if(!bitmap)return;composition_pixels_.resize(bitmap->GetSize());bitmap->GetData(composition_pixels_.data(),composition_pixels_.size(),0);composition_id_=request->GetInt("id");if(popup_visible_)browser_->GetHost()->Invalidate(PET_POPUP);else ReplyPopupComposition();return;
+      const auto params=request->GetDictionary("params");if(!params)return;
+      if(!popup_visible_){auto result=CefDictionaryValue::Create();result->SetString("png",params->GetString("png"));auto reply=CefDictionaryValue::Create();reply->SetInt("id",request->GetInt("id"));reply->SetDictionary("result",result);auto value=CefValue::Create();value->SetDictionary(reply);const auto encoded=CefWriteJSON(value,JSON_WRITER_DEFAULT).ToString();OnDevToolsMessage(browser_,encoded.data(),encoded.size());return;}
+      auto bytes=CefBase64Decode(params->GetString("png"));if(!bytes)return;std::vector<unsigned char>raw(bytes->GetSize());bytes->GetData(raw.data(),raw.size(),0);auto image=CefImage::CreateImage();if(!image->AddPNG(1.f,raw.data(),raw.size()))return;auto bitmap=image->GetAsBitmap(1.f,CEF_COLOR_TYPE_BGRA_8888,CEF_ALPHA_TYPE_PREMULTIPLIED,composition_width_,composition_height_);if(!bitmap)return;composition_pixels_.resize(bitmap->GetSize());bitmap->GetData(composition_pixels_.data(),composition_pixels_.size(),0);composition_id_=request->GetInt("id");browser_->GetHost()->Invalidate(PET_POPUP);return;
     }
     if(method=="Surface.sendMouseEvent"){
       const auto params=request->GetDictionary("params");if(!params)return;CefMouseEvent event;event.x=params->GetInt("x");event.y=params->GetInt("y");event.modifiers=params->GetInt("modifiers");const auto type=params->GetString("type").ToString();const auto button=params->GetString("button").ToString();const auto button_type=button=="right"?MBT_RIGHT:button=="middle"?MBT_MIDDLE:MBT_LEFT;
@@ -273,6 +275,7 @@ class SurfaceApp : public CefApp, public CefBrowserProcessHandler {
     command->AppendSwitch("disable-background-networking");
     command->AppendSwitch("disable-component-update");
     command->AppendSwitch("enable-automation");
+    command->AppendSwitch("disable-threaded-animation");
     command->AppendSwitchWithValue("headless","new");
   }
   void OnContextInitialized() override {

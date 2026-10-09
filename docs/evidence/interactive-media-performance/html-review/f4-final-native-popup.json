@@ -1,0 +1,182 @@
+{
+  "measuredAt": "2026-10-09T10:57:23.989Z",
+  "status": "native-popup-pair-and-input-passed",
+  "sources": {
+    "colorKeySemantics": "https://raw.githubusercontent.com/chromium/chromium/154.0.8037.98/third_party/blink/renderer/core/html/forms/resources/color_picker.js",
+    "keyRouting": "https://raw.githubusercontent.com/chromium/chromium/154.0.8037.98/third_party/blink/renderer/core/frame/web_frame_widget_impl.cc",
+    "osrRouting": "https://raw.githubusercontent.com/chromiumembedded/cef/14c5a089e8452874cb1a556dc3fde26ed2d87723/libcef/browser/osr/render_widget_host_view_osr.cc"
+  },
+  "cases": [
+    {
+      "scale": 1,
+      "edge": false,
+      "width": 480,
+      "height": 430,
+      "clipped": false,
+      "openerActive": "BUTTON",
+      "point": {
+        "x": 190,
+        "y": 105
+      },
+      "value": "#1b4d7e",
+      "committed": "#1b4d7e",
+      "popupBounds": {
+        "height": 252,
+        "width": 234,
+        "x": 8,
+        "y": 36
+      },
+      "popupPngBytes": 20665,
+      "edgeClicks": [
+        {
+          "edge": "right",
+          "x": 479,
+          "y": 10,
+          "trusted": true
+        },
+        {
+          "edge": "bottom",
+          "x": 10,
+          "y": 429,
+          "trusted": true
+        }
+      ],
+      "ordinaryInputRestored": true,
+      "oldPixelsRetained": true,
+      "ordinaryKeyTrusted": true,
+      "colorInputTrusted": true,
+      "escape": "changed restores then closes; unchanged closes",
+      "enter": "commits and closes"
+    },
+    {
+      "scale": 2,
+      "edge": true,
+      "width": 480,
+      "height": 430,
+      "clipped": false,
+      "openerActive": "BODY",
+      "point": {
+        "x": 344,
+        "y": 171
+      },
+      "value": "#1e548a",
+      "committed": "#1e548a",
+      "popupBounds": {
+        "height": 252,
+        "width": 234,
+        "x": 164,
+        "y": 106
+      },
+      "popupPngBytes": 52693,
+      "edgeClicks": [
+        {
+          "edge": "right",
+          "x": 479,
+          "y": 10,
+          "trusted": true
+        },
+        {
+          "edge": "bottom",
+          "x": 10,
+          "y": 429,
+          "trusted": true
+        }
+      ],
+      "ordinaryInputRestored": true,
+      "oldPixelsRetained": true,
+      "ordinaryKeyTrusted": true,
+      "colorInputTrusted": true,
+      "escape": "changed restores then closes; unchanged closes",
+      "enter": "commits and closes"
+    },
+    {
+      "scale": 2,
+      "edge": false,
+      "width": 180,
+      "height": 140,
+      "clipped": true,
+      "openerActive": "BUTTON",
+      "point": {
+        "x": 170,
+        "y": 65
+      },
+      "value": "#295989",
+      "committed": "#295989",
+      "popupBounds": {
+        "height": 252,
+        "width": 234,
+        "x": 8,
+        "y": 0
+      },
+      "popupPngBytes": 23348,
+      "edgeClicks": [
+        {
+          "edge": "right",
+          "x": 179,
+          "y": 10,
+          "trusted": true
+        },
+        {
+          "edge": "bottom",
+          "x": 10,
+          "y": 139,
+          "trusted": true
+        }
+      ],
+      "ordinaryInputRestored": true,
+      "oldPixelsRetained": true,
+      "ordinaryKeyTrusted": true,
+      "colorInputTrusted": true,
+      "escape": "changed restores then closes; unchanged closes",
+      "enter": "commits and closes"
+    }
+  ],
+  "client": {
+    "source190105": "#1b4d7e",
+    "overlapPoint": {
+      "x": 131.5625,
+      "y": 123
+    },
+    "committed": "#b4c7d9",
+    "enterCommitted": true,
+    "donePopup": true,
+    "zeroPixelDifference": 0,
+    "comparedChannels": 1311872,
+    "palettePixel": [
+      6,
+      31,
+      53,
+      255
+    ],
+    "sameInstance": true,
+    "oldNAfterNPlus5": true,
+    "stopWithPopupProfileRemoved": true,
+    "wheel": {
+      "plainPopupWheel": {
+        "x": -6,
+        "y": -10,
+        "zoom": 1
+      },
+      "modifierWheels": [
+        {
+          "modifier": "ctrlKey",
+          "prevented": true,
+          "inherited": true,
+          "zoom": 1.10517
+        },
+        {
+          "modifier": "metaKey",
+          "prevented": true,
+          "inherited": true,
+          "zoom": 1.10517
+        }
+      ],
+      "nativeWheelInputs": 0,
+      "restoredCamera": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      }
+    }
+  }
+}

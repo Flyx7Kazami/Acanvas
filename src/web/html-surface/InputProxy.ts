@@ -13,6 +13,7 @@ export type HtmlInputAction =
   | { type: 'text-selection'; controlId: string; start: number; end: number; direction?: 'forward' | 'backward' | 'none' }
   | { type: 'files'; controlId: string; files: HtmlSelectedFile[] }
   | HtmlClipboardAction;
+export const htmlInputEditsControl=(action:HtmlInputAction)=>action.type!=='wheel'&&(action.type!=='pointer'||action.action!=='move');
 export type HtmlPresentedInput = HtmlInputAction & Pick<HtmlSurfaceReference, 'instanceId' | 'inputSeq' | 'viewport' | 'frameSeq'>;
 
 /** Maps the current displayed CSS rectangle, including camera and page scaling. */
@@ -28,20 +29,24 @@ export class HtmlInputProxy {
   private nextSequence = 0;
   private pending = Promise.resolve();
   private generation = 0;
+  private pendingEdits = new Set<symbol>();
+  private editSequence = 0;
   constructor(private send: (input: HtmlPresentedInput) => Promise<HtmlInputResult | void>) {}
   present(frame: HtmlSurfaceReference) {
-    if (this.frame?.instanceId !== frame.instanceId) { this.generation++; this.nextSequence = frame.inputSeq; }
+    if (this.frame?.instanceId !== frame.instanceId) { this.generation++; this.nextSequence = frame.inputSeq; this.editSequence=frame.inputSeq;this.pendingEdits.clear(); }
     else this.nextSequence = Math.max(this.nextSequence, frame.inputSeq);
     this.frame = { ...frame, viewport: { ...frame.viewport } };
   }
-  input(action: HtmlInputAction): Promise<void> {
-    return this.dispatch(action).then(() => {});
-  }
-  clipboard(action: HtmlClipboardAction): Promise<HtmlClipboardData | undefined> {
+  input(action: HtmlInputAction): Promise<HtmlInputResult | undefined> {
     return this.dispatch(action);
   }
-  private dispatch(action: HtmlInputAction): Promise<HtmlClipboardData | undefined> {
+  async clipboard(action: HtmlClipboardAction): Promise<HtmlClipboardData | undefined> {
+    return (await this.dispatch(action))?.clipboard;
+  }
+  private dispatch(action: HtmlInputAction): Promise<HtmlInputResult | undefined> {
     const frame = this.frame && { ...this.frame, viewport: { ...this.frame.viewport } }, generation = this.generation;
+    const edit=htmlInputEditsControl(action)?Symbol():undefined;
+    if(edit)this.pendingEdits.add(edit);
     const work = this.pending.then(async () => {
       if (!frame || generation !== this.generation || !this.frame) throw new Error('The HTML surface has changed.');
       if (frame.viewport.width !== this.frame.viewport.width || frame.viewport.height !== this.frame.viewport.height) throw new Error('The HTML surface size has changed.');
@@ -50,13 +55,18 @@ export class HtmlInputProxy {
       if (generation !== this.generation) return;
       if (result && result.inputSeq !== inputSeq) throw new Error('The HTML input sequence has changed.');
       this.nextSequence = inputSeq;
+      if(edit)this.editSequence=inputSeq;
       if(result?.clipboardError)throw new Error(result.clipboardError);
-      return result?.clipboard;
+      return result??{inputSeq};
     });
-    this.pending = work.then(() => {}, () => {}); return work;
+    const completed=work.finally(()=>{if(edit)this.pendingEdits.delete(edit)});
+    this.pending = completed.then(() => {}, () => {}); return completed;
   }
-  clear() { this.generation++; this.frame = undefined; }
+  clear() { this.generation++; this.frame = undefined;this.pendingEdits.clear(); }
+  canProjectEdits(frame:Pick<HtmlSurfaceReference,'instanceId'|'inputSeq'>){return this.frame?.instanceId===frame.instanceId&&this.pendingEdits.size===0&&frame.inputSeq>=this.editSequence;}
   flush() { return this.pending; }
+  get inputSeq() { return this.nextSequence; }
+  get instanceId(){return this.frame?.instanceId;}
 }
 
 export async function htmlSelectedFiles(files: FileList | readonly File[], maxBytes = 8_388_608): Promise<HtmlSelectedFile[]> {
@@ -69,9 +79,27 @@ export async function htmlSelectedFiles(files: FileList | readonly File[], maxBy
 }
 
 const printable = (event: KeyboardEvent) => event.key.length === 1 && !event.metaKey && !event.ctrlKey;
+export function attachHtmlFocusOwnership(contains:(element:Element|null)=>boolean){
+  let owned=contains(document.activeElement);
+  const focus=(event:FocusEvent)=>{const target=event.target instanceof Element?event.target:null;if(target!==document.body&&target!==document.documentElement)owned=contains(target);};
+  const interaction=(event:PointerEvent|KeyboardEvent)=>{if(event.isTrusted)owned=contains(event.target instanceof Element?event.target:null);};
+  document.addEventListener('focusin',focus,true);document.addEventListener('pointerdown',interaction,true);document.addEventListener('keydown',interaction,true);
+  return{
+    owns:()=>{const active=document.activeElement;return owned&&(contains(active)||!active||active===document.body||active===document.documentElement);},
+    dispose:()=>{document.removeEventListener('focusin',focus,true);document.removeEventListener('pointerdown',interaction,true);document.removeEventListener('keydown',interaction,true);owned=false;},
+  };
+}
 /** Local IME owns candidate UI; physical keys follow the source browser's native key pipeline. */
-export function attachHtmlTextInput(element: HTMLInputElement | HTMLTextAreaElement, controlId: string, send: (input: HtmlInputAction) => void) {
-  let composing = false, enterDown = false,physicalCharacter=false;
+export interface HtmlTextInputController {
+  dispose:()=>void;
+  isComposing:()=>boolean;
+  project:(value:string|undefined,selection?:{start:number;end:number;direction?:'forward'|'backward'|'none'})=>void;
+}
+export function attachHtmlTextInput(element: HTMLInputElement | HTMLTextAreaElement, controlId: string, send: (input: HtmlInputAction) => void):HtmlTextInputController {
+  let composing = false, enterDown = false,physicalCharacter=false,selectionIntent=0,observedSelectionIntent=0;
+  const tuple=()=>({value:element.value,start:element.selectionStart,end:element.selectionEnd,direction:element.selectionDirection??'none'});
+  let known=tuple();
+  const remember=()=>{known=tuple()};
   const compositionstart = () => { composing = true; };
   const compositionupdate = (event: CompositionEvent) => { send({ type: 'composition', action: 'update', text: event.data, selectionStart: event.data.length, selectionEnd: event.data.length }); };
   const compositionend = (event: CompositionEvent) => {
@@ -87,6 +115,7 @@ export function attachHtmlTextInput(element: HTMLInputElement | HTMLTextAreaElem
   const keydown = (event: KeyboardEvent) => {
     if (composing || event.isComposing || event.key === 'Process' || event.key === 'Unidentified' || event.keyCode === 229) return;
     if ((event.metaKey || event.ctrlKey) && ['c', 'v', 'x'].includes(event.key.toLowerCase())) return;
+    if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown'].includes(event.key)||(event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='a')selectionIntent++;
     if (event.key === 'Tab') { event.preventDefault(); send({ type: 'key', action: 'press', key: event.shiftKey ? 'Shift+Tab' : 'Tab' }); return; }
     if (printable(event)) {physicalCharacter=true;send({type:'key',action:'down',key:event.code||event.key,character:event.key});return;}
     if (event.key === 'Enter') enterDown = true;
@@ -98,8 +127,19 @@ export function attachHtmlTextInput(element: HTMLInputElement | HTMLTextAreaElem
     send({ type: 'key', action: 'up', key: event.code || event.key,...(printable(event)?{character:event.key}:{}) });physicalCharacter=false;
     if (event.key === 'Enter') enterDown = false;
   };
-  const select = () => { if (!composing && element.type !== 'password' && element.selectionStart !== null && element.selectionEnd !== null) send({ type: 'text-selection', controlId, start: element.selectionStart, end: element.selectionEnd, direction: element.selectionDirection ?? 'none' }); };
-  const listeners = { compositionstart, compositionupdate, compositionend, beforeinput, keydown, keyup, select };
+  const select = () => { const current=tuple();if(current.value===known.value&&current.start===known.start&&current.end===known.end&&current.direction===known.direction&&selectionIntent===observedSelectionIntent)return;observedSelectionIntent=selectionIntent;known=current;if (!composing && element.type !== 'password' && current.start !== null && current.end !== null) send({ type: 'text-selection', controlId, start: current.start, end: current.end, direction: current.direction as 'forward'|'backward'|'none' }); };
+  const listeners = { compositionstart, compositionupdate, compositionend, beforeinput, keydown, keyup, select,input:remember };
   for (const [name, listener] of Object.entries(listeners)) element.addEventListener(name, listener as EventListener);
-  return () => { for (const [name, listener] of Object.entries(listeners)) element.removeEventListener(name, listener as EventListener); if (composing) send({ type: 'composition', action: 'cancel', text: '' }); };
+  return {
+    isComposing:()=>composing,
+    project:(value,selection)=>{
+      if(composing)return;
+      observedSelectionIntent=selectionIntent;
+      known={value:value??element.value,start:selection?.start??element.selectionStart,end:selection?.end??element.selectionEnd,direction:selection?.direction??element.selectionDirection??'none'};
+      if(value!==undefined&&element.value!==value)element.value=value;
+      if(selection&&document.activeElement===element&&(element.selectionStart!==selection.start||element.selectionEnd!==selection.end||element.selectionDirection!==(selection.direction??'none')))try{element.setSelectionRange(selection.start,selection.end,selection.direction)}catch{/* Non-text input types have no selection range. */}
+      remember();
+    },
+    dispose:()=>{for (const [name, listener] of Object.entries(listeners)) element.removeEventListener(name, listener as EventListener); if (composing) send({ type: 'composition', action: 'cancel', text: '' });},
+  };
 }

@@ -18,6 +18,8 @@ Chatbox references appear inline with the text, with a separate preview for each
 - [Chatbox implementation](docs/chatbox/CHATBOX_IMPLEMENTATION_DESIGN.md): references, annotations, task messages, history and the project-managed browser; [validation](docs/chatbox/CHATBOX_IMPLEMENTATION_VALIDATION.md).
 - [Inline references and point markers](docs/chatbox/INLINE_REFERENCES_POINT_ANCHOR_DESIGN.md): caret placement, saved reference positions and anchored annotation numbers; [validation](docs/chatbox/INLINE_REFERENCES_POINT_ANCHOR_VALIDATION.md).
 - [Browser-independent capture](docs/chatbox/UNIVERSAL_BACKGROUND_CAPTURE_DESIGN.md): shared display/evidence pixels, persistent HTML surfaces and [implementation results](docs/chatbox/UNIVERSAL_BACKGROUND_CAPTURE_IMPLEMENTATION.md).
+- [Loading and playback performance](docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md): measured loading, HTML input and active-media interactions, including the remaining native smooth-scroll capture limitation.
+- [Inline reference geometry](docs/chatbox/INLINE_REFERENCE_GEOMETRY_VALIDATION.md): matching preview and confirmed dimensions, text line height and native editing.
 - [Agent Skill](skill/acanvas/SKILL.md): task processing and recovery.
 
 ## Install and run
@@ -105,13 +107,15 @@ Images, video, GIF, Markdown, audio, and HTML share import, selection, layout, a
 | Images, GIF, video | Images and GIFs render directly; video includes playback controls. Resizing preserves the media aspect ratio. |
 | Markdown | Rendered text, lists, code, and links support selection and scrolling. Ordinary wheel gestures scroll the text; Ctrl/Meta-wheel zooms the canvas. Drag blank content areas or the filename to move the block. Four corner handles and four edge midpoints resize width and height independently. |
 | Audio | A compact, unified player contains embedded artwork, the track name, playback controls, and a complete amplitude waveform. Click or drag the waveform to seek across the whole track. Audio references can include specific times or intervals. |
-| HTML | Current-page controls send pointer, keyboard and content scrolling to the persistent preview. Each view supports four active instances, with sixteen active instances per project. Previews waiting for project-wide or retained-surface capacity continue automatically after resources are released; the per-view limit produces a clear capacity error. Ctrl/Meta-wheel and pinch gestures zoom the canvas. Drag the filename to move the block, and use eight resize handles to adjust width and height independently. |
+| HTML | Current-page controls send pointer and keyboard input to the persistent preview. Ordinary wheel and trackpad scrolling over the preview or its controls pans the canvas; Ctrl/Meta-wheel and trackpad pinch zoom it. Each view supports four active instances, with sixteen active instances per project. Previews waiting for project-wide or retained-surface capacity continue automatically after resources are released; the per-view limit produces a clear capacity error. Drag the filename to move the block, and use eight resize handles to adjust width and height independently. |
 
 A mixed selection can share one group annotation, with a common number and comment while preserving each material's source. Image and video region annotations retain explicit region bounds.
 
 Canvas controls, including audio timelines, inherit canvas pan and zoom gestures. Components that need ordinary content scrolling declare a content wheel region; click, drag, and keyboard controls retain their own behavior. See [canvas input responsibilities](docs/CANVAS_INPUT.md) when adding a component.
 
 HTML previews support self-contained files and explicitly imported local resource bundles in an isolated origin. A persistent project renderer produces the displayed pixels; current-page controls forward input to that instance. Closing the owning page or removing its preview releases the running instances. Brief connection interruptions retain state; a restarted instance starts its script state again. Retained pixels and completed evidence preserve their captured view. Remote resources and host-specific APIs require further integration. Markdown displays raw HTML as text and uses source placeholders for embedded images.
+
+Browser project updates and view presence share an authenticated WebSocket connection, while assets and business operations use the HTTP API. Multiple open pages keep their own task and preview state without reserving persistent HTTP connections for these notifications.
 
 HTML file controls accept up to 32 selected files and 8 MiB total per selection, with up to 32 MiB retained by one runtime. Files travel as selected bytes. Select, date and color controls submit values through the input bridge; their source `input/change` events are synthetic. Composition event properties follow the installed engine. See the implementation results for the measured input and accessibility scope.
 

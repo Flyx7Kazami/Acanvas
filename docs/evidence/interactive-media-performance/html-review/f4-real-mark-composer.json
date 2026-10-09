@@ -1,0 +1,111 @@
+{
+  "status": "PASS",
+  "test": "managed React records Markdown intent and displayed anchors and keeps the native HTML source instance and form",
+  "durationMs": 6470.565833,
+  "rawEvidence": "/private/tmp/acanvas-chatbox-evidence-GAkGKi",
+  "draftText": "Composer keeps focus",
+  "annotations": [
+    {
+      "annotationId": "291a4079-2ca8-4a58-a92b-ed0e3e173973",
+      "text": "Selected document text",
+      "assetId": "d373b3a0-1916-4d60-94b8-a0d3431d5eac",
+      "objectId": "0b15e5f0-00b9-494f-89e3-c1f56b291c7f",
+      "captureState": {
+        "version": 1,
+        "status": "complete",
+        "captureId": "a0089ae6-e04c-475c-aee1-c3ccaccc8a61"
+      },
+      "captureVersion": 1,
+      "target": {
+        "scope": "object",
+        "coordinateSpace": "normalized",
+        "objectIds": [
+          "0b15e5f0-00b9-494f-89e3-c1f56b291c7f"
+        ],
+        "objectId": "0b15e5f0-00b9-494f-89e3-c1f56b291c7f",
+        "assetId": "d373b3a0-1916-4d60-94b8-a0d3431d5eac",
+        "bounds": {
+          "x": 0.23529411764705882,
+          "y": 0.43333333333333335,
+          "width": 0,
+          "height": 0
+        },
+        "geometry": "point",
+        "contentAnchor": {
+          "kind": "text",
+          "scroll": {
+            "x": 0,
+            "y": 210
+          },
+          "quote": "Observed paragraph",
+          "context": "ock 0\nObserved paragraph 0 with stable text.\nBlock 1\nObserved paragraph 1 with stable text.\nBlock 2\nObserved paragraph 2 with stable text.\nBlock 3\nObserved paragraph 3 with stable text.\nBlock 4\nObserved paragraph 4 wit",
+          "path": "rendered-dom:p[2]",
+          "start": 102,
+          "end": 120
+        }
+      },
+      "surface": null,
+      "png": "html-review/f4-mark-markdown.png",
+      "bitmap": [
+        452,
+        424
+      ],
+      "comparedRgbaChannels": 766592
+    },
+    {
+      "annotationId": "465ea279-f362-4673-b2cd-786ab13406a7",
+      "text": "Keep the native HTML state",
+      "assetId": "fc0133e0-d63f-4685-940e-b18120f8fcab",
+      "objectId": "8fbc9246-6da2-44fa-a148-91c359e9837d",
+      "captureState": {
+        "version": 2,
+        "status": "complete",
+        "captureId": "19b0726e-1623-4a7c-bec0-dd8778be409c"
+      },
+      "captureVersion": 2,
+      "target": {
+        "scope": "object",
+        "coordinateSpace": "normalized",
+        "objectIds": [
+          "8fbc9246-6da2-44fa-a148-91c359e9837d"
+        ],
+        "objectId": "8fbc9246-6da2-44fa-a148-91c359e9837d",
+        "assetId": "fc0133e0-d63f-4685-940e-b18120f8fcab",
+        "bounds": {
+          "x": 0.2857142857142857,
+          "y": 0.125,
+          "width": 0,
+          "height": 0
+        },
+        "geometry": "point"
+      },
+      "surface": {
+        "surfaceId": "fe891795-53fa-4bc3-b035-b73aff6ab898",
+        "instanceId": "4292e1e0-f62f-4b06-bfab-85f7eb680345",
+        "frameSeq": 8,
+        "inputSeq": 42,
+        "viewport": {
+          "width": 350,
+          "height": 240
+        }
+      },
+      "png": "html-review/f4-mark-html.png",
+      "bitmap": [
+        462,
+        364
+      ],
+      "comparedRgbaChannels": 672672
+    }
+  ],
+  "assertions": [
+    "Current editor annotationId and captureState.version identify the completed capture.",
+    "Markdown intent/anchor/scroll210 remains bound to its Markdown object.",
+    "HTML comment remains focused and retains its text after a subsequent native sample.",
+    "HTML capture target is the newly created HTML annotation, with the same original surfaceId and instanceId.",
+    "Captured source value is Saved live input, original source identity is unchanged, and frameSeq/inputSeq match retained native frame metadata.",
+    "Every RGBA channel of each saved PNG equals the synchronous displayed scene-copy oracle.",
+    "Composer retains focus/text after another native sample; genuine return to HTML appends again in the same original source instance."
+  ],
+  "pixelDifferenceChannels": 0,
+  "nativeCoreBoundary": "This passing terminal/native input capture case does not close the separate F2 in-flight compositor smooth-scroll failure."
+}

@@ -1,0 +1,172 @@
+{
+  "semantics": {
+    "controls": [
+      {
+        "id": "#timer",
+        "tag": "input",
+        "type": "text",
+        "role": "textbox",
+        "label": "text",
+        "value": "42",
+        "disabled": false,
+        "readOnly": true,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 78,
+          "height": 21
+        },
+        "focused": false,
+        "selection": {
+          "start": 2,
+          "end": 2,
+          "direction": "none"
+        },
+        "tabIndex": 0,
+        "min": "",
+        "max": "",
+        "step": "",
+        "multiple": false,
+        "accept": ""
+      },
+      {
+        "id": "#raf",
+        "tag": "input",
+        "type": "text",
+        "role": "textbox",
+        "label": "text",
+        "value": "9",
+        "disabled": false,
+        "readOnly": true,
+        "bounds": {
+          "x": 0,
+          "y": 30,
+          "width": 78,
+          "height": 21
+        },
+        "focused": false,
+        "selection": {
+          "start": 1,
+          "end": 1,
+          "direction": "none"
+        },
+        "tabIndex": 0,
+        "min": "",
+        "max": "",
+        "step": "",
+        "multiple": false,
+        "accept": ""
+      },
+      {
+        "id": "#pending",
+        "tag": "input",
+        "type": "text",
+        "role": "textbox",
+        "label": "text",
+        "value": "0",
+        "disabled": false,
+        "readOnly": true,
+        "bounds": {
+          "x": 0,
+          "y": 60,
+          "width": 78,
+          "height": 21
+        },
+        "focused": false,
+        "selection": {
+          "start": 1,
+          "end": 1,
+          "direction": "none"
+        },
+        "tabIndex": 0,
+        "min": "",
+        "max": "",
+        "step": "",
+        "multiple": false,
+        "accept": ""
+      },
+      {
+        "id": "#move",
+        "tag": "button",
+        "type": "button",
+        "role": "button",
+        "label": "button",
+        "disabled": false,
+        "readOnly": false,
+        "bounds": {
+          "x": 41.999839782714844,
+          "y": 170,
+          "width": 20,
+          "height": 20
+        },
+        "focused": false,
+        "tabIndex": 0
+      }
+    ],
+    "readingOrder": [
+      {
+        "id": "#timer",
+        "role": "textbox",
+        "text": "text",
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 78,
+          "height": 21
+        }
+      },
+      {
+        "id": "#raf",
+        "role": "textbox",
+        "text": "text",
+        "bounds": {
+          "x": 0,
+          "y": 30,
+          "width": 78,
+          "height": 21
+        }
+      },
+      {
+        "id": "#pending",
+        "role": "textbox",
+        "text": "text",
+        "bounds": {
+          "x": 0,
+          "y": 60,
+          "width": 78,
+          "height": 21
+        }
+      },
+      {
+        "id": "#move",
+        "role": "button",
+        "text": "button",
+        "bounds": {
+          "x": 41.999839782714844,
+          "y": 170,
+          "width": 20,
+          "height": 20
+        }
+      }
+    ],
+    "selection": "",
+    "scroll": {
+      "x": 0,
+      "y": 0
+    },
+    "viewport": {
+      "width": 300,
+      "height": 220
+    },
+    "title": "",
+    "omittedControls": 0,
+    "omittedText": 0
+  },
+  "timing": {
+    "prepareMs": 14.334249999999997,
+    "pauseMs": 59.02970800000014,
+    "semanticMs": 7.866833000000042,
+    "copyMs": 51.1628750000001,
+    "totalMs": 75.42254200000013
+  }
+}

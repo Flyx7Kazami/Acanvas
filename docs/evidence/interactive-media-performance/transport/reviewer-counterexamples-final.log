@@ -1,0 +1,13 @@
+✔ strict bounded request/response schemas reject excess keys, unsafe ids and identity/string boundaries (1.055458ms)
+✔ asynchronous error then close rejects every owner once; late old-socket events cannot close a replacement (2.174125ms)
+✔ abort last CONNECTING owner closes only that transport; already-aborted request starts no socket (0.349833ms)
+✔ explicit development origin is accepted; cross-site and null origins remain rejected, including when configured (65.323333ms)
+✔ ping timeout retires exact owners, explicit view end removes its subscription, shutdown clears heartbeat and sockets (35.263291ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 446.544167

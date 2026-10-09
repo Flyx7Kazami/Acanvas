@@ -34,7 +34,7 @@ export function useBoard() {
   const [switching, setSwitching] = useState(false);
   const [sending, setSending] = useState(false);
   const [projectChanged, setProjectChanged] = useState(false);
-  const streamRef = useRef<EventSource | null>(null);
+  const streamRef = useRef<AbortController | null>(null);
   const reconnectTimerRef = useRef(0);
   const sessionRef = useRef(new URLSearchParams(window.location.search).get('session') || '');
   const viewSessionRef = useRef('');
@@ -48,7 +48,7 @@ export function useBoard() {
   const loadSequence = useRef(0);
   const showError = useCallback((cause: unknown) => {
     if (cause instanceof RequestError && cause.code === 'project_changed') {
-      setProjectChanged(true); streamRef.current?.close(); window.clearTimeout(reconnectTimerRef.current); reconnectTimerRef.current = 0;
+      setProjectChanged(true); streamRef.current?.abort(); window.clearTimeout(reconnectTimerRef.current); reconnectTimerRef.current = 0;
     }
     setError(cause instanceof Error ? cause.message : 'The action could not be completed. Try again.');
   }, []);
@@ -100,7 +100,7 @@ export function useBoard() {
   }, [api, adopt]);
 
   useEffect(() => {
-    let alive = true, events: EventSource | undefined, reconnectingRequest: Promise<unknown> | undefined, timer = 0;
+    let alive = true, events: AbortController | undefined, reconnectingRequest: Promise<unknown> | undefined, timer = 0;
     const changed = () => { window.clearTimeout(timer); timer = window.setTimeout(() => { if (alive) void refresh().catch(showError); }, 60); };
     const reconnect = () => {
       if (!alive || api.projectChanged || reconnectTimerRef.current) return;
@@ -112,14 +112,13 @@ export function useBoard() {
     };
     const connectEvents = () => {
       if (!alive || api.projectChanged) return;
-      events?.close(); events = new EventSource('/api/events'); streamRef.current = events;
-      events.onopen = () => { if (alive) { setConnection('connected'); void refresh().catch(showError); } };
-      events.onerror = () => {
-        if (!alive) return;
-        setConnection('reconnecting'); events?.close();
+      events?.abort(); events = new AbortController(); streamRef.current = events;
+      const current = events;
+      void api.watchEvents(current.signal, () => { if (alive && !current.signal.aborted) { setConnection('connected'); void refresh().catch(showError); } }, changed).catch(() => {
+        if (!alive || current.signal.aborted) return;
+        setConnection('reconnecting'); current.abort();
         if (!reconnectingRequest) reconnect();
-      };
-      events.onmessage = changed; events.addEventListener('change', changed); events.addEventListener('state', changed);
+      });
     };
     (async () => {
       const bootstrap = await api.bootstrap();
@@ -133,7 +132,7 @@ export function useBoard() {
       const next = await api.state(sessionRef.current); if (!alive) return;
       adopt(next); connectEvents();
     })().catch(cause => { if (alive) showError(cause); });
-    return () => { alive = false; events?.close(); window.clearTimeout(timer); window.clearTimeout(reconnectTimerRef.current); reconnectTimerRef.current = 0; };
+    return () => { alive = false; events?.abort(); window.clearTimeout(timer); window.clearTimeout(reconnectTimerRef.current); reconnectTimerRef.current = 0; };
   }, [api, adopt, refresh, showError]);
 
   const save = useCallback((snapshot: LocalDraft) => {

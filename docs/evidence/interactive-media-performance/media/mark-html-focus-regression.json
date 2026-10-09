@@ -1,0 +1,569 @@
+{
+  "status": "exact-reproduced-product-focus-regression",
+  "sourceCandidate": "/private/tmp/acanvas-final-private-3ZrUZY",
+  "originalDefaultFailure": "/private/tmp/acanvas-chatbox-evidence-B0Yh0L",
+  "diagnosticEvidence": "/private/tmp/acanvas-chatbox-evidence-lXfnMD",
+  "clickedPoint": {
+    "x": 830,
+    "y": 280
+  },
+  "before": {
+    "frameSeq": "37",
+    "camera": "matrix(1, 0, 0, 1, 0, 0)",
+    "objects": [
+      {
+        "id": "78b580dd-2844-4176-bf6f-e73cb4c0b857",
+        "rect": {
+          "x": 220,
+          "y": 250,
+          "width": 340,
+          "height": 300,
+          "top": 250,
+          "right": 560,
+          "bottom": 550,
+          "left": 220
+        }
+      },
+      {
+        "id": "89eafaaf-90a8-46b2-b03a-acf216a76ce7",
+        "rect": {
+          "x": 730,
+          "y": 250,
+          "width": 350,
+          "height": 240,
+          "top": 250,
+          "right": 1080,
+          "bottom": 490,
+          "left": 730
+        }
+      }
+    ]
+  },
+  "openedEditor": {
+    "frameSeq": "38",
+    "editor": "<div class=\"canvas-annotation-note annotation-full inline-annotation-reader \" role=\"region\" aria-label=\"Annotation\" data-canvas-control=\"true\" data-annotation-id=\"d6dc3f53-2c1a-4ca3-b1ef-68def4fbb8fd\" data-comment-mode=\"edit\" style=\"max-width: 1424px; max-height: 856px; left: 22px; top: -14px;\"><div class=\"annotation-full-body\"><textarea class=\"annotation-fulltext\" data-canvas-wheel=\"content\" rows=\"4\" aria-label=\"Add a comment\" placeholder=\"Add a comment…\"></textarea></div><div class=\"annotation-footer\"><div class=\"annotation-context\"><div class=\"annotation-target-actions\"><button type=\"button\">Redraw mark</button></div><div class=\"annotation-source-thumbs\"><span class=\"asset-thumb\" data-kind=\"html\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-code-xml content-thumbnail-icon\"><path d=\"m18 16 4-4-4-4\"></path><path d=\"m6 8-4 4 4 4\"></path><path d=\"m14.5 4-5 16\"></path></svg></span></div></div><button type=\"button\" class=\"annotation-done\" aria-label=\"Done\">Done</button></div></div>",
+    "active": "<input aria-label=\"Live value\" tabindex=\"0\" data-html-control=\"#value\" autocomplete=\"off\" type=\"text\" value=\"initial\" style=\"position: absolute; left: 2.28571%; top: 3.33333%; width: 61.7143%; height: 12.0833%; box-sizing: border-box; padding: 0px; margin: 0px; border: 0px; opacity: 0; pointer-events: auto; resize: none;\">"
+  },
+  "focusEvents": [
+    {
+      "at": 2270.9000000953674,
+      "type": "pointerdown",
+      "target": {
+        "tag": "svg",
+        "class": {},
+        "label": null
+      },
+      "active": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live input"
+      },
+      "mode": "whiteboard mode-select  ",
+      "frameSeq": "37"
+    },
+    {
+      "at": 2271.4000000953674,
+      "type": "focusout",
+      "target": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live input"
+      },
+      "active": {
+        "tag": "BODY",
+        "class": "",
+        "label": null
+      },
+      "mode": "whiteboard mode-select  ",
+      "frameSeq": "37"
+    },
+    {
+      "at": 2271.600000143051,
+      "type": "focusin",
+      "target": {
+        "tag": "BUTTON",
+        "class": "icon-button ",
+        "label": "Mark canvas",
+        "value": ""
+      },
+      "active": {
+        "tag": "BUTTON",
+        "class": "icon-button ",
+        "label": "Mark canvas",
+        "value": ""
+      },
+      "mode": "whiteboard mode-select  ",
+      "frameSeq": "37"
+    },
+    {
+      "at": 2271.800000190735,
+      "type": "pointerup",
+      "target": {
+        "tag": "svg",
+        "class": {},
+        "label": null
+      },
+      "active": {
+        "tag": "BUTTON",
+        "class": "icon-button ",
+        "label": "Mark canvas",
+        "value": ""
+      },
+      "mode": "whiteboard mode-select  ",
+      "frameSeq": "37"
+    },
+    {
+      "at": 2271.9000000953674,
+      "type": "focusout",
+      "target": {
+        "tag": "BUTTON",
+        "class": "icon-button ",
+        "label": "Mark canvas",
+        "value": ""
+      },
+      "active": {
+        "tag": "BODY",
+        "class": "",
+        "label": null
+      },
+      "mode": "whiteboard mode-select  ",
+      "frameSeq": "37"
+    },
+    {
+      "at": 2272,
+      "type": "focusin",
+      "target": {
+        "tag": "DIV",
+        "class": "whiteboard mode-select  ",
+        "label": "Project board. Enter selects files, arrow keys move them, and Space pans the canvas."
+      },
+      "active": {
+        "tag": "DIV",
+        "class": "whiteboard mode-select  ",
+        "label": "Project board. Enter selects files, arrow keys move them, and Space pans the canvas."
+      },
+      "mode": "whiteboard mode-select  ",
+      "frameSeq": "37"
+    },
+    {
+      "at": 2273.4000000953674,
+      "type": "focusout",
+      "target": {
+        "tag": "DIV",
+        "class": "whiteboard mode-mark  ",
+        "label": "Project board. Enter selects files, arrow keys move them, and Space pans the canvas."
+      },
+      "active": {
+        "tag": "BODY",
+        "class": "",
+        "label": null
+      },
+      "mode": "whiteboard mode-mark  ",
+      "frameSeq": "37"
+    },
+    {
+      "at": 2273.5,
+      "type": "focusin",
+      "target": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live input"
+      },
+      "active": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live input"
+      },
+      "mode": "whiteboard mode-mark  ",
+      "frameSeq": "37"
+    },
+    {
+      "at": 2286.2000000476837,
+      "type": "pointerdown",
+      "target": {
+        "tag": "DIV",
+        "class": "canvas-mark-surface",
+        "label": null
+      },
+      "active": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live input"
+      },
+      "mode": "whiteboard mode-mark  ",
+      "frameSeq": "38"
+    },
+    {
+      "at": 2286.300000190735,
+      "type": "focusout",
+      "target": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live input"
+      },
+      "active": {
+        "tag": "BODY",
+        "class": "",
+        "label": null
+      },
+      "mode": "whiteboard mode-mark  ",
+      "frameSeq": "38"
+    },
+    {
+      "at": 2286.4000000953674,
+      "type": "focusin",
+      "target": {
+        "tag": "DIV",
+        "class": "whiteboard mode-mark  ",
+        "label": "Project board. Enter selects files, arrow keys move them, and Space pans the canvas."
+      },
+      "active": {
+        "tag": "DIV",
+        "class": "whiteboard mode-mark  ",
+        "label": "Project board. Enter selects files, arrow keys move them, and Space pans the canvas."
+      },
+      "mode": "whiteboard mode-mark  ",
+      "frameSeq": "38"
+    },
+    {
+      "at": 2286.9000000953674,
+      "type": "focusout",
+      "target": {
+        "tag": "DIV",
+        "class": "whiteboard mode-mark  ",
+        "label": "Project board. Enter selects files, arrow keys move them, and Space pans the canvas."
+      },
+      "active": {
+        "tag": "BODY",
+        "class": "",
+        "label": null
+      },
+      "mode": "whiteboard mode-mark  ",
+      "frameSeq": "38"
+    },
+    {
+      "at": 2287,
+      "type": "focusin",
+      "target": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live input"
+      },
+      "active": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live input"
+      },
+      "mode": "whiteboard mode-mark  ",
+      "frameSeq": "38"
+    },
+    {
+      "at": 2289.600000143051,
+      "type": "pointerup",
+      "target": {
+        "tag": "DIV",
+        "class": "whiteboard mode-mark  ",
+        "label": "Project board. Enter selects files, arrow keys move them, and Space pans the canvas."
+      },
+      "active": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live input"
+      },
+      "mode": "whiteboard mode-mark  ",
+      "frameSeq": "38"
+    },
+    {
+      "at": 2297.9000000953674,
+      "type": "focusout",
+      "target": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live input"
+      },
+      "active": {
+        "tag": "BODY",
+        "class": "",
+        "label": null
+      },
+      "mode": "whiteboard mode-select  ",
+      "annotation": "d6dc3f53-2c1a-4ca3-b1ef-68def4fbb8fd",
+      "frameSeq": "38"
+    },
+    {
+      "at": 2298.100000143051,
+      "type": "focusin",
+      "target": {
+        "tag": "TEXTAREA",
+        "class": "annotation-fulltext",
+        "label": "Add a comment",
+        "value": ""
+      },
+      "active": {
+        "tag": "TEXTAREA",
+        "class": "annotation-fulltext",
+        "label": "Add a comment",
+        "value": ""
+      },
+      "mode": "whiteboard mode-select  ",
+      "annotation": "d6dc3f53-2c1a-4ca3-b1ef-68def4fbb8fd",
+      "frameSeq": "38"
+    },
+    {
+      "at": 2298.800000190735,
+      "type": "focusout",
+      "target": {
+        "tag": "TEXTAREA",
+        "class": "annotation-fulltext",
+        "label": "Add a comment",
+        "value": ""
+      },
+      "active": {
+        "tag": "BODY",
+        "class": "",
+        "label": null
+      },
+      "mode": "whiteboard mode-select  ",
+      "annotation": "d6dc3f53-2c1a-4ca3-b1ef-68def4fbb8fd",
+      "frameSeq": "38"
+    },
+    {
+      "at": 2298.9000000953674,
+      "type": "focusin",
+      "target": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live input"
+      },
+      "active": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live input"
+      },
+      "mode": "whiteboard mode-select  ",
+      "annotation": "d6dc3f53-2c1a-4ca3-b1ef-68def4fbb8fd",
+      "frameSeq": "38"
+    },
+    {
+      "at": 2301.7000000476837,
+      "type": "input",
+      "target": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live inputKeep the native HTML state"
+      },
+      "active": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live inputKeep the native HTML state"
+      },
+      "mode": "whiteboard mode-select  ",
+      "annotation": "d6dc3f53-2c1a-4ca3-b1ef-68def4fbb8fd",
+      "frameSeq": "38"
+    },
+    {
+      "at": 2303,
+      "type": "focusout",
+      "target": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live inputKeep the native HTML state"
+      },
+      "active": {
+        "tag": "BODY",
+        "class": "",
+        "label": null
+      },
+      "mode": "whiteboard mode-select  ",
+      "annotation": "d6dc3f53-2c1a-4ca3-b1ef-68def4fbb8fd",
+      "frameSeq": "39"
+    },
+    {
+      "at": 2303.2000000476837,
+      "type": "focusin",
+      "target": {
+        "tag": "TEXTAREA",
+        "class": "annotation-fulltext",
+        "label": "Add a comment",
+        "value": ""
+      },
+      "active": {
+        "tag": "TEXTAREA",
+        "class": "annotation-fulltext",
+        "label": "Add a comment",
+        "value": ""
+      },
+      "mode": "whiteboard mode-select  ",
+      "annotation": "d6dc3f53-2c1a-4ca3-b1ef-68def4fbb8fd",
+      "frameSeq": "39"
+    },
+    {
+      "at": 2344.5,
+      "type": "pointerdown",
+      "target": {
+        "tag": "BUTTON",
+        "class": "annotation-done",
+        "label": "Done",
+        "value": ""
+      },
+      "active": {
+        "tag": "TEXTAREA",
+        "class": "annotation-fulltext",
+        "label": "Add a comment",
+        "value": ""
+      },
+      "mode": "whiteboard mode-select  ",
+      "annotation": "d6dc3f53-2c1a-4ca3-b1ef-68def4fbb8fd",
+      "frameSeq": "41"
+    },
+    {
+      "at": 2344.600000143051,
+      "type": "focusout",
+      "target": {
+        "tag": "TEXTAREA",
+        "class": "annotation-fulltext",
+        "label": "Add a comment",
+        "value": ""
+      },
+      "active": {
+        "tag": "BODY",
+        "class": "",
+        "label": null
+      },
+      "mode": "whiteboard mode-select  ",
+      "annotation": "d6dc3f53-2c1a-4ca3-b1ef-68def4fbb8fd",
+      "frameSeq": "41"
+    },
+    {
+      "at": 2344.7000000476837,
+      "type": "focusin",
+      "target": {
+        "tag": "BUTTON",
+        "class": "annotation-done",
+        "label": "Done",
+        "value": ""
+      },
+      "active": {
+        "tag": "BUTTON",
+        "class": "annotation-done",
+        "label": "Done",
+        "value": ""
+      },
+      "mode": "whiteboard mode-select  ",
+      "annotation": "d6dc3f53-2c1a-4ca3-b1ef-68def4fbb8fd",
+      "frameSeq": "41"
+    },
+    {
+      "at": 2344.800000190735,
+      "type": "pointerup",
+      "target": {
+        "tag": "BUTTON",
+        "class": "annotation-done",
+        "label": "Done",
+        "value": ""
+      },
+      "active": {
+        "tag": "BUTTON",
+        "class": "annotation-done",
+        "label": "Done",
+        "value": ""
+      },
+      "mode": "whiteboard mode-select  ",
+      "annotation": "d6dc3f53-2c1a-4ca3-b1ef-68def4fbb8fd",
+      "frameSeq": "41"
+    },
+    {
+      "at": 2345.300000190735,
+      "type": "focusout",
+      "target": {
+        "tag": "BUTTON",
+        "class": "annotation-done",
+        "label": "Done",
+        "value": ""
+      },
+      "active": {
+        "tag": "BODY",
+        "class": "",
+        "label": null
+      },
+      "mode": "whiteboard mode-select  ",
+      "annotation": "d6dc3f53-2c1a-4ca3-b1ef-68def4fbb8fd",
+      "frameSeq": "41"
+    },
+    {
+      "at": 2352.100000143051,
+      "type": "focusin",
+      "target": {
+        "tag": "DIV",
+        "class": "whiteboard mode-select  ",
+        "label": "Project board. Enter selects files, arrow keys move them, and Space pans the canvas."
+      },
+      "active": {
+        "tag": "DIV",
+        "class": "whiteboard mode-select  ",
+        "label": "Project board. Enter selects files, arrow keys move them, and Space pans the canvas."
+      },
+      "mode": "whiteboard mode-select  ",
+      "frameSeq": "42"
+    },
+    {
+      "at": 2357.600000143051,
+      "type": "focusout",
+      "target": {
+        "tag": "DIV",
+        "class": "whiteboard mode-select  ",
+        "label": "Project board. Enter selects files, arrow keys move them, and Space pans the canvas."
+      },
+      "active": {
+        "tag": "BODY",
+        "class": "",
+        "label": null
+      },
+      "mode": "whiteboard mode-select  ",
+      "frameSeq": "42"
+    },
+    {
+      "at": 2357.800000190735,
+      "type": "focusin",
+      "target": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live inputKeep the native HTML state"
+      },
+      "active": {
+        "tag": "INPUT",
+        "class": "",
+        "label": "Live value",
+        "value": "Saved live inputKeep the native HTML state"
+      },
+      "mode": "whiteboard mode-select  ",
+      "frameSeq": "42"
+    }
+  ],
+  "newCaptureRequestCount": 0,
+  "returnedAnnotationId": "25bd8470-2134-4b2f-b75a-4af9e6a31563",
+  "returnedObjectId": "78b580dd-2844-4176-bf6f-e73cb4c0b857",
+  "htmlObjectId": "89eafaaf-90a8-46b2-b03a-acf216a76ce7",
+  "persistentAnnotations": 1,
+  "cause": "A canonical HTML semantic focus projection moved client focus from the new annotation textarea back to the source HTML input. Comment text became HTML input text. The empty annotation closed without capture. The test helper read the prior completed annotation because it waited on last() rather than the current editor annotation identity.",
+  "productFixOwner": "html_response_execution",
+  "testFix": "Wait for current editor annotationId and matching capture/captureState version. Check comment value and real post-edit native sample; keep original target/pixel/source assertions, then exercise composer and return to HTML.",
+  "resolution": "Generic HTML client focus ownership and exact helper annotation identity completion. Executor full managed flow plus four lifecycle cases PASS; independent F4 review remains pending.",
+  "resolvedEvidence": "media/f4-managed-focus-result.json"
+}

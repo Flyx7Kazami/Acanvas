@@ -166,20 +166,23 @@ details[open] summary svg { rotate: 180deg; }
 .composer { display: flex; flex-direction: column; height: 52px; min-height: 52px; overflow: hidden; background: var(--surface); border: 1px solid color-mix(in srgb,var(--edge) 85%,transparent); border-radius: 26px; padding: 9px 9px 9px 16px; position: relative; box-shadow: var(--float-shadow); width: 100%; transition: height 180ms var(--ease); }
 .composer:has(.draft-attachments) { padding-top: 10px; }
 .composer-input-row { display: flex; flex: 0 0 auto; align-items: flex-end; gap: 8px; min-width: 0; }
-.composer-input-row>.chatbox-editor,.composer-input-row>.chatbox-editor:focus,.composer-input-row>.chatbox-editor:focus-visible { flex: 1; min-width: 0; width: 100%; height: 24px; min-height: 24px; overflow: hidden; scrollbar-width: thin; font-size: 15px; line-height: 24px; padding: 0; margin: 4px 0; background: transparent; border: 0; border-radius: 0; outline: 0; box-shadow: none; caret-color: var(--ink); display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+.composer-input-row>.chatbox-editor { flex: 1; min-width: 0; width: 100%; height: 24px; min-height: 24px; overflow: hidden; scrollbar-width: thin; font-size: 15px; line-height: 24px; padding: 0; margin: 4px 0; background: transparent; border: 0; border-radius: 0; outline: 0; box-shadow: none; caret-color: var(--ink); display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
 .chatbox-editor[data-empty='true']::before { content:attr(data-placeholder); color:var(--muted); pointer-events:none; }
 .inline-reference-node { display:inline; white-space:normal; }
-.chatbox-reference,.chatbox-reference-preview,.task-inline-reference { display:inline-flex; vertical-align:middle; align-items:center; gap:5px; max-width:calc(100% - 6px); margin:1px 3px; border:1px solid color-mix(in srgb,var(--edge) 65%,transparent); border-radius:9px; background:color-mix(in srgb,var(--surface) 85%,var(--annotation-fill)); box-shadow:0 2px 6px color-mix(in srgb,var(--ink) 8%,transparent); padding:2px 3px; font-size:11px; line-height:24px; color:var(--ink); white-space:nowrap; user-select:all; }
-.chatbox-reference>span:not(.asset-thumb) { max-width:180px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-.chatbox-reference button,.chatbox-reference-preview>button:last-child { display:grid; place-items:center; width:24px; height:24px; border:0; border-radius:6px; background:transparent; flex-shrink:0; }
-.chatbox-reference button:hover,.chatbox-reference-preview>button:last-child:hover { background:var(--hover); }
-.chatbox-reference .asset-thumb,.chatbox-reference-preview .asset-thumb,.task-inline-reference .asset-thumb { width:22px; height:22px; flex-basis:22px; border-radius:5px; }
+.chatbox-reference,.chatbox-reference-preview,.task-inline-reference { display:inline-flex; vertical-align:top; align-items:center; gap:5px; height:1lh; max-width:calc(100% - 6px); margin:0 3px; border:1px solid color-mix(in srgb,var(--edge) 65%,transparent); border-radius:7px; background:color-mix(in srgb,var(--surface) 85%,var(--annotation-fill)); box-shadow:none; padding:0 3px; font:inherit; color:var(--ink); white-space:nowrap; user-select:all; }
+.reference-content,.chatbox-reference button,.chatbox-reference-preview button { height:calc(1lh - 2px); margin:0; padding:0; border:0; border-radius:5px; background:transparent; box-shadow:none; font:inherit; letter-spacing:inherit; color:inherit; }
+.reference-content { display:flex; align-items:center; gap:5px; min-width:0; flex:0 1 auto; }
+.reference-content[role='button'] { cursor:pointer; }
+.chatbox-reference[data-reference-disabled]>.reference-content,.chatbox-reference-preview[data-reference-disabled]>.reference-content { opacity:.45; cursor:default; }
+.reference-label { min-width:0; max-width:180px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.reference-remove { display:grid; place-items:center; width:calc(1lh - 2px); flex:0 0 auto; }
+.reference-content:hover,.reference-remove:hover { background:var(--hover); }
+.chatbox-reference .asset-thumb,.chatbox-reference-preview .asset-thumb,.task-inline-reference .asset-thumb { width:calc(1lh - 4px); height:calc(1lh - 4px); flex:0 0 calc(1lh - 4px); border-radius:4px; }
+.reference-content>svg { flex:0 0 auto; }
 .chatbox-reference-preview { color:var(--muted); }
-.chatbox-reference-preview>.reference-preview-confirm { display:flex; align-items:center; gap:6px; width:auto; height:24px; min-width:0; max-width:240px; background:transparent; padding:0; border:0; font-size:11px; }
-.reference-preview-confirm>span:last-child { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .task-inline-reference { padding-right:6px; user-select:text; }
 .task-inline-reference>span:last-child { max-width:180px; overflow:hidden; text-overflow:ellipsis; }
-.chatbox-reference[data-reference-unavailable] { border-style:dashed; color:var(--muted); }
+.chatbox-reference[data-reference-unavailable],.chatbox-reference-preview[data-reference-unavailable] { border-style:dashed; color:var(--muted); }
 .reference-search { position:absolute; left:0; right:0; bottom:calc(100% + 8px); z-index:6; max-height:240px; overflow:auto; padding:5px; background:var(--surface); border:1px solid var(--edge); border-radius:12px; box-shadow:var(--float-shadow); pointer-events:auto; }
 .reference-search>button { display:flex; align-items:center; gap:8px; width:100%; min-height:40px; padding:6px; border:0; border-radius:7px; background:transparent; text-align:left; }
 .reference-search>button[aria-selected='true'] { background:var(--soft); }

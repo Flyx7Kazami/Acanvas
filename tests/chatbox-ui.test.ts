@@ -41,8 +41,20 @@ async function fixture(t: test.TestContext, narrow = false) {
   const evidence = await realpath(await mkdtemp(join(tmpdir(), 'acanvas-chatbox-evidence-'))); t.diagnostic(`Evidence: ${evidence}`);
   const running = await startServer({ root, port: 0, webRoot: resolve(process.env.ACANVAS_TEST_WEB_ROOT || 'dist/web'), browser: { headless: true } });
   const session = running.service.createSession('Chatbox acceptance');
+  const observation: { page?: Page } = {};
+  t.after(async () => {
+    try {
+      const page = observation.page;
+      if (page && !page.isClosed()) await page.screenshot({ path: join(evidence, 'final-ui.png'), timeout: 5_000 });
+      const state = running.service.state(session.id);
+      await writeFile(join(evidence, 'state.json'), JSON.stringify(state, null, 2));
+      const annotations = [...state.draft.annotations, ...state.tasks.flatMap(task => task.snapshot.annotations)];
+      for (const [index, annotation] of annotations.entries()) if (annotation.capture) { const bytes = await readFile(running.service.assetPath(annotation.capture.screenshotAssetId)).catch(() => undefined); if (bytes) await writeFile(join(evidence, `capture-${index + 1}.png`), bytes); }
+    } finally { try { await running.close(); } finally { await rm(root, { recursive: true, force: true }); } }
+  });
   await running.browser.open(session.id);
   const page = running.browser.page(session.id)!;
+  observation.page = page;
   await page.context().addInitScript(installSceneOracle); await page.evaluate(installSceneOracle);
   if (narrow) await page.setViewportSize({ width: 320, height: 700 });
   await expect(page.locator('#whiteboard')).toBeVisible();
@@ -74,21 +86,19 @@ async function fixture(t: test.TestContext, narrow = false) {
     await expect(page.getByRole('textbox', { name: 'Add a comment', exact: true })).toBeVisible();
   };
   const done = async (text: string) => {
-    await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill(text);
+    const editor = page.getByRole('textbox', { name: 'Add a comment', exact: true });
+    const annotationId = await editor.locator('xpath=ancestor::*[@data-annotation-id][1]').getAttribute('data-annotation-id');
+    assert(annotationId);
+    await editor.fill(text); await expect(editor).toHaveValue(text);
     await page.getByRole('button', { name: 'Done', exact: true }).click();
-    try { await expect(page.locator('.draft-annotation').last()).toHaveAttribute('data-capture-state', 'complete', { timeout: 15_000 }); }
-    catch (cause) { t.diagnostic(await page.locator('.draft-annotation').last().innerText()); throw cause; }
-    await expect(page.locator('.capture-progress')).toHaveCount(0); const annotation = (await saved()).annotations.at(-1)!; await assertSceneCopy(page, annotation); return annotation;
+    try { await expect.poll(() => {
+      const annotation = running.service.draft(session.id).annotations.find(value => value.id === annotationId);
+      return annotation?.captureState?.status === 'complete' && annotation.capture?.version === annotation.captureState.version;
+    }, { timeout: 15_000 }).toBe(true); }
+    catch (cause) { t.diagnostic(JSON.stringify(running.service.draft(session.id).annotations.find(value => value.id === annotationId))); throw cause; }
+    await expect(page.locator('.capture-progress')).toHaveCount(0); const annotation = (await saved()).annotations.find(value => value.id === annotationId)!; await assertSceneCopy(page, annotation); return annotation;
   };
-  t.after(async () => {
-    if (!page.isClosed()) {
-      await page.screenshot({ path: join(evidence, 'final-ui.png') }); const state = running.service.state(session.id);
-      await writeFile(join(evidence, 'state.json'), JSON.stringify(state, null, 2));
-      const annotations = [...state.draft.annotations, ...state.tasks.flatMap(task => task.snapshot.annotations)];
-      for (const [index, annotation] of annotations.entries()) if (annotation.capture) { const bytes = await readFile(running.service.assetPath(annotation.capture.screenshotAssetId)).catch(() => undefined); if (bytes) await writeFile(join(evidence, `capture-${index + 1}.png`), bytes); }
-    }
-    await running.close(); await rm(root, { recursive: true, force: true });
-  });
+
   return { root, evidence, running, session, page, call, importAsset, image, object, saved, select, mark, done, state: () => running.service.state(session.id) };
 }
 
@@ -509,12 +519,26 @@ test('managed React records Markdown intent and displayed anchors and keeps the 
   const liveInput = htmlContent.getByRole('textbox', { name: 'Live value', exact: true }); await liveInput.click(); await liveInput.press('ControlOrMeta+A'); await liveInput.press('Backspace'); await liveInput.pressSequentially('Saved live input');
   await expect.poll(() => latestFrame?.semantics.controls.find(value => value.label === 'Live value')?.value).toBe('Saved live input');
   await expect.poll(async () => Number(await htmlContent.locator('[data-html-semantics]').getAttribute('data-frame-seq'))).toBeGreaterThanOrEqual(latestFrame!.frameSeq);
-  await app.mark({ x: 830, y: 280 }); const captured = await app.done('Keep the native HTML state'); assert.equal(captured.objectId, htmlObject.id);
+  await app.mark({ x: 830, y: 280 });
+  const comment = page.getByRole('textbox', { name: 'Add a comment', exact: true });
+  await comment.fill('Keep the native HTML state');
+  const commentFrame = latestFrame!.frameSeq;
+  await expect.poll(() => latestFrame?.frameSeq).toBeGreaterThan(commentFrame);
+  await expect(comment).toBeFocused(); await expect(comment).toHaveValue('Keep the native HTML state');
+  const captured = await app.done('Keep the native HTML state'); assert.equal(captured.objectId, htmlObject.id);
   const surface = captured.capture!.presentation!.layers.find(value => value.objectId === htmlObject.id)!.surface!; assert.equal(surface.surfaceId, original.surfaceId); assert.equal(surface.instanceId, original.instanceId);
   const frame = await app.call(`/api/sessions/${app.session.id}/capture-views/${original.owner.viewId}/html-surfaces/${surface.surfaceId}/frames/${surface.frameSeq}?documentId=${encodeURIComponent(original.owner.documentId)}&viewGeneration=${original.owner.viewGeneration}`) as HtmlSurfaceFrameMetadata;
   assert.equal(frame.semantics.controls.find(value => value.label === 'Live value')?.value, 'Saved live input'); assert.equal(frame.semantics.readingOrder.find(value => value.text.startsWith('Instance '))?.text, identity); assert.equal(frame.frameSeq, surface.frameSeq); assert.equal(frame.inputSeq, surface.inputSeq);
   await expect(liveInput).toHaveValue('Saved live input'); assert.equal((latestFrame as HtmlSurfaceFrameMetadata).instanceId, original.instanceId); await expect(htmlContent.locator('iframe')).toHaveCount(0);
-
+  const composer = page.locator('#instruction');
+  await composer.click(); await composer.pressSequentially('Composer keeps focus');
+  const composerFrame = latestFrame!.frameSeq;
+  await expect.poll(() => latestFrame?.frameSeq).toBeGreaterThan(composerFrame);
+  await expect(composer).toBeFocused(); assert.equal((await app.saved()).text, 'Composer keeps focus');
+  await expect(liveInput).toHaveValue('Saved live input');
+  await liveInput.click(); await liveInput.press('End'); await liveInput.pressSequentially(' again');
+  await expect.poll(() => latestFrame?.semantics.controls.find(value => value.label === 'Live value')?.value).toBe('Saved live input again');
+  await expect(liveInput).toBeFocused(); assert.equal(latestFrame!.instanceId, original.instanceId);
 });
 
 test('managed React saves independent video/audio selections and actual playback positions', async t => {
@@ -718,6 +742,53 @@ test('refinement Mark hover and clicks share displayed content ownership and cle
   await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'delete', objectId: top.id, expectedVersion: top.version }] });
   await expect(page.locator(`[data-object-id="${top.id}"]`)).toHaveCount(0); await expect(page.locator('.canvas-mark-guide')).toHaveAttribute('data-mark-target', bottom.id);
   await page.screenshot({ path: join(app.evidence, 'mark-letterbox-ownership.png') });
+});
+
+test('Mark stationary hover follows committed deletion, overlap, camera and resize ownership', async t => {
+  const app = await fixture(t), { page } = app;
+  const bounds = { x: 350, y: 300, width: 250, height: 180 };
+  const bottom = await app.object(await app.image('Bottom.png'), bounds);
+  const top = await app.object(await app.image('Top.png'), bounds);
+  await page.getByRole('button', { name: 'Mark canvas', exact: true }).click();
+  await page.mouse.move(470, 390);
+  const guide = page.locator('.canvas-mark-guide');
+  await expect(guide).toHaveAttribute('data-mark-target', top.id);
+  const firstSeq = Number(await page.locator('.scene-canvas').getAttribute('data-frame-seq'));
+  await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'delete', objectId: top.id, expectedVersion: top.version }] });
+  await expect(page.locator(`[data-object-id="${top.id}"]`)).toHaveCount(0);
+  await expect(guide).toHaveAttribute('data-mark-target', bottom.id);
+  assert(Number(await page.locator('.scene-canvas').getAttribute('data-frame-seq')) > firstSeq);
+  const next = await app.object(await app.image('New top.png'), bounds);
+  await expect(guide).toHaveAttribute('data-mark-target', next.id);
+  await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: next.id, expectedVersion: next.version, changes: { x: 900 } }] });
+  await expect(guide).toHaveAttribute('data-mark-target', bottom.id);
+  await page.mouse.wheel(0, 100); await expect(guide).toHaveCount(0);
+  await page.mouse.wheel(0, -100); await expect(guide).toHaveAttribute('data-mark-target', bottom.id);
+  await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: bottom.id, expectedVersion: bottom.version, changes: { height: 80 } }] });
+  await expect(guide).toHaveCount(0);
+});
+
+test('annotation focus follows the active editor when a pending reader is closed or replaced', async t => {
+  const app = await fixture(t), { page } = app;
+  await app.mark({ x: 400, y: 300 }); const first = await app.done('First owner');
+  await app.mark({ x: 800, y: 300 }); const second = await app.done('Second owner');
+  await page.evaluate(() => {
+    const buttons = document.querySelectorAll<HTMLButtonElement>('.draft-annotation .annotation-content');
+    buttons[0].click(); buttons[1].click();
+  });
+  const editor = page.getByRole('textbox', { name: 'Annotation text', exact: true });
+  await expect(editor).toHaveValue('Second owner'); await expect(editor).toBeFocused();
+  await editor.press('End'); await editor.pressSequentially('Z');
+  await expect(editor).toHaveValue('Second ownerZ');
+  await page.evaluate(() => {
+    document.querySelector('.annotation-full')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    document.querySelectorAll<HTMLButtonElement>('.draft-annotation .annotation-content')[0].click();
+  });
+  await expect(editor).toHaveValue('First owner'); await expect(editor).toBeFocused();
+  await editor.press('End'); await editor.pressSequentially('Y'); await expect(editor).toHaveValue('First ownerY');
+  const saved = await app.saved();
+  assert.equal(saved.annotations.find(annotation => annotation.id === first.id)?.text, 'First ownerY');
+  assert.equal(saved.annotations.find(annotation => annotation.id === second.id)?.text, 'Second ownerZ');
 });
 
 test('refinement collapsed comment surfaces use one Canvas visual and preserve their pixels in PNG', async t => {

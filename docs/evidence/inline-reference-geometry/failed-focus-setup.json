@@ -1,0 +1,406 @@
+{
+  "status": "failed",
+  "projectRoot": "/private/tmp/acanvas-reference-geometry-project-f1fxTP",
+  "serviceUrl": "http://127.0.0.1:62499",
+  "headless": true,
+  "failures": [
+    "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'a a bb' !== 'a b'\n\n    at TestContext.<anonymous> (file:///private/tmp/acanvas-reference-geometry-build-nZICc5/dist/tests/inline-reference-geometry.test.js:159:28)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+  ],
+  "errors": [],
+  "results": [
+    {
+      "width": 1440,
+      "theme": "light",
+      "scenario": "short-text",
+      "preview": {
+        "editor": {
+          "width": 617,
+          "height": 24,
+          "scrollHeight": 24,
+          "scrollWidth": 617,
+          "lineHeight": 24,
+          "fontSize": "15px"
+        },
+        "composerHeight": 52,
+        "refs": [
+          {
+            "text": "A.txt",
+            "color": "rgb(112, 112, 112)",
+            "elements": [
+              {
+                "tag": "SPAN",
+                "rect": {
+                  "x": 14.453125,
+                  "y": 0,
+                  "width": 90.71875,
+                  "height": 24
+                },
+                "styles": {
+                  "fontFamily": "\"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+                  "fontSize": "15px",
+                  "fontWeight": "400",
+                  "letterSpacing": "normal",
+                  "lineHeight": "24px",
+                  "gap": "5px",
+                  "padding": "0px 3px",
+                  "margin": "0px 3px",
+                  "borderWidth": "1px",
+                  "borderRadius": "7px",
+                  "backgroundColor": "color(srgb 0.989128 0.994482 1 / 0.868235)",
+                  "maxWidth": "calc(100% - 6px)",
+                  "whiteSpace": "nowrap",
+                  "textOverflow": "clip",
+                  "overflow": "visible",
+                  "verticalAlign": "top",
+                  "boxShadow": "none"
+                }
+              },
+              {
+                "tag": "BUTTON",
+                "rect": {
+                  "x": 18.453125,
+                  "y": 1,
+                  "width": 55.71875,
+                  "height": 22
+                },
+                "styles": {
+                  "fontFamily": "\"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+                  "fontSize": "15px",
+                  "fontWeight": "400",
+                  "letterSpacing": "normal",
+                  "lineHeight": "24px",
+                  "gap": "5px",
+                  "padding": "0px",
+                  "margin": "0px",
+                  "borderWidth": "0px",
+                  "borderRadius": "5px",
+                  "backgroundColor": "rgba(0, 0, 0, 0)",
+                  "maxWidth": "none",
+                  "whiteSpace": "nowrap",
+                  "textOverflow": "clip",
+                  "overflow": "visible",
+                  "verticalAlign": "baseline",
+                  "boxShadow": "none"
+                }
+              },
+              {
+                "tag": "SPAN",
+                "rect": {
+                  "x": 18.453125,
+                  "y": 2,
+                  "width": 20,
+                  "height": 20
+                },
+                "styles": {
+                  "fontFamily": "\"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+                  "fontSize": "15px",
+                  "fontWeight": "400",
+                  "letterSpacing": "normal",
+                  "lineHeight": "24px",
+                  "gap": "normal",
+                  "padding": "0px",
+                  "margin": "0px",
+                  "borderWidth": "1px",
+                  "borderRadius": "4px",
+                  "backgroundColor": "rgb(252, 252, 250)",
+                  "maxWidth": "none",
+                  "whiteSpace": "nowrap",
+                  "textOverflow": "clip",
+                  "overflow": "hidden",
+                  "verticalAlign": "baseline",
+                  "boxShadow": "none"
+                }
+              },
+              {
+                "tag": "SPAN",
+                "rect": {
+                  "x": 43.453125,
+                  "y": 0,
+                  "width": 30.71875,
+                  "height": 24
+                },
+                "styles": {
+                  "fontFamily": "\"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+                  "fontSize": "15px",
+                  "fontWeight": "400",
+                  "letterSpacing": "normal",
+                  "lineHeight": "24px",
+                  "gap": "normal",
+                  "padding": "0px",
+                  "margin": "0px",
+                  "borderWidth": "0px",
+                  "borderRadius": "0px",
+                  "backgroundColor": "rgba(0, 0, 0, 0)",
+                  "maxWidth": "180px",
+                  "whiteSpace": "nowrap",
+                  "textOverflow": "ellipsis",
+                  "overflow": "hidden",
+                  "verticalAlign": "baseline",
+                  "boxShadow": "none"
+                }
+              },
+              {
+                "tag": "BUTTON",
+                "rect": {
+                  "x": 79.171875,
+                  "y": 1,
+                  "width": 22,
+                  "height": 22
+                },
+                "styles": {
+                  "fontFamily": "\"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+                  "fontSize": "15px",
+                  "fontWeight": "400",
+                  "letterSpacing": "normal",
+                  "lineHeight": "24px",
+                  "gap": "normal",
+                  "padding": "0px",
+                  "margin": "0px",
+                  "borderWidth": "0px",
+                  "borderRadius": "5px",
+                  "backgroundColor": "rgba(0, 0, 0, 0)",
+                  "maxWidth": "none",
+                  "whiteSpace": "nowrap",
+                  "textOverflow": "clip",
+                  "overflow": "visible",
+                  "verticalAlign": "baseline",
+                  "boxShadow": "none"
+                }
+              }
+            ],
+            "shadows": [
+              "none",
+              "none",
+              "none",
+              "none",
+              "none",
+              "none",
+              "none",
+              "none",
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "textRects": [
+          {
+            "y": 3,
+            "height": 18
+          },
+          {
+            "y": 3,
+            "height": 18
+          }
+        ]
+      },
+      "formal": {
+        "editor": {
+          "width": 617,
+          "height": 24,
+          "scrollHeight": 24,
+          "scrollWidth": 617,
+          "lineHeight": 24,
+          "fontSize": "15px"
+        },
+        "composerHeight": 52,
+        "refs": [
+          {
+            "text": "A.txt",
+            "color": "rgb(32, 32, 32)",
+            "elements": [
+              {
+                "tag": "SPAN",
+                "rect": {
+                  "x": 14.453125,
+                  "y": 0,
+                  "width": 90.71875,
+                  "height": 24
+                },
+                "styles": {
+                  "fontFamily": "\"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+                  "fontSize": "15px",
+                  "fontWeight": "400",
+                  "letterSpacing": "normal",
+                  "lineHeight": "24px",
+                  "gap": "5px",
+                  "padding": "0px 3px",
+                  "margin": "0px 3px",
+                  "borderWidth": "1px",
+                  "borderRadius": "7px",
+                  "backgroundColor": "color(srgb 0.989128 0.994482 1 / 0.868235)",
+                  "maxWidth": "calc(100% - 6px)",
+                  "whiteSpace": "nowrap",
+                  "textOverflow": "clip",
+                  "overflow": "visible",
+                  "verticalAlign": "top",
+                  "boxShadow": "none"
+                }
+              },
+              {
+                "tag": "BUTTON",
+                "rect": {
+                  "x": 18.453125,
+                  "y": 1,
+                  "width": 55.71875,
+                  "height": 22
+                },
+                "styles": {
+                  "fontFamily": "\"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+                  "fontSize": "15px",
+                  "fontWeight": "400",
+                  "letterSpacing": "normal",
+                  "lineHeight": "24px",
+                  "gap": "5px",
+                  "padding": "0px",
+                  "margin": "0px",
+                  "borderWidth": "0px",
+                  "borderRadius": "5px",
+                  "backgroundColor": "rgba(0, 0, 0, 0)",
+                  "maxWidth": "none",
+                  "whiteSpace": "nowrap",
+                  "textOverflow": "clip",
+                  "overflow": "visible",
+                  "verticalAlign": "baseline",
+                  "boxShadow": "none"
+                }
+              },
+              {
+                "tag": "SPAN",
+                "rect": {
+                  "x": 18.453125,
+                  "y": 2,
+                  "width": 20,
+                  "height": 20
+                },
+                "styles": {
+                  "fontFamily": "\"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+                  "fontSize": "15px",
+                  "fontWeight": "400",
+                  "letterSpacing": "normal",
+                  "lineHeight": "24px",
+                  "gap": "normal",
+                  "padding": "0px",
+                  "margin": "0px",
+                  "borderWidth": "1px",
+                  "borderRadius": "4px",
+                  "backgroundColor": "rgb(252, 252, 250)",
+                  "maxWidth": "none",
+                  "whiteSpace": "nowrap",
+                  "textOverflow": "clip",
+                  "overflow": "hidden",
+                  "verticalAlign": "baseline",
+                  "boxShadow": "none"
+                }
+              },
+              {
+                "tag": "SPAN",
+                "rect": {
+                  "x": 43.453125,
+                  "y": 0,
+                  "width": 30.71875,
+                  "height": 24
+                },
+                "styles": {
+                  "fontFamily": "\"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+                  "fontSize": "15px",
+                  "fontWeight": "400",
+                  "letterSpacing": "normal",
+                  "lineHeight": "24px",
+                  "gap": "normal",
+                  "padding": "0px",
+                  "margin": "0px",
+                  "borderWidth": "0px",
+                  "borderRadius": "0px",
+                  "backgroundColor": "rgba(0, 0, 0, 0)",
+                  "maxWidth": "180px",
+                  "whiteSpace": "nowrap",
+                  "textOverflow": "ellipsis",
+                  "overflow": "hidden",
+                  "verticalAlign": "baseline",
+                  "boxShadow": "none"
+                }
+              },
+              {
+                "tag": "BUTTON",
+                "rect": {
+                  "x": 79.171875,
+                  "y": 1,
+                  "width": 22,
+                  "height": 22
+                },
+                "styles": {
+                  "fontFamily": "\"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+                  "fontSize": "15px",
+                  "fontWeight": "400",
+                  "letterSpacing": "normal",
+                  "lineHeight": "24px",
+                  "gap": "normal",
+                  "padding": "0px",
+                  "margin": "0px",
+                  "borderWidth": "0px",
+                  "borderRadius": "5px",
+                  "backgroundColor": "rgba(0, 0, 0, 0)",
+                  "maxWidth": "none",
+                  "whiteSpace": "nowrap",
+                  "textOverflow": "clip",
+                  "overflow": "visible",
+                  "verticalAlign": "baseline",
+                  "boxShadow": "none"
+                }
+              }
+            ],
+            "shadows": [
+              "none",
+              "none",
+              "none",
+              "none",
+              "none",
+              "none",
+              "none",
+              "none",
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "textRects": [
+          {
+            "y": 3,
+            "height": 18
+          },
+          {
+            "y": 3,
+            "height": 18
+          }
+        ]
+      },
+      "deletions": [
+        {
+          "editor": {
+            "width": 617,
+            "height": 24,
+            "scrollHeight": 24,
+            "scrollWidth": 617,
+            "lineHeight": 24,
+            "fontSize": "15px"
+          },
+          "composerHeight": 52,
+          "refs": [],
+          "textRects": [
+            {
+              "y": 3,
+              "height": 18
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "No Send or Done operations",
+    "Task references use the shared unchanged rendering path; fixture exercises object references",
+    "Actual content line-count reductions may shrink the editor by whole normal line heights"
+  ]
+}

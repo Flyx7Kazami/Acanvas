@@ -1,0 +1,176 @@
+{
+  "date": "2026-10-09T08:48:55.882Z",
+  "status": "failed",
+  "reviewer": "independent clean-context review",
+  "baseline": "f3269b8",
+  "scope": {
+    "reviewedSource": [
+      "src/web/ChatboxReferences.tsx",
+      "src/web/styles.css"
+    ],
+    "reviewedTest": "tests/inline-reference-geometry.test.ts",
+    "supportingUnchangedSource": "src/web/ChatboxEditor.tsx",
+    "excluded": "Parallel media/WS/native/performance changes, shared dist, live 4317, user board, Send/Done, system Chrome/Codex/Keychain/OS clipboard"
+  },
+  "sourceReview": {
+    "sharedDomAndTruncation": "passed",
+    "heightAndVerticalAlignment": "passed",
+    "shadowRemoval": "passed",
+    "formalContentTabStop": "passed: tabindex=-1; Tab traverses editor, remove button, Send, then next page control",
+    "formalClickNativeSelection": "failed: F1"
+  },
+  "requirements": [
+    {
+      "id": "R1",
+      "requirement": "Preview/formal names, DOM, box and child geometry, truncation and non-color styles match",
+      "status": "passed",
+      "evidence": "16 actual App scenarios at 1440/320 light/dark plus 4 image/all-computed-style scenarios at 390/1440 light/dark. All full rects and every non-color computed property match. Differences are currentColor and inherited foreground-derived properties; visible border/background geometry and colors stay equal."
+    },
+    {
+      "id": "R2",
+      "requirement": "No inline-reference shadow in light/dark hover/focus states",
+      "status": "passed",
+      "evidence": "16 scenarios check every reference descendant box-shadow; image/fallback supplement also checks text-shadow and filter. All are none. Hover/focus full rects stable."
+    },
+    {
+      "id": "R3",
+      "requirement": "Full reference box equals body line height; single-line removal preserves height and real wrapped content adapts",
+      "status": "passed",
+      "evidence": "Reference 24px; single-line editor 24px/composer 52px before/after confirm and every deletion. Narrow content naturally measures 48/72px and returns by normal 24px line increments. Supplement explicit 3 text lines to 2 measures 72 to 48px. No fixed-height masking."
+    },
+    {
+      "id": "R4",
+      "requirement": "Preserve no-extra-@, repeats, native pointer/selection, keyboard, IME/Unicode and draft persistence",
+      "status": "failed",
+      "evidence": "Keyboard confirm/delete, duplicate refs, arrow/cross selection, UTF-16 offsets, native CDP IME, revision and refresh passed. Formal pointer click while composer is unfocused fails F1."
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "priority": 2,
+      "status": "open",
+      "file": "src/web/ChatboxReferences.tsx",
+      "line": 17,
+      "title": "Restore native composer focus and atom selection when clicking a formal reference",
+      "trigger": "With a persisted formal reference between \"before \" and \"after\", focus #whiteboard, click the reference name, then type Z.",
+      "actual": "New reference-content button prevents pointerdown default and propagation in both states, and formal onClick has no action. Focus stays on #whiteboard, native Selection is empty, and typing Z leaves request text \"before after\".",
+      "expected": "Original f3269b8 formal span focuses #instruction and selects the reference atom from before-text offset 7 through after-text offset 0; typing Z yields \"before Zafter\". Restore the original native click selection/input behavior while preserving same geometry, preview confirmation, and existing editor-focus caret behavior.",
+      "evidence": "review-focus-counterexample.json",
+      "reproduced": "Current failure observed in 390/1440 light/dark; direct original/current two-file private comparison confirms regression."
+    }
+  ],
+  "verification": {
+    "privateServerTypecheck": "passed",
+    "privateWebTypecheck": "passed",
+    "privateViteBuild": "passed",
+    "targetedDiffCheck": "passed",
+    "primaryBrowser": {
+      "status": "passed",
+      "tests": 1,
+      "failures": 0,
+      "durationMs": 45760.132625,
+      "geometryScenarios": 16,
+      "pageErrors": []
+    },
+    "supplementary": {
+      "status": "passed",
+      "cases": 14,
+      "pageErrors": [],
+      "computedStyleCompared": "Every property of outer reference and complete descendant subtree; archive keeps geometry/relevant styles and exact color differences."
+    },
+    "fallbacks": "Actual App rendered missing-object Removed object and missing-task Historical request from read-only intercepted /api/state fixtures; both outer boxes 24px. No unknown server entity or task was written.",
+    "focusCounterexample": [
+      {
+        "label": "f3269b8-reference-files",
+        "before": "whiteboard",
+        "after": "instruction",
+        "selection": {
+          "anchor": {
+            "type": 3,
+            "name": "#text",
+            "text": "before ",
+            "parentId": "instruction",
+            "parentClass": "chatbox-editor",
+            "inEditor": true
+          },
+          "anchorOffset": 7,
+          "focus": {
+            "type": 3,
+            "name": "#text",
+            "text": "after",
+            "parentId": "instruction",
+            "parentClass": "chatbox-editor",
+            "inEditor": true
+          },
+          "focusOffset": 0,
+          "isCollapsed": false,
+          "text": "\nA.txt\n\n"
+        },
+        "textBefore": "before after",
+        "textAfter": "before Zafter"
+      },
+      {
+        "label": "current",
+        "before": "whiteboard",
+        "after": "whiteboard",
+        "selection": {
+          "anchor": null,
+          "anchorOffset": 0,
+          "focus": null,
+          "focusOffset": 0,
+          "isCollapsed": true,
+          "text": ""
+        },
+        "textBefore": "before after",
+        "textAfter": "before after"
+      }
+    ]
+  },
+  "attempts": [
+    {
+      "status": "environment-failure",
+      "stage": "primary first launch",
+      "reason": "Sandbox listen EPERM 127.0.0.1 before browser startup",
+      "resolution": "Authorized isolated loopback/owned headless browser rerun passed"
+    },
+    {
+      "status": "harness-failure",
+      "stage": "supplement style comparison",
+      "reason": "The initial finite foreground property list omitted computed row-rule-color, text-emphasis-color and currentColor-derived zero-width border color properties. Assertions failed before product interaction checks.",
+      "resolution": "Retained all three failed results, then compare every non-color property and archive all color differences. No product source changed.",
+      "evidence": [
+        "review-failed-currentcolor-property.json",
+        "review-failed-text-emphasis-currentcolor.json",
+        "review-failed-zero-border-currentcolor.json"
+      ]
+    },
+    {
+      "status": "passed",
+      "stage": "primary and final supplement"
+    },
+    {
+      "status": "failed",
+      "stage": "independent original/current native-focus counterexample",
+      "productFinding": "F1"
+    }
+  ],
+  "evidence": [
+    "review-browser-measurements.json",
+    "review-focus-counterexample.json",
+    "review-fallback-task.png"
+  ],
+  "rawEvidence": {
+    "primary": "/private/tmp/acanvas-reference-review-primary/result.json",
+    "fullComputedStyle": "/private/tmp/acanvas-reference-review-supplement/result.json",
+    "privateCurrentBuild": "/private/tmp/acanvas-reference-review-build-lvBcYZ",
+    "privateOriginalReferenceFiles": "/private/tmp/acanvas-reference-review-original-0dSpwB"
+  },
+  "boundaries": [
+    "Chrome headless, isolated temporary services/projects, port 0, Node 24; owned browsers/services closed and temporary data projects removed.",
+    "Formal fallback references measured; task preview is absent in the actual application flow, so matching task preview markup is a source-level common-render-path conclusion.",
+    "Screen-reader narration was not exercised. Formal content is outside sequential Tab order; the open native pointer/selection regression blocks acceptance.",
+    "No source edits or Git commit by reviewer. All failed and passing attempts remain recorded."
+  ],
+  "nextAcceptance": "After executor fixes F1, independently rerun the same original-selection counterexample and 4 width/theme formal-pointer cases, plus preserve geometry, active-editor caret, preview keyboard confirmation and deletion behavior."
+}

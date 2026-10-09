@@ -1,0 +1,536 @@
+{
+  "status": "PASS_WITH_DOCUMENTED_LIMITS",
+  "reviewedAt": "2026-10-09T12:38:51.594448+00:00",
+  "reviewer": "Independent clean-context documentation and delivery-claims reviewer",
+  "baseline": "f3269b8",
+  "scope": {
+    "documents": [
+      "README.md",
+      "docs/PLAN.md",
+      "docs/INTERACTIVE_MEDIA_PERFORMANCE_DESIGN.md",
+      "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md",
+      "docs/NATIVE_ATOMIC_CAPTURE_EXTENSION_DESIGN.md",
+      "docs/chatbox/INLINE_REFERENCE_GEOMETRY_DESIGN.md",
+      "docs/chatbox/INLINE_REFERENCE_GEOMETRY_VALIDATION.md"
+    ],
+    "method": "Read AGENTS/plan and requested seven final documents; review execution and independent acceptance records; independently recompute small F3/F4response summaries and original default TAP totals; audit comparison scripts; compare protected public snapshots and opaque asset bytes; compare formal/candidate/source files; read native build configuration/signature; verify updated status/auth/Origin and eight built resources through read-only product/API calls. No browser/native helper/test/build or large-gzip run was started.",
+    "independentAcceptanceBoundary": "Final document and exact runtime delivery delta accepted within the user-selected style/performance scope. Existing independent implementation/media/HTML tests remain evidence at their declared scope. Protected business JSON was compared programmatically and asset buffers were compared only as opaque bytes. Actual.acanvas files and actual media metadata were not read directly or parsed; no credentials or task bodies were output."
+  },
+  "findings": [
+    {
+      "id": "D01",
+      "priority": "wording",
+      "status": "CLOSED",
+      "file": "docs/chatbox/INLINE_REFERENCE_GEOMETRY_DESIGN.md",
+      "line": 3,
+      "title": "Align the reference design status with completed focused acceptance",
+      "actual": "The design header says implementation and validation are in progress, while the reference validation and plan state that implementation and independent focused acceptance passed.",
+      "expected": "State that implementation and focused independent acceptance passed, with combined checks and the controlled runtime update still pending.",
+      "evidence": [
+        "docs/chatbox/INLINE_REFERENCE_GEOMETRY_VALIDATION.md:3-15",
+        "docs/PLAN.md:9-11",
+        "docs/evidence/inline-reference-geometry/review.json"
+      ],
+      "impact": "Status consistency only; no unsupported functional completion or runtime-update claim was established by this wording.",
+      "closure": "Root changed the design header to focused independent acceptance passed, with combined checks and runtime update pending."
+    },
+    {
+      "id": "D02",
+      "priority": "wording",
+      "status": "CLOSED",
+      "file": "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md",
+      "line": 63,
+      "title": "Attribute aborted resource requests to their archived run and phase",
+      "actual": "The text calls27 ERR_ABORTED requests reload artwork/content cancellations without identifying the run. The four archived runs contain27/24/26/26 total requests; each r1 run includes two cancellations in active wheel/drag phases.",
+      "expected": "State that resource-request cancellations are retained by run and phase, or give the four totals with their respective labels.",
+      "evidence": [
+        "docs/evidence/interactive-media-performance/loading-playback-execution.json:finalMeasurements.*.networkFailures",
+        "docs/evidence/interactive-media-performance/loading-playback-execution.json:finalMeasurements.*.networkFailurePhases"
+      ],
+      "impact": "Resource-history wording; does not change accepted input or performance results.",
+      "closure": "Root removed the single27 count and states that material request cancellations are recorded separately for each run and phase.",
+      "closureLocation": "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:65"
+    },
+    {
+      "id": "D03",
+      "priority": "wording",
+      "status": "CLOSED",
+      "file": "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md",
+      "line": 55,
+      "title": "Use the same rounding for the compact-audio GPU CPU duration",
+      "actual": "Candidate compact-audio GPU CPU is stated as1.84s. The recorded value is1.834767s.",
+      "expected": "At two decimal places use1.83s, consistent with ordinary nearest rounding.",
+      "evidence": [
+        "docs/evidence/interactive-media-performance/loading-playback-execution.json:finalMeasurements.candidate-r1.perPhaseWork.audio-large-playing-stationary.gpuCPUSeconds"
+      ],
+      "impact": "Small rounding correction only.",
+      "closure": "Root uses1.83s for compact-audio candidate GPU CPU.",
+      "closureLocation": "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:57"
+    },
+    {
+      "id": "D04",
+      "priority": "wording",
+      "status": "CLOSED",
+      "file": "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md",
+      "line": 77,
+      "title": "Distinguish the F4 controlled-source browser matrix from real CEF integration",
+      "actual": "The text calls the nine-case matrix real dual-HTML/external-domain coverage. The independent report specifies real Chromium production components with two synthetic periodic semantic sources and controlled backend pixels/receipts; separate managed/full-controls/popup tests cover three real CEF integration cases.",
+      "expected": "Explicitly identify the nine-case matrix as actual Chromium with controlled backend pixels/receipts and list the three real CEF integration tests separately.",
+      "evidence": [
+        "docs/evidence/interactive-media-performance/html-review.json:f4FinalReview.independentMatrix.scope",
+        "docs/evidence/interactive-media-performance/html-review.json:f4FinalReview.productionIntegration"
+      ],
+      "impact": "Coverage wording; the nine browser cases and three separate integration tests all pass.",
+      "closure": "Root explicitly identifies nine actual-Chromium cases with controlled backend pixels/receipts, followed by three separate normalCEF integration tests and14focused regression cases."
+    }
+  ],
+  "severityCounts": {
+    "P1": 0,
+    "P2": 0,
+    "wording": 0
+  },
+  "checklist": [
+    {
+      "id": "DOC01",
+      "status": "PASS_CURRENT_TEXT",
+      "criterion": "Delivery scope is first loading, HTML response and desktop hover wheel, playback pan performance, and the three inline-reference requirements.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_DESIGN.md:5-11",
+        "docs/PLAN.md:9-17",
+        "docs/chatbox/INLINE_REFERENCE_GEOMETRY_DESIGN.md:7-9"
+      ]
+    },
+    {
+      "id": "DOC02",
+      "status": "PASS_CURRENT_TEXT",
+      "criterion": "F2 in-flight native smooth-scroll pairing stays open, outside this runtime delivery; CSS128+88 passes and completed-scroll40 passes are separate evidence.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:27-33",
+        "docs/NATIVE_ATOMIC_CAPTURE_EXTENSION_DESIGN.md:3-19",
+        "docs/evidence/interactive-media-performance/html-review.json:findings.F2",
+        "docs/evidence/interactive-media-performance/html-review.json:candidateFollowup.results"
+      ]
+    },
+    {
+      "id": "DOC03",
+      "status": "PASS_CURRENT_TEXT",
+      "criterion": "The CEF/Chromium atomic-capture extension is static research and technical design. Root-only metadata samples do not establish nested/fixed/sticky semantics, and source-framework work is declared unimplemented.",
+      "evidence": [
+        "docs/NATIVE_ATOMIC_CAPTURE_EXTENSION_DESIGN.md:13-19",
+        "docs/NATIVE_ATOMIC_CAPTURE_EXTENSION_DESIGN.md:35-37",
+        "docs/evidence/interactive-media-performance/native-scroll-research.json:conclusion",
+        "docs/evidence/interactive-media-performance/native-scroll-research.json:capabilities.C4-C7",
+        "docs/evidence/interactive-media-performance/native-scroll-research.json:buildScope"
+      ]
+    },
+    {
+      "id": "DOC04",
+      "status": "PASS_CURRENT_TEXT",
+      "criterion": "The main-thread visible Canvas commit endpoint, superseded inputs and physical-display exclusion are explicit. First image publication is navigation relative; no-store media is not called an HTTP-cache hit.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_DESIGN.md:49",
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:37-39",
+        "docs/evidence/interactive-media-performance/html-response-execution.json:measurementBoundaries"
+      ]
+    },
+    {
+      "id": "DOC05",
+      "status": "PASS_CURRENT_TEXT",
+      "criterion": "Actual media duration/codec/decode load stays unknown; AAC256s/MP3320s and MP4 freebox fixture limits are explicit, and separate audio/video playback follows singlePlayback.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_DESIGN.md:11,45",
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:17,35",
+        "docs/evidence/interactive-media-performance/media-review.json:requirements.real-playback-performance"
+      ]
+    },
+    {
+      "id": "DOC06",
+      "status": "PASS_CURRENT_TEXT",
+      "criterion": "Same-GPU16 exact comparisons and current/old CPU-helper16 exact comparisons are distinguished from disclosed GPU/CPU text-antialiasing and image-interpolation differences.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_DESIGN.md:29",
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:25",
+        "docs/evidence/interactive-media-performance/media-review.json:independentBrowserCommandsFinal",
+        "docs/evidence/interactive-media-performance/media-review.json:backendQualityAssessment"
+      ]
+    },
+    {
+      "id": "DOC07",
+      "status": "PASS_CURRENT_TEXT",
+      "criterion": "Reference evidence supports common geometry, foreground state, no shadows,24px complete boxes, same-line deletion stability and natural multiline shrink, including native atom-selection and narrow-focus fixes.",
+      "evidence": [
+        "docs/chatbox/INLINE_REFERENCE_GEOMETRY_VALIDATION.md:5-13",
+        "docs/evidence/inline-reference-geometry/execution.json:attempts",
+        "docs/evidence/inline-reference-geometry/review.json:requirements",
+        "docs/evidence/inline-reference-geometry/review.json:verification"
+      ],
+      "boundary": "16 primary geometry scenarios and20 independent supplementary checks are functional evidence, not an installed-runtime claim."
+    },
+    {
+      "id": "DOC08",
+      "status": "PASS_FINAL_DELIVERY_DECLARATION",
+      "criterion": "Final259-case default keeps225pass/1startupFAIL/33skip/0cancel plus unchanged-candidate focused1PASS. Root acceptance of required business coverage is recorded. Controlled service-only update and both public-field/original-byte rounds are completed; final documents describe actual completion without rewriting the default failure.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:79-87",
+        "docs/PLAN.md:19-21",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:isolatedChecks.startupFailure.rootFinalCheckDecision",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:controlledUpdate"
+      ]
+    },
+    {
+      "id": "DOC09",
+      "status": "PASS",
+      "criterion": "Local Markdown references resolve.",
+      "result": {
+        "localLinksChecked": 125,
+        "brokenPaths": 0,
+        "localAnchorsPresent": 0
+      },
+      "boundary": "File existence only. External URLs were not fetched, and linked implementation documents outside the requested seven-document set were not substantively reviewed."
+    },
+    {
+      "id": "DOC10",
+      "status": "PASS_CLAIMS_AGAINST_INDEPENDENT_AUDIT",
+      "criterion": "Final media21 active phases,2508 inputs per full build,2470matched+38superseded baseline and2508matched candidate, all terminal positions/pending, pan table, video drag, disclosed small regressions, loading milestones and constructor-work distinction match the independent report.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:43-63",
+        "docs/evidence/interactive-media-performance/media/reviewer-final-raw-audit.json",
+        "docs/evidence/interactive-media-performance/media-review.json:finalNumericAudit"
+      ],
+      "boundary": "One full21-phase run per version contains the displayed interaction repetitions; separate process repeats cover loading only. Subsequent HTML/process-owner changes are declared separately from the frozen media run."
+    },
+    {
+      "id": "DOC11",
+      "status": "PASS_CURRENT_TEXT",
+      "criterion": "BFS scoped ownership enumeration, same-load registration346/159.5ms p50 and400/206.3ms maximum, nine real native openings with three cancellations/six sampled peers and36helper/nineprofile cleanup have direct and independent evidence. Renderer lifecycle tail remains unexplained at the internal dependency level.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_DESIGN.md:37",
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:11,61",
+        "docs/evidence/interactive-media-performance/html-startup-stage-diagnostic.json:fixedOriginalIdComparison",
+        "docs/evidence/interactive-media-performance/html-startup-stage-diagnostic.json:rendererTail",
+        "docs/evidence/interactive-media-performance/html-review.json:finalIncrementalAcceptance"
+      ]
+    },
+    {
+      "id": "DOC12",
+      "status": "PASS_CURRENT_FINAL_F3_DECLARATION",
+      "criterion": "Final F3 independent acceptance passes the complete normal CEF production client,13combined cases and seven independently added counterexamples. OptionalFirefoxskip and physicalIME/trackpad exclusions are explicit; F2 stays outside this delivery.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:15,29",
+        "docs/PLAN.md:17",
+        "docs/evidence/interactive-media-performance/html-review.json:f3FinalReview",
+        "docs/evidence/interactive-media-performance/html-review.json:deliveryScope"
+      ]
+    },
+    {
+      "id": "DOC13",
+      "status": "PASS_CURRENT_TEXT",
+      "criterion": "Stationary main-task/GPUCPU work, RVFC/PTS dimensions/FPS, one-playing-media/PCM samples and retained startup/buffer-drain observations match evidence; readback and cold-constructor increases are explicitly disclosed.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:55-61",
+        "docs/evidence/interactive-media-performance/media/reviewer-final-raw-audit.json:audits.*.playback",
+        "docs/evidence/interactive-media-performance/loading-playback-execution.json:finalMeasurements.*.perPhaseWork"
+      ]
+    },
+    {
+      "id": "DOC14",
+      "status": "PASS_CURRENT_TEXT",
+      "criterion": "F4 shared client interaction ownership spans Scene controls, native Canvas and popup. External client fields retain focus while values/geometry/pixels continue projecting; direct reentry,Tab,source script/internal blur/popup-close and late owner callbacks have explicit evidence.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_DESIGN.md:35",
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:75-77",
+        "docs/evidence/interactive-media-performance/html-review.json:f4FinalReview"
+      ],
+      "boundary": "Nine actual-Chromium browser-domain cases use controlled backend pixels/receipts. Three separate real CEF integration tests and14focused regressions pass."
+    },
+    {
+      "id": "DOC15",
+      "status": "PASS_SUMMARY_RECOMPUTATION",
+      "criterion": "F3 and F4 short-response data remain distinct from the earlier21media phases. Each twelve-click timestamp chain and median/max is correct; F4max146ms versus F3max134ms and burst timing variability are disclosed. No sustained throughput or statistical-tail equivalence is claimed.",
+      "result": {
+        "F3": {
+          "clicks": 12,
+          "p50Ms": 72,
+          "maxMs": 134,
+          "burstMs": 437
+        },
+        "F4": {
+          "clicks": 12,
+          "p50Ms": 70,
+          "maxMs": 146,
+          "burstMs": 355,
+          "acceptedSeq": 23,
+          "displayedSeq": 23,
+          "count": 22,
+          "singleFlightMax": 1,
+          "rAfTicks": 10,
+          "pcmPackets": 3,
+          "maxPcmGapMs": 22
+        }
+      },
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:63-67",
+        "docs/evidence/interactive-media-performance/html-response-final-f3-summary.json",
+        "docs/evidence/interactive-media-performance/html-response-final-f4-summary.json"
+      ],
+      "boundary": "All declared timestamp differences, trusted-event booleans and summary median/max values were recomputed from the small pairedClicks arrays. Raw archive/harness paths exist; gzip contents were not parsed."
+    },
+    {
+      "id": "DOC16",
+      "status": "PASS_FINAL_DEFAULT_DECLARATION",
+      "criterion": "Historical F4discovery258/225pass/1productFAIL/32skip stays distinct from final259/225pass/1browser-startupFAIL/33skip. Private doubleTypeScript/Vite and190-file direct-byte match pass, same-candidate focused retry passes, and controlled runtime delivery is now completed with two preserved-state comparison rounds.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:73-81",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:serialF3FailureRound.default",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:isolatedChecks.build",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:isolatedChecks.default",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:isolatedChecks.focusedStartupReplay",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:isolatedChecks.sourceComparisonAfterDefault"
+      ]
+    },
+    {
+      "id": "DOC17",
+      "status": "PASS_CURRENT_TEXT",
+      "criterion": "Managed capture waits on the current annotationId/captureStateversion and retains original target,PNG,native surface/instance,input/frame/form-value assertions. Independent real managed test reports zeroRGBA differences; oldfocus counterexample and all earlierF1/F2/F3/cut histories remain.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:75-77",
+        "docs/evidence/interactive-media-performance/media/f4-managed-focus-result.json",
+        "docs/evidence/interactive-media-performance/media/mark-html-focus-regression.json",
+        "docs/evidence/interactive-media-performance/html-review/f4-real-mark-composer.json",
+        "docs/evidence/interactive-media-performance/html-review.json:f4FinalReview.preservedHistory"
+      ]
+    },
+    {
+      "id": "DOC18",
+      "status": "PASS_RAW_TAP_AND_SCOPE_DECLARATION",
+      "criterion": "Final default numbers, original startup failure and same-candidate targeted replay agree with rawTAP. The failed fixture did not reach product assertions; exact underlying startup cause remains unknown. No all-zero-failure complete-round claim is made.",
+      "result": {
+        "testFiles": 50,
+        "tests": 259,
+        "passed": 225,
+        "failed": 1,
+        "skipped": 33,
+        "cancelled": 0,
+        "durationMs": 260833.921584,
+        "focusedRetry": {
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "durationMs": 4923.137209
+        },
+        "matchingSourceFiles": 190
+      },
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:79",
+        "docs/PLAN.md:19",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:isolatedChecks.startupFailure",
+        "/private/tmp/acanvas-final-f4-N9IZuj/f4-default-startup-failed.log:374-381,1606-1613",
+        "/private/tmp/acanvas-final-f4-N9IZuj/f4-focused-browser-start.log:10-17"
+      ],
+      "boundary": "Root decision accepts all required business cases observed across the full round or unchanged-candidate replay. Optional skipped cases remain skipped. This reviewer did not rerun tests or infer an absent underlyingChrome cause."
+    },
+    {
+      "id": "DOC19",
+      "status": "PASS_INDEPENDENT_EXACT_COMPARISON",
+      "criterion": "All four protected public snapshots and all three protected original-byte sets independently match at the documented business/API scope.",
+      "result": {
+        "snapshotPairComparisons": 6,
+        "allPublicBusinessFieldsEqual": true,
+        "assetRounds": [
+          {
+            "files": 44,
+            "bytes": 94370916,
+            "allEqual": true
+          },
+          {
+            "files": 44,
+            "bytes": 94370916,
+            "allEqual": true
+          },
+          {
+            "files": 44,
+            "bytes": 94370916,
+            "allEqual": true
+          }
+        ],
+        "protectedAssetFiles": 132,
+        "protectedTotalBytes": 283112748,
+        "allPermissions0700or0600": true,
+        "formalFiles": 55,
+        "formalManifestComplete": true,
+        "allFormalBytesEqual": true,
+        "sourceFiles": 190,
+        "sourceSnapshotFiles": 190,
+        "allSourceBytesEqual": true,
+        "nativeSourceEqualToAcceptedClockSource": true,
+        "counts": {
+          "sessions": 4,
+          "tasks": 34,
+          "assets": 44,
+          "objects": 12,
+          "annotations": 15
+        },
+        "contentPrintedOrParsed": false
+      },
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:81-83",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:controlledUpdate.businessComparisons",
+        "/private/tmp/acanvas-docs-final-runtime-audit.json"
+      ],
+      "boundary": "All six snapshot pairs compared full project/session/state objects after sorting only the top session/state lists. Runtime service identity and measurement timestamps are outside business equality and checked separately. Asset metadata/body semantics were not parsed;44opaque buffers per round preserve exact size and bytes."
+    },
+    {
+      "id": "DOC20",
+      "status": "PASS_METHOD_REVIEW",
+      "criterion": "Snapshot/asset scripts use normal publicCLI/API reads, include full exposed session states, compare with isDeepStrictEqual/Buffer.equals, bind evidence assets to their owning session, protect files0700/0600 and emit summary-only results.",
+      "evidence": [
+        "/private/tmp/acanvas-interactive-delivery-lmQVoC/snapshot-service.mjs",
+        "/private/tmp/acanvas-interactive-delivery-lmQVoC/asset-bytes.mjs",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:controlledUpdate.activityBoundary"
+      ],
+      "boundary": "Internal host bindings and native sampling/client pre-prepare activity have no public enumeration. Final documents explicitly preserve this boundary rather than claiming universal idle or internal-field coverage."
+    },
+    {
+      "id": "DOC21",
+      "status": "PASS_CONFIGURATION_WITH_DOCUMENTED_SIGNATURE_LIMIT",
+      "criterion": "Installed normal Release arm64 helper has sandboxON, both testclipboard macrosOFF, source identical to acceptedF1clock source, Keychain provider disabled, private clipboard and existing headless/rendering settings. FailedF2 probe configurations were not installed.",
+      "result": {
+        "releaseArm64": true,
+        "sandboxOn": true,
+        "testClipboardTripwireOff": true,
+        "testClipboardFakeHandleOff": true,
+        "acceptedNativeSourceByteEqual": true,
+        "threadedAnimationDisabled": true,
+        "gpuCompositingDisabled": false,
+        "keychainProviderDisabled": true,
+        "nativeClipboardAccessDisabled": true,
+        "adhocLinkerSignature": true,
+        "deepVerificationExitCode": 1,
+        "deepVerificationKnownResourceError": true
+      },
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:85",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:controlledUpdate.installedNative",
+        ".runtime/cef-build/CMakeCache.txt",
+        "src/server/render-surface/native/main.mm"
+      ],
+      "boundary": "Read-only codesign display/deep verification was independently repeated. Its existing bundle-resource verification error is retained as a documented limit and is not counted asPASS; no signing policy or installed binary was changed by reviewer."
+    },
+    {
+      "id": "DOC22",
+      "status": "PASS_INDEPENDENT_LIVE_READS_AND_RECORDED_WS",
+      "criterion": "Exact updated service/project identity, authentication and Origin denial plus eight served resources match the formal build. Recorded events-only WS101/401/403 probes use no view registration and their method is consistent with the declared scope.",
+      "result": {
+        "serviceIdentityMatches": true,
+        "status200": true,
+        "projectIdentityMatches": true,
+        "servicePid": 90528,
+        "unauthenticatedStatus": 401,
+        "foreignOriginStatus": 403,
+        "resourceFiles": 8,
+        "servedResourceBytes": 713606,
+        "allResourceBytesEqual": true,
+        "viewRegistered": false,
+        "userPageOpenedOrRefreshed": false,
+        "businessWrites": false,
+        "credentialsOrBodiesPrinted": false
+      },
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:87",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:controlledUpdate.http",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:controlledUpdate.connection",
+        "/private/tmp/acanvas-interactive-delivery-lmQVoC/check-live-http.mjs",
+        "/private/tmp/acanvas-interactive-delivery-lmQVoC/check-live-connection.mjs",
+        "/private/tmp/acanvas-docs-final-live-audit.json"
+      ],
+      "boundary": "Reviewer independently repeated status/auth/Origin/resource GETs; WS results were method-and-record reviewed. Initial restricted connection attempt ended before status with no underlying cause recorded; the permitted read-only rerun passed. No browser/page refresh, native helper launch, view registration or business mutation occurred."
+    },
+    {
+      "id": "DOC23",
+      "status": "PASS_FORMAL_BUILD_AND_RESOURCE_DELTA",
+      "criterion": "Normal product stop, shared application build, normal native installer and detached service-only reopen are documented as completed. All55formal server/web files form the complete non-map manifest and match the acceptedF4candidate;190source/test/config files still match the frozen source snapshot.",
+      "evidence": [
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md:81-87",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:controlledUpdate.productStop",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:controlledUpdate.formalBuild",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:controlledUpdate.formalCandidateComparison",
+        "docs/evidence/interactive-media-performance/delivery-execution.json:controlledUpdate.start",
+        "/private/tmp/acanvas-docs-final-runtime-audit.json"
+      ],
+      "boundary": "The formal build/stop/install/start receipts were reviewed; this reviewer did not repeat these mutations. No user browser was opened or refreshed."
+    },
+    {
+      "id": "DOC24",
+      "status": "PASS_FINAL_DOCUMENT_DELTA",
+      "criterion": "All requested final documents correctly state runtime completion, true default/retry status, preserved business counts/bytes and all accepted scope limits.125local Markdown links resolve.",
+      "evidence": [
+        "README.md",
+        "docs/PLAN.md",
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_DESIGN.md",
+        "docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md",
+        "docs/NATIVE_ATOMIC_CAPTURE_EXTENSION_DESIGN.md",
+        "docs/chatbox/INLINE_REFERENCE_GEOMETRY_DESIGN.md",
+        "docs/chatbox/INLINE_REFERENCE_GEOMETRY_VALIDATION.md"
+      ]
+    }
+  ],
+  "finalAcceptancePending": [],
+  "protectedBoundaries": {
+    "productionServiceAccessed": true,
+    "serviceAccessReadOnly": true,
+    "actualPublicBusinessSnapshotsCompared": true,
+    "actualOpaqueAssetBytesCompared": true,
+    "actualWhiteboardWritten": false,
+    "actualAssetMetadataOrContentSemanticsParsed": false,
+    "credentialsOrTaskBodiesPrinted": false,
+    "browserOrNativeHelperStarted": false,
+    "buildOrTestStarted": false,
+    "largeGzipParsed": false,
+    "sourceOrTopLevelDocsEdited": false,
+    "sharedDistOrRuntimeWrittenByReviewer": false,
+    "gitCommitted": false,
+    "reviewEvidenceOnlyWritten": true,
+    "actualAcanvasDataFilesReadDirectly": false
+  },
+  "conclusion": "PASS_WITH_DOCUMENTED_LIMITS. No open finding within the authorized current style/performance delivery. Exact runtime/source/resource/business/original-byte integrity and final document claims pass independent delta acceptance. The namedF2,measurement,fixture,hardware,default-startup and signing limits remain explicit. Root may complete its final Git commit.",
+  "reviewHistory": [
+    {
+      "reviewedAt": "2026-10-09T10:26:05+00:00",
+      "result": "Interim scope review,111local links, D01status wording open; final media numbers and delivery stages pending."
+    },
+    {
+      "stage": "pre-delivery incremental",
+      "result": "D01,D02,D03closed;117local links; final media claims match independent raw-audit report. HTMLreview is PASS_WITH_KNOWN_F2_LIMITATION with final F3prod1/combined13/independent7passes. Ordinary checks, short numeric sanity and live runtime delivery remain pending."
+    },
+    {
+      "reviewedAt": "2026-10-09T12:17:54.503209+00:00",
+      "stage": "F4 final-source pre-delivery delta",
+      "result": "F4independent9controlled-backend browser/3realCEF/14focused evidence checked; F3/F4summary arithmetic passed.121local links. D04closed. Final default has a parent-reported browser_unavailable startup/environment failure under diagnosis; finaltotals/retry and actualruntime remain pending."
+    },
+    {
+      "reviewedAt": "2026-10-09T12:25:36.326686+00:00",
+      "stage": "final-default acceptance before actual-runtime delta",
+      "result": "OriginalTAP259/225pass/1startupFAIL/33skip/0cancel and samecandidate1PASS replay independently match docs.190filesMATCH. Rootrequired-business acceptance acknowledged;122local links; actualupdate/two-round results pending."
+    },
+    {
+      "reviewedAt": "2026-10-09T12:38:51.594448+00:00",
+      "stage": "final exact runtime/document delta",
+      "result": "Independent6snapshot pairs/132opaque files/55formal files/190source files/acceptednative source allmatch; modes correct. Read-onlylivePID90528/status/auth/Origin/8resources passed. Native configuration matches;deep signature error preserved.125links;allD01-D04closed; no remainingreview work."
+    }
+  ],
+  "documentedLimits": [
+    "F2in-flight native smooth-scroll DOM/pixel mismatch remains open and outside this user-selected runtime delivery. The CEF/Chromium atomic transaction is technical research/design only.",
+    "Warm/session-waveform-cache-cleared native HTML startup tail and small interaction regressions remain visible; internal renderer lifecycle dependency is still unknown.",
+    "21media-phase measurements are from the frozen media source. LaterBFS/F3/F4changes have separate functional and short-response evidence rather than a claimed complete21phase rerun.",
+    "Latency ends at main-thread successful visibleCanvas commit, before browser/system compositor screen output. Short twelve-click/burst cases do not prove statistical tail equivalence or sustained throughput.",
+    "GPU/CPU antialiasing and image-filter pixel differences remain disclosed. SameGPU16case exactness and current/oldCPUhelper16case exactness are separate evidence.",
+    "Actual media codec/duration/decode dimensions/load remain unknown. Synthetic AAC256s/MP3320s/MP4freebox fixtures do not establish actual codec or Range-transfer equivalence.",
+    "System nativeIME candidate UI, physicalWebKit trackpad/Safari and existing HTML touchscreen double-touch exclusion are outside automated scope. The nineF4browser cases use controlled backend pixels/receipts; three realCEF integrations are separate.",
+    "Complete default retains one browser_unavailable startup failure with underlying cause unknown,33optional skips, and a same-unchanged-candidate focusedPASS. It is not a zero-failure whole round.",
+    "Installed helper retains adhoc/linker signing and the existing deep-verification bundle-resource error; that verification is notPASS.",
+    "Integrity equality covers publicly exposed business fields and original bytes. Internal host bindings, native sampling and pre-prepare client activity lack public enumeration."
+  ],
+  "rootRemaining": [
+    "Root performs its final change/material check and root-only Git commit."
+  ]
+}

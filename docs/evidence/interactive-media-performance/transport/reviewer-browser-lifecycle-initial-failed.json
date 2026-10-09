@@ -1,0 +1,46 @@
+{
+  "status": "incomplete",
+  "scope": "Owned empty real App; functional lifecycle, no timing conclusion; Chromium actual BFCache eligibility recorded separately from persisted-event branch",
+  "measuredAt": "2026-10-09T06:02:53.866Z",
+  "webRoot": "/private/tmp/acanvas-cold-transport-20261009/web",
+  "errors": [],
+  "streams": [],
+  "acks": [
+    {
+      "type": "ready",
+      "instanceId": "6ad66724-536c-46d4-84a8-979ea1988cc2"
+    },
+    {
+      "type": "view-ready",
+      "view": {
+        "projectId": "fd40897a-8e74-4aac-a20e-76b76947fd9b",
+        "sessionId": "4aac1365-478d-4fcc-9107-a0ce96454281",
+        "documentId": "1c9693bc-e04e-43b6-acad-05781dffec4e",
+        "viewId": "5ca9c12b-b760-452c-86c7-b811c8496e5c",
+        "viewGeneration": 1
+      }
+    },
+    {
+      "type": "view-ready",
+      "view": {
+        "projectId": "fd40897a-8e74-4aac-a20e-76b76947fd9b",
+        "sessionId": "4aac1365-478d-4fcc-9107-a0ce96454281",
+        "documentId": "1c9693bc-e04e-43b6-acad-05781dffec4e",
+        "viewId": "5ca9c12b-b760-452c-86c7-b811c8496e5c",
+        "viewGeneration": 1
+      }
+    },
+    {
+      "type": "ready",
+      "instanceId": "6ad66724-536c-46d4-84a8-979ea1988cc2"
+    }
+  ],
+  "lifecycle": [],
+  "browser": "155.0.8059.39",
+  "persistedBranchKeepsSameView": true,
+  "oldViewActiveAfterNavigation": true,
+  "failure": {
+    "message": "page.goBack: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for navigation until \"load\"\u001b[22m\n\u001b[2m    - navigated to \"http://127.0.0.1:57795/?session=4aac1365-478d-4fcc-9107-a0ce96454281\"\u001b[22m\n",
+    "stack": "page.goBack: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for navigation until \"load\"\u001b[22m\n\u001b[2m    - navigated to \"http://127.0.0.1:57795/?session=4aac1365-478d-4fcc-9107-a0ce96454281\"\u001b[22m\n\n    at /private/tmp/acanvas-connection-review-OZWHtX/reviewer-browser-lifecycle.mjs:21:115"
+  }
+}

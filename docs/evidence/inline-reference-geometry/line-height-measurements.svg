@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="960" viewBox="0 0 1200 960"><rect width="1200" height="960" fill="white"/><g font-family="Arial,sans-serif" fill="#202020"><text x="600" y="30" text-anchor="middle" font-size="20">Measured editor height during confirmation and deletion</text><text x="600" y="54" text-anchor="middle" font-size="13">24px per text line; real wrapped content returns to the remaining text line count.</text>
+<text x="160" y="90" text-anchor="middle" font-size="14">1440px / light</text><text x="160" y="109" text-anchor="middle" font-size="13">short-text</text>
+<path d="M80 255H290" stroke="#dedede"/><text x="72" y="259" text-anchor="end" font-size="11">24px</text>
+<path d="M80 195H290" stroke="#dedede"/><text x="72" y="199" text-anchor="end" font-size="11">48px</text>
+<path d="M80 135H290" stroke="#dedede"/><text x="72" y="139" text-anchor="end" font-size="11">72px</text>
+<polyline points="80,255 185,255 290,255" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="80" cy="255" r="4" fill="#23617c"/><text x="80" y="275" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="185" cy="255" r="4" fill="#23617c"/><text x="185" y="275" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="290" cy="255" r="4" fill="#23617c"/><text x="290" y="275" text-anchor="middle" font-size="11">Delete 1</text>
+<text x="458" y="90" text-anchor="middle" font-size="14">1440px / light</text><text x="458" y="109" text-anchor="middle" font-size="13">long-text</text>
+<path d="M378 255H588" stroke="#dedede"/><text x="370" y="259" text-anchor="end" font-size="11">24px</text>
+<path d="M378 195H588" stroke="#dedede"/><text x="370" y="199" text-anchor="end" font-size="11">48px</text>
+<path d="M378 135H588" stroke="#dedede"/><text x="370" y="139" text-anchor="end" font-size="11">72px</text>
+<polyline points="378,255 483,255 588,255" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="378" cy="255" r="4" fill="#23617c"/><text x="378" y="275" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="483" cy="255" r="4" fill="#23617c"/><text x="483" y="275" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="588" cy="255" r="4" fill="#23617c"/><text x="588" y="275" text-anchor="middle" font-size="11">Delete 1</text>
+<text x="756" y="90" text-anchor="middle" font-size="14">1440px / light</text><text x="756" y="109" text-anchor="middle" font-size="13">multiple-text</text>
+<path d="M676 255H886" stroke="#dedede"/><text x="668" y="259" text-anchor="end" font-size="11">24px</text>
+<path d="M676 195H886" stroke="#dedede"/><text x="668" y="199" text-anchor="end" font-size="11">48px</text>
+<path d="M676 135H886" stroke="#dedede"/><text x="668" y="139" text-anchor="end" font-size="11">72px</text>
+<polyline points="676,255 746,255 816,255 886,255" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="676" cy="255" r="4" fill="#23617c"/><text x="676" y="275" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="746" cy="255" r="4" fill="#23617c"/><text x="746" y="275" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="816" cy="255" r="4" fill="#23617c"/><text x="816" y="275" text-anchor="middle" font-size="11">Delete 1</text>
+<circle cx="886" cy="255" r="4" fill="#23617c"/><text x="886" y="275" text-anchor="middle" font-size="11">Delete 2</text>
+<text x="1054" y="90" text-anchor="middle" font-size="14">1440px / light</text><text x="1054" y="109" text-anchor="middle" font-size="13">pure-references</text>
+<path d="M974 255H1184" stroke="#dedede"/><text x="966" y="259" text-anchor="end" font-size="11">24px</text>
+<path d="M974 195H1184" stroke="#dedede"/><text x="966" y="199" text-anchor="end" font-size="11">48px</text>
+<path d="M974 135H1184" stroke="#dedede"/><text x="966" y="139" text-anchor="end" font-size="11">72px</text>
+<polyline points="974,255 1044,255 1114,255 1184,255" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="974" cy="255" r="4" fill="#23617c"/><text x="974" y="275" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="1044" cy="255" r="4" fill="#23617c"/><text x="1044" y="275" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="1114" cy="255" r="4" fill="#23617c"/><text x="1114" y="275" text-anchor="middle" font-size="11">Delete 1</text>
+<circle cx="1184" cy="255" r="4" fill="#23617c"/><text x="1184" y="275" text-anchor="middle" font-size="11">Delete 2</text>
+<text x="160" y="300" text-anchor="middle" font-size="14">1440px / dark</text><text x="160" y="319" text-anchor="middle" font-size="13">short-text</text>
+<path d="M80 465H290" stroke="#dedede"/><text x="72" y="469" text-anchor="end" font-size="11">24px</text>
+<path d="M80 405H290" stroke="#dedede"/><text x="72" y="409" text-anchor="end" font-size="11">48px</text>
+<path d="M80 345H290" stroke="#dedede"/><text x="72" y="349" text-anchor="end" font-size="11">72px</text>
+<polyline points="80,465 185,465 290,465" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="80" cy="465" r="4" fill="#23617c"/><text x="80" y="485" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="185" cy="465" r="4" fill="#23617c"/><text x="185" y="485" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="290" cy="465" r="4" fill="#23617c"/><text x="290" y="485" text-anchor="middle" font-size="11">Delete 1</text>
+<text x="458" y="300" text-anchor="middle" font-size="14">1440px / dark</text><text x="458" y="319" text-anchor="middle" font-size="13">long-text</text>
+<path d="M378 465H588" stroke="#dedede"/><text x="370" y="469" text-anchor="end" font-size="11">24px</text>
+<path d="M378 405H588" stroke="#dedede"/><text x="370" y="409" text-anchor="end" font-size="11">48px</text>
+<path d="M378 345H588" stroke="#dedede"/><text x="370" y="349" text-anchor="end" font-size="11">72px</text>
+<polyline points="378,465 483,465 588,465" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="378" cy="465" r="4" fill="#23617c"/><text x="378" y="485" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="483" cy="465" r="4" fill="#23617c"/><text x="483" y="485" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="588" cy="465" r="4" fill="#23617c"/><text x="588" y="485" text-anchor="middle" font-size="11">Delete 1</text>
+<text x="756" y="300" text-anchor="middle" font-size="14">1440px / dark</text><text x="756" y="319" text-anchor="middle" font-size="13">multiple-text</text>
+<path d="M676 465H886" stroke="#dedede"/><text x="668" y="469" text-anchor="end" font-size="11">24px</text>
+<path d="M676 405H886" stroke="#dedede"/><text x="668" y="409" text-anchor="end" font-size="11">48px</text>
+<path d="M676 345H886" stroke="#dedede"/><text x="668" y="349" text-anchor="end" font-size="11">72px</text>
+<polyline points="676,465 746,465 816,465 886,465" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="676" cy="465" r="4" fill="#23617c"/><text x="676" y="485" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="746" cy="465" r="4" fill="#23617c"/><text x="746" y="485" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="816" cy="465" r="4" fill="#23617c"/><text x="816" y="485" text-anchor="middle" font-size="11">Delete 1</text>
+<circle cx="886" cy="465" r="4" fill="#23617c"/><text x="886" y="485" text-anchor="middle" font-size="11">Delete 2</text>
+<text x="1054" y="300" text-anchor="middle" font-size="14">1440px / dark</text><text x="1054" y="319" text-anchor="middle" font-size="13">pure-references</text>
+<path d="M974 465H1184" stroke="#dedede"/><text x="966" y="469" text-anchor="end" font-size="11">24px</text>
+<path d="M974 405H1184" stroke="#dedede"/><text x="966" y="409" text-anchor="end" font-size="11">48px</text>
+<path d="M974 345H1184" stroke="#dedede"/><text x="966" y="349" text-anchor="end" font-size="11">72px</text>
+<polyline points="974,465 1044,465 1114,465 1184,465" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="974" cy="465" r="4" fill="#23617c"/><text x="974" y="485" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="1044" cy="465" r="4" fill="#23617c"/><text x="1044" y="485" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="1114" cy="465" r="4" fill="#23617c"/><text x="1114" y="485" text-anchor="middle" font-size="11">Delete 1</text>
+<circle cx="1184" cy="465" r="4" fill="#23617c"/><text x="1184" y="485" text-anchor="middle" font-size="11">Delete 2</text>
+<text x="160" y="510" text-anchor="middle" font-size="14">320px / light</text><text x="160" y="529" text-anchor="middle" font-size="13">short-text</text>
+<path d="M80 675H290" stroke="#dedede"/><text x="72" y="679" text-anchor="end" font-size="11">24px</text>
+<path d="M80 615H290" stroke="#dedede"/><text x="72" y="619" text-anchor="end" font-size="11">48px</text>
+<path d="M80 555H290" stroke="#dedede"/><text x="72" y="559" text-anchor="end" font-size="11">72px</text>
+<polyline points="80,675 185,675 290,675" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="80" cy="675" r="4" fill="#23617c"/><text x="80" y="695" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="185" cy="675" r="4" fill="#23617c"/><text x="185" y="695" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="290" cy="675" r="4" fill="#23617c"/><text x="290" y="695" text-anchor="middle" font-size="11">Delete 1</text>
+<text x="458" y="510" text-anchor="middle" font-size="14">320px / light</text><text x="458" y="529" text-anchor="middle" font-size="13">long-text</text>
+<path d="M378 675H588" stroke="#dedede"/><text x="370" y="679" text-anchor="end" font-size="11">24px</text>
+<path d="M378 615H588" stroke="#dedede"/><text x="370" y="619" text-anchor="end" font-size="11">48px</text>
+<path d="M378 555H588" stroke="#dedede"/><text x="370" y="559" text-anchor="end" font-size="11">72px</text>
+<polyline points="378,555 483,555 588,675" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="378" cy="555" r="4" fill="#23617c"/><text x="378" y="695" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="483" cy="555" r="4" fill="#23617c"/><text x="483" y="695" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="588" cy="675" r="4" fill="#23617c"/><text x="588" y="695" text-anchor="middle" font-size="11">Delete 1</text>
+<text x="756" y="510" text-anchor="middle" font-size="14">320px / light</text><text x="756" y="529" text-anchor="middle" font-size="13">multiple-text</text>
+<path d="M676 675H886" stroke="#dedede"/><text x="668" y="679" text-anchor="end" font-size="11">24px</text>
+<path d="M676 615H886" stroke="#dedede"/><text x="668" y="619" text-anchor="end" font-size="11">48px</text>
+<path d="M676 555H886" stroke="#dedede"/><text x="668" y="559" text-anchor="end" font-size="11">72px</text>
+<polyline points="676,555 746,555 816,675 886,675" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="676" cy="555" r="4" fill="#23617c"/><text x="676" y="695" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="746" cy="555" r="4" fill="#23617c"/><text x="746" y="695" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="816" cy="675" r="4" fill="#23617c"/><text x="816" y="695" text-anchor="middle" font-size="11">Delete 1</text>
+<circle cx="886" cy="675" r="4" fill="#23617c"/><text x="886" y="695" text-anchor="middle" font-size="11">Delete 2</text>
+<text x="1054" y="510" text-anchor="middle" font-size="14">320px / light</text><text x="1054" y="529" text-anchor="middle" font-size="13">pure-references</text>
+<path d="M974 675H1184" stroke="#dedede"/><text x="966" y="679" text-anchor="end" font-size="11">24px</text>
+<path d="M974 615H1184" stroke="#dedede"/><text x="966" y="619" text-anchor="end" font-size="11">48px</text>
+<path d="M974 555H1184" stroke="#dedede"/><text x="966" y="559" text-anchor="end" font-size="11">72px</text>
+<polyline points="974,615 1044,615 1114,675 1184,675" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="974" cy="615" r="4" fill="#23617c"/><text x="974" y="695" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="1044" cy="615" r="4" fill="#23617c"/><text x="1044" y="695" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="1114" cy="675" r="4" fill="#23617c"/><text x="1114" y="695" text-anchor="middle" font-size="11">Delete 1</text>
+<circle cx="1184" cy="675" r="4" fill="#23617c"/><text x="1184" y="695" text-anchor="middle" font-size="11">Delete 2</text>
+<text x="160" y="720" text-anchor="middle" font-size="14">320px / dark</text><text x="160" y="739" text-anchor="middle" font-size="13">short-text</text>
+<path d="M80 885H290" stroke="#dedede"/><text x="72" y="889" text-anchor="end" font-size="11">24px</text>
+<path d="M80 825H290" stroke="#dedede"/><text x="72" y="829" text-anchor="end" font-size="11">48px</text>
+<path d="M80 765H290" stroke="#dedede"/><text x="72" y="769" text-anchor="end" font-size="11">72px</text>
+<polyline points="80,885 185,885 290,885" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="80" cy="885" r="4" fill="#23617c"/><text x="80" y="905" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="185" cy="885" r="4" fill="#23617c"/><text x="185" y="905" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="290" cy="885" r="4" fill="#23617c"/><text x="290" y="905" text-anchor="middle" font-size="11">Delete 1</text>
+<text x="458" y="720" text-anchor="middle" font-size="14">320px / dark</text><text x="458" y="739" text-anchor="middle" font-size="13">long-text</text>
+<path d="M378 885H588" stroke="#dedede"/><text x="370" y="889" text-anchor="end" font-size="11">24px</text>
+<path d="M378 825H588" stroke="#dedede"/><text x="370" y="829" text-anchor="end" font-size="11">48px</text>
+<path d="M378 765H588" stroke="#dedede"/><text x="370" y="769" text-anchor="end" font-size="11">72px</text>
+<polyline points="378,765 483,765 588,885" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="378" cy="765" r="4" fill="#23617c"/><text x="378" y="905" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="483" cy="765" r="4" fill="#23617c"/><text x="483" y="905" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="588" cy="885" r="4" fill="#23617c"/><text x="588" y="905" text-anchor="middle" font-size="11">Delete 1</text>
+<text x="756" y="720" text-anchor="middle" font-size="14">320px / dark</text><text x="756" y="739" text-anchor="middle" font-size="13">multiple-text</text>
+<path d="M676 885H886" stroke="#dedede"/><text x="668" y="889" text-anchor="end" font-size="11">24px</text>
+<path d="M676 825H886" stroke="#dedede"/><text x="668" y="829" text-anchor="end" font-size="11">48px</text>
+<path d="M676 765H886" stroke="#dedede"/><text x="668" y="769" text-anchor="end" font-size="11">72px</text>
+<polyline points="676,765 746,765 816,885 886,885" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="676" cy="765" r="4" fill="#23617c"/><text x="676" y="905" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="746" cy="765" r="4" fill="#23617c"/><text x="746" y="905" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="816" cy="885" r="4" fill="#23617c"/><text x="816" y="905" text-anchor="middle" font-size="11">Delete 1</text>
+<circle cx="886" cy="885" r="4" fill="#23617c"/><text x="886" y="905" text-anchor="middle" font-size="11">Delete 2</text>
+<text x="1054" y="720" text-anchor="middle" font-size="14">320px / dark</text><text x="1054" y="739" text-anchor="middle" font-size="13">pure-references</text>
+<path d="M974 885H1184" stroke="#dedede"/><text x="966" y="889" text-anchor="end" font-size="11">24px</text>
+<path d="M974 825H1184" stroke="#dedede"/><text x="966" y="829" text-anchor="end" font-size="11">48px</text>
+<path d="M974 765H1184" stroke="#dedede"/><text x="966" y="769" text-anchor="end" font-size="11">72px</text>
+<polyline points="974,825 1044,825 1114,885 1184,885" fill="none" stroke="#23617c" stroke-width="2"/>
+<circle cx="974" cy="825" r="4" fill="#23617c"/><text x="974" y="905" text-anchor="middle" font-size="11">Preview</text>
+<circle cx="1044" cy="825" r="4" fill="#23617c"/><text x="1044" y="905" text-anchor="middle" font-size="11">Formal</text>
+<circle cx="1114" cy="885" r="4" fill="#23617c"/><text x="1114" y="905" text-anchor="middle" font-size="11">Delete 1</text>
+<circle cx="1184" cy="885" r="4" fill="#23617c"/><text x="1184" y="905" text-anchor="middle" font-size="11">Delete 2</text>
+</g></svg>

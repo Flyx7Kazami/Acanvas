@@ -13,6 +13,7 @@ import { startHtmlPreview } from './html-preview.js';
 import { ProjectBrowser, type ProjectBrowserOptions } from './browser-capture.js';
 import { ProjectHtmlSurfaces, type HtmlSurfaceFrame, type HtmlSurfacesOptions } from './render-surface/html.js';
 import { htmlInputRequestBytes } from '../shared/html-surface.js';
+import { createBoardConnections, type ViewPresence } from './board-connection.js';
 
 export interface ServerOptions { root: string; port?: number; maxUploadBytes?: number; webRoot?: string; allowedOrigins?: string[]; browser?: ProjectBrowserOptions; htmlSurfaces?: HtmlSurfacesOptions }
 export interface RunningServer { service: CanvasService; browser: ProjectBrowser; url: string; close: () => Promise<void> }
@@ -46,7 +47,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   let browser: ProjectBrowser;
   let closing = false;
   let port = options.port ?? 4317;
-  const presences = new Map<string, { view: CaptureView; connections: Set<ServerResponse>; timer?: ReturnType<typeof setTimeout> }>();
+  const presences = new Map<string, { view: CaptureView; connections: Set<ViewPresence>; timer?: ReturnType<typeof setTimeout> }>();
   const sameView = (a: CaptureView, b: CaptureView) => a.projectId === b.projectId && a.sessionId === b.sessionId && a.documentId === b.documentId && a.viewId === b.viewId && a.viewGeneration === b.viewGeneration;
   const endPresence = (viewId: string) => { const record = presences.get(viewId); if (!record) return; presences.delete(viewId); clearTimeout(record.timer); for (const connection of record.connections) connection.end(); };
   const retireView = async (view: Pick<CaptureView, 'sessionId' | 'viewId' | 'documentId' | 'viewGeneration'>, operation?: CaptureViewOperation) => {
@@ -54,6 +55,25 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
     endPresence(view.viewId); await surfaces.closeView(view.viewId);
     for (const [id, owner] of surfaceOwners) if (owner.viewId === view.viewId) surfaceOwners.delete(id);
     return result;
+  };
+  const watchPresence = (view: CaptureView, connection: ViewPresence) => {
+    const active = service.captureView(view.sessionId, view.viewId);
+    if (!sameView(view, active)) throw new ApiFailure(409, 'scene_view_conflict', 'Use the current document and view generation.');
+    let record = presences.get(view.viewId);
+    if (record && !sameView(record.view, view)) throw new ApiFailure(409, 'scene_view_conflict', 'Use the current document and view generation.');
+    if (!record) { record = { view: active, connections: new Set() }; presences.set(view.viewId, record); }
+    const current = record; clearTimeout(current.timer); current.timer = undefined; current.connections.add(connection);
+    return () => {
+      current.connections.delete(connection);
+      if (closing || presences.get(view.viewId) !== current || current.connections.size || current.timer) return;
+      current.timer = setTimeout(() => {
+        current.timer = undefined;
+        if (closing || presences.get(view.viewId) !== current || current.connections.size) return;
+        let latest: CaptureView; try { latest = service.captureView(view.sessionId, view.viewId); } catch { endPresence(view.viewId); return; }
+        if (!sameView(current.view, latest)) { endPresence(view.viewId); return; }
+        void retireView(latest).catch(() => { endPresence(view.viewId); });
+      }, 5000); current.timer.unref();
+    };
   };
   const authenticationCookieName = () => `acanvas_auth_${port}`;
   const guardSource = (request: IncomingMessage) => {
@@ -126,22 +146,9 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
           if (viewId && captureViewMatch[3] === 'presence' && method === 'GET') {
             const view = service.captureView(sessionId, viewId);
             if (url.searchParams.get('documentId') !== view.documentId || Number(url.searchParams.get('viewGeneration')) !== view.viewGeneration) throw new ApiFailure(409, 'scene_view_conflict', 'Use the current document and view generation.');
-            let record = presences.get(viewId);
-            if (record && !sameView(record.view, view)) throw new ApiFailure(409, 'scene_view_conflict', 'Use the current document and view generation.');
-            if (!record) { record = { view, connections: new Set() }; presences.set(viewId, record); }
-            const current = record; clearTimeout(current.timer); current.timer = undefined; current.connections.add(response);
+            const detach = watchPresence(view, response);
             response.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' }); response.write('event: ready\ndata: {}\n\n');
-            response.on('close', () => {
-              current.connections.delete(response);
-              if (closing || presences.get(viewId) !== current || current.connections.size) return;
-              current.timer = setTimeout(() => {
-                current.timer = undefined;
-                if (closing || presences.get(viewId) !== current || current.connections.size) return;
-                let active: CaptureView; try { active = service.captureView(sessionId, viewId); } catch { endPresence(viewId); return; }
-                if (!sameView(current.view, active)) { endPresence(viewId); return; }
-                void retireView(active).catch(() => { endPresence(viewId); });
-              }, 5000); current.timer.unref();
-            }); return;
+            response.once('close', detach); return;
           }
           if (viewId && captureViewMatch[3] === 'scenes' && method === 'POST') { send(response, 200, service.sceneSnapshot(sessionId, viewId, await payload(request))); return; }
           if (viewId && captureViewMatch[3] === 'presented' && method === 'PUT') { send(response, 200, service.confirmScenePresentation(sessionId, viewId, await payload(request))); return; }
@@ -354,20 +361,28 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
     const pending = handle(request, response); handlers.add(pending);
     void pending.then(() => handlers.delete(pending), () => handlers.delete(pending));
   });
-  service.onChange = () => { for (const response of events) response.write('event: change\ndata: {}\n\n'); };
-  const heartbeat = setInterval(() => { for (const response of events) response.write(': alive\n\n'); for (const record of presences.values()) for (const response of record.connections) response.write(': alive\n\n'); }, 15_000); heartbeat.unref();
-  await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch(async error => { clearInterval(heartbeat); await surfaces.close(); await preview.close(); service.close(); throw error; });
+  const connections = createBoardConnections(server, { instanceId: service.identity().instanceId, watch: watchPresence, guard(request) {
+    if (closing) throw new ApiFailure(503, 'service_closing', 'Reconnect after the local service starts.');
+    guardSource(request);
+    if (!request.headers.origin || (request.headers.origin !== `http://${request.headers.host}` && !options.allowedOrigins?.includes(request.headers.origin))) throw new ApiFailure(403, 'origin_rejected', 'Use the same local browser origin.');
+    const prefix = `${authenticationCookieName()}=`;
+    const cookie = request.headers.cookie?.split(';').map(value => value.trim()).find(value => value.startsWith(prefix))?.slice(prefix.length);
+    if (!sameToken(cookie, token)) throw new ApiFailure(401, 'authentication_required', 'Connect through this local service before using its API.');
+  } });
+  service.onChange = () => { for (const response of events) response.write('event: change\ndata: {}\n\n'); connections.changed(); };
+  const heartbeat = setInterval(() => { for (const response of events) response.write(': alive\n\n'); for (const record of presences.values()) for (const response of record.connections) if ('write' in response) (response as ServerResponse).write(': alive\n\n'); }, 15_000); heartbeat.unref();
+  await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch(async error => { clearInterval(heartbeat); connections.close(); await surfaces.close(); await preview.close(); service.close(); throw error; });
   let shutdown: Promise<void> | undefined;
   const runtime: ServiceRuntime = { project: service.project, ...service.identity(), url: `http://127.0.0.1:${port}` };
   browser = new ProjectBrowser(service, runtime.url, token, options.browser);
   stopService = () => {
     if (shutdown) return shutdown;
     shutdown = (async () => {
-      closing = true; clearInterval(heartbeat);
+      closing = true; clearInterval(heartbeat); connections.close();
       // Cancel captures while the business service can still invalidate versions.
       await browser.close();
       const stopped = new Promise<void>((resolvePromise, reject) => server.close((error) => error ? reject(error) : resolvePromise()));
-      const streams = new Set([...events, ...[...presences.values()].flatMap(record => [...record.connections])]);
+      const streams = new Set([...events, ...[...presences.values()].flatMap(record => [...record.connections].filter((connection): connection is ServerResponse => 'write' in connection))]);
       for (const record of presences.values()) clearTimeout(record.timer); presences.clear();
       for (const response of streams) response.end(); events.clear();
       // Incomplete uploads end through their normal cleanup before SQLite closes.

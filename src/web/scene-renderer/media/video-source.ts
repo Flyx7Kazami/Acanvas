@@ -1,9 +1,8 @@
 import type { MediaPresentationPosition } from '../../../shared/types.js';
 
-export interface VideoTextureFrame { pixels: HTMLCanvasElement; bitmap: { width: number; height: number }; media: MediaPresentationPosition; observedFrames?: number }
-/** The texture displayed by the application is copied here, using observed native decoder timing. */
+export interface VideoTextureFrame { pixels: HTMLVideoElement; bitmap: { width: number; height: number }; media: MediaPresentationPosition; observedFrames?: number }
+/** The publisher synchronously copies the current native decoder frame and its observed timing. */
 export function observeVideoFrames(video: HTMLVideoElement, publish: (frame: VideoTextureFrame) => void, onError?: (cause: unknown) => void, onUnavailable?: () => void): () => void {
-  const pixels = video.ownerDocument.createElement('canvas'), context = pixels.getContext('2d')!;
   let disposed = false, callback = 0, animation = 0, generation = 0, presentedTime: number | undefined;
   let source = video.src, waitingForData = video.readyState < 2, seeking = video.seeking;
   let seekStartedAt = seeking ? performance.now() : 0, minimumPresentationTime = 0, lastPresentationTime = -Infinity, lastPlaybackTime = video.currentTime;
@@ -19,10 +18,8 @@ export function observeVideoFrames(video: HTMLVideoElement, publish: (frame: Vid
     if (!ready()) return;
     try {
       if (video.videoWidth * video.videoHeight > 8_000_000) throw new Error('Video textures support frames up to eight million pixels.');
-      if (pixels.width !== video.videoWidth || pixels.height !== video.videoHeight) { pixels.width = video.videoWidth; pixels.height = video.videoHeight; }
-      context.drawImage(video, 0, 0, pixels.width, pixels.height); context.getImageData(0, 0, 1, 1);
       presentedTime = metadata?.mediaTime ?? video.currentTime;
-      publish({ pixels, bitmap: { width: pixels.width, height: pixels.height }, media: { playbackTime: video.currentTime, presentedTime, timePrecision: metadata ? 'rvfc-observed' : 'playback-sampled' }, ...(metadata ? { observedFrames: metadata.presentedFrames } : {}) });
+      publish({ pixels: video, bitmap: { width: video.videoWidth, height: video.videoHeight }, media: { playbackTime: video.currentTime, presentedTime, timePrecision: metadata ? 'rvfc-observed' : 'playback-sampled' }, ...(metadata ? { observedFrames: metadata.presentedFrames } : {}) });
       video.dataset.presentedTime = String(presentedTime); video.dataset.timePrecision = metadata ? 'rvfc-observed' : 'playback-sampled';
       lastPlaybackTime = video.currentTime; if (metadata) lastPresentationTime = metadata.presentationTime;
     } catch (cause) { onError?.(cause); }

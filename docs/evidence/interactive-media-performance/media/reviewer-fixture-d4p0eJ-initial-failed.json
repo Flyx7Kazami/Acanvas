@@ -1,0 +1,7 @@
+{
+  "error": "TimeoutError: page.waitForFunction: Timeout 8000ms exceeded.",
+  "results": [],
+  "errors": [
+    "The requested module '/node_modules/react/jsx-dev-runtime.js?v=c4b1c551' does not provide an export named 'jsxDEV'"
+  ]
+}

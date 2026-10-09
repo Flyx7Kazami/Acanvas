@@ -1,0 +1,118 @@
+{
+  "status": "executor-full-managed-and-lifecycle-PASS-independent-review-pending",
+  "webRoot": "/private/tmp/acanvas-html-f4-20261009/web-owner",
+  "compiled": "/private/tmp/acanvas-html-f4-20261009/compiled",
+  "nativeExecutable": "/private/tmp/acanvas-html-response-20261009/native-clock-build/Release/acanvas-surface.app/Contents/MacOS/acanvas-surface",
+  "sourceChange": "HTML client focus ownership is shared by controls, canvas and popup; source canonical focus follows the client only while this surface owns client interaction. External annotation/composer/toolbar input remains owned by its current client element.",
+  "helperChange": "Read the current editor annotationId, verify typed textarea value, wait for that ID captureState.complete and matching capture/captureState version, then return that annotation.",
+  "cases": [
+    {
+      "name": "original managed Markdown/HTML plus comment/composer/return-HTML ownership",
+      "durationMs": 6522.57925,
+      "evidence": "/private/tmp/acanvas-chatbox-evidence-4k80m0",
+      "result": "PASS"
+    },
+    {
+      "name": "original managed audio/video ranges/capture/time",
+      "durationMs": 4203.835833,
+      "evidence": "/private/tmp/acanvas-chatbox-evidence-97j6eO",
+      "result": "PASS"
+    },
+    {
+      "name": "original Mark hover",
+      "durationMs": 2449.713375,
+      "evidence": "/private/tmp/acanvas-chatbox-evidence-HJhfBt",
+      "result": "PASS"
+    },
+    {
+      "name": "stationary Mark presentation ownership",
+      "durationMs": 1905.84025,
+      "evidence": "/private/tmp/acanvas-chatbox-evidence-a02Whc",
+      "result": "PASS"
+    },
+    {
+      "name": "pending reader focus close/replace",
+      "durationMs": 1759.043042,
+      "evidence": "/private/tmp/acanvas-chatbox-evidence-JMUg1j",
+      "result": "PASS"
+    }
+  ],
+  "managedAssertions": [
+    "Markdown scroll/text intent and displayed anchor match the captured scene.",
+    "A new HTML annotation uses its own ID, correct objectId and complete capture/version.",
+    "Comment focus and value survive an actual subsequent HTML sample before Done.",
+    "Saved PNG bytes match the synchronously copied displayed frame.",
+    "Captured native HTML surfaceId/instanceId/inputSeq/frameSeq and Saved live input form value match the original source instance.",
+    "Composer native typing and focus survive an actual subsequent HTML sample without modifying source input.",
+    "Returning directly to source HTML and appending text produces Saved live input again in the same instance."
+  ],
+  "savedAnnotations": [
+    {
+      "annotationId": "af870930-c335-4698-a034-af746df5b987",
+      "objectId": "aba2ab16-abf2-4e6e-900c-2838923ad190",
+      "text": "Selected document text",
+      "captureId": "599d3b3e-f698-45a0-88c2-2545640093e2",
+      "captureVersion": 1,
+      "captureState": {
+        "version": 1,
+        "status": "complete",
+        "captureId": "599d3b3e-f698-45a0-88c2-2545640093e2"
+      },
+      "frameSeq": 12,
+      "camera": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "sourceAnchor": {
+        "kind": "text",
+        "scroll": {
+          "x": 0,
+          "y": 210
+        },
+        "quote": "Observed paragraph",
+        "context": "ock 0\nObserved paragraph 0 with stable text.\nBlock 1\nObserved paragraph 1 with stable text.\nBlock 2\nObserved paragraph 2 with stable text.\nBlock 3\nObserved paragraph 3 with stable text.\nBlock 4\nObserved paragraph 4 wit",
+        "path": "rendered-dom:p[2]",
+        "start": 102,
+        "end": 120
+      },
+      "surfaces": []
+    },
+    {
+      "annotationId": "547a2d3c-de8c-4313-a9a7-77581ad39557",
+      "objectId": "a9246878-f24a-4abe-b0ae-5f73abf32250",
+      "text": "Keep the native HTML state",
+      "captureId": "04a3fce6-d79b-4afc-8853-7bb672a13439",
+      "captureVersion": 2,
+      "captureState": {
+        "version": 2,
+        "status": "complete",
+        "captureId": "04a3fce6-d79b-4afc-8853-7bb672a13439"
+      },
+      "frameSeq": 45,
+      "camera": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "sourceAnchor": null,
+      "surfaces": [
+        {
+          "objectId": "a9246878-f24a-4abe-b0ae-5f73abf32250",
+          "surface": {
+            "surfaceId": "35507a86-787e-4b09-bfb4-faa48a2ddda7",
+            "instanceId": "06b9a2c0-41f4-4739-8aaf-f0f7592aabbd",
+            "frameSeq": 6,
+            "inputSeq": 42,
+            "viewport": {
+              "width": 350,
+              "height": 240
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "ordinaryLog": "media/f4-managed-lifecycle.tap",
+  "resources": "All five isolated browser/server/CEF fixtures closed before releasing the functional window."
+}

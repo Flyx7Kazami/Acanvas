@@ -1,0 +1,1762 @@
+{
+  "status": "incomplete",
+  "measuredAt": "2026-10-09T05:50:46.381Z",
+  "version": "working-tree",
+  "root": "/private/tmp/acanvas-board-transport-project-DDOhYt",
+  "dist": "/private/tmp/acanvas-cold-transport-20261009/compiled",
+  "webRoot": "/private/tmp/acanvas-cold-transport-20261009/web",
+  "output": "/private/tmp/acanvas-cold-transport-20261009/three-page-mixed-candidate",
+  "scope": "Owned 12-object synthetic media / normal CEF",
+  "pageCount": 3,
+  "cefOpen": [
+    {
+      "elapsedMs": 1760.552542
+    },
+    {
+      "elapsedMs": 718.8790829999998
+    },
+    {
+      "elapsedMs": 747.2898329999998
+    },
+    {
+      "elapsedMs": 913.6827919999996
+    },
+    {
+      "elapsedMs": 1440.8940000000002
+    },
+    {
+      "elapsedMs": 3821.4487919999992
+    },
+    {
+      "elapsedMs": 1368.8634999999995
+    },
+    {
+      "elapsedMs": 1902.2815409999985
+    },
+    {
+      "elapsedMs": 1724.9427079999987
+    }
+  ],
+  "surfaceCreate": [
+    {
+      "elapsedMs": 1766.9357080000004,
+      "engine": "cef"
+    },
+    {
+      "elapsedMs": 2222.062625,
+      "engine": "cef"
+    },
+    {
+      "elapsedMs": 2422.9380830000005,
+      "engine": "cef"
+    },
+    {
+      "elapsedMs": 3316.846041,
+      "engine": "cef"
+    },
+    {
+      "elapsedMs": 4732.889625,
+      "engine": "cef"
+    },
+    {
+      "elapsedMs": 7783.207624999999,
+      "engine": "cef"
+    },
+    {
+      "elapsedMs": 9048.847624999999,
+      "engine": "cef"
+    },
+    {
+      "elapsedMs": 10241.355209000001,
+      "engine": "cef"
+    },
+    {
+      "elapsedMs": 11232.278957999999,
+      "engine": "cef"
+    }
+  ],
+  "pages": [
+    {
+      "index": 0,
+      "websocketCreated": 1,
+      "ready": 1,
+      "viewReady": 1,
+      "streams": [],
+      "errors": [],
+      "domContentLoadedMs": 366.91816700000004,
+      "allResourcesReady": false,
+      "allResourcesReadyMs": 25369.227417000002,
+      "coldWebsocketCreated": 1,
+      "browserFacts": {
+        "imageDecode": [
+          2.4000000953674316,
+          4.299999952316284,
+          2.299999952316284,
+          1.7999999523162842,
+          2.3999998569488525,
+          3.200000047683716,
+          1.5,
+          1.5,
+          1.7999999523162842,
+          2.3999998569488525,
+          1.8999998569488525,
+          2.799999952316284,
+          1.5,
+          2.0999999046325684,
+          2.1999998092651367,
+          2.700000047683716,
+          1.8000001907348633,
+          1.7999999523162842,
+          2.5,
+          1.2999999523162842,
+          1.7999999523162842,
+          2,
+          1.5999999046325684,
+          6.299999952316284,
+          2.0999999046325684,
+          2.3999998569488525,
+          1.8999998569488525,
+          2.200000047683716,
+          1.5,
+          2.5,
+          2.200000047683716,
+          2.4000000953674316,
+          1.7999999523162842,
+          2.3999998569488525,
+          1.7000000476837158,
+          1.8000001907348633,
+          1.6999998092651367,
+          2.5,
+          3.3999998569488525,
+          1.7000000476837158,
+          1.4000000953674316,
+          1.6000001430511475,
+          1.7000000476837158,
+          2.3999998569488525,
+          1.7000000476837158,
+          1.5,
+          1.6000001430511475,
+          2.5999999046325684,
+          1.7999999523162842,
+          2.299999952316284,
+          2.799999952316284,
+          1.5,
+          2.5,
+          2.299999952316284,
+          2.3999998569488525,
+          2.4000000953674316,
+          1.8999998569488525,
+          1.5,
+          1.1999998092651367,
+          1.3999998569488525,
+          1.5999999046325684,
+          1.5,
+          3.5,
+          3.799999952316284,
+          2.5,
+          1.5,
+          1.2999999523162842,
+          3.0999999046325684,
+          2.9000000953674316,
+          1.5,
+          1.5,
+          1.9000000953674316,
+          5.599999904632568,
+          1.9000000953674316,
+          1.8000001907348633,
+          5,
+          1.2000000476837158,
+          1.7999999523162842,
+          1.6000001430511475,
+          1.1000001430511475,
+          2,
+          7.599999904632568,
+          1.9000000953674316,
+          2.1999998092651367,
+          5.599999904632568,
+          1.2999999523162842,
+          2.6000001430511475,
+          7.799999952316284,
+          1.4000000953674316,
+          2.3999998569488525,
+          5.799999952316284,
+          2
+        ],
+        "audioDecode": [
+          309.59999990463257
+        ],
+        "longTasks": [
+          59,
+          51,
+          133,
+          372,
+          183,
+          61,
+          70,
+          76,
+          54
+        ],
+        "lifecycle": [
+          {
+            "type": "pageshow",
+            "persisted": false
+          }
+        ],
+        "resources": [
+          {
+            "kind": "business",
+            "queuedMs": 5.5,
+            "responseWaitMs": 0.5,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "state",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 3.5,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.8999998569488525,
+            "responseWaitMs": 5.1000001430511475,
+            "bodyMs": 0.39999985694885254
+          },
+          {
+            "kind": "state",
+            "queuedMs": 0.5,
+            "responseWaitMs": 2.3999998569488525,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.6000001430511475,
+            "responseWaitMs": 6,
+            "bodyMs": 0.5999999046325684
+          },
+          {
+            "kind": "asset",
+            "queuedMs": 3802.0999999046326,
+            "responseWaitMs": 1.5999999046325684,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1377.1999998092651,
+            "responseWaitMs": 9050.800000190735,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "asset",
+            "queuedMs": 3776.4000000953674,
+            "responseWaitMs": 1,
+            "bodyMs": 35.5
+          },
+          {
+            "kind": "business",
+            "queuedMs": 2080.100000143051,
+            "responseWaitMs": 2,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 2076.7999999523163,
+            "responseWaitMs": 10243.700000047684,
+            "bodyMs": 0.09999990463256836
+          },
+          {
+            "kind": "asset",
+            "queuedMs": 3961.5999999046326,
+            "responseWaitMs": 3.3000001907348633,
+            "bodyMs": 46
+          },
+          {
+            "kind": "business",
+            "queuedMs": 2801.5,
+            "responseWaitMs": 5.1000001430511475,
+            "bodyMs": 0.5999999046325684
+          },
+          {
+            "kind": "html",
+            "queuedMs": 2795.600000143051,
+            "responseWaitMs": 11234.5,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "asset",
+            "queuedMs": 4660.599999904633,
+            "responseWaitMs": 2.299999952316284,
+            "bodyMs": 17.40000009536743
+          },
+          {
+            "kind": "asset",
+            "queuedMs": 4609,
+            "responseWaitMs": 1.1000001430511475,
+            "bodyMs": 9.799999952316284
+          },
+          {
+            "kind": "asset",
+            "queuedMs": 4620.700000047684,
+            "responseWaitMs": 14.700000047683716,
+            "bodyMs": 24.700000047683716
+          },
+          {
+            "kind": "asset",
+            "queuedMs": 4680.299999952316,
+            "responseWaitMs": 1.3000001907348633,
+            "bodyMs": 21.299999952316284
+          },
+          {
+            "kind": "asset",
+            "queuedMs": 4605.099999904633,
+            "responseWaitMs": 1.7000000476837158,
+            "bodyMs": 2
+          },
+          {
+            "kind": "business",
+            "queuedMs": 3695.7000000476837,
+            "responseWaitMs": 3.5999999046325684,
+            "bodyMs": 0.9000000953674316
+          },
+          {
+            "kind": "asset",
+            "queuedMs": 10184.400000095367,
+            "responseWaitMs": 3.799999952316284,
+            "bodyMs": 3.3999998569488525
+          },
+          {
+            "kind": "asset",
+            "queuedMs": 10184.299999952316,
+            "responseWaitMs": 3.5,
+            "bodyMs": 3.5999999046325684
+          },
+          {
+            "kind": "asset",
+            "queuedMs": 10462.400000095367,
+            "responseWaitMs": 9.200000047683716,
+            "bodyMs": 25.299999952316284
+          },
+          {
+            "kind": "business",
+            "queuedMs": 883.5999999046326,
+            "responseWaitMs": 1.2000000476837158,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "business",
+            "queuedMs": 250.5,
+            "responseWaitMs": 69.89999985694885,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "business",
+            "queuedMs": 36.200000047683716,
+            "responseWaitMs": 3.0999999046325684,
+            "bodyMs": 1.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.9000000953674316,
+            "responseWaitMs": 2.5,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 145,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "asset",
+            "queuedMs": 272.2000000476837,
+            "responseWaitMs": 31.200000047683716,
+            "bodyMs": 0.5999999046325684
+          },
+          {
+            "kind": "asset",
+            "queuedMs": 306.7999999523163,
+            "responseWaitMs": 464,
+            "bodyMs": 9.799999952316284
+          },
+          {
+            "kind": "html",
+            "queuedMs": 33.700000047683716,
+            "responseWaitMs": 2,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 20,
+            "responseWaitMs": 0.8000001907348633,
+            "bodyMs": 0.19999980926513672
+          },
+          {
+            "kind": "business",
+            "queuedMs": 51.39999985694885,
+            "responseWaitMs": 18.200000047683716,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "business",
+            "queuedMs": 3.3999998569488525,
+            "responseWaitMs": 1.9000000953674316,
+            "bodyMs": 0.5999999046325684
+          },
+          {
+            "kind": "business",
+            "queuedMs": 14.900000095367432,
+            "responseWaitMs": 16.299999952316284,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 416.39999985694885,
+            "responseWaitMs": 15.600000143051147,
+            "bodyMs": 0.39999985694885254
+          },
+          {
+            "kind": "business",
+            "queuedMs": 420.89999985694885,
+            "responseWaitMs": 3.9000000953674316,
+            "bodyMs": 0.7000000476837158
+          },
+          {
+            "kind": "html",
+            "queuedMs": 329,
+            "responseWaitMs": 216.20000004768372,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "business",
+            "queuedMs": 217.29999995231628,
+            "responseWaitMs": 2.3999998569488525,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 134.70000004768372,
+            "responseWaitMs": 4.200000047683716,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 45.200000047683716,
+            "responseWaitMs": 6.1000001430511475,
+            "bodyMs": 1.3999998569488525
+          },
+          {
+            "kind": "business",
+            "queuedMs": 42.200000047683716,
+            "responseWaitMs": 92.09999990463257,
+            "bodyMs": 2.700000047683716
+          },
+          {
+            "kind": "business",
+            "queuedMs": 8.299999952316284,
+            "responseWaitMs": 8.100000143051147,
+            "bodyMs": 0.5999999046325684
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 2,
+            "bodyMs": 0.8999998569488525
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.1999998092651367,
+            "responseWaitMs": 3.200000047683716,
+            "bodyMs": 0.6000001430511475
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.6000001430511475,
+            "responseWaitMs": 136.19999980926514,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.4000000953674316,
+            "responseWaitMs": 1.2000000476837158,
+            "bodyMs": 0.7000000476837158
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.8000001907348633,
+            "responseWaitMs": 14.399999856948853,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.8999998569488525,
+            "responseWaitMs": 5.700000047683716,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5999999046325684,
+            "responseWaitMs": 0.9000000953674316,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 10.400000095367432,
+            "responseWaitMs": 0.7000000476837158,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.8000001907348633,
+            "responseWaitMs": 163.79999995231628,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 18.5,
+            "responseWaitMs": 2.4000000953674316,
+            "bodyMs": 0.19999980926513672
+          },
+          {
+            "kind": "html",
+            "queuedMs": 9,
+            "responseWaitMs": 4.900000095367432,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 10.700000047683716,
+            "responseWaitMs": 4.699999809265137,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 13.200000047683716,
+            "responseWaitMs": 120.5,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 2.200000047683716,
+            "bodyMs": 0.19999980926513672
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.40000009536743164,
+            "responseWaitMs": 0.2999999523162842,
+            "bodyMs": 0.7999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.40000009536743164,
+            "responseWaitMs": 1.2000000476837158,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "business",
+            "queuedMs": 1.4000000953674316,
+            "responseWaitMs": 46,
+            "bodyMs": 1.0999999046325684
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7999999523162842,
+            "responseWaitMs": 5.400000095367432,
+            "bodyMs": 1.1999998092651367
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7999999523162842,
+            "responseWaitMs": 12.5,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "business",
+            "queuedMs": 7.299999952316284,
+            "responseWaitMs": 18.59999990463257,
+            "bodyMs": 0.3000001907348633
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.2000000476837158,
+            "responseWaitMs": 122.5,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 16.59999990463257,
+            "responseWaitMs": 5.400000095367432,
+            "bodyMs": 0.19999980926513672
+          },
+          {
+            "kind": "html",
+            "queuedMs": 16.299999952316284,
+            "responseWaitMs": 1.6000001430511475,
+            "bodyMs": 0.39999985694885254
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.3999998569488525,
+            "responseWaitMs": 355.30000019073486,
+            "bodyMs": 0.19999980926513672
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.6999998092651367,
+            "responseWaitMs": 0.7000000476837158,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.5999999046325684,
+            "responseWaitMs": 6.400000095367432,
+            "bodyMs": 1
+          },
+          {
+            "kind": "html",
+            "queuedMs": 96.09999990463257,
+            "responseWaitMs": 1.9000000953674316,
+            "bodyMs": 0.7999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 97.90000009536743,
+            "responseWaitMs": 1.0999999046325684,
+            "bodyMs": 0.3000001907348633
+          },
+          {
+            "kind": "html",
+            "queuedMs": 22.09999990463257,
+            "responseWaitMs": 124.80000019073486,
+            "bodyMs": 0.39999985694885254
+          },
+          {
+            "kind": "html",
+            "queuedMs": 23.200000047683716,
+            "responseWaitMs": 2.299999952316284,
+            "bodyMs": 0.6000001430511475
+          },
+          {
+            "kind": "html",
+            "queuedMs": 22.40000009536743,
+            "responseWaitMs": 4.700000047683716,
+            "bodyMs": 0.7000000476837158
+          },
+          {
+            "kind": "html",
+            "queuedMs": 8.800000190734863,
+            "responseWaitMs": 20.699999809265137,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.8000001907348633,
+            "responseWaitMs": 6.299999952316284,
+            "bodyMs": 0.7000000476837158
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 1.0999999046325684,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.6000001430511475,
+            "responseWaitMs": 20.199999809265137,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7999999523162842,
+            "responseWaitMs": 18.799999952316284,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5999999046325684,
+            "responseWaitMs": 19,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 11.599999904632568,
+            "responseWaitMs": 39.5,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 51,
+            "responseWaitMs": 1.6000001430511475,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 48.700000047683716,
+            "responseWaitMs": 172.90000009536743,
+            "bodyMs": 0.39999985694885254
+          },
+          {
+            "kind": "html",
+            "queuedMs": 181.70000004768372,
+            "responseWaitMs": 137,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 53.5,
+            "responseWaitMs": 1,
+            "bodyMs": 0
+          },
+          {
+            "kind": "html",
+            "queuedMs": 51.39999985694885,
+            "responseWaitMs": 4.400000095367432,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 37.60000014305115,
+            "responseWaitMs": 9.599999904632568,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "business",
+            "queuedMs": 5.1000001430511475,
+            "responseWaitMs": 7.099999904632568,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1,
+            "responseWaitMs": 1.2999999523162842,
+            "bodyMs": 0.09999990463256836
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 1.8999998569488525,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.2999999523162842,
+            "responseWaitMs": 5.400000095367432,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 4.299999952316284,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5999999046325684,
+            "responseWaitMs": 1.3000001907348633,
+            "bodyMs": 0.19999980926513672
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.6999998092651367,
+            "responseWaitMs": 1.8000001907348633,
+            "bodyMs": 0.7999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.6000001430511475,
+            "responseWaitMs": 159,
+            "bodyMs": 0.09999990463256836
+          },
+          {
+            "kind": "html",
+            "queuedMs": 51.200000047683716,
+            "responseWaitMs": 1.5999999046325684,
+            "bodyMs": 0.3000001907348633
+          },
+          {
+            "kind": "html",
+            "queuedMs": 47.59999990463257,
+            "responseWaitMs": 135.40000009536743,
+            "bodyMs": 0.7999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 49.39999985694885,
+            "responseWaitMs": 2.200000047683716,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.8000001907348633,
+            "responseWaitMs": 4.599999904632568,
+            "bodyMs": 0.09999990463256836
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.40000009536743164,
+            "responseWaitMs": 11.900000095367432,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 10.700000047683716,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 11,
+            "responseWaitMs": 146.20000004768372,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.3000001907348633,
+            "responseWaitMs": 1.7999999523162842,
+            "bodyMs": 0.09999990463256836
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.2999999523162842,
+            "responseWaitMs": 4.900000095367432,
+            "bodyMs": 2.0999999046325684
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7999999523162842,
+            "responseWaitMs": 0.9000000953674316,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.39999985694885254,
+            "responseWaitMs": 7.700000047683716,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.3000001907348633,
+            "responseWaitMs": 0.6999998092651367,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.39999985694885254,
+            "responseWaitMs": 0.7000000476837158,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.39999985694885254,
+            "responseWaitMs": 1.9000000953674316,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1,
+            "responseWaitMs": 3.799999952316284,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1,
+            "responseWaitMs": 4.5,
+            "bodyMs": 0.10000014305114746
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.5,
+            "responseWaitMs": 7.200000047683716,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.39999985694885254,
+            "responseWaitMs": 53.200000047683716,
+            "bodyMs": 0.7999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.39999985694885254,
+            "responseWaitMs": 0.7999999523162842,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5999999046325684,
+            "responseWaitMs": 1.6000001430511475,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.6999998092651367,
+            "responseWaitMs": 2.700000047683716,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 232.59999990463257,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7999999523162842,
+            "responseWaitMs": 3.3999998569488525,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 4.599999904632568,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 3.5,
+            "bodyMs": 0.39999985694885254
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.3000001907348633,
+            "responseWaitMs": 235.39999985694885,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.6000001430511475,
+            "responseWaitMs": 1.2999999523162842,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 2.4000000953674316,
+            "bodyMs": 0.09999990463256836
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.39999985694885254,
+            "responseWaitMs": 13.800000190734863,
+            "bodyMs": 1.8999998569488525
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5999999046325684,
+            "responseWaitMs": 137.60000014305115,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.19999980926513672,
+            "responseWaitMs": 17.40000009536743,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "business",
+            "queuedMs": 15.899999856948853,
+            "responseWaitMs": 10.5,
+            "bodyMs": 0.6000001430511475
+          },
+          {
+            "kind": "html",
+            "queuedMs": 26.699999809265137,
+            "responseWaitMs": 5.800000190734863,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 31.299999952316284,
+            "responseWaitMs": 1.5,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 8.5,
+            "responseWaitMs": 5.300000190734863,
+            "bodyMs": 0.19999980926513672
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.2999999523162842,
+            "responseWaitMs": 4.6000001430511475,
+            "bodyMs": 0.39999985694885254
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 9.199999809265137,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.40000009536743164,
+            "responseWaitMs": 0.5999999046325684,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.6999998092651367,
+            "responseWaitMs": 5.5,
+            "bodyMs": 1.1000001430511475
+          },
+          {
+            "kind": "html",
+            "queuedMs": 2.5999999046325684,
+            "responseWaitMs": 7.700000047683716,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 2.5,
+            "responseWaitMs": 11.599999904632568,
+            "bodyMs": 0.7999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 2.5,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.8999998569488525,
+            "responseWaitMs": 104.40000009536743,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 1.2000000476837158,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 1.0999999046325684,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.2999999523162842,
+            "responseWaitMs": 87.60000014305115,
+            "bodyMs": 1.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.40000009536743164,
+            "responseWaitMs": 1,
+            "bodyMs": 0.09999990463256836
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5999999046325684,
+            "responseWaitMs": 85.20000004768372,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.2999999523162842,
+            "responseWaitMs": 0.7999999523162842,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.6999998092651367,
+            "responseWaitMs": 4.6000001430511475,
+            "bodyMs": 0.5999999046325684
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7999999523162842,
+            "responseWaitMs": 2.3999998569488525,
+            "bodyMs": 0.9000000953674316
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 6.299999952316284,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7999999523162842,
+            "responseWaitMs": 1.7000000476837158,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.6999998092651367,
+            "responseWaitMs": 0.9000000953674316,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.2999999523162842,
+            "responseWaitMs": 0.5,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 0.7000000476837158,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.5999999046325684,
+            "responseWaitMs": 1.5999999046325684,
+            "bodyMs": 0.3000001907348633
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7999999523162842,
+            "responseWaitMs": 4.5,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.0999999046325684,
+            "responseWaitMs": 2.4000000953674316,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.40000009536743164,
+            "responseWaitMs": 0.5,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.40000009536743164,
+            "responseWaitMs": 67,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7999999523162842,
+            "responseWaitMs": 97.70000004768372,
+            "bodyMs": 0.6000001430511475
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.3000001907348633,
+            "responseWaitMs": 0.6999998092651367,
+            "bodyMs": 0.10000014305114746
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7999999523162842,
+            "responseWaitMs": 2.5999999046325684,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7999999523162842,
+            "responseWaitMs": 1.5,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.20000004768371582,
+            "responseWaitMs": 9.199999809265137,
+            "bodyMs": 0.7000000476837158
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 102.40000009536743,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5999999046325684,
+            "responseWaitMs": 6.900000095367432,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.39999985694885254,
+            "responseWaitMs": 0.6000001430511475,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 8.700000047683716,
+            "bodyMs": 1
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 0.9000000953674316,
+            "bodyMs": 1.2999999523162842
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.6000001430511475,
+            "responseWaitMs": 2.299999952316284,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.4000000953674316,
+            "responseWaitMs": 1,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.2000000476837158,
+            "responseWaitMs": 3.6999998092651367,
+            "bodyMs": 0.3000001907348633
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 1,
+            "bodyMs": 0.10000014305114746
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.1000001430511475,
+            "responseWaitMs": 148.5,
+            "bodyMs": 1.2000000476837158
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.6000001430511475,
+            "responseWaitMs": 4.5,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1,
+            "responseWaitMs": 14.399999856948853,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 10.799999952316284,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.9000000953674316,
+            "responseWaitMs": 144.20000004768372,
+            "bodyMs": 0.5999999046325684
+          },
+          {
+            "kind": "html",
+            "queuedMs": 2.5,
+            "responseWaitMs": 182.70000004768372,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 10,
+            "responseWaitMs": 5.599999904632568,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 2,
+            "responseWaitMs": 3.0999999046325684,
+            "bodyMs": 0.7000000476837158
+          },
+          {
+            "kind": "html",
+            "queuedMs": 3.299999952316284,
+            "responseWaitMs": 24.100000143051147,
+            "bodyMs": 0.7999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 25.399999856948853,
+            "responseWaitMs": 6.1000001430511475,
+            "bodyMs": 0.5999999046325684
+          },
+          {
+            "kind": "business",
+            "queuedMs": 17.100000143051147,
+            "responseWaitMs": 8.399999856948853,
+            "bodyMs": 0.6000001430511475
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 2.1999998092651367,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.5,
+            "responseWaitMs": 5.200000047683716,
+            "bodyMs": 0.6000001430511475
+          },
+          {
+            "kind": "html",
+            "queuedMs": 9.300000190734863,
+            "responseWaitMs": 5,
+            "bodyMs": 0.7999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.2999999523162842,
+            "responseWaitMs": 1.2000000476837158,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.6000001430511475,
+            "responseWaitMs": 0.7999999523162842,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "business",
+            "queuedMs": 1.2000000476837158,
+            "responseWaitMs": 3.5,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.7999999523162842,
+            "responseWaitMs": 4.200000047683716,
+            "bodyMs": 0
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.40000009536743164,
+            "responseWaitMs": 226.20000004768372,
+            "bodyMs": 0.19999980926513672
+          },
+          {
+            "kind": "html",
+            "queuedMs": 4,
+            "responseWaitMs": 3.1000001430511475,
+            "bodyMs": 1.8999998569488525
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7999999523162842,
+            "responseWaitMs": 6.200000047683716,
+            "bodyMs": 4.200000047683716
+          },
+          {
+            "kind": "html",
+            "queuedMs": 4.900000095367432,
+            "responseWaitMs": 7.299999952316284,
+            "bodyMs": 1.0999999046325684
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7999999523162842,
+            "responseWaitMs": 225.20000004768372,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 21.700000047683716,
+            "responseWaitMs": 170.39999985694885,
+            "bodyMs": 0.3000001907348633
+          },
+          {
+            "kind": "html",
+            "queuedMs": 25,
+            "responseWaitMs": 4.1000001430511475,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 14.5,
+            "responseWaitMs": 1.4000000953674316,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 57.59999990463257,
+            "responseWaitMs": 3.4000000953674316,
+            "bodyMs": 0.39999985694885254
+          },
+          {
+            "kind": "html",
+            "queuedMs": 23.200000047683716,
+            "responseWaitMs": 1.2999999523162842,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "business",
+            "queuedMs": 1.0999999046325684,
+            "responseWaitMs": 24,
+            "bodyMs": 0.7000000476837158
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 0.5999999046325684,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "business",
+            "queuedMs": 1.8999998569488525,
+            "responseWaitMs": 4.799999952316284,
+            "bodyMs": 0.3000001907348633
+          },
+          {
+            "kind": "html",
+            "queuedMs": 4.799999952316284,
+            "responseWaitMs": 3.5,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 6.700000047683716,
+            "responseWaitMs": 1.7999999523162842,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.40000009536743164,
+            "responseWaitMs": 0.5999999046325684,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.5,
+            "responseWaitMs": 3.799999952316284,
+            "bodyMs": 0.8999998569488525
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.0999999046325684,
+            "responseWaitMs": 5.299999952316284,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 4.099999904632568,
+            "responseWaitMs": 59.60000014305115,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 33.5,
+            "responseWaitMs": 39.10000014305115,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.6000001430511475,
+            "responseWaitMs": 21.399999856948853,
+            "bodyMs": 1
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.2999999523162842,
+            "responseWaitMs": 138.29999995231628,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.40000009536743164,
+            "responseWaitMs": 227.39999985694885,
+            "bodyMs": 1
+          },
+          {
+            "kind": "html",
+            "queuedMs": 8,
+            "responseWaitMs": 199,
+            "bodyMs": 1.0999999046325684
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.2999999523162842,
+            "responseWaitMs": 1.7999999523162842,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 15,
+            "responseWaitMs": 1.3999998569488525,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 12.799999952316284,
+            "responseWaitMs": 1.9000000953674316,
+            "bodyMs": 0.7000000476837158
+          },
+          {
+            "kind": "html",
+            "queuedMs": 20.5,
+            "responseWaitMs": 3.1999998092651367,
+            "bodyMs": 0.3000001907348633
+          },
+          {
+            "kind": "business",
+            "queuedMs": 1.2000000476837158,
+            "responseWaitMs": 2.8999998569488525,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5999999046325684,
+            "responseWaitMs": 7.900000095367432,
+            "bodyMs": 0.09999990463256836
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 0.5999999046325684,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.40000009536743164,
+            "responseWaitMs": 1.7000000476837158,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 1.1999998092651367,
+            "bodyMs": 0.10000014305114746
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 9.099999904632568,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 1.9000000953674316,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "business",
+            "queuedMs": 1.1000001430511475,
+            "responseWaitMs": 3.3999998569488525,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.7000000476837158,
+            "responseWaitMs": 1.1999998092651367,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5999999046325684,
+            "responseWaitMs": 1.4000000953674316,
+            "bodyMs": 0.39999985694885254
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 1.2999999523162842,
+            "bodyMs": 0.20000004768371582
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.5,
+            "responseWaitMs": 110.70000004768372,
+            "bodyMs": 0.19999980926513672
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.40000009536743164,
+            "responseWaitMs": 1.7000000476837158,
+            "bodyMs": 0.09999990463256836
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1,
+            "responseWaitMs": 0.8999998569488525,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.8999998569488525,
+            "responseWaitMs": 0.6000001430511475,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1,
+            "responseWaitMs": 162.5,
+            "bodyMs": 0.7999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.3000001907348633,
+            "responseWaitMs": 1.5,
+            "bodyMs": 2.0999999046325684
+          },
+          {
+            "kind": "business",
+            "queuedMs": 1,
+            "responseWaitMs": 21.09999990463257,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 9.900000095367432,
+            "responseWaitMs": 134.29999995231628,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 1.5,
+            "responseWaitMs": 3.200000047683716,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.2999999523162842,
+            "responseWaitMs": 1.1000001430511475,
+            "bodyMs": 0.39999985694885254
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.2999999523162842,
+            "responseWaitMs": 1,
+            "bodyMs": 0.09999990463256836
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.2999999523162842,
+            "responseWaitMs": 3.4000000953674316,
+            "bodyMs": 0.5
+          },
+          {
+            "kind": "business",
+            "queuedMs": 0.5999999046325684,
+            "responseWaitMs": 5.099999904632568,
+            "bodyMs": 0.8000001907348633
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.9000000953674316,
+            "responseWaitMs": 6.200000047683716,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "business",
+            "queuedMs": 1.7000000476837158,
+            "responseWaitMs": 4.199999809265137,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.39999985694885254,
+            "responseWaitMs": 0.8000001907348633,
+            "bodyMs": 0.6999998092651367
+          },
+          {
+            "kind": "html",
+            "queuedMs": 3,
+            "responseWaitMs": 3.799999952316284,
+            "bodyMs": 0.40000009536743164
+          },
+          {
+            "kind": "html",
+            "queuedMs": 0.2999999523162842,
+            "responseWaitMs": 5.6000001430511475,
+            "bodyMs": 0.2999999523162842
+          },
+          {
+            "kind": "html",
+            "queuedMs": 8.400000095367432,
+            "responseWaitMs": 3.5,
+            "bodyMs": 0.20000004768371582
+          }
+        ]
+      }
+    },
+    {
+      "index": 1,
+      "websocketCreated": 1,
+      "ready": 1,
+      "viewReady": 1,
+      "streams": [],
+      "errors": [],
+      "domContentLoadedMs": 298.77816699999994,
+      "allResourcesReady": false,
+      "allResourcesReadyMs": 25301.464792
+    },
+    {
+      "index": 2,
+      "websocketCreated": 1,
+      "ready": 1,
+      "viewReady": 1,
+      "streams": [],
+      "errors": [],
+      "domContentLoadedMs": 237.5975830000002,
+      "allResourcesReady": false,
+      "allResourcesReadyMs": 25255.927832999998
+    }
+  ],
+  "boundaries": [
+    "Same browser context and network partition; loopback HTTP/1.1 origin.",
+    "First navigation, warmed HTTP reads and first-page reload are reported separately.",
+    "PNG fetch queue and image decode elapsed intervals are separate; decode intervals include asynchronous wait and CPU, rather than measuring decoder CPU alone.",
+    "Audio/video duration and codecs are synthetic; actual user media metadata was outside the non-content read scope.",
+    "No foreground browser or user canvas operations."
+  ],
+  "materials": [
+    {
+      "mime": "image/png",
+      "bytes": 3506295
+    },
+    {
+      "mime": "image/png",
+      "bytes": 3506295
+    },
+    {
+      "mime": "image/png",
+      "bytes": 3506295
+    },
+    {
+      "mime": "image/png",
+      "bytes": 2740274
+    },
+    {
+      "mime": "image/png",
+      "bytes": 803268
+    },
+    {
+      "mime": "video/mp4",
+      "bytes": 34192043
+    },
+    {
+      "mime": "audio/x-m4a",
+      "bytes": 4150436
+    },
+    {
+      "mime": "audio/mpeg",
+      "bytes": 7681296
+    },
+    {
+      "mime": "text/html",
+      "bytes": 175168
+    },
+    {
+      "mime": "text/html",
+      "bytes": 175168
+    },
+    {
+      "mime": "text/html",
+      "bytes": 175168
+    },
+    {
+      "mime": "text/markdown",
+      "bytes": 2898
+    }
+  ],
+  "browser": "140.0.7339.186",
+  "coldNavigationMs": 25369.339708,
+  "error": "Error: page.evaluate: TypeError: Cannot read properties of undefined (reading 'requestStart')\n    at eval (eval at evaluate (:291:30), <anonymous>:1:330)\n    at async <anonymous>:317:30"
+}

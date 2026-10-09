@@ -1,3 +1,4 @@
+import { BoardConnection, BoardConnectionError } from './board-connection.js';
 import { resolveContentMime } from '../shared/content-types';
 import type { AnnotationCaptureInput, ApiError, Asset, BaseSceneSnapshot, BoardOperation, BoardState, Bootstrap, CaptureResult, CaptureRetryResult, CaptureView, CaptureViewOperation, Draft, HtmlSurfaceFrameMetadata, ProjectHtmlSurface, ProjectHtmlSurfaceInput, ScenePresentation, ScenePresentationOperation, SceneSource, Session, SessionView, Task } from '../shared/types';
 import type { BrowserPage, BrowserStatus } from '../shared/browser-capture';
@@ -75,6 +76,7 @@ export interface HtmlPreviewGrant { id: string; url: string; origin: string; exp
 export class BoardApi {
   private instanceId = '';
   private token = '';
+  private connection?: BoardConnection;
   private project?: Bootstrap['project'];
   projectChanged = false;
 
@@ -110,10 +112,12 @@ export class BoardApi {
     if (this.project && (result.project.id !== this.project.id || result.project.root !== this.project.root)) {
       this.projectChanged = true;
       this.token = '';
+      this.connection?.close(); this.connection = undefined;
       throw new RequestError('This address now serves another project. Your draft is preserved. Reopen the board to continue.', 409, 'project_changed');
     }
     this.project = result.project;
     this.token = result.token;
+    if (this.instanceId !== result.service.instanceId) { this.connection?.close(); this.connection = new BoardConnection(result.service.instanceId); }
     this.instanceId = result.service.instanceId;
     return result;
   }
@@ -127,12 +131,17 @@ export class BoardApi {
   saveDraft(draft: Draft) { return this.request<Draft>(`/api/sessions/${encodeURIComponent(draft.sessionId)}/draft`, { method: 'PUT', body: JSON.stringify(draft) }); }
   private captureViewPath(sessionId: string, viewId?: string) { return `/api/sessions/${encodeURIComponent(sessionId)}/capture-views${viewId ? `/${encodeURIComponent(viewId)}` : ''}`; }
   registerCaptureView(sessionId: string, documentId: string) { return this.request<CaptureView>(this.captureViewPath(sessionId), { method: 'POST', body: JSON.stringify({ documentId }) }); }
-  async watchCaptureView(view: CaptureView, signal: AbortSignal, onConnected?: () => void): Promise<void> {
-    const response = await this.response(`${this.captureViewPath(view.sessionId, view.viewId)}/presence?${new URLSearchParams({ documentId: view.documentId, viewGeneration: String(view.viewGeneration) })}`, { signal });
-    if (!response.body) throw new RequestError('The local service is disconnected.', 0, 'connection_lost');
-    const reader = response.body.getReader();
-    try { onConnected?.(); while (!signal.aborted && !(await reader.read()).done) { /* The open stream owns this document view. */ } }
-    finally { await reader.cancel().catch(() => undefined); reader.releaseLock(); }
+  private connectionError(cause: unknown): never {
+    if (cause instanceof BoardConnectionError) throw new RequestError(errorMessages[cause.code] || 'The local service is disconnected.', cause.status, cause.code);
+    throw cause;
+  }
+  watchEvents(signal: AbortSignal, onConnected: () => void, onChange: () => void) {
+    if (!this.connection || this.projectChanged) return Promise.reject(new RequestError('Reconnect to the local service.', 0, 'connection_lost'));
+    return this.connection.watchEvents(signal, onConnected, onChange).catch(cause => this.connectionError(cause));
+  }
+  watchCaptureView(view: CaptureView, signal: AbortSignal, onConnected: () => void = () => undefined): Promise<void> {
+    if (!this.connection || this.projectChanged) return Promise.reject(new RequestError('Reconnect to the local service.', 0, 'connection_lost'));
+    return this.connection.watchView(view, signal, onConnected).catch(cause => this.connectionError(cause));
   }
   sceneSnapshot(sessionId: string, viewId: string, operation: CaptureViewOperation) { return this.request<BaseSceneSnapshot>(`${this.captureViewPath(sessionId, viewId)}/scenes`, { method: 'POST', body: JSON.stringify(operation) }); }
   confirmScenePresentation(sessionId: string, viewId: string, operation: ScenePresentationOperation) { return this.request<ScenePresentation>(`${this.captureViewPath(sessionId, viewId)}/presented`, { method: 'PUT', body: JSON.stringify(operation) }); }

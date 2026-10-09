@@ -1,0 +1,76 @@
+{
+  "status": "passed",
+  "scope": "Owned empty real App; functional lifecycle, no timing conclusion; Chromium actual BFCache eligibility recorded separately from persisted-event branch",
+  "measuredAt": "2026-10-09T06:03:54.396Z",
+  "webRoot": "/private/tmp/acanvas-cold-transport-20261009/web",
+  "errors": [],
+  "streams": [],
+  "acks": [
+    {
+      "type": "ready",
+      "instanceId": "c25b139c-3298-494e-9d21-7a2bdd773d4b"
+    },
+    {
+      "type": "view-ready",
+      "view": {
+        "projectId": "b03902cb-c6aa-4f19-a92a-57f84fb96f60",
+        "sessionId": "489e0ecd-07b1-43d0-ae3f-597b26190383",
+        "documentId": "568775a0-29b8-4fd5-beef-15ea902a2dc6",
+        "viewId": "11507cfd-9e3c-4aa2-a238-d8f350b75eef",
+        "viewGeneration": 1
+      }
+    },
+    {
+      "type": "ready",
+      "instanceId": "8fe3442a-81f0-4812-8e3b-324d6bf193a9"
+    },
+    {
+      "type": "view-ready",
+      "view": {
+        "projectId": "b03902cb-c6aa-4f19-a92a-57f84fb96f60",
+        "sessionId": "489e0ecd-07b1-43d0-ae3f-597b26190383",
+        "documentId": "568775a0-29b8-4fd5-beef-15ea902a2dc6",
+        "viewId": "c3d41cf4-c7f8-4449-bfeb-b91949309690",
+        "viewGeneration": 2
+      }
+    }
+  ],
+  "lifecycle": [],
+  "browser": "155.0.8059.39",
+  "persistedBranchKeepsSameView": true,
+  "oldViewActiveAfterNavigation": true,
+  "actualNavigation": {
+    "sameView": true,
+    "lifecycle": [
+      {
+        "type": "pageshow",
+        "persisted": false
+      },
+      {
+        "type": "pagehide",
+        "persisted": true
+      },
+      {
+        "type": "pageshow",
+        "persisted": true
+      },
+      {
+        "type": "pagehide",
+        "persisted": true
+      },
+      {
+        "type": "pageshow",
+        "persisted": true
+      }
+    ],
+    "notRestoredReasons": null
+  },
+  "navigationRestoresActiveDocument": true,
+  "samePortRestart": {
+    "instanceReplaced": true,
+    "cookieRenewed": true,
+    "newViewAcknowledged": true,
+    "oldViewReplaced": true
+  },
+  "pageCloseRetiresOwnedView": true
+}

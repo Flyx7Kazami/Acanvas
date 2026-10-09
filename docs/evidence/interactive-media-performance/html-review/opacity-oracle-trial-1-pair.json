@@ -1,0 +1,295 @@
+{
+  "semantics": {
+    "controls": [
+      {
+        "id": "#translate",
+        "tag": "button",
+        "type": "button",
+        "role": "button",
+        "label": "button",
+        "disabled": false,
+        "readOnly": false,
+        "bounds": {
+          "x": 63.34400177001953,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        },
+        "focused": false,
+        "tabIndex": 0
+      },
+      {
+        "id": "#opacity",
+        "tag": "button",
+        "type": "button",
+        "role": "button",
+        "label": "button",
+        "disabled": false,
+        "readOnly": false,
+        "bounds": {
+          "x": 10,
+          "y": 50,
+          "width": 20,
+          "height": 20
+        },
+        "focused": false,
+        "tabIndex": 0
+      },
+      {
+        "id": "#width",
+        "tag": "button",
+        "type": "button",
+        "role": "button",
+        "label": "button",
+        "disabled": false,
+        "readOnly": false,
+        "bounds": {
+          "x": 10,
+          "y": 90,
+          "width": 40,
+          "height": 20
+        },
+        "focused": false,
+        "tabIndex": 0
+      },
+      {
+        "id": "#negative",
+        "tag": "button",
+        "type": "button",
+        "role": "button",
+        "label": "button",
+        "disabled": false,
+        "readOnly": false,
+        "bounds": {
+          "x": 36.65599822998047,
+          "y": 130,
+          "width": 20,
+          "height": 20
+        },
+        "focused": false,
+        "tabIndex": 0
+      },
+      {
+        "id": "#paused",
+        "tag": "button",
+        "type": "button",
+        "role": "button",
+        "label": "button",
+        "disabled": false,
+        "readOnly": false,
+        "bounds": {
+          "x": 90,
+          "y": 170,
+          "width": 20,
+          "height": 20
+        },
+        "focused": false,
+        "tabIndex": 0
+      },
+      {
+        "id": "#idle",
+        "tag": "button",
+        "type": "button",
+        "role": "button",
+        "label": "button",
+        "disabled": false,
+        "readOnly": false,
+        "bounds": {
+          "x": 10,
+          "y": 210,
+          "width": 20,
+          "height": 20
+        },
+        "focused": false,
+        "tabIndex": 0
+      },
+      {
+        "id": "#press",
+        "tag": "button",
+        "type": "button",
+        "role": "button",
+        "label": "Press",
+        "disabled": false,
+        "readOnly": false,
+        "bounds": {
+          "x": 10,
+          "y": 250,
+          "width": 80,
+          "height": 20
+        },
+        "focused": true,
+        "tabIndex": 0
+      },
+      {
+        "id": "#value",
+        "tag": "input",
+        "type": "text",
+        "role": "textbox",
+        "label": "text",
+        "value": "1",
+        "disabled": false,
+        "readOnly": true,
+        "bounds": {
+          "x": 100,
+          "y": 250,
+          "width": 58,
+          "height": 21
+        },
+        "focused": false,
+        "selection": {
+          "start": 1,
+          "end": 1,
+          "direction": "none"
+        },
+        "tabIndex": 0,
+        "min": "",
+        "max": "",
+        "step": "",
+        "multiple": false,
+        "accept": ""
+      }
+    ],
+    "readingOrder": [
+      {
+        "id": "#translate",
+        "role": "button",
+        "text": "button",
+        "bounds": {
+          "x": 63.34400177001953,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        }
+      },
+      {
+        "id": "#opacity",
+        "role": "button",
+        "text": "button",
+        "bounds": {
+          "x": 10,
+          "y": 50,
+          "width": 20,
+          "height": 20
+        }
+      },
+      {
+        "id": "#width",
+        "role": "button",
+        "text": "button",
+        "bounds": {
+          "x": 10,
+          "y": 90,
+          "width": 40,
+          "height": 20
+        }
+      },
+      {
+        "id": "#negative",
+        "role": "button",
+        "text": "button",
+        "bounds": {
+          "x": 36.65599822998047,
+          "y": 130,
+          "width": 20,
+          "height": 20
+        }
+      },
+      {
+        "id": "#paused",
+        "role": "button",
+        "text": "button",
+        "bounds": {
+          "x": 90,
+          "y": 170,
+          "width": 20,
+          "height": 20
+        }
+      },
+      {
+        "id": "#idle",
+        "role": "button",
+        "text": "button",
+        "bounds": {
+          "x": 10,
+          "y": 210,
+          "width": 20,
+          "height": 20
+        }
+      },
+      {
+        "id": "#press",
+        "role": "button",
+        "text": "Press",
+        "bounds": {
+          "x": 10,
+          "y": 250,
+          "width": 80,
+          "height": 20
+        }
+      },
+      {
+        "id": "#value",
+        "role": "textbox",
+        "text": "text",
+        "bounds": {
+          "x": 100,
+          "y": 250,
+          "width": 58,
+          "height": 21
+        }
+      }
+    ],
+    "selection": "",
+    "scroll": {
+      "x": 0,
+      "y": 0
+    },
+    "viewport": {
+      "width": 300,
+      "height": 300
+    },
+    "activeElementId": "#press",
+    "title": "",
+    "omittedControls": 0,
+    "omittedText": 0,
+    "reviewStyles": {
+      "translate": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 53.344, 0)",
+        "width": 20
+      },
+      "opacity": {
+        "opacity": 0.25,
+        "transform": "none",
+        "width": 20
+      },
+      "width": {
+        "opacity": 1,
+        "transform": "none",
+        "width": 40
+      },
+      "negative": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 26.656, 0)",
+        "width": 20
+      },
+      "paused": {
+        "opacity": 1,
+        "transform": "matrix(1, 0, 0, 1, 80, 0)",
+        "width": 20
+      },
+      "idle": {
+        "opacity": 1,
+        "transform": "none",
+        "width": 20
+      }
+    }
+  },
+  "timing": {
+    "prepareMs": 145.92004100000008,
+    "pauseMs": 48.55445800000007,
+    "semanticMs": 7.848750000000109,
+    "copyMs": 40.70570799999996,
+    "totalMs": 197.45833300000004
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "status": "PASS_WITH_KNOWN_F2_LIMITATION",
+  "scope": "F3 local edit/selection ownership within the current style/performance delivery. F2 native compositor smooth-scroll capture remains a separate known limitation.",
+  "source": [
+    "src/web/html-surface/InputProxy.ts",
+    "src/web/html-surface/Controls.tsx",
+    "src/web/html-surface/SceneHtmlSurface.tsx"
+  ],
+  "logic": [
+    "The input proxy registers editing intent synchronously before queueing. Accepted editing receipts record their actual inputSeq; projection remains deferred until no editing action is pending and the displayed frame covers that sequence. Pure pointer movement leaves editing projection available.",
+    "Native client widgets keep local uncontrolled values. A single layout projection applies canonical text/value/checked/select options/focus/selection after ownership permits. Source geometry and Canvas pairs continue to update normally.",
+    "Text input maintains a persistent known value/selection tuple. Projection records the target tuple before DOM changes. Asynchronous select events with the same tuple are deduplicated. Actual selection-key revisions preserve repeated SelectAll intent even when the range is unchanged.",
+    "Active local composition retains its client state through commit/cancel acknowledgment and presented input sequence. Program focus records known focus before focusing. Old owner control callbacks are dropped when their expected instance is no longer current.",
+    "ACK/failure updates local projection state so an already displayed confirming frame can apply immediately. This React update is limited to editing actions; pointermove does not add these rerenders."
+  ],
+  "tests": {
+    "typecheck": "web and server PASS, server output unique private directory",
+    "node": {
+      "passed": 11,
+      "skipped": 1,
+      "failed": 0,
+      "scope": "input ordering, receipt sequence, failure/owner invalidation, preACK/confirmed frame ownership, pure pointermove, composition native protocol, file bounds/staging"
+    },
+    "productionClient": {
+      "passed": 1,
+      "skipped": 1,
+      "failed": 0,
+      "skippedScope": "Firefox optional suite not enabled in this execution",
+      "facts": "docs/evidence/interactive-media-performance/html-f3-client-controls.json",
+      "raw": "/private/tmp/acanvas-html-f3-20261009/full-client-controls-selection-revision/client-controls-execution.json",
+      "scope": "Normal sandboxed CEF source and production web: original 0..2 selection failure, IME replacement/UTF16/blur commit, source key cancellation, password omission/client retention, trusted copy/cut/paste/rich HTML and generated PNG, select/date/color, private file staging and exact8MiB/oversize feedback, accessible reading/focus/scroll, pixel comparison scope retained."
+    },
+    "combinedSuite": {
+      "passed": 13,
+      "skipped": 0,
+      "failed": 0,
+      "scope": "Combined actual Chromium ownership fixture plus existing native-controls/browser and Node suite. Holds an input before ACK, publishes stale frames, covers ACK with stale sequence, and restores canonical source script state; checkbox/select/range/local focus, selection echo suppression, repeated SelectAll, active composition and owner replacement with late ACK all pass.",
+      "browserCases": 2,
+      "unitCases": 11
+    }
+  },
+  "failuresRetained": [
+    {
+      "name": "independent original F3",
+      "evidence": "docs/evidence/interactive-media-performance/html-review/selection-feedback-failure.json",
+      "meaning": "Accepted seq54 local selection was overwritten by frame12 inputSeq53 and echoed as seq55."
+    },
+    {
+      "name": "intermediate repeated SelectAll/cut",
+      "evidence": "docs/evidence/interactive-media-performance/html-f3-intermediate-cut-failure.json",
+      "meaning": "Original F3 and IME passed, then tuple-only dedup dropped repeated user SelectAll after refocusing rich contenteditable. Source focused range collapsed0..0 and cut had empty selection. Actual selection-key revision handling resolves this exact case; original trace remains private."
+    }
+  ],
+  "privateArtifacts": {
+    "compiled": "/private/tmp/acanvas-html-f3-20261009/compiled",
+    "web": "/private/tmp/acanvas-html-f3-20261009/web-selection-revision",
+    "native": "/private/tmp/acanvas-html-response-20261009/native-clock-build/Release/acanvas-surface.app/Contents/MacOS/acanvas-surface",
+    "nativeOverride": "/private/tmp/acanvas-html-f3-20261009/native-override.mjs"
+  },
+  "boundaries": [
+    "The browser ownership fixture uses actual native client controls with controlled synthetic input receipts; source-native composition/trusted clipboard/files are separately validated by the complete production client test.",
+    "Physical macOS OS IME candidate UI and WebKit hardware trackpad are not exercised by this Chromium automation. Existing desktop gesture scope and touchscreen control exclusion remain unchanged.",
+    "Feedback pixel assertions are exact outside the own feedback rectangle; within it only visible feedback, DOM error text and one alpha-composition point are asserted.",
+    "No server authentication, native composition contract, sandbox, private clipboard, frame-rate/DPR, installed runtime, live service or shared dist changes in this F3 fix."
+  ],
+  "pending": [
+    "Root-owned overall default validation and runtime delivery."
+  ],
+  "sourceFrozenAt": "2026-10-09T11:35:35.850Z",
+  "resourceClosure": "Both owned browser test fixtures closed through test teardown. Full production client controls passed private CEF profile removal and server/browser shutdown. Independent reviewer owns its separate active runtime window.",
+  "independentReview": {
+    "status": "PASS_WITH_KNOWN_F2_LIMITATION",
+    "report": "docs/evidence/interactive-media-performance/html-review.json",
+    "productionClientCasesPassed": 1,
+    "repoTestsPassed": 13,
+    "independentCounterexamplesPassed": 7,
+    "ownedResourcesClosed": true
+  },
+  "finalResponseSanity": {
+    "status": "passed",
+    "summary": "docs/evidence/interactive-media-performance/html-response-final-f3-summary.json",
+    "rawArchive": "docs/evidence/interactive-media-performance/html-response-final-f3.json.gz",
+    "clickToCanvasCommitMs": {
+      "count": 12,
+      "p50": 72,
+      "p95": 134,
+      "max": 134
+    },
+    "burst": {
+      "inputsDuringInFlightFrameDelivery": 10,
+      "acceptedInputSeq": 23,
+      "displayedInputSeq": 23,
+      "displayedCount": "22",
+      "count": 22,
+      "elapsedMs": 437,
+      "rAfTicksDuringBurst": 6,
+      "maxConcurrentSampleRequests": 1,
+      "nativeAudioRunning": true,
+      "pcmPackets": 3,
+      "maxPcmPtsGapMs": 22,
+      "finalDisplay": {
+        "at": 1791545971651,
+        "frameSeq": 16
+      },
+      "invisibleTextProxyValueAtCommit": "22"
+    }
+  },
+  "followup": {
+    "finding": "F4 client focus domain",
+    "evidence": "docs/evidence/interactive-media-performance/html-f4-execution.json",
+    "status": "PASS_WITH_KNOWN_F2_LIMITATION",
+    "finalResponseSanity": "docs/evidence/interactive-media-performance/html-response-final-f4-summary.json"
+  }
+}

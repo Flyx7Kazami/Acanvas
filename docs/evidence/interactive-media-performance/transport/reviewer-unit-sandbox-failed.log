@@ -1,0 +1,68 @@
+✔ one page shares events and view transport, ignores canceled acknowledgements and releases each owner (15.281458ms)
+✔ view errors isolate their subscriber and instance changes reject the old connection (0.564125ms)
+✖ board connection authenticates its upgrade with the same origin and bootstrap cookie (14.529708ms)
+✖ typed view acknowledgements preserve ownership and operation sequence for invalid identities (8.555541ms)
+✖ board connection rejects malformed, binary and oversized messages (7.524958ms)
+✖ shared websocket view owners preserve the five second disconnect grace and isolate new generations (5.012666ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 2
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 353.373125
+
+✖ failing tests:
+
+test at ../../../../../private/tmp/acanvas-connection-review-OZWHtX/tests/board-connection.test.js:43:1
+✖ board connection authenticates its upgrade with the same origin and bootstrap cookie (14.529708ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at ../../../../../private/tmp/acanvas-connection-review-OZWHtX/tests/board-connection.test.js:68:1
+✖ typed view acknowledgements preserve ownership and operation sequence for invalid identities (8.555541ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at ../../../../../private/tmp/acanvas-connection-review-OZWHtX/tests/board-connection.test.js:97:1
+✖ board connection rejects malformed, binary and oversized messages (7.524958ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at ../../../../../private/tmp/acanvas-connection-review-OZWHtX/tests/board-connection.test.js:105:1
+✖ shared websocket view owners preserve the five second disconnect grace and isolate new generations (5.012666ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2306:21)
+      at listenInCluster (node:net:2437:12)
+      at node:net:2666:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }

@@ -1,0 +1,416 @@
+{
+  "date": "2026-10-09T08:58:19.423Z",
+  "status": "passed",
+  "baseline": "f3269b8",
+  "scope": [
+    "src/web/ChatboxReferences.tsx",
+    "src/web/styles.css",
+    "tests/inline-reference-geometry.test.ts"
+  ],
+  "implementation": {
+    "sharedContentStructure": true,
+    "bodyFont": "inherit",
+    "referenceHeight": "1lh",
+    "verticalAlignment": "top",
+    "thumbnailHeight": "1lh - 4px",
+    "removeHeight": "1lh - 2px",
+    "labelMaximumWidth": "180px",
+    "shadow": "none",
+    "formalContentTabIndex": null,
+    "sharedContentElement": "span",
+    "formalPointerHandling": "browser-native focus and atom selection",
+    "previewConfirmation": "role=button, click, Enter, Space",
+    "editorFontPolicy": "base 15px; narrow media 16px; base rule applies across focus states"
+  },
+  "build": {
+    "root": "/private/tmp/acanvas-reference-geometry-fix-build-YgsiGS",
+    "node": "v24 project runtime",
+    "serverTypecheck": "passed after native-selection tests",
+    "webTypecheck": "passed after common-span and editor selector changes",
+    "privateViteBuild": "passed after common-span and editor selector changes",
+    "sharedDistTouched": false
+  },
+  "test": {
+    "file": "tests/inline-reference-geometry.test.ts",
+    "command": "TMPDIR=/private/tmp <project-node-24> --test --test-concurrency=1 <private-build>/dist/tests/inline-reference-geometry.test.js",
+    "headless": true,
+    "isolatedProject": true,
+    "port": 0,
+    "durationMs": 47071.5585,
+    "geometryScenarios": 16,
+    "passed": 1,
+    "failed": 0,
+    "pageErrors": 0,
+    "measurements": "measurements.json",
+    "scenarios": [
+      {
+        "width": 1440,
+        "theme": "light",
+        "scenario": "short-text",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "15px",
+        "referenceHeights": [
+          24
+        ],
+        "editorHeight": 24,
+        "composerHeight": 52,
+        "deletionEditorHeights": [
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "scenario": "long-text",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "15px",
+        "referenceHeights": [
+          24
+        ],
+        "editorHeight": 24,
+        "composerHeight": 52,
+        "deletionEditorHeights": [
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "scenario": "multiple-text",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "15px",
+        "referenceHeights": [
+          24,
+          24
+        ],
+        "editorHeight": 24,
+        "composerHeight": 52,
+        "deletionEditorHeights": [
+          24,
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "scenario": "pure-references",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "15px",
+        "referenceHeights": [
+          24,
+          24
+        ],
+        "editorHeight": 24,
+        "composerHeight": 52,
+        "deletionEditorHeights": [
+          24,
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "scenario": "short-text",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "15px",
+        "referenceHeights": [
+          24
+        ],
+        "editorHeight": 24,
+        "composerHeight": 52,
+        "deletionEditorHeights": [
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "scenario": "long-text",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "15px",
+        "referenceHeights": [
+          24
+        ],
+        "editorHeight": 24,
+        "composerHeight": 52,
+        "deletionEditorHeights": [
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "scenario": "multiple-text",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "15px",
+        "referenceHeights": [
+          24,
+          24
+        ],
+        "editorHeight": 24,
+        "composerHeight": 52,
+        "deletionEditorHeights": [
+          24,
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "scenario": "pure-references",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "15px",
+        "referenceHeights": [
+          24,
+          24
+        ],
+        "editorHeight": 24,
+        "composerHeight": 52,
+        "deletionEditorHeights": [
+          24,
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 320,
+        "theme": "light",
+        "scenario": "short-text",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "16px",
+        "referenceHeights": [
+          24
+        ],
+        "editorHeight": 24,
+        "composerHeight": 52,
+        "deletionEditorHeights": [
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 320,
+        "theme": "light",
+        "scenario": "long-text",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "16px",
+        "referenceHeights": [
+          24
+        ],
+        "editorHeight": 72,
+        "composerHeight": 100,
+        "deletionEditorHeights": [
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 320,
+        "theme": "light",
+        "scenario": "multiple-text",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "16px",
+        "referenceHeights": [
+          24,
+          24
+        ],
+        "editorHeight": 72,
+        "composerHeight": 100,
+        "deletionEditorHeights": [
+          24,
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 320,
+        "theme": "light",
+        "scenario": "pure-references",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "16px",
+        "referenceHeights": [
+          24,
+          24
+        ],
+        "editorHeight": 48,
+        "composerHeight": 76,
+        "deletionEditorHeights": [
+          24,
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 320,
+        "theme": "dark",
+        "scenario": "short-text",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "16px",
+        "referenceHeights": [
+          24
+        ],
+        "editorHeight": 24,
+        "composerHeight": 52,
+        "deletionEditorHeights": [
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 320,
+        "theme": "dark",
+        "scenario": "long-text",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "16px",
+        "referenceHeights": [
+          24
+        ],
+        "editorHeight": 72,
+        "composerHeight": 100,
+        "deletionEditorHeights": [
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 320,
+        "theme": "dark",
+        "scenario": "multiple-text",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "16px",
+        "referenceHeights": [
+          24,
+          24
+        ],
+        "editorHeight": 72,
+        "composerHeight": 100,
+        "deletionEditorHeights": [
+          24,
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      },
+      {
+        "width": 320,
+        "theme": "dark",
+        "scenario": "pure-references",
+        "previewEqualsFormalExceptForeground": true,
+        "fontSize": "16px",
+        "referenceHeights": [
+          24,
+          24
+        ],
+        "editorHeight": 48,
+        "composerHeight": 76,
+        "deletionEditorHeights": [
+          24,
+          24
+        ],
+        "hoverAndTrueFocusGeometryStable": true,
+        "allReferenceSubtreeBoxShadows": "none"
+      }
+    ],
+    "editing": {
+      "editing": "keyboard confirm, revision, UTF-16 offsets, arrows, Delete, duplicate reference, Backspace, native IME, refresh, cross selection",
+      "revision": 61,
+      "tasks": 0
+    },
+    "nativePointerScenarios": 4,
+    "editorAlreadyFocusedScenarios": 4,
+    "previewEnterSpace": "passed",
+    "trueFocusTargets": "preview role button, editor, remove button",
+    "tabAndShiftTab": "editor to remove and back",
+    "nativeSelectionEvidence": "native-selection-fix.json"
+  },
+  "attempts": [
+    {
+      "status": "environment-failure",
+      "reason": "listen EPERM 127.0.0.1 inside sandbox before browser launch",
+      "evidenceDirectory": "/private/tmp/acanvas-reference-geometry-run-OP0t54",
+      "response": "Reran with approved isolated loopback and owned headless browser permission"
+    },
+    {
+      "status": "harness-failure",
+      "reason": "Previous scenario pointer hovered preview during comparison; formal comparison had pointer outside",
+      "evidence": "failed-hover-state.json",
+      "response": "Moved pointer outside before both state snapshots"
+    },
+    {
+      "status": "harness-failure",
+      "reason": "Playwright contenteditable.fill focus invoked existing saved-selection restoration after the previous scenario explicitly focused a remove button",
+      "evidence": "failed-focus-setup.json",
+      "response": "Fixture explicitly focuses the editor before fill, matching focus then selection and input"
+    },
+    {
+      "status": "passed",
+      "evidence": "measurements.json"
+    },
+    {
+      "status": "product-failure",
+      "stage": "independent review",
+      "finding": "F1",
+      "reason": "Formal common button pointerdown intercepted native focus and atom selection",
+      "evidence": "review-focus-counterexample.json",
+      "response": "Shared body uses ordinary span; formal body has no pointer handler, role or tabIndex; preview alone provides confirmation semantics"
+    },
+    {
+      "status": "product-failure",
+      "stage": "native-selection fix geometry rerun",
+      "reason": "Narrow base editor was 16px while a higher-specificity focused editor selector imposed 15px",
+      "evidence": "failed-narrow-focus-size.json",
+      "nativeCounterexamples": "All 4 width/theme counterexamples and all 4 already-focused pointer cases passed before narrow geometry stopped the run",
+      "response": "Removed repeated focus selectors from the base editor rule so one base and media strategy governs every focus state"
+    },
+    {
+      "status": "passed",
+      "stage": "native-selection and true-focus final execution",
+      "evidence": "measurements.json",
+      "nativeSelectionEvidence": "native-selection-fix.json",
+      "durationMs": 47071.5585
+    }
+  ],
+  "verificationBoundaries": [
+    "Single-line reference insertion, confirmation and each removal keep editor 24px and composer 52px",
+    "Real wrapped content changes editor by normal 24px line increments; 320px scenarios measured 24, 48 and 72px",
+    "Formal/preview full computed geometry and style match except inherited foreground color",
+    "Object references exercised with generic file thumbnails; task/history references share common CSS and their data behavior is unchanged",
+    "Task Send, annotation Done, actual user board and live 4317 service were outside this execution",
+    "Private headless browser and isolated service closed after the test",
+    "The two setup failures were retained and did not require a product-code workaround",
+    "Formal reference clicks from whiteboard focus select the native atom from before text offset 7 through after text offset 0; typing Z persists before Zafter and removes only that reference",
+    "Already-focused editor pointer clicks preserve the same native atom selection behavior",
+    "Preview role-button focus and Enter/Space, editor real focus, remove-button focus, Tab and Shift+Tab exercised",
+    "At 320px and 390px the editor and inherited reference fonts stay 16px through blur and real focus; desktop stays 15px",
+    "Independent reacceptance of F1 remains assigned to the clean reviewer"
+  ],
+  "screenshots": [
+    "1440-light-preview.png",
+    "1440-light-formal.png",
+    "320-dark-preview.png",
+    "320-dark-formal.png"
+  ],
+  "lineHeightChart": "line-height-measurements.svg",
+  "independentReacceptance": "pending"
+}

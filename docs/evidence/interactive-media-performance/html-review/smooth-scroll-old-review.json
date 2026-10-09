@@ -1,0 +1,29 @@
+{
+  "status": "FAIL",
+  "output": "/private/tmp/acanvas-html-independent-scroll-old-20261009-01",
+  "rows": [
+    {
+      "scale": 1,
+      "index": 0,
+      "scrollY": 0,
+      "controls": 3,
+      "timing": {
+        "prepareMs": 7.307542000000012,
+        "pauseMs": 28.77283299999999,
+        "semanticMs": 6.847750000000019,
+        "copyMs": 21.925082999999972,
+        "totalMs": 38.04387500000007
+      }
+    }
+  ],
+  "boundary": "Independent source smooth scrollIntoView, exact stripe bands and visible control bounds in same sole production root screenshot. No extra flags, tolerance, retries, sleeps or semantic rewrite.",
+  "requested": [
+    {
+      "scale": 1,
+      "before": 0,
+      "immediate": 0,
+      "events": []
+    }
+  ],
+  "error": "AssertionError [ERR_ASSERTION]: {\"scale\":1,\"index\":1,\"y\":5,\"scroll\":10}\n+ actual - expected\n\n  [\n+   255,\n+   255,\n+   255\n-   0,\n-   0,\n-   0\n  ]\n"
+}

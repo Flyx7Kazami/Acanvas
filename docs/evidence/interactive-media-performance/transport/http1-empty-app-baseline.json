@@ -1,0 +1,86 @@
+{
+  "measuredAt": "2026-10-09T05:40:20.964Z",
+  "scope": "Owned temporary project, empty actual App, no CEF/media/source content",
+  "browser": "140.0.7339.186",
+  "baseline": [
+    {
+      "index": 0,
+      "domContentLoadedMs": 1097.219833,
+      "streams": [
+        {
+          "path": "events",
+          "status": 200,
+          "protocol": "http/1.1",
+          "connectionId": 63,
+          "responseMs": 46.45700007677078
+        },
+        {
+          "path": "presence",
+          "status": 200,
+          "protocol": "http/1.1",
+          "connectionId": 144,
+          "responseMs": 7.036000024527311
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "domContentLoadedMs": 1071.2065000000002,
+      "streams": [
+        {
+          "path": "events",
+          "status": 200,
+          "protocol": "http/1.1",
+          "connectionId": 151,
+          "responseMs": 40.9580001141876
+        },
+        {
+          "path": "presence",
+          "status": 200,
+          "protocol": "http/1.1",
+          "connectionId": 212,
+          "responseMs": 2.1440000273287296
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "domContentLoadedMs": 1063.58725,
+      "streams": [
+        {
+          "path": "events",
+          "status": 200,
+          "protocol": "http/1.1",
+          "connectionId": 206,
+          "responseMs": 39.225999964401126
+        },
+        {
+          "path": "presence",
+          "status": 200,
+          "protocol": "http/1.1",
+          "connectionId": 199,
+          "responseMs": 2.3150001652538776
+        }
+      ]
+    }
+  ],
+  "probe": {
+    "pendingAfterMs": 3501.944292,
+    "pending": true,
+    "directNodeControlMs": 2.5102499999993597,
+    "afterFirstPageClose": {
+      "elapsedMs": 3512.7000000476837,
+      "startTime": 1029.2000000476837,
+      "requestStart": 4537.200000047684,
+      "responseStart": 4538.299999952316,
+      "responseEnd": 4538.5
+    },
+    "releaseToCompleteMs": 7.99554100000023
+  },
+  "refresh": {
+    "domContentLoadedMs": 569.7589159999989,
+    "probeMs": 2
+  },
+  "status": "measured",
+  "ownedRoot": "/private/tmp/acanvas-owned-transport-RhxAfU"
+}

@@ -1,0 +1,4106 @@
+{
+  "status": "PASS",
+  "methodology": "Raw gzip documents were independently unpacked. Each native input was uniquely covered by the first successful matching camera/object commit or a later committed input that superseded it. Every matched pair was checked against its actual frameSeq/time/geometry/media/surface records and all three latest native surface publications. Quantile definition is floor((n-1)*.5) and ceil((n-1)*.95). Loading-only repeats intentionally contain zero gesture inputs and are not playback/input trials.",
+  "equivalentSetup": {
+    "sameObjectIdsKindsBounds": true,
+    "sameFixtures": true,
+    "sameBrowser": true,
+    "sameDPR": true
+  },
+  "audits": {
+    "baseline-r1": {
+      "status": "PASS",
+      "archive": "final-baseline-r1.json.gz",
+      "buildRoot": "/private/tmp/acanvas-interactive-media-build-1L57oA",
+      "fixtures": "/private/tmp/acanvas-interactive-exact-final-fixtures-vfigqM",
+      "browser": "155.0.8059.39",
+      "dpr": 2,
+      "objectBounds": [
+        {
+          "id": "16994e72-4c0e-4c66-abdd-ab8f1e8c40d6",
+          "kind": "image",
+          "x": 3940,
+          "y": 120,
+          "width": 210,
+          "height": 280
+        },
+        {
+          "id": "42ec4cb1-6bf0-4700-ac0b-ed5c1cf86ac5",
+          "kind": "html",
+          "x": 3940,
+          "y": 2060,
+          "width": 740,
+          "height": 247.882
+        },
+        {
+          "id": "50a24204-5f04-4620-bec7-f5e8c5ce48e6",
+          "kind": "image",
+          "x": 1400,
+          "y": 120,
+          "width": 280,
+          "height": 280
+        },
+        {
+          "id": "6c06394f-4e06-4d22-ab2c-4772979b83b8",
+          "kind": "html",
+          "x": 2670,
+          "y": 2060,
+          "width": 740,
+          "height": 247.882
+        },
+        {
+          "id": "75bddc75-9043-4f73-a5e2-d111a7bbb40e",
+          "kind": "image",
+          "x": 130,
+          "y": 120,
+          "width": 280.617,
+          "height": 280.617
+        },
+        {
+          "id": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+          "kind": "video",
+          "x": 1400,
+          "y": 1090,
+          "width": 597.347,
+          "height": 797.855
+        },
+        {
+          "id": "9918d900-9157-4491-bc77-764da69477f8",
+          "kind": "audio-large",
+          "x": 3940,
+          "y": 1090,
+          "width": 1087.465,
+          "height": 439.632
+        },
+        {
+          "id": "9b9d4290-e079-4389-922a-3785949e188e",
+          "kind": "markdown",
+          "x": 130,
+          "y": 2060,
+          "width": 868.563,
+          "height": 878.889
+        },
+        {
+          "id": "b87c1d74-189f-4b80-abe5-714c6c5e910a",
+          "kind": "image",
+          "x": 130,
+          "y": 1090,
+          "width": 616.54,
+          "height": 411.027
+        },
+        {
+          "id": "c241c0bc-d26c-4096-aee4-81c41b536807",
+          "kind": "image",
+          "x": 2670,
+          "y": 120,
+          "width": 280,
+          "height": 280
+        },
+        {
+          "id": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+          "kind": "audio",
+          "x": 2670,
+          "y": 1090,
+          "width": 1087.465,
+          "height": 134.966
+        },
+        {
+          "id": "e130e149-bb61-472d-b27b-5cf7c596d4f3",
+          "kind": "html",
+          "x": 1400,
+          "y": 2060,
+          "width": 740,
+          "height": 247.882
+        }
+      ],
+      "counts": {
+        "inputPhases": 21,
+        "inputs": 2508,
+        "matched": 2470,
+        "superseded": 38,
+        "covered": 2508
+      },
+      "phases": [
+        {
+          "name": "audio-playing-pan",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 119,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 21.299999952316284,
+            "p95": 31.899999856948853,
+            "max": 37.90000009536743
+          },
+          "elapsed": 3590
+        },
+        {
+          "name": "audio-playing-drag",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 238,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 24.399999856948853,
+            "p95": 110.09999990463257,
+            "max": 124.70000004768372
+          },
+          "elapsed": 9897
+        },
+        {
+          "name": "audio-playing-wheel",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 120,
+          "matched": 105,
+          "superseded": 15,
+          "pending": 0,
+          "terminalInputId": 358,
+          "terminalMatched": true,
+          "latency": {
+            "count": 105,
+            "p50": 21.200000047683716,
+            "p95": 44.89999985694885,
+            "max": 93.90000009536743
+          },
+          "elapsed": 6999
+        },
+        {
+          "name": "audio-playing-zoom",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 120,
+          "matched": 109,
+          "superseded": 11,
+          "pending": 0,
+          "terminalInputId": 478,
+          "terminalMatched": true,
+          "latency": {
+            "count": 109,
+            "p50": 22.100000143051147,
+            "p95": 44,
+            "max": 64.29999995231628
+          },
+          "elapsed": 6437
+        },
+        {
+          "name": "audio-playing-pan-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 597,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 20.300000190734863,
+            "p95": 30.200000047683716,
+            "max": 36.90000009536743
+          },
+          "elapsed": 3088
+        },
+        {
+          "name": "audio-playing-drag-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 716,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 21.90000009536743,
+            "p95": 61.5,
+            "max": 118.5
+          },
+          "elapsed": 9598
+        },
+        {
+          "name": "audio-playing-zoom-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 120,
+          "matched": 108,
+          "superseded": 12,
+          "pending": 0,
+          "terminalInputId": 836,
+          "terminalMatched": true,
+          "latency": {
+            "count": 108,
+            "p50": 20.5,
+            "p95": 39.90000009536743,
+            "max": 77.70000004768372
+          },
+          "elapsed": 6645
+        },
+        {
+          "name": "audio-large-playing-pan",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 955,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 17.299999952316284,
+            "p95": 20.5,
+            "max": 25.699999809265137
+          },
+          "elapsed": 2460
+        },
+        {
+          "name": "audio-large-playing-drag",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1074,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 17.399999856948853,
+            "p95": 29.40000009536743,
+            "max": 36.799999952316284
+          },
+          "elapsed": 5589
+        },
+        {
+          "name": "audio-large-playing-wheel",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1194,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 18.09999990463257,
+            "p95": 34.200000047683716,
+            "max": 45.700000047683716
+          },
+          "elapsed": 6347
+        },
+        {
+          "name": "audio-large-playing-zoom",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1314,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 18,
+            "p95": 33.59999990463257,
+            "max": 39.5
+          },
+          "elapsed": 6256
+        },
+        {
+          "name": "audio-large-playing-pan-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1433,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 17.5,
+            "p95": 22.200000047683716,
+            "max": 23.700000047683716
+          },
+          "elapsed": 2582
+        },
+        {
+          "name": "audio-large-playing-drag-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1552,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 17.40000009536743,
+            "p95": 32.40000009536743,
+            "max": 34.19999980926514
+          },
+          "elapsed": 5584
+        },
+        {
+          "name": "audio-large-playing-zoom-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1672,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 17.5,
+            "p95": 33,
+            "max": 41.200000047683716
+          },
+          "elapsed": 6430
+        },
+        {
+          "name": "video-playing-pan",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1791,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 26.5,
+            "p95": 44.10000014305115,
+            "max": 48.89999985694885
+          },
+          "elapsed": 3295
+        },
+        {
+          "name": "video-playing-drag",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1910,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 36.59999990463257,
+            "p95": 56.09999990463257,
+            "max": 86.29999995231628
+          },
+          "elapsed": 6170
+        },
+        {
+          "name": "video-playing-wheel",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 2030,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 51.5,
+            "p95": 56,
+            "max": 58.700000047683716
+          },
+          "elapsed": 4906
+        },
+        {
+          "name": "video-playing-zoom",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 2150,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 51.5,
+            "p95": 56.09999990463257,
+            "max": 58.799999952316284
+          },
+          "elapsed": 4810
+        },
+        {
+          "name": "video-playing-pan-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 2269,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 26,
+            "p95": 43.5,
+            "max": 47
+          },
+          "elapsed": 3420
+        },
+        {
+          "name": "video-playing-drag-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 2388,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 51,
+            "p95": 57.10000014305115,
+            "max": 59.299999952316284
+          },
+          "elapsed": 5714
+        },
+        {
+          "name": "video-playing-zoom-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 2508,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 50.299999952316284,
+            "p95": 56.799999952316284,
+            "max": 67.40000009536743
+          },
+          "elapsed": 5151
+        }
+      ],
+      "playback": [
+        {
+          "name": "audio-playing-stationary",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 334,
+              "nonzero": 318,
+              "max": 0.08595082088818631
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 334,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 6.182700000047683,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-pan",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 167,
+              "nonzero": 167,
+              "max": 0.0859509821525633
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 167,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 3.413100000143051,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-drag",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 481,
+              "nonzero": 481,
+              "max": 0.08595109884017783
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 481,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 9.2865,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-wheel",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 373,
+              "nonzero": 373,
+              "max": 0.0859520510663401
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 373,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 6.664299999952316,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-zoom",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 335,
+              "nonzero": 335,
+              "max": 0.08595048060592239
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 335,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 6.077599999904632,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-pan-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 156,
+              "nonzero": 156,
+              "max": 0.0859486765809282
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 156,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 2.975600000143051,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-drag-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 459,
+              "nonzero": 459,
+              "max": 0.08594807393144276
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 459,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 8.473,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-zoom-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 341,
+              "nonzero": 341,
+              "max": 0.08594835337664153
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 341,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 6.361199999809265,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-stationary",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 370,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 370,
+              "nonzero": 370,
+              "max": 0.09241699520841701
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 6.160899999856949,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-pan",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 140,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 140,
+              "nonzero": 140,
+              "max": 0.08877051295272308
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 2.327100000143051,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-drag",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 315,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 315,
+              "nonzero": 315,
+              "max": 0.08876959003831417
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 5.248900000095367,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-wheel",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 360,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 360,
+              "nonzero": 360,
+              "max": 0.08878648600132623
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 6.005,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-zoom",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 355,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 355,
+              "nonzero": 355,
+              "max": 0.08878632253377422
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 5.921199999809265,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-pan-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 147,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 147,
+              "nonzero": 147,
+              "max": 0.08876434701455341
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 2.4485999999046326,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-drag-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 311,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 311,
+              "nonzero": 311,
+              "max": 0.08878457524147429
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 5.191099999904632,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-zoom-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 365,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 365,
+              "nonzero": 365,
+              "max": 0.08878132630047232
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 6.084799999952316,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "video-playing-stationary",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 368,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 368,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 181,
+          "rvfcPublications": 181,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 185,
+          "boundedSeconds": 6.179900000095367,
+          "decodedFPS": 29.935759477846748,
+          "pts": [
+            0.033333,
+            6.166667
+          ]
+        },
+        {
+          "name": "video-playing-pan",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 185,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 185,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 82,
+          "rvfcPublications": 82,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 92,
+          "boundedSeconds": 3.1092000000476836,
+          "decodedFPS": 29.58960504264411,
+          "pts": [
+            6.433333,
+            9.5
+          ]
+        },
+        {
+          "name": "video-playing-drag",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 357,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 357,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 139,
+          "rvfcPublications": 139,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 178,
+          "boundedSeconds": 6.019599999904632,
+          "decodedFPS": 29.570071101538314,
+          "pts": [
+            9.8,
+            3.733333
+          ]
+        },
+        {
+          "name": "video-playing-wheel",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 285,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 285,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 125,
+          "rvfcPublications": 125,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 142,
+          "boundedSeconds": 4.764900000095367,
+          "decodedFPS": 29.801255010001874,
+          "pts": [
+            4.033333,
+            8.766667
+          ]
+        },
+        {
+          "name": "video-playing-zoom",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 281,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 281,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 125,
+          "rvfcPublications": 125,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 139,
+          "boundedSeconds": 4.705799999952316,
+          "decodedFPS": 29.538016915595325,
+          "pts": [
+            9,
+            1.666667
+          ]
+        },
+        {
+          "name": "video-playing-pan-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 190,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 190,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 91,
+          "rvfcPublications": 91,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 97,
+          "boundedSeconds": 3.2567999999523165,
+          "decodedFPS": 29.783836895547836,
+          "pts": [
+            1.9,
+            5.133333
+          ]
+        },
+        {
+          "name": "video-playing-drag-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 326,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 326,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 139,
+          "rvfcPublications": 139,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 165,
+          "boundedSeconds": 5.5145999999046325,
+          "decodedFPS": 29.920574475547358,
+          "pts": [
+            5.366667,
+            10.833333
+          ]
+        },
+        {
+          "name": "video-playing-zoom-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 297,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 297,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 123,
+          "rvfcPublications": 123,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 149,
+          "boundedSeconds": 4.981700000047684,
+          "decodedFPS": 29.909468654992033,
+          "pts": [
+            11.166667,
+            4.1
+          ]
+        }
+      ],
+      "loading": {
+        "cold": {
+          "firstImagePublishedAt": 740,
+          "allImagesPublishedAt": 882,
+          "allImagesVisibleCommitAt": 888.7000000476837,
+          "firstImageConstructorWorkMs": 17,
+          "allImageConstructorWorkMs": 73.80000019073486,
+          "htmlPreparingPublishAt": [
+            203.70000004768372,
+            206.29999995231628,
+            239.79999995231628
+          ],
+          "htmlAuthoritativePublishAt": [
+            1389.1000001430511,
+            2468.100000143051,
+            2870.7999999523163
+          ],
+          "allAuthoritativeHTMLVisibleCommitAt": 2878.9000000953674,
+          "waveforms": [
+            {
+              "at": 685.1000001430511,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 942.7999999523163,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 997.2000000476837,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1010.7000000476837,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1091.1000001430511,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 1098,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "audioPlayable": [
+            {
+              "at": 1023.6000001430511,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1099.2000000476837,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "assetHTTPPolicy": "private,no-store; the third navigation clears only the session waveform envelope"
+        },
+        "warm": {
+          "firstImagePublishedAt": 241.80000019073486,
+          "allImagesPublishedAt": 919.2000000476837,
+          "allImagesVisibleCommitAt": 923.6000001430511,
+          "firstImageConstructorWorkMs": 15.700000047683716,
+          "allImageConstructorWorkMs": 69.90000009536743,
+          "htmlPreparingPublishAt": [
+            100.80000019073486,
+            102.90000009536743,
+            126.10000014305115
+          ],
+          "htmlAuthoritativePublishAt": [
+            1438.2000000476837,
+            1800.6000001430511,
+            2604.5
+          ],
+          "allAuthoritativeHTMLVisibleCommitAt": 2614.5,
+          "waveforms": [
+            {
+              "at": 127.20000004768372,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 127.30000019073486,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 143.70000004768372,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 143.70000004768372,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 212.30000019073486,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 221,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 950.8000001907349,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 960,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1017,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 1023.3000001907349,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "audioPlayable": [
+            {
+              "at": 970.5,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1035.1000001430511,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "assetHTTPPolicy": "private,no-store; the third navigation clears only the session waveform envelope"
+        },
+        "cacheWarm": {
+          "firstImagePublishedAt": 232.89999985694885,
+          "allImagesPublishedAt": 1041.8999998569489,
+          "allImagesVisibleCommitAt": 1045.5999999046326,
+          "firstImageConstructorWorkMs": 16.09999990463257,
+          "allImageConstructorWorkMs": 74.09999966621399,
+          "htmlPreparingPublishAt": [
+            92.79999995231628,
+            95.19999980926514,
+            116.89999985694885
+          ],
+          "htmlAuthoritativePublishAt": [
+            1416.3999998569489,
+            1735.5,
+            2538.2999999523163
+          ],
+          "allAuthoritativeHTMLVisibleCommitAt": 2539.399999856949,
+          "waveforms": [
+            {
+              "at": 608.2999999523163,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 658.5999999046326,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1062.5999999046326,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1073.5999999046326,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1362.5999999046326,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 1368.5,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "audioPlayable": [
+            {
+              "at": 1084.3999998569489,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1379.5999999046326,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "assetHTTPPolicy": "private,no-store; the third navigation clears only the session waveform envelope"
+        }
+      },
+      "errors": [],
+      "failures": []
+    },
+    "baseline-loading-r2": {
+      "status": "PASS",
+      "archive": "final-baseline-loading-r2.json.gz",
+      "buildRoot": "/private/tmp/acanvas-interactive-media-build-1L57oA",
+      "fixtures": "/private/tmp/acanvas-interactive-exact-final-fixtures-vfigqM",
+      "browser": "155.0.8059.39",
+      "dpr": 2,
+      "objectBounds": [
+        {
+          "id": "16994e72-4c0e-4c66-abdd-ab8f1e8c40d6",
+          "kind": "image",
+          "x": 3940,
+          "y": 120,
+          "width": 210,
+          "height": 280
+        },
+        {
+          "id": "42ec4cb1-6bf0-4700-ac0b-ed5c1cf86ac5",
+          "kind": "html",
+          "x": 3940,
+          "y": 2060,
+          "width": 740,
+          "height": 247.882
+        },
+        {
+          "id": "50a24204-5f04-4620-bec7-f5e8c5ce48e6",
+          "kind": "image",
+          "x": 1400,
+          "y": 120,
+          "width": 280,
+          "height": 280
+        },
+        {
+          "id": "6c06394f-4e06-4d22-ab2c-4772979b83b8",
+          "kind": "html",
+          "x": 2670,
+          "y": 2060,
+          "width": 740,
+          "height": 247.882
+        },
+        {
+          "id": "75bddc75-9043-4f73-a5e2-d111a7bbb40e",
+          "kind": "image",
+          "x": 130,
+          "y": 120,
+          "width": 280.617,
+          "height": 280.617
+        },
+        {
+          "id": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+          "kind": "video",
+          "x": 1400,
+          "y": 1090,
+          "width": 597.347,
+          "height": 797.855
+        },
+        {
+          "id": "9918d900-9157-4491-bc77-764da69477f8",
+          "kind": "audio-large",
+          "x": 3940,
+          "y": 1090,
+          "width": 1087.465,
+          "height": 439.632
+        },
+        {
+          "id": "9b9d4290-e079-4389-922a-3785949e188e",
+          "kind": "markdown",
+          "x": 130,
+          "y": 2060,
+          "width": 868.563,
+          "height": 878.889
+        },
+        {
+          "id": "b87c1d74-189f-4b80-abe5-714c6c5e910a",
+          "kind": "image",
+          "x": 130,
+          "y": 1090,
+          "width": 616.54,
+          "height": 411.027
+        },
+        {
+          "id": "c241c0bc-d26c-4096-aee4-81c41b536807",
+          "kind": "image",
+          "x": 2670,
+          "y": 120,
+          "width": 280,
+          "height": 280
+        },
+        {
+          "id": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+          "kind": "audio",
+          "x": 2670,
+          "y": 1090,
+          "width": 1087.465,
+          "height": 134.966
+        },
+        {
+          "id": "e130e149-bb61-472d-b27b-5cf7c596d4f3",
+          "kind": "html",
+          "x": 1400,
+          "y": 2060,
+          "width": 740,
+          "height": 247.882
+        }
+      ],
+      "counts": {
+        "inputPhases": 0,
+        "inputs": 0,
+        "matched": 0,
+        "superseded": 0,
+        "covered": 0
+      },
+      "phases": [],
+      "playback": [],
+      "loading": {
+        "cold": {
+          "firstImagePublishedAt": 580.7999999523163,
+          "allImagesPublishedAt": 685.8999998569489,
+          "allImagesVisibleCommitAt": 691.7999999523163,
+          "firstImageConstructorWorkMs": 18.299999952316284,
+          "allImageConstructorWorkMs": 80.7000002861023,
+          "htmlPreparingPublishAt": [
+            140.5,
+            143.39999985694885,
+            173.19999980926514
+          ],
+          "htmlAuthoritativePublishAt": [
+            1115.5,
+            1672.8999998569489,
+            2643.399999856949
+          ],
+          "allAuthoritativeHTMLVisibleCommitAt": 2645.0999999046326,
+          "waveforms": [
+            {
+              "at": 547.8999998569489,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 752.8999998569489,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 793.0999999046326,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 803.0999999046326,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 845.2999999523163,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 852.5999999046326,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "audioPlayable": [
+            {
+              "at": 803.6999998092651,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 863.1999998092651,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "assetHTTPPolicy": "private,no-store; the third navigation clears only the session waveform envelope"
+        },
+        "warm": {
+          "firstImagePublishedAt": 218.29999995231628,
+          "allImagesPublishedAt": 974.0999999046326,
+          "allImagesVisibleCommitAt": 978.0999999046326,
+          "firstImageConstructorWorkMs": 12.599999904632568,
+          "allImageConstructorWorkMs": 68.99999952316284,
+          "htmlPreparingPublishAt": [
+            98.09999990463257,
+            100.59999990463257,
+            122.29999995231628
+          ],
+          "htmlAuthoritativePublishAt": [
+            1058.4000000953674,
+            1801.5,
+            2376.5999999046326
+          ],
+          "allAuthoritativeHTMLVisibleCommitAt": 2384.5999999046326,
+          "waveforms": [
+            {
+              "at": 123.29999995231628,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 123.29999995231628,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 139.09999990463257,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 139.20000004768372,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 196.29999995231628,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 202.20000004768372,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 992.5,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1002.4000000953674,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1070.0999999046326,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 1076.7000000476837,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "audioPlayable": [
+            {
+              "at": 1014.5,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1110.5,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "assetHTTPPolicy": "private,no-store; the third navigation clears only the session waveform envelope"
+        },
+        "cacheWarm": {
+          "firstImagePublishedAt": 190,
+          "allImagesPublishedAt": 997.7999999523163,
+          "allImagesVisibleCommitAt": 1001.6999998092651,
+          "firstImageConstructorWorkMs": 12.900000095367432,
+          "allImageConstructorWorkMs": 65.80000019073486,
+          "htmlPreparingPublishAt": [
+            85.19999980926514,
+            87.69999980926514,
+            108.29999995231628
+          ],
+          "htmlAuthoritativePublishAt": [
+            939,
+            2015.1999998092651,
+            2342.0999999046326
+          ],
+          "allAuthoritativeHTMLVisibleCommitAt": 2343,
+          "waveforms": [
+            {
+              "at": 597.6999998092651,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 702.3999998569489,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 1027.6999998092651,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1037,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1085.3999998569489,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 1091.7999999523163,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "audioPlayable": [
+            {
+              "at": 1048.2999999523163,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 1093.5,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "assetHTTPPolicy": "private,no-store; the third navigation clears only the session waveform envelope"
+        }
+      },
+      "errors": [],
+      "failures": []
+    },
+    "candidate-r1": {
+      "status": "PASS",
+      "archive": "final-candidate-r1.json.gz",
+      "buildRoot": "/private/tmp/acanvas-interactive-media-build-4TftKl",
+      "fixtures": "/private/tmp/acanvas-interactive-exact-final-fixtures-vfigqM",
+      "browser": "155.0.8059.39",
+      "dpr": 2,
+      "objectBounds": [
+        {
+          "id": "16994e72-4c0e-4c66-abdd-ab8f1e8c40d6",
+          "kind": "image",
+          "x": 3940,
+          "y": 120,
+          "width": 210,
+          "height": 280
+        },
+        {
+          "id": "42ec4cb1-6bf0-4700-ac0b-ed5c1cf86ac5",
+          "kind": "html",
+          "x": 3940,
+          "y": 2060,
+          "width": 740,
+          "height": 247.882
+        },
+        {
+          "id": "50a24204-5f04-4620-bec7-f5e8c5ce48e6",
+          "kind": "image",
+          "x": 1400,
+          "y": 120,
+          "width": 280,
+          "height": 280
+        },
+        {
+          "id": "6c06394f-4e06-4d22-ab2c-4772979b83b8",
+          "kind": "html",
+          "x": 2670,
+          "y": 2060,
+          "width": 740,
+          "height": 247.882
+        },
+        {
+          "id": "75bddc75-9043-4f73-a5e2-d111a7bbb40e",
+          "kind": "image",
+          "x": 130,
+          "y": 120,
+          "width": 280.617,
+          "height": 280.617
+        },
+        {
+          "id": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+          "kind": "video",
+          "x": 1400,
+          "y": 1090,
+          "width": 597.347,
+          "height": 797.855
+        },
+        {
+          "id": "9918d900-9157-4491-bc77-764da69477f8",
+          "kind": "audio-large",
+          "x": 3940,
+          "y": 1090,
+          "width": 1087.465,
+          "height": 439.632
+        },
+        {
+          "id": "9b9d4290-e079-4389-922a-3785949e188e",
+          "kind": "markdown",
+          "x": 130,
+          "y": 2060,
+          "width": 868.563,
+          "height": 878.889
+        },
+        {
+          "id": "b87c1d74-189f-4b80-abe5-714c6c5e910a",
+          "kind": "image",
+          "x": 130,
+          "y": 1090,
+          "width": 616.54,
+          "height": 411.027
+        },
+        {
+          "id": "c241c0bc-d26c-4096-aee4-81c41b536807",
+          "kind": "image",
+          "x": 2670,
+          "y": 120,
+          "width": 280,
+          "height": 280
+        },
+        {
+          "id": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+          "kind": "audio",
+          "x": 2670,
+          "y": 1090,
+          "width": 1087.465,
+          "height": 134.966
+        },
+        {
+          "id": "e130e149-bb61-472d-b27b-5cf7c596d4f3",
+          "kind": "html",
+          "x": 1400,
+          "y": 2060,
+          "width": 740,
+          "height": 247.882
+        }
+      ],
+      "counts": {
+        "inputPhases": 21,
+        "inputs": 2508,
+        "matched": 2508,
+        "superseded": 0,
+        "covered": 2508
+      },
+      "phases": [
+        {
+          "name": "audio-playing-pan",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 119,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 17.399999856948853,
+            "p95": 18.5,
+            "max": 45.80000019073486
+          },
+          "elapsed": 2361
+        },
+        {
+          "name": "audio-playing-drag",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 238,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 17.40000009536743,
+            "p95": 18.40000009536743,
+            "max": 20.699999809265137
+          },
+          "elapsed": 5859
+        },
+        {
+          "name": "audio-playing-wheel",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 358,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 17.299999952316284,
+            "p95": 17.799999952316284,
+            "max": 20.799999952316284
+          },
+          "elapsed": 6276
+        },
+        {
+          "name": "audio-playing-zoom",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 478,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 17.399999856948853,
+            "p95": 18,
+            "max": 19.299999952316284
+          },
+          "elapsed": 6370
+        },
+        {
+          "name": "audio-playing-pan-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 597,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 17.399999856948853,
+            "p95": 18.5,
+            "max": 20.799999952316284
+          },
+          "elapsed": 2346
+        },
+        {
+          "name": "audio-playing-drag-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 716,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 17.399999856948853,
+            "p95": 17.699999809265137,
+            "max": 19.90000009536743
+          },
+          "elapsed": 4315
+        },
+        {
+          "name": "audio-playing-zoom-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 836,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 17.300000190734863,
+            "p95": 17.700000047683716,
+            "max": 20.899999856948853
+          },
+          "elapsed": 6365
+        },
+        {
+          "name": "audio-large-playing-pan",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 955,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 17.40000009536743,
+            "p95": 19.59999990463257,
+            "max": 21.09999990463257
+          },
+          "elapsed": 2349
+        },
+        {
+          "name": "audio-large-playing-drag",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1074,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 17.299999952316284,
+            "p95": 19.200000047683716,
+            "max": 21.40000009536743
+          },
+          "elapsed": 4245
+        },
+        {
+          "name": "audio-large-playing-wheel",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1194,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 17.300000190734863,
+            "p95": 19.200000047683716,
+            "max": 29.700000047683716
+          },
+          "elapsed": 6454
+        },
+        {
+          "name": "audio-large-playing-zoom",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1314,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 17.299999952316284,
+            "p95": 19.299999952316284,
+            "max": 21.90000009536743
+          },
+          "elapsed": 6469
+        },
+        {
+          "name": "audio-large-playing-pan-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1433,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 17.300000190734863,
+            "p95": 19.40000009536743,
+            "max": 21.799999952316284
+          },
+          "elapsed": 2362
+        },
+        {
+          "name": "audio-large-playing-drag-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1552,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 17.09999990463257,
+            "p95": 19.200000047683716,
+            "max": 26.5
+          },
+          "elapsed": 4362
+        },
+        {
+          "name": "audio-large-playing-zoom-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1672,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 17,
+            "p95": 18.700000047683716,
+            "max": 19.799999952316284
+          },
+          "elapsed": 6402
+        },
+        {
+          "name": "video-playing-pan",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1791,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 18.700000047683716,
+            "p95": 21.299999952316284,
+            "max": 24.40000009536743
+          },
+          "elapsed": 2384
+        },
+        {
+          "name": "video-playing-drag",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 1910,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 18.299999952316284,
+            "p95": 22,
+            "max": 26.399999856948853
+          },
+          "elapsed": 3213
+        },
+        {
+          "name": "video-playing-wheel",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 2030,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 19.200000047683716,
+            "p95": 22.100000143051147,
+            "max": 25.799999952316284
+          },
+          "elapsed": 4505
+        },
+        {
+          "name": "video-playing-zoom",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 2150,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 18.699999809265137,
+            "p95": 22.200000047683716,
+            "max": 25.699999809265137
+          },
+          "elapsed": 4475
+        },
+        {
+          "name": "video-playing-pan-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 2269,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 18.90000009536743,
+            "p95": 21.09999990463257,
+            "max": 22.59999990463257
+          },
+          "elapsed": 2428
+        },
+        {
+          "name": "video-playing-drag-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 119,
+          "matched": 119,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 2388,
+          "terminalMatched": true,
+          "latency": {
+            "count": 119,
+            "p50": 18,
+            "p95": 21.299999952316284,
+            "max": 23.40000009536743
+          },
+          "elapsed": 4225
+        },
+        {
+          "name": "video-playing-zoom-repeat",
+          "physicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "inputs": 120,
+          "matched": 120,
+          "superseded": 0,
+          "pending": 0,
+          "terminalInputId": 2508,
+          "terminalMatched": true,
+          "latency": {
+            "count": 120,
+            "p50": 19.200000047683716,
+            "p95": 22.100000143051147,
+            "max": 28.600000143051147
+          },
+          "elapsed": 4693
+        }
+      ],
+      "playback": [
+        {
+          "name": "audio-playing-stationary",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 369,
+              "nonzero": 369,
+              "max": 0.08594793540708776
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 369,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 6.148299999952316,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-pan",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 133,
+              "nonzero": 133,
+              "max": 0.08594651795630784
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 133,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 2.2383000001907347,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-drag",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 331,
+              "nonzero": 331,
+              "max": 0.08594818191908117
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 331,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 5.557299999952316,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-wheel",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 358,
+              "nonzero": 358,
+              "max": 0.08594822948498858
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 358,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 5.9693999998569485,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-zoom",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 363,
+              "nonzero": 363,
+              "max": 0.08594873578982673
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 363,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 6.050299999952316,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-pan-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 134,
+              "nonzero": 134,
+              "max": 0.08594756860843454
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 134,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 2.2354000000953675,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-drag-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 246,
+              "nonzero": 246,
+              "max": 0.08594771525749333
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 246,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 4.112200000047684,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-playing-zoom-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "kind": "audio-large",
+              "width": 1087.465,
+              "height": 439.632
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 363,
+              "nonzero": 363,
+              "max": 0.08594791872861966
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 363,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 6.0546000001430516,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-stationary",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 373,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 373,
+              "nonzero": 373,
+              "max": 0.0891849456242201
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 6.2341000001430515,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-pan",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 134,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 134,
+              "nonzero": 134,
+              "max": 0.08876893329381126
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 2.238400000095367,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-drag",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 242,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 242,
+              "nonzero": 242,
+              "max": 0.08878925031724282
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 4.0307999999523165,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-wheel",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 366,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 366,
+              "nonzero": 366,
+              "max": 0.08878306796934268
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 6.098299999952316,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-zoom",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 357,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 357,
+              "nonzero": 357,
+              "max": 0.08879204308594182
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 5.9535,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-pan-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 136,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 136,
+              "nonzero": 136,
+              "max": 0.08872737272534852
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 2.265599999904633,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-drag-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 248,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 248,
+              "nonzero": 248,
+              "max": 0.08879757144396552
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 4.143700000047684,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "audio-large-playing-zoom-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "kind": "audio",
+              "width": 1087.465,
+              "height": 134.966
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 366,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 366,
+              "nonzero": 366,
+              "max": 0.08878511514169254
+            }
+          ],
+          "rvfcCallbacks": 0,
+          "rvfcPublications": 0,
+          "decodedFrames": 0,
+          "boundedSeconds": 6.106099999904632,
+          "decodedFPS": 0,
+          "pts": []
+        },
+        {
+          "name": "video-playing-stationary",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 371,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 371,
+              "nonzero": 2,
+              "max": 0.05685205173383805
+            }
+          ],
+          "rvfcCallbacks": 186,
+          "rvfcPublications": 186,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 184,
+          "boundedSeconds": 6.175299999952316,
+          "decodedFPS": 29.79612326549654,
+          "pts": [
+            0,
+            6.166667
+          ]
+        },
+        {
+          "name": "video-playing-pan",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 136,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 136,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 69,
+          "rvfcPublications": 69,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 67,
+          "boundedSeconds": 2.2802999999523164,
+          "decodedFPS": 29.3820988472574,
+          "pts": [
+            6.4,
+            8.666667
+          ]
+        },
+        {
+          "name": "video-playing-drag",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 184,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 184,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 92,
+          "rvfcPublications": 92,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 91,
+          "boundedSeconds": 3.080700000047684,
+          "decodedFPS": 29.538741194725706,
+          "pts": [
+            8.833333,
+            11.866667
+          ]
+        },
+        {
+          "name": "video-playing-wheel",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 259,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 259,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 129,
+          "rvfcPublications": 129,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 130,
+          "boundedSeconds": 4.314700000047684,
+          "decodedFPS": 30.12955709517772,
+          "pts": [
+            0.1,
+            4.366667
+          ]
+        },
+        {
+          "name": "video-playing-zoom",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 259,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 259,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 129,
+          "rvfcPublications": 129,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 128,
+          "boundedSeconds": 4.316099999904632,
+          "decodedFPS": 29.656402771675417,
+          "pts": [
+            4.633333,
+            8.9
+          ]
+        },
+        {
+          "name": "video-playing-pan-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 138,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 138,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 69,
+          "rvfcPublications": 69,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 69,
+          "boundedSeconds": 2.3087000000476836,
+          "decodedFPS": 29.886949364826474,
+          "pts": [
+            9.166667,
+            11.433333
+          ]
+        },
+        {
+          "name": "video-playing-drag-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 233,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 233,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 116,
+          "rvfcPublications": 116,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 117,
+          "boundedSeconds": 3.9135,
+          "decodedFPS": 29.896512073591413,
+          "pts": [
+            11.6,
+            3.466667
+          ]
+        },
+        {
+          "name": "video-playing-zoom-repeat",
+          "activePhysicalMedia": [
+            {
+              "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+              "kind": "video",
+              "width": 597.347,
+              "height": 797.855
+            }
+          ],
+          "rms": [
+            {
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+              "samples": 274,
+              "nonzero": 0,
+              "max": 0
+            },
+            {
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+              "samples": 274,
+              "nonzero": 0,
+              "max": 0
+            }
+          ],
+          "rvfcCallbacks": 136,
+          "rvfcPublications": 136,
+          "sourceBitmap": {
+            "width": 1920,
+            "height": 1080
+          },
+          "decodedFrames": 135,
+          "boundedSeconds": 4.560099999904633,
+          "decodedFPS": 29.60461393452409,
+          "pts": [
+            3.866667,
+            8.366667
+          ]
+        }
+      ],
+      "loading": {
+        "cold": {
+          "firstImagePublishedAt": 281.7999999523163,
+          "allImagesPublishedAt": 385.89999985694885,
+          "allImagesVisibleCommitAt": 390.09999990463257,
+          "firstImageConstructorWorkMs": 19,
+          "allImageConstructorWorkMs": 73.59999990463257,
+          "htmlPreparingPublishAt": [
+            159.59999990463257,
+            164.39999985694885,
+            174.39999985694885
+          ],
+          "htmlAuthoritativePublishAt": [
+            2573.5999999046326,
+            2568.899999856949,
+            2578.2999999523163
+          ],
+          "allAuthoritativeHTMLVisibleCommitAt": 2579.899999856949,
+          "waveforms": [
+            {
+              "at": 512,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 707.7000000476837,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            }
+          ],
+          "audioPlayable": [
+            {
+              "at": 400.7999999523163,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 423.5,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "assetHTTPPolicy": "private,no-store; the third navigation clears only the session waveform envelope"
+        },
+        "warm": {
+          "firstImagePublishedAt": 143.19999980926514,
+          "allImagesPublishedAt": 219.79999995231628,
+          "allImagesVisibleCommitAt": 225,
+          "firstImageConstructorWorkMs": 5.3999998569488525,
+          "allImageConstructorWorkMs": 70.89999985694885,
+          "htmlPreparingPublishAt": [
+            88.59999990463257,
+            90.39999985694885,
+            99.39999985694885
+          ],
+          "htmlAuthoritativePublishAt": [
+            1517.7999999523163,
+            1677.0999999046326,
+            1636.3999998569489
+          ],
+          "allAuthoritativeHTMLVisibleCommitAt": 1688.5,
+          "waveforms": [
+            {
+              "at": 100.19999980926514,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 100.19999980926514,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "audioPlayable": [
+            {
+              "at": 258.09999990463257,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 294.09999990463257,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "assetHTTPPolicy": "private,no-store; the third navigation clears only the session waveform envelope"
+        },
+        "cacheWarm": {
+          "firstImagePublishedAt": 141.29999995231628,
+          "allImagesPublishedAt": 218.59999990463257,
+          "allImagesVisibleCommitAt": 222.79999995231628,
+          "firstImageConstructorWorkMs": 4.799999952316284,
+          "allImageConstructorWorkMs": 68.79999995231628,
+          "htmlPreparingPublishAt": [
+            94.79999995231628,
+            96.89999985694885,
+            104.89999985694885
+          ],
+          "htmlAuthoritativePublishAt": [
+            1546.2999999523163,
+            3234.899999856949,
+            1573.5999999046326
+          ],
+          "allAuthoritativeHTMLVisibleCommitAt": 3236,
+          "waveforms": [
+            {
+              "at": 506.09999990463257,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 1238.1999998092651,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            }
+          ],
+          "audioPlayable": [
+            {
+              "at": 291.7999999523163,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 364.39999985694885,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "assetHTTPPolicy": "private,no-store; the third navigation clears only the session waveform envelope"
+        }
+      },
+      "errors": [],
+      "failures": []
+    },
+    "candidate-loading-r2": {
+      "status": "PASS",
+      "archive": "final-candidate-loading-r2.json.gz",
+      "buildRoot": "/private/tmp/acanvas-interactive-media-build-4TftKl",
+      "fixtures": "/private/tmp/acanvas-interactive-exact-final-fixtures-vfigqM",
+      "browser": "155.0.8059.39",
+      "dpr": 2,
+      "objectBounds": [
+        {
+          "id": "16994e72-4c0e-4c66-abdd-ab8f1e8c40d6",
+          "kind": "image",
+          "x": 3940,
+          "y": 120,
+          "width": 210,
+          "height": 280
+        },
+        {
+          "id": "42ec4cb1-6bf0-4700-ac0b-ed5c1cf86ac5",
+          "kind": "html",
+          "x": 3940,
+          "y": 2060,
+          "width": 740,
+          "height": 247.882
+        },
+        {
+          "id": "50a24204-5f04-4620-bec7-f5e8c5ce48e6",
+          "kind": "image",
+          "x": 1400,
+          "y": 120,
+          "width": 280,
+          "height": 280
+        },
+        {
+          "id": "6c06394f-4e06-4d22-ab2c-4772979b83b8",
+          "kind": "html",
+          "x": 2670,
+          "y": 2060,
+          "width": 740,
+          "height": 247.882
+        },
+        {
+          "id": "75bddc75-9043-4f73-a5e2-d111a7bbb40e",
+          "kind": "image",
+          "x": 130,
+          "y": 120,
+          "width": 280.617,
+          "height": 280.617
+        },
+        {
+          "id": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+          "kind": "video",
+          "x": 1400,
+          "y": 1090,
+          "width": 597.347,
+          "height": 797.855
+        },
+        {
+          "id": "9918d900-9157-4491-bc77-764da69477f8",
+          "kind": "audio-large",
+          "x": 3940,
+          "y": 1090,
+          "width": 1087.465,
+          "height": 439.632
+        },
+        {
+          "id": "9b9d4290-e079-4389-922a-3785949e188e",
+          "kind": "markdown",
+          "x": 130,
+          "y": 2060,
+          "width": 868.563,
+          "height": 878.889
+        },
+        {
+          "id": "b87c1d74-189f-4b80-abe5-714c6c5e910a",
+          "kind": "image",
+          "x": 130,
+          "y": 1090,
+          "width": 616.54,
+          "height": 411.027
+        },
+        {
+          "id": "c241c0bc-d26c-4096-aee4-81c41b536807",
+          "kind": "image",
+          "x": 2670,
+          "y": 120,
+          "width": 280,
+          "height": 280
+        },
+        {
+          "id": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+          "kind": "audio",
+          "x": 2670,
+          "y": 1090,
+          "width": 1087.465,
+          "height": 134.966
+        },
+        {
+          "id": "e130e149-bb61-472d-b27b-5cf7c596d4f3",
+          "kind": "html",
+          "x": 1400,
+          "y": 2060,
+          "width": 740,
+          "height": 247.882
+        }
+      ],
+      "counts": {
+        "inputPhases": 0,
+        "inputs": 0,
+        "matched": 0,
+        "superseded": 0,
+        "covered": 0
+      },
+      "phases": [],
+      "playback": [],
+      "loading": {
+        "cold": {
+          "firstImagePublishedAt": 234.5,
+          "allImagesPublishedAt": 331.39999985694885,
+          "allImagesVisibleCommitAt": 332.5,
+          "firstImageConstructorWorkMs": 18.800000190734863,
+          "allImageConstructorWorkMs": 73.7000002861023,
+          "htmlPreparingPublishAt": [
+            137.59999990463257,
+            139.69999980926514,
+            149.19999980926514
+          ],
+          "htmlAuthoritativePublishAt": [
+            1630.5999999046326,
+            1591,
+            1626
+          ],
+          "allAuthoritativeHTMLVisibleCommitAt": 1631.6999998092651,
+          "waveforms": [
+            {
+              "at": 461.59999990463257,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 642.3999998569489,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            }
+          ],
+          "audioPlayable": [
+            {
+              "at": 344,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 396.09999990463257,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "assetHTTPPolicy": "private,no-store; the third navigation clears only the session waveform envelope"
+        },
+        "warm": {
+          "firstImagePublishedAt": 155.70000004768372,
+          "allImagesPublishedAt": 234.29999995231628,
+          "allImagesVisibleCommitAt": 235.20000004768372,
+          "firstImageConstructorWorkMs": 4.900000095367432,
+          "allImageConstructorWorkMs": 69.70000004768372,
+          "htmlPreparingPublishAt": [
+            99.40000009536743,
+            101.60000014305115,
+            112.60000014305115
+          ],
+          "htmlAuthoritativePublishAt": [
+            1383.6000001430511,
+            3208.2999999523163,
+            1338
+          ],
+          "allAuthoritativeHTMLVisibleCommitAt": 3213.2999999523163,
+          "waveforms": [
+            {
+              "at": 113.5,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 113.60000014305115,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "audioPlayable": [
+            {
+              "at": 271.2000000476837,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 310.2999999523163,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "assetHTTPPolicy": "private,no-store; the third navigation clears only the session waveform envelope"
+        },
+        "cacheWarm": {
+          "firstImagePublishedAt": 127.60000014305115,
+          "allImagesPublishedAt": 203.70000004768372,
+          "allImagesVisibleCommitAt": 211.90000009536743,
+          "firstImageConstructorWorkMs": 4.700000047683716,
+          "allImageConstructorWorkMs": 66.7000002861023,
+          "htmlPreparingPublishAt": [
+            82.40000009536743,
+            84.30000019073486,
+            91.5
+          ],
+          "htmlAuthoritativePublishAt": [
+            1932.1000001430511,
+            3453.7000000476837,
+            2021.2000000476837
+          ],
+          "allAuthoritativeHTMLVisibleCommitAt": 3467,
+          "waveforms": [
+            {
+              "at": 481.90000009536743,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            },
+            {
+              "at": 1119,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            }
+          ],
+          "audioPlayable": [
+            {
+              "at": 276.90000009536743,
+              "objectId": "9918d900-9157-4491-bc77-764da69477f8"
+            },
+            {
+              "at": 345.90000009536743,
+              "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8"
+            }
+          ],
+          "assetHTTPPolicy": "private,no-store; the third navigation clears only the session waveform envelope"
+        }
+      },
+      "errors": [],
+      "failures": []
+    }
+  },
+  "comparisons": [
+    {
+      "phase": "audio-playing-pan",
+      "physicalMedia": [
+        {
+          "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+          "kind": "audio-large",
+          "width": 1087.465,
+          "height": 439.632
+        }
+      ],
+      "baselineP95": 31.899999856948853,
+      "candidateP95": 18.5,
+      "baselineMatched": 119,
+      "candidateMatched": 119,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 3590,
+      "candidateElapsed": 2361
+    },
+    {
+      "phase": "audio-playing-drag",
+      "physicalMedia": [
+        {
+          "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+          "kind": "audio-large",
+          "width": 1087.465,
+          "height": 439.632
+        }
+      ],
+      "baselineP95": 110.09999990463257,
+      "candidateP95": 18.40000009536743,
+      "baselineMatched": 119,
+      "candidateMatched": 119,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 9897,
+      "candidateElapsed": 5859
+    },
+    {
+      "phase": "audio-playing-wheel",
+      "physicalMedia": [
+        {
+          "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+          "kind": "audio-large",
+          "width": 1087.465,
+          "height": 439.632
+        }
+      ],
+      "baselineP95": 44.89999985694885,
+      "candidateP95": 17.799999952316284,
+      "baselineMatched": 105,
+      "candidateMatched": 120,
+      "baselineSuperseded": 15,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 6999,
+      "candidateElapsed": 6276
+    },
+    {
+      "phase": "audio-playing-zoom",
+      "physicalMedia": [
+        {
+          "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+          "kind": "audio-large",
+          "width": 1087.465,
+          "height": 439.632
+        }
+      ],
+      "baselineP95": 44,
+      "candidateP95": 18,
+      "baselineMatched": 109,
+      "candidateMatched": 120,
+      "baselineSuperseded": 11,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 6437,
+      "candidateElapsed": 6370
+    },
+    {
+      "phase": "audio-playing-pan-repeat",
+      "physicalMedia": [
+        {
+          "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+          "kind": "audio-large",
+          "width": 1087.465,
+          "height": 439.632
+        }
+      ],
+      "baselineP95": 30.200000047683716,
+      "candidateP95": 18.5,
+      "baselineMatched": 119,
+      "candidateMatched": 119,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 3088,
+      "candidateElapsed": 2346
+    },
+    {
+      "phase": "audio-playing-drag-repeat",
+      "physicalMedia": [
+        {
+          "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+          "kind": "audio-large",
+          "width": 1087.465,
+          "height": 439.632
+        }
+      ],
+      "baselineP95": 61.5,
+      "candidateP95": 17.699999809265137,
+      "baselineMatched": 119,
+      "candidateMatched": 119,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 9598,
+      "candidateElapsed": 4315
+    },
+    {
+      "phase": "audio-playing-zoom-repeat",
+      "physicalMedia": [
+        {
+          "objectId": "9918d900-9157-4491-bc77-764da69477f8",
+          "kind": "audio-large",
+          "width": 1087.465,
+          "height": 439.632
+        }
+      ],
+      "baselineP95": 39.90000009536743,
+      "candidateP95": 17.700000047683716,
+      "baselineMatched": 108,
+      "candidateMatched": 120,
+      "baselineSuperseded": 12,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 6645,
+      "candidateElapsed": 6365
+    },
+    {
+      "phase": "audio-large-playing-pan",
+      "physicalMedia": [
+        {
+          "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+          "kind": "audio",
+          "width": 1087.465,
+          "height": 134.966
+        }
+      ],
+      "baselineP95": 20.5,
+      "candidateP95": 19.59999990463257,
+      "baselineMatched": 119,
+      "candidateMatched": 119,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 2460,
+      "candidateElapsed": 2349
+    },
+    {
+      "phase": "audio-large-playing-drag",
+      "physicalMedia": [
+        {
+          "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+          "kind": "audio",
+          "width": 1087.465,
+          "height": 134.966
+        }
+      ],
+      "baselineP95": 29.40000009536743,
+      "candidateP95": 19.200000047683716,
+      "baselineMatched": 119,
+      "candidateMatched": 119,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 5589,
+      "candidateElapsed": 4245
+    },
+    {
+      "phase": "audio-large-playing-wheel",
+      "physicalMedia": [
+        {
+          "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+          "kind": "audio",
+          "width": 1087.465,
+          "height": 134.966
+        }
+      ],
+      "baselineP95": 34.200000047683716,
+      "candidateP95": 19.200000047683716,
+      "baselineMatched": 120,
+      "candidateMatched": 120,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 6347,
+      "candidateElapsed": 6454
+    },
+    {
+      "phase": "audio-large-playing-zoom",
+      "physicalMedia": [
+        {
+          "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+          "kind": "audio",
+          "width": 1087.465,
+          "height": 134.966
+        }
+      ],
+      "baselineP95": 33.59999990463257,
+      "candidateP95": 19.299999952316284,
+      "baselineMatched": 120,
+      "candidateMatched": 120,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 6256,
+      "candidateElapsed": 6469
+    },
+    {
+      "phase": "audio-large-playing-pan-repeat",
+      "physicalMedia": [
+        {
+          "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+          "kind": "audio",
+          "width": 1087.465,
+          "height": 134.966
+        }
+      ],
+      "baselineP95": 22.200000047683716,
+      "candidateP95": 19.40000009536743,
+      "baselineMatched": 119,
+      "candidateMatched": 119,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 2582,
+      "candidateElapsed": 2362
+    },
+    {
+      "phase": "audio-large-playing-drag-repeat",
+      "physicalMedia": [
+        {
+          "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+          "kind": "audio",
+          "width": 1087.465,
+          "height": 134.966
+        }
+      ],
+      "baselineP95": 32.40000009536743,
+      "candidateP95": 19.200000047683716,
+      "baselineMatched": 119,
+      "candidateMatched": 119,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 5584,
+      "candidateElapsed": 4362
+    },
+    {
+      "phase": "audio-large-playing-zoom-repeat",
+      "physicalMedia": [
+        {
+          "objectId": "d0a5fb65-c2b8-4a58-a081-979b033f12a8",
+          "kind": "audio",
+          "width": 1087.465,
+          "height": 134.966
+        }
+      ],
+      "baselineP95": 33,
+      "candidateP95": 18.700000047683716,
+      "baselineMatched": 120,
+      "candidateMatched": 120,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 6430,
+      "candidateElapsed": 6402
+    },
+    {
+      "phase": "video-playing-pan",
+      "physicalMedia": [
+        {
+          "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+          "kind": "video",
+          "width": 597.347,
+          "height": 797.855
+        }
+      ],
+      "baselineP95": 44.10000014305115,
+      "candidateP95": 21.299999952316284,
+      "baselineMatched": 119,
+      "candidateMatched": 119,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 3295,
+      "candidateElapsed": 2384
+    },
+    {
+      "phase": "video-playing-drag",
+      "physicalMedia": [
+        {
+          "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+          "kind": "video",
+          "width": 597.347,
+          "height": 797.855
+        }
+      ],
+      "baselineP95": 56.09999990463257,
+      "candidateP95": 22,
+      "baselineMatched": 119,
+      "candidateMatched": 119,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 6170,
+      "candidateElapsed": 3213
+    },
+    {
+      "phase": "video-playing-wheel",
+      "physicalMedia": [
+        {
+          "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+          "kind": "video",
+          "width": 597.347,
+          "height": 797.855
+        }
+      ],
+      "baselineP95": 56,
+      "candidateP95": 22.100000143051147,
+      "baselineMatched": 120,
+      "candidateMatched": 120,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 4906,
+      "candidateElapsed": 4505
+    },
+    {
+      "phase": "video-playing-zoom",
+      "physicalMedia": [
+        {
+          "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+          "kind": "video",
+          "width": 597.347,
+          "height": 797.855
+        }
+      ],
+      "baselineP95": 56.09999990463257,
+      "candidateP95": 22.200000047683716,
+      "baselineMatched": 120,
+      "candidateMatched": 120,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 4810,
+      "candidateElapsed": 4475
+    },
+    {
+      "phase": "video-playing-pan-repeat",
+      "physicalMedia": [
+        {
+          "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+          "kind": "video",
+          "width": 597.347,
+          "height": 797.855
+        }
+      ],
+      "baselineP95": 43.5,
+      "candidateP95": 21.09999990463257,
+      "baselineMatched": 119,
+      "candidateMatched": 119,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 3420,
+      "candidateElapsed": 2428
+    },
+    {
+      "phase": "video-playing-drag-repeat",
+      "physicalMedia": [
+        {
+          "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+          "kind": "video",
+          "width": 597.347,
+          "height": 797.855
+        }
+      ],
+      "baselineP95": 57.10000014305115,
+      "candidateP95": 21.299999952316284,
+      "baselineMatched": 119,
+      "candidateMatched": 119,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 5714,
+      "candidateElapsed": 4225
+    },
+    {
+      "phase": "video-playing-zoom-repeat",
+      "physicalMedia": [
+        {
+          "objectId": "98df0bc2-f3e2-4f36-a254-e8d802deeb54",
+          "kind": "video",
+          "width": 597.347,
+          "height": 797.855
+        }
+      ],
+      "baselineP95": 56.799999952316284,
+      "candidateP95": 22.100000143051147,
+      "baselineMatched": 120,
+      "candidateMatched": 120,
+      "baselineSuperseded": 0,
+      "candidateSuperseded": 0,
+      "baselineElapsed": 5151,
+      "candidateElapsed": 4693
+    }
+  ],
+  "limits": [
+    "Latency ends at successful main-thread visible Canvas commit, before OS compositor output.",
+    "One full 21-input-phase run per version contains two pan/drag/zoom repetitions for each physical medium. Separate process repeats cover loading only.",
+    "Audio and video follow the product singlePlayback rule; no simultaneous audio-plus-video playback claim.",
+    "Historical CPU versus GPU pixels differ in ordinary antialiasing and image filtering; same-GPU uncached pixel equivalence and original-CPU-helper equivalence were independently checked separately.",
+    "Actual user audio/video codec, duration and decoded dimensions were not read. Synthetic full-file audio is 256/320s, video is 1920x1080/30fps/12s. MP4 padding matches file bytes rather than decoder work or actual Range transfer equivalence.",
+    "Native HTML warm/cache-cleared startup tail variation remains visible in loading records; a general all-loading improvement is not claimed.",
+    "F2 native programmatic root smooth-scroll semantic/pixel pairing remains a documented limitation outside these non-scroll performance phases."
+  ]
+}
