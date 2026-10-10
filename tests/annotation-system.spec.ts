@@ -239,7 +239,7 @@ test('video range selection keeps playback position and replaces its representat
   await expect.poll(() => video.evaluate(element => (element as HTMLVideoElement).paused), { timeout: 5000 }).toBeTruthy();
   expect(await video.evaluate(element => (element as HTMLVideoElement).currentTime)).toBeCloseTo((await app.state()).draft.annotations[0].timeEnd!, 1);
   const lightShot = info.outputPath('video-range-light.png'); await page.locator('.annotation-full').screenshot({ path: lightShot }); console.log(`MEDIA_RANGE_SHOT ${lightShot}`);
-  await page.getByRole('button', { name: 'Switch to dark theme' }).click(); const darkShot = info.outputPath('video-range-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); const darkShot = info.outputPath('video-range-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
   await page.getByRole('slider', { name: 'Start point' }).focus(); await page.getByRole('slider', { name: 'Start point' }).press('ArrowRight');
   await expect.poll(async () => (await app.state()).draft.annotations[0]?.snapshotAssetId).toBeTruthy();
   await page.getByRole('button', { name: 'Send request', exact: true }).click();
@@ -490,7 +490,7 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   expect(hovered.width).toBe(light.width); expect(hovered.height).toBe(light.height);
   // Both themes draw the identical range, so the mask never inverts its emphasis.
   const lightShot = info.outputPath('range-annotation-light.png'); await page.locator('.annotation-full').screenshot({ path: lightShot }); console.log(`MEDIA_RANGE_SHOT ${lightShot}`);
-  await page.getByRole('button', { name: 'Switch to dark theme' }).click();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click();
   const dark = await surface();
   // The dark theme retains the original white frame and grips.
   expect(dark.rail).toBe('rgb(255, 255, 255)'); expect(dark.border).toBe(dark.rail); expect(dark.railShade).toBeGreaterThan(230);
@@ -498,7 +498,7 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   expect(dark.shadow).toBe(light.shadow); expect(dark.fill).toBe(light.fill);
   expect(dark.selectionShadow).toBe('none');
   const darkShot = info.outputPath('range-annotation-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
-  await page.getByRole('button', { name: 'Switch to light theme' }).click();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Light', exact: true }).click();
 
   // The rounded selection generates its own outside mask, sharing one edge with the selected span.
   const track = (await page.locator('.annotation-range-timeline').boundingBox())!;
@@ -526,10 +526,10 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   const selected = { start: Number(await start.getAttribute('aria-valuenow')), end: Number(await end.getAttribute('aria-valuenow')) };
   expect(selected.start).toBeGreaterThan(0); expect(selected.end).toBeLessThanOrEqual(duration); expect(selected.end).toBeGreaterThan(selected.start);
   const shot = info.outputPath('range-card.png'); await page.locator('.annotation-full').screenshot({ path: shot }); console.log(`MEDIA_RANGE_SHOT ${shot}`);
-  await page.getByRole('button', { name: 'Switch to dark theme' }).click();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click();
   const partialDark = await surface(); expect(partialDark.rail).toBe(dark.rail); expect(partialDark.border).toBe(dark.border);
   const darkSelectedShot = info.outputPath('range-card-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkSelectedShot }); console.log(`MEDIA_RANGE_SHOT ${darkSelectedShot}`);
-  await page.getByRole('button', { name: 'Switch to light theme' }).click();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Light', exact: true }).click();
 
   // The excerpt plays from the start point and stops itself at the end point.
   await page.getByRole('button', { name: 'Play range preview' }).click();
@@ -554,7 +554,7 @@ test('the annotation range shows narrow rails, a flush rounded mask, a compact h
   await expect(shortVideo.locator('.annotation-range-handle span')).toHaveCount(2);
   await end.evaluate(element => (element as HTMLElement).blur());
   const shortVideoLight = info.outputPath('video-short-light.png'); await page.locator('.annotation-full').screenshot({ path: shortVideoLight }); console.log(`MEDIA_RANGE_SHOT ${shortVideoLight}`);
-  await page.getByRole('button', { name: 'Switch to dark theme' }).click();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click();
   const shortVideoDark = info.outputPath('video-short-dark.png'); await page.locator('.annotation-full').screenshot({ path: shortVideoDark }); console.log(`MEDIA_RANGE_SHOT ${shortVideoDark}`);
 });
 
@@ -567,8 +567,7 @@ test('annotation text, bubble and full panel keep screen sizes while anchors fol
   const samples: unknown[] = []; let textHeight: number | undefined, inputFont: string | undefined;
   const worldZoom = () => page.locator('.canvas-world').evaluate(element => new DOMMatrix(getComputedStyle(element).transform).a);
   for (const theme of ['light', 'dark']) {
-    const switchTheme = page.getByRole('button', { name: theme === 'dark' ? 'Switch to dark theme' : 'Switch to light theme', exact: true });
-    if (await switchTheme.count()) await switchTheme.click();
+    await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: theme === 'dark' ? 'Dark' : 'Light', exact: true }).click();
     for (const width of [1440, 390, 320]) {
       await page.setViewportSize({ width, height: 760 });
       for (const target of [.5, 1, 1.5, 2]) {
@@ -745,8 +744,7 @@ test('Cancel edit has theme-aware hover and keyboard feedback with stable bounds
   const samples = [];
   for (const theme of ['light', 'dark']) for (const width of [1440, 320]) {
     await page.setViewportSize({ width, height: 760 });
-    const switchTheme = page.getByRole('button', { name: theme === 'dark' ? 'Switch to dark theme' : 'Switch to light theme', exact: true });
-    if (await switchTheme.count()) await switchTheme.click();
+    await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: theme === 'dark' ? 'Dark' : 'Light', exact: true }).click();
     await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Original queued request.');
     const cancel = page.getByRole('button', { name: 'Cancel edit', exact: true }); await page.mouse.move(0, 0); await settleNote(page.locator('.composer'));
     const style = () => cancel.evaluate(element => { const value = getComputedStyle(element), { x, y, width, height } = element.getBoundingClientRect(); return { background: value.backgroundColor, color: value.color, outline: value.outlineStyle, rect: { x, y, width, height } }; });

@@ -2,6 +2,9 @@ import type { AssetKind } from './types.js';
 
 export type ContentKind = 'image' | 'gif' | 'video' | 'audio' | 'markdown' | 'html' | 'note' | 'file';
 export const noteMime = 'text/x-acanvas-note';
+export const noteFillColor = { sand: '#efe4d0', sage: '#e3eee4', mist: '#e2eef3', blush: '#f4e4e1', lilac: '#ebe6f2' } as const;
+export type NoteFill = keyof typeof noteFillColor;
+export const isNoteFill = (value: unknown): value is NoteFill => typeof value === 'string' && Object.hasOwn(noteFillColor, value);
 export const editableTextBytes = 2 * 1024 * 1024;
 const editableMime = new Set(['text/markdown', 'text/x-markdown', noteMime]);
 export const editableTextMime = (mime: string) => editableMime.has(mime.split(';', 1)[0].trim().toLowerCase());

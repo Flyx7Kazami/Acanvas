@@ -3,15 +3,17 @@ import { createRoot } from 'react-dom/client';
 import { AudioCanvasPlayer } from './AudioCanvasPlayer';
 import { resolveContentKind } from '../shared/content-types';
 import type { Asset } from '../shared/types';
+import { readThemePreference, themeFromPreference } from './theme';
 import './audio-review.css';
 
 function Preview() {
   const [assets, setAssets] = useState<Asset[]>([]), [selected, setSelected] = useState(''), [error, setError] = useState('');
   const src = selected ? `/api/assets/${encodeURIComponent(selected)}/content` : undefined;
   useEffect(() => {
-    const applyTheme = () => { document.documentElement.dataset.theme = localStorage.getItem('acanvas-theme') === 'dark' ? 'dark' : 'light'; };
-    applyTheme(); window.addEventListener('storage', applyTheme);
-    return () => window.removeEventListener('storage', applyTheme);
+    const applyTheme = () => { document.documentElement.dataset.theme = themeFromPreference(readThemePreference()); };
+    const query = window.matchMedia('(prefers-color-scheme: dark)');
+    applyTheme(); query.addEventListener('change', applyTheme); window.addEventListener('storage', applyTheme);
+    return () => { query.removeEventListener('change', applyTheme); window.removeEventListener('storage', applyTheme); };
   }, []);
   useEffect(() => { void (async () => {
     try {

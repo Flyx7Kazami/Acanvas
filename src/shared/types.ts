@@ -1,11 +1,12 @@
 import type {HtmlSemanticSnapshot,HtmlControlInput,HtmlClipboardAction,HtmlSurfacePopup} from './html-surface.js';
+import type { NoteFill } from './content-types.js';
 export type AssetKind = 'image' | 'video' | 'file';
 export type TaskStatus = 'queued' | 'editing' | 'running' | 'blocked' | 'interrupted' | 'completed' | 'cancelled';
 export interface Project { id: string; name: string; root: string }
 export interface HtmlBundle { entryPath: string; files: Record<string, string> }
 export interface Asset { id: string; name: string; mime: string; size: number; kind: AssetKind; createdAt: string; sourceTaskId?: string; sourceRunId?: string; htmlBundle?: HtmlBundle; evidence?: { sessionId: string; draftId: string; captureId: string } }
 export interface Bounds { x: number; y: number; width: number; height: number }
-export interface BoardObject extends Bounds { id: string; assetId: string; type: AssetKind; version: number; createdAt: string; updatedAt: string; sourceTaskId?: string; sourceRunId?: string }
+export interface BoardObject extends Bounds { id: string; assetId: string; type: AssetKind; version: number; createdAt: string; updatedAt: string; sourceTaskId?: string; sourceRunId?: string; fill?: NoteFill }
 export interface ContentAnchor { kind: 'visual' | 'text'; scroll?: { x: number; y: number }; quote?: string; context?: string; path?: string; start?: number; end?: number }
 export interface CaptureState { version: number; status: 'incomplete' | 'complete'; captureId?: string }
 export interface AnnotationInput { id: string; scope: 'object' | 'group' | 'region'; objectId?: string; objectIds: string[]; assetId?: string; bounds: Bounds; coordinateSpace: 'normalized' | 'world'; text: string; timeStart?: number; timeEnd?: number; snapshotAssetId?: string; geometry?: 'point' | 'rect'; contentAnchor?: ContentAnchor; captureState?: CaptureState; capture?: AnnotationCapture; sceneSource?: SceneSource }
@@ -55,7 +56,7 @@ export interface LateResult { runId: string; consumerId: string; receivedAt: str
 export interface Task { lastEditDraftId?: string; id: string; sessionId: string; draftId: string; sequence: number; status: TaskStatus; snapshot: TaskSnapshot; requirementText: string; createdAt: string; updatedAt: string; currentRunId: string | null; reason: string | null; receipt: Receipt | null; replies: TaskReply[]; runs: Run[]; lateResults: LateResult[] }
 export type BoardOperation =
   | { type: 'create'; object: { id?: string; assetId: string; x: number; y: number; width: number; height: number } }
-  | { type: 'update'; objectId: string; expectedVersion: number; changes: Partial<Bounds> }
+  | { type: 'update'; objectId: string; expectedVersion: number; changes: Partial<Bounds> & { fill?: NoteFill | null } }
   | { type: 'delete'; objectId: string; expectedVersion: number };
 export interface BoardState { project: Project; sessions: Session[]; session: Session; draft: Draft; assets: Asset[]; objects: BoardObject[]; annotations: Annotation[]; tasks: Task[] }
 export interface Bootstrap { project: Project; token: string; service: ServiceIdentity; capabilities: { maxUploadBytes: number; backup: boolean; recovery: boolean; mediaPreview: 'browser'; generation: 'host_tools' } }

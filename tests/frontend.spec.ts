@@ -197,7 +197,7 @@ test('canvas annotation comments wrap and follow markers across edges themes zoo
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 760 });
     for (const dark of [false, true]) {
-      const themeButton = page.getByRole('button', { name: dark ? 'Switch to dark theme' : 'Switch to light theme', exact: true }); if (await themeButton.count()) await themeButton.click();
+      if ((await page.locator('html').getAttribute('data-theme')) !== (dark ? 'dark' : 'light')) { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: dark ? 'Dark' : 'Light', exact: true }).click(); }
       for (const zoom of [.5, 1.6]) {
         await app.call(`/api/sessions/${initial.session.id}/view`, 'PUT', { ...initial.session.view, x: width - 46 - object.x * zoom, y: 300 - object.y * zoom, zoom, selectedObjectIds: [] });
         await page.reload(); await expect(page.locator('.zoom-label')).toHaveText(`${Math.round(zoom * 100)}%`);
@@ -366,24 +366,92 @@ test('six inline alignment commands batch positions without changing sizes or un
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(['Cover.png', 'Palette.png', 'Type.png'].map(name => ({ ...image, name }))); await expect(page.locator('.board-object')).toHaveCount(3);
   const requests: { operations: { objectId: string; expectedVersion: number; changes: { x: number; y: number } }[] }[] = [];
   page.on('request', request => { if (request.method() === 'POST' && request.url().endsWith('/api/board/operations')) requests.push(request.postDataJSON()); });
-  const reset = async () => { const state = await app.state(); await app.call('/api/board/operations', 'POST', { sessionId: state.session.id, operations: state.objects.map((object, index) => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: [{ x: 220, y: 200, width: 120, height: 80 }, { x: 410, y: 310, width: 80, height: 120 }, { x: 900, y: 200, width: 60, height: 60 }][index] })) }); await app.call(`/api/sessions/${state.session.id}/view`, 'PUT', { x: 0, y: 0, zoom: 1, selectedObjectIds: state.objects.slice(0, 2).map(object => object.id) }); await page.reload(); await expect(page.getByRole('button', { name: 'Align', exact: true })).toBeVisible(); await expect(page.getByRole('button', { name: 'Align left', exact: true })).toHaveCount(0); await page.getByRole('button', { name: 'Align', exact: true }).click(); await expect(page.getByRole('button', { name: 'Align left', exact: true })).toBeVisible(); return app.state(); };
+  const reset = async () => { const state = await app.state(); await app.call('/api/board/operations', 'POST', { sessionId: state.session.id, operations: state.objects.map((object, index) => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: [{ x: 220, y: 200, width: 120, height: 80 }, { x: 410, y: 310, width: 80, height: 120 }, { x: 900, y: 200, width: 60, height: 60 }][index] })) }); await app.call(`/api/sessions/${state.session.id}/view`, 'PUT', { x: 0, y: 0, zoom: 1, selectedObjectIds: state.objects.slice(0, 2).map(object => object.id) }); await page.reload(); await expect(page.getByRole('button', { name: 'Align', exact: true })).toBeVisible(); await expect(page.getByRole('button', { name: 'Align left', exact: true })).toHaveCount(0); await page.getByRole('button', { name: 'Align', exact: true }).hover(); await expect(page.getByRole('button', { name: 'Align left', exact: true })).toBeVisible(); return app.state(); };
   const commands = [{ name: 'Align left', expected: [[220, 200], [220, 310]] }, { name: 'Align horizontal centers', expected: [[295, 200], [315, 310]] }, { name: 'Align right', expected: [[370, 200], [410, 310]] }, { name: 'Align top', expected: [[220, 200], [410, 200]] }, { name: 'Align vertical centers', expected: [[220, 275], [410, 255]] }, { name: 'Align bottom', expected: [[220, 350], [410, 310]] }];
-  for (const command of commands) { const before = await reset(), count = requests.length; const button = page.getByRole('button', { name: command.name, exact: true }); await button.focus(); await button.press('Enter'); await expect(page.getByRole('button', { name: 'Align', exact: true })).toBeEnabled(); await expect(button).toHaveCount(0); await expect.poll(async () => (await app.state()).objects.slice(0, 2).map(object => [object.x, object.y])).toEqual(command.expected); const after = await app.state(); expect(requests.length).toBe(count + 1); for (let index = 0; index < 2; index++) { expect(after.objects[index].width).toBe(before.objects[index].width); expect(after.objects[index].height).toBe(before.objects[index].height); } expect(after.objects[2]).toEqual(before.objects[2]); const versions = after.objects.map(object => object.version); await page.getByRole('button', { name: 'Align', exact: true }).click(); await button.press('Enter'); await page.evaluate(() => new Promise(requestAnimationFrame)); expect((await app.state()).objects.map(object => object.version)).toEqual(versions); expect(requests.length).toBe(count + 1); }
+  for (const command of commands) { const before = await reset(), count = requests.length; const button = page.getByRole('button', { name: command.name, exact: true }); await button.focus(); await button.press('Enter'); await expect(page.getByRole('button', { name: 'Align', exact: true })).toBeEnabled(); await expect(page.getByRole('button', { name: 'Back to selection tools', exact: true })).toHaveCount(0); await expect.poll(async () => (await app.state()).objects.slice(0, 2).map(object => [object.x, object.y])).toEqual(command.expected); const after = await app.state(); expect(requests.length).toBe(count + 1); for (let index = 0; index < 2; index++) { expect(after.objects[index].width).toBe(before.objects[index].width); expect(after.objects[index].height).toBe(before.objects[index].height); } expect(after.objects[2]).toEqual(before.objects[2]); const versions = after.objects.map(object => object.version); await page.getByRole('button', { name: 'Align', exact: true }).hover(); await button.press('Enter'); await page.evaluate(() => new Promise(requestAnimationFrame)); expect((await app.state()).objects.map(object => object.version)).toEqual(versions); expect(requests.length).toBe(count + 1); }
   await reset();
-  for (const width of [390, 320]) { await page.setViewportSize({ width, height: 480 }); await page.getByRole('button', { name: 'Fit all files', exact: true }).click(); await expect.poll(async () => page.locator('.alignment-actions button,.canvas-toolbar button').evaluateAll(elements => elements.every(element => { const bounds = element.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === element; }))).toBeTruthy(); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toHaveCount(0); await page.getByRole('button', { name: 'Back to selection tools', exact: true }).click(); await expect(page.getByRole('button', { name: 'Align', exact: true })).toBeFocused(); await page.getByRole('button', { name: 'Align', exact: true }).press('Enter'); if (width === 390) await page.screenshot({ path: info.outputPath('alignment-controls-390.png') }); }
+  for (const width of [390, 320]) { await page.setViewportSize({ width, height: 480 }); await page.getByRole('button', { name: 'Fit all files', exact: true }).click(); await page.getByRole('button', { name: 'Align', exact: true }).hover(); await expect.poll(async () => page.locator('.alignment-actions button,.canvas-toolbar button').evaluateAll(elements => elements.every(element => { const bounds = element.getBoundingClientRect(); return document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)?.closest('button') === element; }))).toBeTruthy(); await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toHaveCount(0); if (width === 390) await page.screenshot({ path: info.outputPath('alignment-controls-390.png') }); }
   await page.getByRole('button', { name: 'Align left', exact: true }).press('Escape'); await expect(page.getByRole('button', { name: 'Align', exact: true })).toBeFocused(); await page.getByRole('button', { name: 'Align', exact: true }).press('Enter');
-  const before = await app.state(); await page.route('**/api/board/operations', route => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'object_conflict', message: 'Updated layout' } }) })); await page.getByRole('button', { name: 'Align right', exact: true }).click(); await expect(page.getByRole('alert')).toBeVisible(); expect((await app.state()).objects).toEqual(before.objects); await expect(page.getByRole('button', { name: 'Align', exact: true })).toBeEnabled(); await expect(page.locator('.alignment-actions')).toHaveCount(0);
+  const before = await app.state(); await page.route('**/api/board/operations', route => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'object_conflict', message: 'Updated layout' } }) })); await page.getByRole('button', { name: 'Align right', exact: true }).click(); await expect(page.getByRole('alert')).toBeVisible(); expect((await app.state()).objects).toEqual(before.objects); await expect(page.getByRole('button', { name: 'Align', exact: true })).toBeEnabled(); await expect(page.getByRole('button', { name: 'Align right', exact: true })).toBeVisible();
 });
 
-test('alignment command restores keyboard focus after its confirmed layout write', async ({ page, app }) => {
+test('alignment hover menu skips an unchanged layout write', async ({ page, app }) => {
   await open(page, app); const image = await png(page);
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(['Cover.png', 'Palette.png'].map(name => ({ ...image, name }))); await expect(page.locator('.board-object')).toHaveCount(2);
   for (const [index, object] of (await page.locator('.board-object').all()).entries()) { await object.focus(); await page.keyboard.press(index ? 'Shift+Enter' : 'Enter'); }
   await page.route('**/api/board/operations', async route => { const response = await route.fetch(); await new Promise(resolve => setTimeout(resolve, 180)); await route.fulfill({ response }); });
-  const align = page.getByRole('button', { name: 'Align', exact: true }); await align.focus(); await align.press('Enter');
-  const command = page.getByRole('button', { name: 'Align left', exact: true }); await expect(command).toBeFocused(); await command.press('Enter');
-  await expect(align).toBeEnabled(); await expect(align).toBeFocused(); await expect(page.locator('.alignment-actions')).toHaveCount(0);
+  const align = page.getByRole('button', { name: 'Align', exact: true }); await align.hover();
+  const command = page.getByRole('button', { name: 'Align left', exact: true }); await expect(command).toBeVisible(); await command.press('Enter');
+  await expect(align).toBeEnabled(); await expect(command).toBeVisible();
   const positions = (await app.state()).objects.map(object => object.x); expect(positions[0]).toBe(positions[1]);
+  const versions = (await app.state()).objects.map(object => object.version); await command.press('Enter'); await page.evaluate(() => new Promise(requestAnimationFrame)); expect((await app.state()).objects.map(object => object.version)).toEqual(versions);
+});
+
+test('note color opens above the control beside delete', async ({ page, app }) => {
+  await open(page, app);
+  await page.getByRole('button', { name: 'Add note', exact: true }).click();
+  await page.locator('#whiteboard').click({ position: { x: 640, y: 360 } });
+  const card = page.locator('.note-card');
+  await expect(card.locator('textarea')).toBeFocused();
+  await page.keyboard.type('Hi');
+  await expect(card.locator('button')).toHaveCount(0);
+  const remove = page.getByRole('button', { name: 'Remove selected files from canvas', exact: true });
+  const color = page.getByRole('button', { name: 'Note color', exact: true });
+  await expect(color).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Align', exact: true })).toHaveCount(0);
+  const removeBox = await remove.boundingBox(), colorBox = await color.boundingBox();
+  expect(colorBox!.x).toBeGreaterThanOrEqual(removeBox!.x + removeBox!.width - 1);
+  await expect(page.getByRole('radio', { name: 'Sage', exact: true })).toHaveCount(0);
+  await color.hover();
+  for (const name of ['Default', 'Sand', 'Sage', 'Mist', 'Blush', 'Lilac']) await expect(page.getByRole('radio', { name, exact: true })).toBeVisible();
+  const defaultSwatch = await page.getByRole('radio', { name: 'Default', exact: true }).evaluate(element => {
+    const swatch = element.querySelector('.note-color-swatch')!;
+    const button = element.getBoundingClientRect(), painted = swatch.getBoundingClientRect();
+    return { gradient: getComputedStyle(swatch).backgroundImage, gap: Math.max(painted.left - button.left, painted.top - button.top, button.right - painted.right, button.bottom - painted.bottom) };
+  });
+  expect(defaultSwatch.gradient).toBe('linear-gradient(135deg, rgb(28, 28, 28) 50%, rgb(255, 255, 255) 50%)');
+  expect(defaultSwatch.gap).toBeLessThanOrEqual(0);
+  await expect(color.locator('svg.lucide-palette')).toBeVisible();
+  const openColor = await color.boundingBox(), panel = await page.locator('.note-color-menu').boundingBox(), bar = await page.locator('.selection-actions').boundingBox();
+  expect(panel!.y).toBeLessThan(openColor!.y);
+  expect(bar!.y - (panel!.y + panel!.height)).toBeGreaterThanOrEqual(4);
+  await page.getByRole('radio', { name: 'Mist', exact: true }).hover();
+  await expect.poll(() => card.evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(226, 238, 243)');
+  expect((await app.state()).objects[0].fill).toBeUndefined();
+  const sage = page.getByRole('radio', { name: 'Sage', exact: true });
+  await sage.hover();
+  await page.mouse.down();
+  await expect.poll(() => sage.evaluate(element => getComputedStyle(element).scale)).toBe('0.96');
+  await page.mouse.up();
+  await expect(sage).toHaveCSS('box-shadow', 'rgb(255, 255, 255) 0px 0px 0px 1px, rgb(112, 112, 112) 0px 0px 0px 3px');
+  await expect(card).toHaveAttribute('data-fill', 'sage');
+  await expect.poll(() => card.evaluate(element => ({ background: getComputedStyle(element).backgroundColor, ink: getComputedStyle(element.querySelector('.plain-text-mirror')!).color }))).toEqual({ background: 'rgb(227, 238, 228)', ink: 'rgb(42, 39, 36)' });
+  await page.reload();
+  await expect(page.locator('.note-card')).toHaveAttribute('data-fill', 'sage');
+  expect((await app.state()).objects.find(object => object.fill)?.fill).toBe('sage');
+});
+
+test('theme button opens a menu with light, dark, and follow system', async ({ page, app }) => {
+  await open(page, app);
+  const themeButton = page.getByRole('button', { name: 'Theme', exact: true });
+  await themeButton.click();
+  const menu = page.getByRole('menu', { name: 'Theme', exact: true });
+  await expect(menu).toBeVisible();
+  const menuBox = await menu.boundingBox(), buttonBox = await themeButton.boundingBox();
+  expect(menuBox!.y).toBeGreaterThanOrEqual(buttonBox!.y + buttonBox!.height);
+  await expect(page.getByRole('menuitemradio', { name: 'Light', exact: true })).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('menuitemradio', { name: 'Follow system', exact: true }).click();
+  await expect(menu).toHaveCount(0);
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await themeButton.click();
+  await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click();
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 });
 
 test('each confirmed local send animates once including SSE-first and recovered responses', async ({ page, app }, info) => {
@@ -842,7 +910,7 @@ test('real image import, zoomed media annotation, move/resize, CLI publication a
   await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
   await expect(page.locator('.toast')).toHaveCount(0);
   await page.screenshot({ path: info.outputPath('light-board.png') });
-  await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click();
   await expect.poll(async () => page.locator('.composer').evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(34, 34, 34)');
   await page.locator('.board-object img').evaluateAll(images => Promise.all(images.map(image => (image as HTMLImageElement).decode())));
   const pixels = await page.locator('.board-object img').evaluateAll(images => images.map(image => { const frame = document.createElement('canvas'); frame.width = 600; frame.height = 300; const context = frame.getContext('2d')!; context.drawImage(image as HTMLImageElement, 0, 0); return [...context.getImageData(130, 80, 1, 1).data]; }));
@@ -1047,7 +1115,7 @@ test('video overlay follows visible footage, compacts around fixed controls and 
   await setView(310, 95, 1); await expect(bar).toHaveAttribute('data-layout', 'stacked'); await operable();
   await page.screenshot({ path: info.outputPath('video-overlay-clipped-390.png') });
   await setView(-110, -70, 1); await expect(bar).toHaveAttribute('data-layout', 'compact'); await operable();
-  await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click();
   await expect(page.locator('#whiteboard')).toHaveCSS('background-image', 'none');
   await page.screenshot({ path: info.outputPath('video-overlay-dark-clipped-390.png') });
   await setView((390 - original.width * .15) / 2, (480 - original.height * .15) / 2, .15); await expect(bar).not.toBeVisible(); await expect(bar).toHaveAttribute('aria-hidden', 'true');
@@ -1160,7 +1228,7 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
   for (const [name, width, height, dark] of [['light', 1440, 1000, false], ['dark', 1440, 1000, true], ['narrow', 390, 844, true]] as const) {
     await page.setViewportSize({ width, height });
     if (width <= 1160) await page.getByRole('button', { name: 'Fit all files', exact: true }).click();
-    if (dark && await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).count()) await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+    if (dark && await page.locator('html').getAttribute('data-theme') !== 'dark') { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); }
     const input = page.locator('#instruction'); await input.focus();
     await page.locator('.composer').evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
     const composer = (await page.locator('.composer').boundingBox())!, box = (await input.boundingBox())!, send = (await page.getByRole('button', { name: 'Send request', exact: true }).boundingBox())!;
@@ -1227,7 +1295,7 @@ test('full-screen canvas and floating controls preserve multiline drafts and ref
 test('dark narrow composer keeps text styling stable, restores inline focus and respects reduced motion', async ({ page, app }, info) => {
   await page.setViewportSize({ width: 390, height: 844 }); await page.emulateMedia({ reducedMotion: 'reduce' });
   await open(page, app);
-  await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click();
   const composer = page.locator('.composer'), input = page.locator('#instruction');
   const before = await composer.evaluate(element => ({ border: getComputedStyle(element).borderColor, surface: getComputedStyle(element).backgroundColor }));
   await input.focus(); await expect(input).toBeFocused();
@@ -1511,7 +1579,7 @@ test('spring queue and composer keep compact references, editable FIFO slots and
   const result = await app.state(); expect(result.tasks.map(task => task.id)).toEqual(ids); expect(result.tasks[0].snapshot.userRequest.text).toBe('Revised request'); expect(result.tasks[0].snapshot.annotations[0].text).toBe('Revised first comment'); expect(result.tasks[0].sequence).toBe(1);
   for (const width of [390, 320]) { await page.setViewportSize({ width, height: 480 }); await expect(page.getByRole('button', { name: 'More request actions', exact: true })).toBeInViewport(); await page.locator('.queue-stack').hover(); await expect(page.getByRole('button', { name: 'Edit request 1', exact: true })).toBeInViewport(); await page.screenshot({ path: info.outputPath(`spring-queue-${width}.png`) }); }
   await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expectInstructionText(input, 'Revised request'); await replaceInstructionText(input, 'Discarded edit'); await page.getByRole('button', { name: 'Cancel edit', exact: true }).click(); await expectInstructionText(input, 'Next unsent idea'); expect((await app.state()).tasks[0].snapshot.userRequest.text).toBe('Revised request');
-  await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' }); await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click(); await first.locator('.queue-task').click(); await expect(first.locator('.motion-disclosure')).toHaveAttribute('data-motion', 'open'); expect(await first.locator('.motion-disclosure').evaluate(element => getComputedStyle(element).transitionDuration)).toBe('0s'); await first.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(first.locator('.motion-disclosure')).toHaveCount(0); await page.screenshot({ path: info.outputPath('spring-queue-dark-reduced.png') });
+  await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' }); await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); await first.locator('.queue-task').click(); await expect(first.locator('.motion-disclosure')).toHaveAttribute('data-motion', 'open'); expect(await first.locator('.motion-disclosure').evaluate(element => getComputedStyle(element).transitionDuration)).toBe('0s'); await first.getByRole('button', { name: 'Collapse request details', exact: true }).click(); await expect(first.locator('.motion-disclosure')).toHaveCount(0); await page.screenshot({ path: info.outputPath('spring-queue-dark-reduced.png') });
 });
 
 test('request details group each annotation once with all snapshot targets in one horizontal row', async ({ page, app }, info) => {
@@ -1698,7 +1766,7 @@ test('short feedback stays quiet and only overlaps during rapid actions', async 
   for (let index = 0; index < 2; index++) { await copy(); await expect(transient).toHaveAttribute('data-count', '1'); await page.clock.runFor(2800); await expect(stack).toBeHidden(); }
   for (const width of [1440, 390, 320]) for (const theme of ['light', 'dark']) {
     await page.setViewportSize({ width, height: width === 1440 ? 1000 : 480 });
-    if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
+    if (await page.locator('html').getAttribute('data-theme') !== theme) { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: theme === 'dark' ? 'Dark' : 'Light', exact: true }).click(); };
     await page.emulateMedia({ reducedMotion: width === 320 ? 'reduce' : 'no-preference' });
     for (let index = 0; index < 7; index++) await copy();
     await expect(transient).toHaveAttribute('data-count', '5'); await expect(page.locator('.notification-peeks>span')).toHaveCount(2); await expect(page.locator('.toast')).toHaveCount(1);
@@ -1718,7 +1786,7 @@ test('ordinary errors expire and repeated identical failures show again while ac
     await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: `failure-${index}.txt`, mimeType: 'text/plain', buffer: Buffer.from('isolated failure') });
     await expect(page.getByRole('alert')).toContainText('The local service could not complete this action.'); await expect(page.locator('.notification-transients')).toHaveAttribute('data-count', '1');
     await page.clock.runFor(2800); await expect(page.locator('.notification-stack')).toBeHidden();
-    await page.getByRole('button', { name: `Switch to ${index === 0 ? 'dark' : 'light'} theme`, exact: true }).click(); await expect(page.locator('.notification-stack')).toBeHidden();
+    await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: index === 0 ? 'Dark' : 'Light', exact: true }).click(); await expect(page.locator('.notification-stack')).toBeHidden();
   }
   await page.unroute('**/api/assets?*');
   let releaseUpload!: () => void; const held = new Promise<void>(resolve => { releaseUpload = resolve; });
@@ -1811,7 +1879,7 @@ test('inline queue references move below the instruction and expose every thumbn
   }
   const geometry: unknown[] = [];
   for (const theme of ['light', 'dark']) {
-    if (theme === 'dark') await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+    if (theme === 'dark') { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); }
     for (const width of [1440, 390, 320]) {
       await page.setViewportSize({ width, height: width === 1440 ? 1000 : 700 });
       await expect(item.locator('.queue-preview')).toHaveCount(width <= 360 ? 1 : 3); await expect(item.locator('.queue-preview-overflow')).toHaveText(width <= 360 ? '+3' : '+1');
@@ -1852,7 +1920,7 @@ test('composer More menu preserves compact layout, real click targets, keyboard 
   await expect(page.locator('.dock-footer')).toHaveCount(0);
   const measures = [];
   for (const theme of ['light', 'dark'] as const) {
-    if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
+    if (await page.locator('html').getAttribute('data-theme') !== theme) { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: theme === 'dark' ? 'Dark' : 'Light', exact: true }).click(); };
     for (const width of [1440, 390, 320]) {
       await page.setViewportSize({ width, height: width === 1440 ? 1000 : 480 });
       const compactWidth = width === 320 ? 224 : 280, expandedWidth = width === 1440 ? 720 : width - 32;
@@ -1893,7 +1961,7 @@ test('composer More menu preserves compact layout, real click targets, keyboard 
   await page.keyboard.press('Escape'); await expect(menu).toHaveCount(0); await expect(more).toBeFocused(); await expect(form).toHaveAttribute('data-compact', 'true');
   await more.press(' '); await expect(menu).toBeVisible(); await input.click(); await expect(menu).toHaveCount(0); await expect(input).toBeFocused();
   await replaceInstructionText(input, 'Keep this draft.'); await expect(form).toHaveAttribute('data-save-state', 'saved');
-  await more.click(); await page.getByRole('button', { name: 'Switch to light theme', exact: true }).click(); await expect(menu).toHaveCount(0); await expect(page.getByRole('button', { name: 'Switch to dark theme', exact: true })).toBeFocused();
+  await more.click(); await page.getByRole('button', { name: 'Theme', exact: true }).click(); await expect(menu).toHaveCount(0); await page.getByRole('menuitemradio', { name: 'Light', exact: true }).click(); await expect(page.getByRole('button', { name: 'Theme', exact: true })).toBeFocused();
   await more.focus(); await more.press('Enter'); await page.keyboard.press('End'); await page.keyboard.press('Enter');
   await expect(page.getByRole('region', { name: 'Resume prompt', exact: true })).toBeVisible(); await expectInstructionText(input, 'Keep this draft.'); expect((await app.state()).tasks).toHaveLength(0);
   await page.getByRole('button', { name: 'Close resume prompt', exact: true }).click();
@@ -1925,7 +1993,7 @@ test('copy feedback stays fixed in the corner and truncates its text when room i
   const geometry = () => stack.evaluate(element => { const bounds = element.getBoundingClientRect(); return { right: innerWidth - bounds.right, bottom: innerHeight - bounds.bottom, width: bounds.width, height: bounds.height }; });
   const measured = [];
   for (const theme of ['light', 'dark'] as const) {
-    if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
+    if (await page.locator('html').getAttribute('data-theme') !== theme) { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: theme === 'dark' ? 'Dark' : 'Light', exact: true }).click(); };
     for (const width of [712, 830, 1440]) {
       await page.setViewportSize({ width, height: 720 }); await page.locator('#whiteboard').focus(); await page.clock.runFor(600);
       await composerAction(page, 'Copy resume prompt'); await page.clock.runFor(30);
@@ -1960,7 +2028,7 @@ test('history rounds every corner for empty and scrolling content in both themes
   await open(page, app); await page.setViewportSize({ width: 712, height: 620 });
   const panel = page.locator('.history-list');
   for (const theme of ['light', 'dark'] as const) {
-    if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
+    if (await page.locator('html').getAttribute('data-theme') !== theme) { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: theme === 'dark' ? 'Dark' : 'Light', exact: true }).click(); };
     await composerAction(page, 'Request history'); await expect(panel).toHaveCSS('border-radius', '20px'); await expect(panel).toHaveCSS('overflow', 'auto');
     await page.screenshot({ path: info.outputPath(`history-empty-rounded-${theme}.png`) }); await page.getByRole('button', { name: 'Close request history', exact: true }).click();
   }
@@ -1969,7 +2037,7 @@ test('history rounds every corner for empty and scrolling content in both themes
     await app.call(`/api/sessions/${state.session.id}/tasks`, 'POST', { draftId: draft.id, expectedRevision: draft.revision });
   }
   for (const theme of ['light', 'dark'] as const) {
-    if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} theme`, exact: true }).click();
+    if (await page.locator('html').getAttribute('data-theme') !== theme) { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: theme === 'dark' ? 'Dark' : 'Light', exact: true }).click(); };
     await composerAction(page, 'Request history'); await expect(panel).toHaveCSS('border-radius', '20px');
     await expect.poll(() => panel.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
     await panel.evaluate(element => { element.scrollTop = element.scrollHeight; });

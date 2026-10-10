@@ -5,7 +5,7 @@ import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import type { Annotation, AnnotationCapture, AnnotationCaptureInput, AnnotationInput, AnnotationTarget, Asset, BaseSceneSnapshot, BoardObject, BoardOperation, BoardState, CaptureResult, CaptureRetryResult, CaptureView, CaptureViewOperation, Claim, CompleteInput, ContentAnchor, Draft, DraftReferences, HostBinding, HtmlBundle, HtmlSurfaceReference, Project, ResolvedRequestReference, Run, RunIdentity, ScenePresentation, ScenePresentationOperation, SceneSource, ServiceIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
 import { bundleLimits, bundleMime, validBundlePath } from '../shared/html-bundle.js';
-import { contentCapabilities, editableTextBytes, editableTextMime, resolveContentKind } from '../shared/content-types.js';
+import { contentCapabilities, editableTextBytes, editableTextMime, isNoteFill, resolveContentKind } from '../shared/content-types.js';
 import { annotationTarget, sameAnnotationTarget, rasterDimensions } from './annotation-capture.js';
 import { generateRequirementText, referenceOrder } from '../shared/task-message.js';
 
@@ -90,7 +90,7 @@ export class CanvasService {
       CREATE TABLE IF NOT EXISTS drafts(id TEXT PRIMARY KEY, session_id TEXT NOT NULL UNIQUE REFERENCES sessions(id), revision INTEGER NOT NULL DEFAULT 1, text TEXT NOT NULL, attachments_json TEXT NOT NULL, annotations_json TEXT NOT NULL, references_json TEXT NOT NULL, updated_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS assets(id TEXT PRIMARY KEY, name TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, kind TEXT NOT NULL, path TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL, source_task_id TEXT, source_run_id TEXT);
       CREATE TABLE IF NOT EXISTS html_bundles(asset_id TEXT PRIMARY KEY REFERENCES assets(id), manifest_json TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS objects(id TEXT PRIMARY KEY, asset_id TEXT NOT NULL REFERENCES assets(id), x REAL NOT NULL, y REAL NOT NULL, width REAL NOT NULL, height REAL NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, source_task_id TEXT, source_run_id TEXT);
+      CREATE TABLE IF NOT EXISTS objects(id TEXT PRIMARY KEY, asset_id TEXT NOT NULL REFERENCES assets(id), x REAL NOT NULL, y REAL NOT NULL, width REAL NOT NULL, height REAL NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, source_task_id TEXT, source_run_id TEXT, fill TEXT);
       CREATE TABLE IF NOT EXISTS annotations(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), task_id TEXT NOT NULL, data_json TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), draft_id TEXT NOT NULL UNIQUE, sequence INTEGER NOT NULL, status TEXT NOT NULL, snapshot_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, current_run_id TEXT, reason TEXT, receipt_json TEXT, replies_json TEXT NOT NULL DEFAULT '[]', UNIQUE(session_id, sequence));
       CREATE TABLE IF NOT EXISTS task_edits(draft_id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), task_id TEXT NOT NULL REFERENCES tasks(id), previous_draft_json TEXT NOT NULL, state TEXT NOT NULL);
@@ -108,6 +108,7 @@ export class CanvasService {
     if (!(this.db.pragma('table_info(drafts)') as Row[]).some((column) => column.name === 'revision')) this.db.exec('ALTER TABLE drafts ADD COLUMN revision INTEGER NOT NULL DEFAULT 1');
     if (!(this.db.pragma('table_info(annotation_sources)') as Row[]).some((column) => column.name === 'state')) this.db.exec("ALTER TABLE annotation_sources ADD COLUMN state TEXT NOT NULL DEFAULT 'bound'");
     if (!(this.db.pragma('table_info(drafts)') as Row[]).some((column) => column.name === 'editing_task_id')) this.db.exec('ALTER TABLE drafts ADD COLUMN editing_task_id TEXT REFERENCES tasks(id)');
+    if (!(this.db.pragma('table_info(objects)') as Row[]).some((column) => column.name === 'fill')) this.db.exec('ALTER TABLE objects ADD COLUMN fill TEXT');
     let projectId = this.db.prepare("SELECT value FROM metadata WHERE key='project_id'").get() as Row | undefined;
     if (!projectId) { this.db.prepare("INSERT INTO metadata(key,value) VALUES('project_id',?)").run(randomUUID()); projectId = this.db.prepare("SELECT value FROM metadata WHERE key='project_id'").get() as Row; }
     this.project = { id: projectId.value, name: basename(this.root), root: this.root };
@@ -434,7 +435,7 @@ export class CanvasService {
       throw error;
     }
   }
-  private objectFrom(row: Row): BoardObject { return { id: row.id, assetId: row.asset_id, type: this.asset(row.asset_id).kind, x: row.x, y: row.y, width: row.width, height: row.height, version: row.version, createdAt: row.created_at, updatedAt: row.updated_at, ...(row.source_task_id ? { sourceTaskId: row.source_task_id, sourceRunId: row.source_run_id } : {}) }; }
+  private objectFrom(row: Row): BoardObject { return { id: row.id, assetId: row.asset_id, type: this.asset(row.asset_id).kind, x: row.x, y: row.y, width: row.width, height: row.height, version: row.version, createdAt: row.created_at, updatedAt: row.updated_at, ...(isNoteFill(row.fill) ? { fill: row.fill } : {}), ...(row.source_task_id ? { sourceTaskId: row.source_task_id, sourceRunId: row.source_run_id } : {}) }; }
   object(id: string): BoardObject { nonempty(id, 'Object ID', 200); const row = this.db.prepare('SELECT * FROM objects WHERE id=?').get(id) as Row; return row ? this.objectFrom(row) : fail(404, 'object_missing', 'The referenced object is unavailable.'); }
   objects(): BoardObject[] { return (this.db.prepare('SELECT * FROM objects ORDER BY created_at,id').all() as Row[]).map((row) => this.objectFrom(row)); }
   annotations(): Annotation[] { return (this.db.prepare('SELECT data_json FROM annotations ORDER BY rowid').all() as Row[]).map((row) => parse(row.data_json)); }
@@ -946,7 +947,7 @@ export class CanvasService {
         for (const key of ['x', 'y', 'width', 'height'] as const) finite(object[key], `Object ${key}`);
         if (object.width <= 0 || object.height <= 0) fail(400, 'invalid_object', 'Objects require positive dimensions.');
         if (touched.has(id) || this.db.prepare('SELECT id FROM objects WHERE id=?').get(id)) fail(409, 'object_conflict', 'The object ID already exists.');
-        this.db.prepare('INSERT INTO objects VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(id, asset.id, object.x, object.y, object.width, object.height, 1, time, time, source?.taskId ?? null, source?.runId ?? null);
+        this.db.prepare('INSERT INTO objects(id, asset_id, x, y, width, height, version, created_at, updated_at, source_task_id, source_run_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(id, asset.id, object.x, object.y, object.width, object.height, 1, time, time, source?.taskId ?? null, source?.runId ?? null);
         touched.add(id); objectIds.push(id);
       } else if (operation?.type === 'update' || operation?.type === 'delete') {
         const id = nonempty(operation.objectId, 'Object ID', 200);
@@ -955,11 +956,18 @@ export class CanvasService {
         if (!Number.isSafeInteger(operation.expectedVersion) || object.version !== operation.expectedVersion) fail(409, 'object_conflict', 'The object changed. Read its current version before updating.', { objectId: id, currentVersion: object.version });
         if (operation.type === 'delete') this.db.prepare('DELETE FROM objects WHERE id=? AND version=?').run(id, operation.expectedVersion);
         else {
-          if (!operation.changes || Object.keys(operation.changes).some((key) => !['x', 'y', 'width', 'height'].includes(key))) fail(400, 'invalid_object', 'Object changes support position and dimensions.');
+          if (!operation.changes || Object.keys(operation.changes).some((key) => !['x', 'y', 'width', 'height', 'fill'].includes(key))) fail(400, 'invalid_object', 'Object changes support position, dimensions and note color.');
+          let fill = object.fill ?? null;
+          if ('fill' in operation.changes) {
+            if (resolveContentKind(this.asset(object.assetId)) !== 'note') fail(400, 'invalid_object', 'Only notes have a background color.');
+            const requested = operation.changes.fill ?? null;
+            if (requested !== null && !isNoteFill(requested)) fail(400, 'invalid_object', 'Choose a note color.');
+            fill = requested;
+          }
           const changed = { ...object, ...operation.changes };
           for (const key of ['x', 'y', 'width', 'height'] as const) finite(changed[key], `Object ${key}`);
           if (changed.width <= 0 || changed.height <= 0) fail(400, 'invalid_object', 'Objects require positive dimensions.');
-          this.db.prepare('UPDATE objects SET x=?,y=?,width=?,height=?,version=version+1,updated_at=? WHERE id=? AND version=?').run(changed.x, changed.y, changed.width, changed.height, time, id, operation.expectedVersion);
+          this.db.prepare('UPDATE objects SET x=?,y=?,width=?,height=?,fill=?,version=version+1,updated_at=? WHERE id=? AND version=?').run(changed.x, changed.y, changed.width, changed.height, fill, time, id, operation.expectedVersion);
         }
         touched.add(id); objectIds.push(id);
       } else fail(400, 'invalid_operation', 'Choose create, update or delete.');

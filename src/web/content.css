@@ -32,6 +32,9 @@
 .plain-text-field.note textarea::placeholder { color: var(--muted); font-weight: 400; }
 .plain-text-field.markdown textarea,.plain-text-field.markdown .plain-text-mirror { padding: 44px 24px 24px; font-family: ui-monospace, monospace; font-size: 13px; font-weight: 400; line-height: 1.5; letter-spacing: 0; }
 .note-card { height: 100%; padding: 8px; background: var(--surface); }
+.note-card[data-fill] .plain-text-mirror { color: #2a2724; }
+.note-card[data-fill] textarea { caret-color: #2a2724; }
+.note-card[data-fill] textarea::placeholder { color: #8a847c; }
 .content-message { color: var(--muted); font-size: 12px; }
 .content-thumbnail-icon { color: var(--muted); }
 .task-media-preview .content-shell { height: 260px; }

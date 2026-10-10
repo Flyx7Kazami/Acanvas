@@ -56,4 +56,28 @@ test('notes and Markdown keep their asset id when text is replaced', async (t) =
   assert.equal((await call('/api/assets/missing/content', 'PUT', 'x')).status, 404);
   assert.equal((await call(`/api/assets/${note.id}/content`, 'PUT', 'x'.repeat(editableTextBytes + 1))).status, 413);
   assert.equal((await call(`/api/assets/${note.id}/content`, 'GET')).text, '');
+
+  const session = await call('/api/sessions', 'POST', JSON.stringify({ name: 'Colors' }), 'application/json');
+  assert.equal(session.status, 201);
+  const place = async (operations: unknown) => call('/api/board/operations', 'POST', JSON.stringify({ sessionId: session.json.id, operations }), 'application/json');
+  const placed = await place([{ type: 'create', object: { assetId: note.id, x: 10, y: 20, width: 240, height: 128 } }]);
+  assert.equal(placed.status, 200);
+  const noteObject = placed.json.objects.find((item: { assetId: string }) => item.assetId === note.id);
+  assert.equal(noteObject.fill, undefined);
+  const colored = await place([{ type: 'update', objectId: noteObject.id, expectedVersion: noteObject.version, changes: { fill: 'sage' } }]);
+  const sage = colored.json.objects.find((item: { id: string }) => item.id === noteObject.id);
+  assert.equal(colored.status, 200);
+  assert.equal(sage.fill, 'sage');
+  assert.equal(sage.x, 10);
+  const moved = await place([{ type: 'update', objectId: noteObject.id, expectedVersion: sage.version, changes: { x: 48 } }]);
+  const shifted = moved.json.objects.find((item: { id: string }) => item.id === noteObject.id);
+  assert.equal(shifted.fill, 'sage');
+  assert.equal(shifted.x, 48);
+  const cleared = await place([{ type: 'update', objectId: noteObject.id, expectedVersion: shifted.version, changes: { fill: null } }]);
+  const restored = cleared.json.objects.find((item: { id: string }) => item.id === noteObject.id);
+  assert.equal(restored.fill, undefined);
+  assert.equal((await place([{ type: 'update', objectId: noteObject.id, expectedVersion: restored.version, changes: { fill: 'neon' } }])).status, 400);
+  const imageObject = (await place([{ type: 'create', object: { assetId: image.id, x: 300, y: 20, width: 80, height: 80 } }])).json.objects.find((item: { assetId: string }) => item.assetId === image.id);
+  assert.equal((await place([{ type: 'update', objectId: imageObject.id, expectedVersion: imageObject.version, changes: { fill: 'sand' } }])).status, 400);
+  assert.equal((await call(`/api/state?sessionId=${encodeURIComponent(session.json.id)}`, 'GET')).json.objects.find((item: { id: string }) => item.id === noteObject.id).fill, undefined);
 });

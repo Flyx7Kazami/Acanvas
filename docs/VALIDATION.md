@@ -1,11 +1,16 @@
 # acanvas 验证记录
 
+## 主题菜单（2026-10-10）
+
+- 右上角 Theme 点开后在按钮下方出现 Light、Dark、Follow system。Follow system 随系统浅色/深色切换，刷新后仍跟随；选 Dark 后不再随系统变回浅色。定向浏览器测试 1/1 通过。
+
 ## 画布便签与 Markdown 编辑（2026-10-10）
 
 按[设计](superpowers/specs/2026-10-10-canvas-notes-markdown-edit-design.md)核对。
 
-- 类型检查通过。`content-types` 2 项与 `text-content` 1 项通过：`text/x-acanvas-note` 存为 `file` 内容种类 `note`，`.txt` 仍是普通文件；替换接口写回便签和 Markdown 且素材 ID 不变，拒绝图片、普通文本、缺失素材和超过 2 MB 的内容，失败后原字节保留。
+- 类型检查通过。`content-types` 2 项与 `text-content` 1 项通过：`text/x-acanvas-note` 存为 `file` 内容种类 `note`，`.txt` 仍是普通文件；替换接口写回便签和 Markdown 且素材 ID 不变，拒绝图片、普通文本、缺失素材和超过 2 MB 的内容，失败后原字节保留。便签背景 `sage` 写在对象上，移动后仍在；清空后字段消失，非法颜色和图片着色返回 400。
 - 隔离端口 4326：左侧 Add note 按下后点画布，出现选中的 Note，文字区获得焦点。输入「第一行标题」后素材为 15 字节，刷新后仍在。Markdown 默认预览为按下，源码为松开；便签上没有这组开关。源码改为 `# Banana` 后回到预览，标题渲染为 Banana，正文为 Edited source。刷新后仍是预览，文件为 24 字节。未写入 4317 上的用户项目。
+- 颜色和对齐改到选择条的悬停菜单。便签卡片上没有颜色按钮。选中一张便签时，删除按钮右侧是固定的调色板图标；悬停后菜单淡入，并与选择条留出间距。Default 是黑白各半的圆点，其后是 Sand、Sage、Mist、Blush、Lilac。选择 Sage 后面板为 `rgb(227, 238, 228)`，文字为 `rgb(42, 39, 36)`，刷新后 `fill` 仍是 `sage`。多选时悬停 Align 直接出现六向对齐，删除按钮保留。定向浏览器测试 3/3 通过。未写入 4317 上的用户项目。
 
 ## 选区按钮、点批注锚点与缩略图预览（2026-10-10）
 

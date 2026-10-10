@@ -62,7 +62,7 @@ test('reselecting one object creates individual atoms with neutral preview styli
   const formal = page.locator('#instruction .chatbox-reference'), preview = page.locator('#instruction .chatbox-reference-preview');
   const appearance = (locator: typeof preview) => locator.evaluate(element => { const style = getComputedStyle(element); return { background: style.backgroundColor, border: style.borderTopColor, color: style.color }; });
   for (const theme of ['light', 'dark']) {
-    if (theme === 'dark') await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+    if (theme === 'dark') { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); }
     await page.locator(`[data-object-id="${object.id}"]`).click({ position: { x: 90, y: 54 } });
     await expect(preview).toHaveCount(1); const before = await appearance(preview);
     await preview.screenshot({ path: join(app.evidence, `${theme}-preview.png`) });
@@ -79,7 +79,7 @@ test('reselecting one object creates individual atoms with neutral preview styli
   assert.equal(new Set(hosts).size, 2);
   // A board update and theme update re-render the composer with the same consumed selection.
   await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: 45 } }] });
-  await page.getByRole('button', { name: 'Switch to light theme', exact: true }).click(); await expect(formal).toHaveCount(2); await expect(preview).toHaveCount(0);
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Light', exact: true }).click(); await expect(formal).toHaveCount(2); await expect(preview).toHaveCount(0);
   await formal.nth(1).getByRole('button', { name: 'Remove reference Repeated.png', exact: true }).click();
   await expect(formal).toHaveCount(1); assert.deepEqual((await app.saved()).references.order, [expected[0]]);
   await page.reload(); await expect(formal).toHaveCount(1); assert.deepEqual((await app.saved()).references.order, [expected[0]]);

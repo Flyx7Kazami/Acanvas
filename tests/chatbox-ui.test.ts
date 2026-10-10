@@ -315,7 +315,7 @@ test('chatbox independent inline previews and formal atoms wrap within 320px lig
   await page.locator('#instruction').fill('Before after'); await editorSelection(page, 7);
   await app.select(first); await page.locator(`[data-object-id="${second.id}"]`).focus(); await page.keyboard.press('Shift+Enter');
   for (const theme of ['light', 'dark']) {
-    if (theme === 'dark') await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+    if (theme === 'dark') { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); }
     await expect(page.locator('[data-reference-preview]')).toHaveCount(2);
     const rects = await page.locator('[data-reference-preview]').evaluateAll(elements => elements.map(element => { const box = element.getBoundingClientRect(); return { x: box.x, right: box.right, width: box.width }; }));
     rects.forEach(rect => { assert(rect.x >= 0 && rect.right <= 321 && rect.width > 80); });
@@ -749,7 +749,7 @@ test('managed React 320px themes, keyboard point marking and reduced motion reta
   await page.emulateMedia({ reducedMotion: 'reduce' });
   let count = 0;
   for (const theme of ['light', 'dark'] as const) {
-    if (theme === 'dark') await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+    if (theme === 'dark') { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); }
     await page.getByRole('button', { name: 'Mark canvas', exact: true }).click();
     if (theme === 'light') { await page.locator('#whiteboard').focus(); await page.keyboard.press('Enter'); }
     else {
@@ -847,7 +847,7 @@ test('annotation focus follows the active editor when a pending reader is closed
 test('refinement collapsed comment surfaces are displayed by the DOM and keep their displayed pixels in PNG', async t => {
   const app = await fixture(t), { page } = app;
   for (const theme of ['light', 'dark']) {
-    if (theme === 'dark') await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+    if (theme === 'dark') { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); }
     await app.mark({ x: 900, y: theme === 'light' ? 350 : 550 }); const first = await app.done(`${theme} short comment`);
     const note = page.locator(`.canvas-annotation-comment[data-annotation-id="${first.id}"]`);
     await expect(note).toHaveCSS('opacity', '1'); assert.equal(await note.getAttribute('data-scene-drawn'), null);
@@ -875,7 +875,7 @@ test('refinement media editors separate text media and footer across narrow them
     const object = await app.object(asset, { x: 35, y: 350, width: 250, height: index === 0 ? 190 : 160 });
     await page.locator(`[data-object-id="${object.id}"] ${index === 0 ? 'audio' : 'video'}`).evaluate(async element => { const media = element as HTMLMediaElement; if (!Number.isFinite(media.duration)) await new Promise<void>(resolve => media.addEventListener('loadedmetadata', () => resolve(), { once: true })); });
     for (const theme of ['light', 'dark']) {
-      const current = await page.locator('html').getAttribute('data-theme'); if (current !== theme) await page.getByRole('button', { name: theme === 'dark' ? 'Switch to dark theme' : 'Switch to light theme', exact: true }).click();
+      if (await page.locator('html').getAttribute('data-theme') !== theme) { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: theme === 'dark' ? 'Dark' : 'Light', exact: true }).click(); }
       await app.mark({ x: 160, y: 430 }); const input = page.getByRole('textbox', { name: 'Add a comment', exact: true }); await input.fill('Readable editable text.\n'.repeat(24));
       await expect(page.locator('.annotation-time-range')).toHaveAttribute('data-ready', 'true');
       await page.locator('.annotation-full').evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });

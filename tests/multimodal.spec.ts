@@ -106,8 +106,8 @@ test('audio plays real media in one row and saves explicit time range without fr
   await expect.poll(async () => (await app.state()).draft.annotations[0]?.timeEnd).toBeGreaterThan(3.5);
   expect((await page.locator('.annotation-range-selection').boundingBox())!.width).toBeGreaterThan(48);
   const lightShot = info.outputPath('audio-range-light.png'); await page.locator('.annotation-full').screenshot({ path: lightShot }); console.log(`MEDIA_RANGE_SHOT ${lightShot}`);
-  await page.getByRole('button', { name: 'Switch to dark theme' }).click(); const darkShot = info.outputPath('audio-range-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
-  await page.getByRole('button', { name: 'Switch to light theme' }).click();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); const darkShot = info.outputPath('audio-range-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Light', exact: true }).click();
   // Between the two grips the track is empty, so a click there sets a single time point.
   await page.mouse.click(box.x + box.width * .5, box.y + box.height / 2);
   await expect.poll(async () => (await app.state()).draft.annotations[0]?.timeEnd).toBeUndefined();
@@ -122,8 +122,8 @@ test('audio plays real media in one row and saves explicit time range without fr
   const endHit = (await page.getByRole('slider', { name: 'End point' }).boundingBox())!;
   expect(startHit.x + startHit.width).toBeLessThanOrEqual(endHit.x + 1);
   const pointLightShot = info.outputPath('audio-point-light.png'); await page.locator('.annotation-full').screenshot({ path: pointLightShot }); console.log(`MEDIA_RANGE_SHOT ${pointLightShot}`);
-  await page.getByRole('button', { name: 'Switch to dark theme' }).click(); const pointDarkShot = info.outputPath('audio-point-dark.png'); await page.locator('.annotation-full').screenshot({ path: pointDarkShot }); console.log(`MEDIA_RANGE_SHOT ${pointDarkShot}`);
-  await page.getByRole('button', { name: 'Switch to light theme' }).click();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); const pointDarkShot = info.outputPath('audio-point-dark.png'); await page.locator('.annotation-full').screenshot({ path: pointDarkShot }); console.log(`MEDIA_RANGE_SHOT ${pointDarkShot}`);
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Light', exact: true }).click();
   await page.mouse.click(startHit.x + startHit.width / 2, startHit.y + startHit.height / 2);
   await page.mouse.click(endHit.x + endHit.width / 2, endHit.y + endHit.height / 2);
   await expect(marker).toHaveAttribute('data-point', 'true');
@@ -137,8 +137,8 @@ test('audio plays real media in one row and saves explicit time range without fr
   expect(shortStartHit.x + shortStartHit.width).toBeLessThanOrEqual(shortEndHit.x + 1);
   await startSlider.evaluate(element => (element as HTMLElement).blur());
   const shortLightShot = info.outputPath('audio-short-light.png'); await page.locator('.annotation-full').screenshot({ path: shortLightShot }); console.log(`MEDIA_RANGE_SHOT ${shortLightShot}`);
-  await page.getByRole('button', { name: 'Switch to dark theme' }).click(); const shortDarkShot = info.outputPath('audio-short-dark.png'); await page.locator('.annotation-full').screenshot({ path: shortDarkShot }); console.log(`MEDIA_RANGE_SHOT ${shortDarkShot}`);
-  await page.getByRole('button', { name: 'Switch to light theme' }).click();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); const shortDarkShot = info.outputPath('audio-short-dark.png'); await page.locator('.annotation-full').screenshot({ path: shortDarkShot }); console.log(`MEDIA_RANGE_SHOT ${shortDarkShot}`);
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Light', exact: true }).click();
   await page.mouse.move(shortStartHit.x + shortStartHit.width / 2, shortStartHit.y + shortStartHit.height / 2); await page.mouse.down();
   await page.mouse.move(shortStartHit.x + shortStartHit.width / 2 - 35, shortStartHit.y + shortStartHit.height / 2, { steps: 5 }); await page.mouse.up();
   expect((await marker.boundingBox())!.width).toBeGreaterThan(48);
@@ -201,7 +201,7 @@ test('audio range card keeps both handles and Done visible at 320 pixels', async
   const start = await page.getByRole('slider', { name: 'Start point' }).boundingBox(), end = await page.getByRole('slider', { name: 'End point' }).boundingBox(), done = await page.getByRole('button', { name: 'Done' }).boundingBox();
   expect(start?.x).toBeGreaterThanOrEqual(bounds!.x); expect(end!.x + end!.width).toBeLessThanOrEqual(bounds!.x + bounds!.width); expect(done!.y).toBeGreaterThan(end!.y + end!.height);
   const lightShot = info.outputPath('audio-range-320-light.png'); await page.locator('.annotation-full').screenshot({ path: lightShot }); console.log(`MEDIA_RANGE_SHOT ${lightShot}`);
-  await page.getByRole('button', { name: 'Switch to dark theme' }).click(); const darkShot = info.outputPath('audio-range-320-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); const darkShot = info.outputPath('audio-range-320-dark.png'); await page.locator('.annotation-full').screenshot({ path: darkShot }); console.log(`MEDIA_RANGE_SHOT ${darkShot}`);
   const narrowTimeline = (await page.locator('.annotation-range-timeline').boundingBox())!.width;
   await page.setViewportSize({ width: 390, height: 700 });
   await expect.poll(async () => (await page.locator('.annotation-range-timeline').boundingBox())!.width).toBeGreaterThan(narrowTimeline);
@@ -232,8 +232,8 @@ test('audio range card keeps both handles and Done visible at 320 pixels', async
   expect(shortLeftWidth).toBeGreaterThan(16);
   expect(Number(await page.getByRole('slider', { name: 'Start point' }).getAttribute('aria-valuenow'))).toBeLessThan(pointStart);
   const shortDarkShot = info.outputPath('audio-short-320-dark.png'); await page.locator('.annotation-full').screenshot({ path: shortDarkShot }); console.log(`MEDIA_RANGE_SHOT ${shortDarkShot}`);
-  await page.getByRole('button', { name: 'Switch to light theme' }).click(); const shortLightShot = info.outputPath('audio-short-320-light.png'); await page.locator('.annotation-full').screenshot({ path: shortLightShot }); console.log(`MEDIA_RANGE_SHOT ${shortLightShot}`);
-  await page.getByRole('button', { name: 'Switch to dark theme' }).click();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Light', exact: true }).click(); const shortLightShot = info.outputPath('audio-short-320-light.png'); await page.locator('.annotation-full').screenshot({ path: shortLightShot }); console.log(`MEDIA_RANGE_SHOT ${shortLightShot}`);
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click();
   const compactStartHit = (await page.getByRole('slider', { name: 'Start point' }).boundingBox())!;
   const continueLeft = await page.context().newCDPSession(page); await continueLeft.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
   await continueLeft.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: compactStartHit.x + compactStartHit.width / 2, y: compactStartHit.y + compactStartHit.height / 2 }] });
@@ -464,7 +464,7 @@ test('HTML origin changes request an explicit board reload and preserve the draf
 });
 
 test('removed task sources use the shared document audio and HTML detail renderers', async ({ page, app }) => {
-  await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click();
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles([
     { name: 'detail.md', mimeType: 'text/markdown', buffer: Buffer.from('# Source notes\n\nRead the original.') },
     { name: 'detail.wav', mimeType: 'audio/wav', buffer: toneWav(3) },

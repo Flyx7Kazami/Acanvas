@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type R
 import { createPortal } from 'react-dom';
 import { Code2, File, FileText, Music2, Play, Type } from 'lucide-react';
 import type { Asset } from '../shared/types';
-import { resolveContentKind } from '../shared/content-types';
+import { resolveContentKind, type NoteFill } from '../shared/content-types';
 import { getVideoThumbnail } from './videoThumbnail';
 import { useAudioArtwork } from './audioArtwork';
 import { MarkdownBlock } from './MarkdownCanvasContent';
@@ -133,11 +133,12 @@ export interface ContentRendererProps {
   onFrameDrag?: (frame: HTMLIFrameElement, start: { x: number; y: number }, event: PointerEvent<HTMLElement>) => void;
   onActivate?: () => void;
   onSaveError?: (cause: unknown) => void;
+  fill?: NoteFill;
 }
 
-export function ContentRenderer({ asset, src, api, surface = 'canvas', disabled, preserveScene, error, onError, onSize, onMediaElement, onReloadBoard, onBlankPointerDown, onFrameDrag, onFrameWheel, onActivate, onSaveError }: ContentRendererProps) {
+export function ContentRenderer({ asset, src, api, surface = 'canvas', disabled, preserveScene, error, onError, onSize, onMediaElement, onReloadBoard, onBlankPointerDown, onFrameDrag, onFrameWheel, onActivate, onSaveError, fill }: ContentRendererProps) {
   const kind = resolveContentKind(asset), title = asset?.name || 'File';
-  if (kind === 'note' && asset) return <NoteCanvasContent asset={asset} src={src} api={api} disabled={disabled} onBlankPointerDown={onBlankPointerDown} onActivate={onActivate} onSaveError={onSaveError}/>;
+  if (kind === 'note' && asset) return <NoteCanvasContent asset={asset} src={src} api={api} fill={fill} disabled={disabled} onBlankPointerDown={onBlankPointerDown} onActivate={onActivate} onSaveError={onSaveError}/>;
   if (error || kind === 'file') return <SceneFileCard asset={asset} src={src} error={error}/>;
   if (kind === 'image') return <SceneStaticImage src={src} title={title} onSize={onSize} onError={() => onError?.()}/>;
   if (kind === 'gif') return <SceneGifContent src={src} title={title} onSize={onSize} onError={onError}/>;
