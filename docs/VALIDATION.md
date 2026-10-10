@@ -1,5 +1,12 @@
 # acanvas 验证记录
 
+## 画布便签与 Markdown 编辑（2026-10-10）
+
+按[设计](superpowers/specs/2026-10-10-canvas-notes-markdown-edit-design.md)核对。
+
+- 类型检查通过。`content-types` 2 项与 `text-content` 1 项通过：`text/x-acanvas-note` 存为 `file` 内容种类 `note`，`.txt` 仍是普通文件；替换接口写回便签和 Markdown 且素材 ID 不变，拒绝图片、普通文本、缺失素材和超过 2 MB 的内容，失败后原字节保留。
+- 隔离端口 4326：左侧 Add note 按下后点画布，出现选中的 Note，文字区获得焦点。输入「第一行标题」后素材为 15 字节，刷新后仍在。Markdown 默认预览为按下，源码为松开；便签上没有这组开关。源码改为 `# Banana` 后回到预览，标题渲染为 Banana，正文为 Edited source。刷新后仍是预览，文件为 24 字节。未写入 4317 上的用户项目。
+
 ## 选区按钮、点批注锚点与缩略图预览（2026-10-10）
 
 - 类型检查与构建通过。`point-anchor` 的点位几何与堆叠两项、`chatbox-ui` 的「重画标记需要新捕获」、320px 点标记和窄表面评论三项通过：气泡尾巴对齐点击，截图像素主体在点击点上方，编辑中再次点 Mark 会更换目标，点标记不再有虚线圆圈。

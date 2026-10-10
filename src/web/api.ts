@@ -20,6 +20,8 @@ const errorMessages: Record<string, string> = {
   empty_request: 'Add request text, attachments or annotations.',
   upload_incomplete: 'The upload was interrupted. Import the complete file again.',
   upload_too_large: 'The file exceeds the upload limit. Choose a smaller file.',
+  content_readonly: 'Only notes and Markdown can be edited.',
+  content_too_large: 'Notes and Markdown stay within 2 MB.',
   request_too_large: 'This request is too large. Reduce the attachments or text and try again.',
   task_edit_conflict: 'This request changed state. Save the current edit or select a waiting request.',
   invalid_annotation: 'Check the annotation area, timestamp and file references, then try again.',
@@ -160,7 +162,8 @@ export class BoardApi {
   editTask(sessionId: string, taskId: string, draftId: string, expectedRevision: number, cancel = false) { return this.request<{ task: Task; draft: Draft }>(`/api/sessions/${encodeURIComponent(sessionId)}/tasks/${encodeURIComponent(taskId)}/${cancel ? 'cancel-edit' : 'edit'}`, { method: 'POST', body: JSON.stringify({ draftId, expectedRevision }) }); }
   view(sessionId: string, view: SessionView) { return this.request<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/view`, { method: 'PUT', body: JSON.stringify(view) }); }
   operations(sessionId: string, operations: BoardOperation[]) { return this.request<{ objects: BoardState['objects'] }>('/api/board/operations', { method: 'POST', body: JSON.stringify({ sessionId, operations }) }); }
-  upload(file: Blob, name: string, signal?: AbortSignal) { return this.request<Asset>(`/api/assets?name=${encodeURIComponent(name)}&mime=${encodeURIComponent(resolveContentMime(name, file.type))}`, { method: 'POST', body: file, signal }); }
+  upload(file: Blob, name: string, signal?: AbortSignal, mime = file.type) { return this.request<Asset>(`/api/assets?name=${encodeURIComponent(name)}&mime=${encodeURIComponent(resolveContentMime(name, mime))}`, { method: 'POST', body: file, signal }); }
+  replaceContent(assetId: string, file: Blob, signal?: AbortSignal) { return this.request<Asset>(`/api/assets/${encodeURIComponent(assetId)}/content`, { method: 'PUT', body: file, signal }); }
   content(assetId: string, sessionId?: string) { return `/api/assets/${encodeURIComponent(assetId)}/content${sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : ''}`; }
   private capturePath(sessionId: string, draftId: string, annotationId: string, version: number) { return `/api/sessions/${encodeURIComponent(sessionId)}/drafts/${encodeURIComponent(draftId)}/annotations/${encodeURIComponent(annotationId)}/captures/${version}`; }
   prepareCapture(sessionId: string, draftId: string, annotationId: string, version: number, input: AnnotationCaptureInput) { return this.request<CaptureResult>(this.capturePath(sessionId, draftId, annotationId, version), { method: 'POST', body: JSON.stringify(input) }); }

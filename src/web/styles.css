@@ -197,7 +197,7 @@ details[open] summary svg { rotate: 180deg; }
 .canvas-mark-guide { position:absolute; z-index:8; pointer-events:none; border:1px solid #3d94e8; box-shadow:0 0 0 1px rgba(61,148,232,.18); }
 .canvas-mark-surface { position:absolute; inset:0; z-index:10; cursor:crosshair; touch-action:none; }
 .whiteboard.mode-mark .canvas-toolbar { z-index:12; }.whiteboard.mode-mark .canvas-annotation-group[data-active='true'] { z-index:11; }
-.whiteboard.mode-mark { cursor:crosshair; }.annotation-outline.point-annotation { border-radius:50%; border-width:2px; background:var(--annotation-fill); }
+.whiteboard.mode-mark,.whiteboard.mode-note { cursor:crosshair; }.annotation-outline.point-annotation { border-radius:50%; border-width:2px; background:var(--annotation-fill); }
 .app-shell[data-sampling] .canvas-annotation-group,.app-shell[data-sampling] .creation-dock,.app-shell[data-sampling] .selection-actions,.app-shell[data-sampling] .canvas-toolbar { visibility:hidden; }
 .app-shell[data-sampling] .object-media { pointer-events:none; }
 .app-shell[data-sampling] .project-identity,.app-shell[data-sampling] .canvas-actions,.app-shell[data-sampling] .notification-stack,.app-shell[data-sampling] .video-playback,.app-shell[data-sampling] .html-preview-tools,.app-shell[data-sampling] .skip-link { visibility:hidden; }

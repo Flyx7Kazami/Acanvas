@@ -1,6 +1,10 @@
 import type { AssetKind } from './types.js';
 
-export type ContentKind = 'image' | 'gif' | 'video' | 'audio' | 'markdown' | 'html' | 'file';
+export type ContentKind = 'image' | 'gif' | 'video' | 'audio' | 'markdown' | 'html' | 'note' | 'file';
+export const noteMime = 'text/x-acanvas-note';
+export const editableTextBytes = 2 * 1024 * 1024;
+const editableMime = new Set(['text/markdown', 'text/x-markdown', noteMime]);
+export const editableTextMime = (mime: string) => editableMime.has(mime.split(';', 1)[0].trim().toLowerCase());
 export interface ContentSource { name: string; mime: string }
 
 const extensionMime: Record<string, string> = {
@@ -26,6 +30,7 @@ export function resolveContentKind(source?: ContentSource): ContentKind {
   if (mime.startsWith('image/')) return 'image';
   if (mime.startsWith('video/')) return 'video';
   if (mime.startsWith('audio/')) return 'audio';
+  if (mime === noteMime) return 'note';
   if (['text/markdown', 'text/x-markdown'].includes(mime)) return 'markdown';
   if (['text/html', 'application/xhtml+xml'].includes(mime)) return 'html';
   return 'file';
@@ -51,6 +56,7 @@ export const contentCapabilities: Record<ContentKind, ContentCapabilities> = {
   video: { label: 'Video', region: true, time: true, interaction: false, freeResize: false, minimum: { width: 40, height: 40 }, initial: { width: 280, height: 210 } },
   audio: { label: 'Audio', region: false, time: true, interaction: false, freeResize: true, minimum: { width: 280, height: 88 }, initial: { width: 480, height: 100 } },
   markdown: { label: 'Markdown', region: false, time: false, interaction: true, freeResize: true, minimum: { width: 180, height: 120 }, initial: { width: 420, height: 320 } },
+  note: { label: 'Note', region: false, time: false, interaction: true, freeResize: true, minimum: { width: 160, height: 72 }, initial: { width: 240, height: 128 } },
   html: { label: 'HTML', region: false, time: false, interaction: true, freeResize: true, minimum: { width: 180, height: 120 }, initial: { width: 420, height: 320 } },
   file: { label: 'File', region: false, time: false, interaction: false, freeResize: false, minimum: { width: 40, height: 40 }, initial: { width: 280, height: 150 } },
 };

@@ -5,7 +5,7 @@ import { open, mkdir, readFile, realpath, rename, rm, stat } from 'node:fs/promi
 import { dirname, extname, resolve, relative } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import type { AnnotationCaptureInput, Asset, Bootstrap, CaptureView, CaptureViewOperation, CompleteInput, Draft, ServiceRuntime, SessionView } from '../shared/types.js';
-import { resolveContentKind, resolveContentMime, storageAssetKind } from '../shared/content-types.js';
+import { editableTextBytes, editableTextMime, resolveContentKind, resolveContentMime, storageAssetKind } from '../shared/content-types.js';
 import { ApiFailure, CanvasService, within } from './service.js';
 import { AudioArtworkReader } from './audio-artwork.js';
 import { clearRuntime, publishRuntime } from './runtime.js';
@@ -277,6 +277,32 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
           response.end(method === 'HEAD' ? undefined : cover.bytes); return;
         }
         const assetMatch = path.match(/^\/api\/assets\/([^/]+)\/content$/);
+        if (assetMatch && method === 'PUT') {
+          const assetId = decodeURIComponent(assetMatch[1]);
+          let current: Asset;
+          try { current = service.sharedAsset(assetId); }
+          catch (error) { request.resume(); throw error; }
+          if (current.htmlBundle || !editableTextMime(current.mime)) { request.resume(); throw new ApiFailure(400, 'content_readonly', 'Only notes and Markdown can be edited.'); }
+          const declared = Number(request.headers['content-length']);
+          if (Number.isFinite(declared) && declared > editableTextBytes) { request.resume(); throw new ApiFailure(413, 'content_too_large', 'Notes and Markdown stay within 2 MB.'); }
+          const temporary = resolve(service.dataDir, 'tmp', `${randomUUID()}.text`);
+          await mkdir(dirname(temporary), { recursive: true, mode: 0o700 });
+          if (!within(service.dataDir, await realpath(dirname(temporary)))) throw new ApiFailure(403, 'path_boundary', 'Upload storage must remain inside this project.');
+          let file: Awaited<ReturnType<typeof open>> | undefined = await open(temporary, 'wx', 0o600), size = 0, consumed = false;
+          try {
+            for await (const chunk of request) {
+              size += chunk.length;
+              if (size > editableTextBytes) throw new ApiFailure(413, 'content_too_large', 'Notes and Markdown stay within 2 MB.');
+              await file.write(chunk);
+            }
+            if (!request.complete) throw new ApiFailure(400, 'upload_incomplete', 'The upload ended before its text was complete.');
+            await file.sync(); await file.close(); file = undefined;
+            const saved = service.replaceAssetContent(assetId, temporary);
+            consumed = true;
+            send(response, 200, saved);
+          } finally { await file?.close().catch(() => {}); if (!consumed) await rm(temporary, { force: true }); }
+          return;
+        }
         if (assetMatch && (method === 'GET' || method === 'HEAD')) {
           const asset = service.readableAsset(decodeURIComponent(assetMatch[1]), url.searchParams.get('sessionId') ?? undefined);
           const file = service.assetPath(asset.id);

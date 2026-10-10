@@ -8,6 +8,7 @@ test('content formats share MIME fallback while keeping original asset storage k
     ['ANIMATION.GIF', '', 'gif', 'image'], ['note.md', 'text/plain', 'markdown', 'file'], ['index.htm', 'application/octet-stream', 'html', 'file'],
     ['memo.M4A', '', 'audio', 'file'], ['song.mp3', 'audio/mpeg; charset=binary', 'audio', 'file'], ['wave.wav', '', 'audio', 'file'],
     ['movie.mp4', '', 'video', 'video'], ['reference.png', '', 'image', 'image'], ['data.bin', '', 'file', 'file'],
+    ['Note', 'text/x-acanvas-note', 'note', 'file'], ['memo.txt', 'text/plain', 'file', 'file'],
   ]) {
     assert.equal(resolveContentKind({ name, mime }), kind, name); assert.equal(storageAssetKind({ name, mime }), storage, name);
   }
@@ -15,6 +16,7 @@ test('content formats share MIME fallback while keeping original asset storage k
   assert.equal(resolveContentKind({ name: 'note.md', mime: 'application/pdf' }), 'file');
   assert.equal(contentCapabilities.audio.region, false); assert.equal(contentCapabilities.audio.time, true);
   assert.equal(contentCapabilities.markdown.region, false); assert.equal(contentCapabilities.html.interaction, true);
+  assert.equal(contentCapabilities.note.freeResize, true); assert.equal(contentCapabilities.note.initial.width, 240);
 });
 
 test('document viewport resize changes width and height independently and retains opposite corners', () => {

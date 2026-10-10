@@ -1,11 +1,11 @@
 import Database from 'better-sqlite3';
 import { randomUUID } from 'node:crypto';
-import { mkdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
+import { mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync } from 'node:fs';
 import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import type { Annotation, AnnotationCapture, AnnotationCaptureInput, AnnotationInput, AnnotationTarget, Asset, BaseSceneSnapshot, BoardObject, BoardOperation, BoardState, CaptureResult, CaptureRetryResult, CaptureView, CaptureViewOperation, Claim, CompleteInput, ContentAnchor, Draft, DraftReferences, HostBinding, HtmlBundle, HtmlSurfaceReference, Project, ResolvedRequestReference, Run, RunIdentity, ScenePresentation, ScenePresentationOperation, SceneSource, ServiceIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
 import { bundleLimits, bundleMime, validBundlePath } from '../shared/html-bundle.js';
-import { contentCapabilities, resolveContentKind } from '../shared/content-types.js';
+import { contentCapabilities, editableTextBytes, editableTextMime, resolveContentKind } from '../shared/content-types.js';
 import { annotationTarget, sameAnnotationTarget, rasterDimensions } from './annotation-capture.js';
 import { generateRequirementText, referenceOrder } from '../shared/task-message.js';
 
@@ -412,6 +412,27 @@ export class CanvasService {
     });
     if (stale) fail(409, 'stale_run', 'The output has been retained for review. Resume with the current execution attempt.', { assetId: asset.id });
     return this.asset(asset.id);
+  }
+  replaceAssetContent(id: string, temporary: string): Asset {
+    const asset = this.sharedAsset(id);
+    if (asset.htmlBundle || !editableTextMime(asset.mime)) fail(400, 'content_readonly', 'Only notes and Markdown can be edited.');
+    const info = statSync(temporary);
+    if (!info.isFile() || info.size > editableTextBytes) fail(413, 'content_too_large', 'Notes and Markdown stay within 2 MB.');
+    const destination = this.assetPath(id);
+    const backup = `${destination}.${randomUUID()}.previous`;
+    renameSync(destination, backup);
+    let published = false;
+    try {
+      renameSync(temporary, destination);
+      published = true;
+      this.transaction(() => { this.db.prepare('UPDATE assets SET size=? WHERE id=?').run(info.size, id); });
+      rmSync(backup, { force: true });
+      return this.asset(id);
+    } catch (error) {
+      if (published) rmSync(destination, { force: true });
+      try { renameSync(backup, destination); } catch { /* The original file is already back in place. */ }
+      throw error;
+    }
   }
   private objectFrom(row: Row): BoardObject { return { id: row.id, assetId: row.asset_id, type: this.asset(row.asset_id).kind, x: row.x, y: row.y, width: row.width, height: row.height, version: row.version, createdAt: row.created_at, updatedAt: row.updated_at, ...(row.source_task_id ? { sourceTaskId: row.source_task_id, sourceRunId: row.source_run_id } : {}) }; }
   object(id: string): BoardObject { nonempty(id, 'Object ID', 200); const row = this.db.prepare('SELECT * FROM objects WHERE id=?').get(id) as Row; return row ? this.objectFrom(row) : fail(404, 'object_missing', 'The referenced object is unavailable.'); }
