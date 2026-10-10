@@ -89,7 +89,7 @@ export function installHtmlSnapshotBridge(instanceId: string, parentOrigin: stri
           if (/^on/i.test(attribute.name) || ['src', 'srcset', 'href', 'xlink:href', 'action', 'formaction', 'poster', 'autofocus'].includes(attribute.name.toLowerCase())) target.removeAttribute(attribute.name);
         }
         target.removeAttribute(pseudoAttribute);
-        if (source instanceof HTMLCanvasElement) target.setAttribute('src', source.toDataURL('image/png'));
+        if (source instanceof HTMLCanvasElement) { let url = 'data:,'; try { url = source.toDataURL('image/png'); } catch { url = 'data:,'; } target.setAttribute('src', url); }
         else if (source instanceof HTMLImageElement && source.currentSrc) target.setAttribute('src', await embedImage(source.currentSrc));
         const style = getComputedStyle(source);
         let css = '';
@@ -141,7 +141,7 @@ export function installHtmlSnapshotBridge(instanceId: string, parentOrigin: stri
       const serializer = new XMLSerializer(), serialized = serializer.serializeToString(root);
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><foreignObject width="${width}" height="${height}">${serializer.serializeToString(background)}</foreignObject><foreignObject width="${width}" height="${height}">${serialized}</foreignObject></svg>`;
       if (new TextEncoder().encode(svg).byteLength > 6 * 1024 * 1024) throw new Error('Preview snapshot is too large.');
-      send({ type: 'acanvas:preview-snapshot', instanceId, requestId: data.requestId, svg, width, height }, parentOrigin);
+      send({ type: 'acanvas:preview-snapshot', instanceId, requestId: data.requestId, svg, width, height, scrollX, scrollY }, parentOrigin);
     } catch (error) {
       send({ type: 'acanvas:preview-snapshot-error', instanceId, requestId: data.requestId, error: error instanceof Error ? error.message : 'Snapshot is unavailable.' }, parentOrigin);
     } finally { clearTimeout(timeout); controller.abort(); capturing = false; }

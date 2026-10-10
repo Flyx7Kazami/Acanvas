@@ -25,7 +25,7 @@ test('completed annotation target edits save an awaiting version and normal Done
   const note = async () => (await state()).draft.annotations[0];
   const open = () => page.locator('.draft-annotation .annotation-content').first().click();
   const done = async () => { await page.getByRole('button', { name: 'Done', exact: true }).click(); await page.waitForFunction(() => document.querySelector('.draft-annotation')?.getAttribute('data-capture-state') === 'complete' && !document.querySelector('.capture-progress')); return note(); };
-  await page.goto(server.url + '/?session=' + session.id); await page.waitForFunction(() => Boolean(document.querySelector('.scene-canvas')?.getAttribute('data-frame-seq')));
+  await page.goto(server.url + '/?session=' + session.id); await page.waitForFunction(() => Boolean(document.querySelector('#whiteboard')?.getAttribute('data-view-id')));
   await page.getByRole('button', { name: 'Mark canvas', exact: true }).click(); await page.locator('.whiteboard').click({ position: { x: 263, y: 177 } });
   await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Exact point scene.');
   const original = await done(), originalVersion = original.captureState!.version, originalCapture = original.capture!;

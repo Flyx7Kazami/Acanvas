@@ -60,7 +60,7 @@ test('ordinary production clients export the actual visible material frames thro
       document.addEventListener('pointerdown', () => { const start = performance.now(); requestAnimationFrame(() => metrics.inputToAnimationFrameMs.push(performance.now() - start)); }, true);
       CanvasRenderingContext2D.prototype.drawImage = function (this: CanvasRenderingContext2D, ...args: any[]) {
         const source = args[0];
-        if (source instanceof HTMLCanvasElement && source.classList.contains('scene-canvas') && args.length === 9 && this.canvas !== source) {
+        if (source instanceof HTMLCanvasElement && source.classList.contains('scene-evidence-canvas') && args.length === 9 && this.canvas !== source) {
           const start = performance.now(), result = (original as any).apply(this, args); metrics.copyMs.push(performance.now() - start); copied.add(this.canvas);
           (window as any).sceneCaptureOracle = { seq: Number(source.dataset.frameSeq), width: args[7], height: args[8], pixels: source.getContext('2d')!.getImageData(args[1], args[2], args[3], args[4]).data }; return result;
         }
@@ -69,7 +69,7 @@ test('ordinary production clients export the actual visible material frames thro
       const toBlob = HTMLCanvasElement.prototype.toBlob;
       HTMLCanvasElement.prototype.toBlob = function (this: HTMLCanvasElement, callback: BlobCallback, type?: string, quality?: number) { if (!copied.has(this)) return toBlob.call(this, callback, type, quality); const start = performance.now(); return toBlob.call(this, blob => { metrics.encodeMs.push(performance.now() - start); callback(blob); }, type, quality); };
     });
-    await page.goto(server.url + '/?session=' + session.id); await page.waitForFunction(() => Boolean(document.querySelector('.scene-canvas')?.getAttribute('data-frame-seq')));
+    await page.goto(server.url + '/?session=' + session.id); await page.waitForFunction(() => Boolean(document.querySelector('#whiteboard')?.getAttribute('data-view-id')));
     await page.evaluate(() => document.fonts.ready);
     await sampleResources();
     const state = await call('/api/state?sessionId=' + session.id) as BoardState;
@@ -92,7 +92,7 @@ test('ordinary production clients export the actual visible material frames thro
       const media = capture.presentation!.media.find(value => value.objectId === object.id);
       if (material.kind === 'gif') { assert.equal(media?.frameIndex, 1); assert.equal(media?.timePrecision, 'decoded-pts'); }
       if (material.kind === 'video') assert.ok(media?.presentedTime !== undefined && Math.abs(media.presentedTime - .7) < .12);
-      if (material.kind === 'html') assert.ok(capture.presentation!.layers.find(value => value.objectId === object.id)?.surface);
+      if (material.kind === 'html') assert.equal(capture.presentation!.layers.find(value => value.objectId === object.id)?.surface, undefined);
       await sampleResources();
       results.push({ engine, browser: browser.version(), client, kind: material.kind, sourceMode: capture.sourceMode, frame: capture.presentation!.frameSeq, comparison, media });
     }

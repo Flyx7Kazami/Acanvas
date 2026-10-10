@@ -39,23 +39,24 @@ test('production ordinary browser captures the visible SceneCanvas through the p
   };
   await context.tracing.start({ screenshots: true, snapshots: true });
   const errors: string[] = [], failedResponses: string[] = [];
+  let presentedRequests = 0; page.on('request', request => { if (request.method() === 'PUT' && new URL(request.url()).pathname.endsWith('/presented')) presentedRequests++; });
   page.on('pageerror', error => errors.push(error.message)); page.on('response', response => { if (response.status() >= 400 && response.url().includes('/api/')) failedResponses.push(response.status() + ' ' + new URL(response.url()).pathname); });
   t.after(async () => { await context.tracing.stop({ path: join(output, 'trace.zip') }); await browser.close(); await server.close(); await rm(root, { recursive: true, force: true }); });
   await page.addInitScript(() => {
     const original = CanvasRenderingContext2D.prototype.drawImage;
     CanvasRenderingContext2D.prototype.drawImage = function (this: CanvasRenderingContext2D, ...args: any[]) {
       const source = args[0];
-      if (source instanceof HTMLCanvasElement && source.classList.contains('scene-canvas') && args.length === 9 && this.canvas !== source) {
+      if (source instanceof HTMLCanvasElement && source.classList.contains('scene-evidence-canvas') && args.length === 9 && this.canvas !== source) {
         (window as any).sceneCaptureOracle = { seq: Number(source.dataset.frameSeq), bitmap: { width: source.width, height: source.height }, width: args[7], height: args[8], pixels: source.getContext('2d')!.getImageData(args[1], args[2], args[3], args[4]).data };
       }
       return (original as any).apply(this, args);
     } as typeof original;
   });
   await page.goto(server.url + '/?session=' + session.id);
-  await page.waitForFunction(() => Boolean(document.querySelector('.scene-canvas')?.getAttribute('data-frame-seq')));
-  await page.waitForFunction(() => { const canvas = document.querySelector<HTMLCanvasElement>('.scene-canvas')!; const pixel = canvas.getContext('2d')!.getImageData(300, 260, 1, 1).data; return pixel[0] === 203 && pixel[1] === 213 && pixel[2] === 223; });
+  await page.waitForFunction(() => Boolean(document.querySelector('#whiteboard')?.getAttribute('data-view-id')));
+  await page.waitForFunction(() => { const image = document.querySelector<HTMLImageElement>('[data-object-id] img'); return Boolean(image?.complete && image.naturalWidth); });
   assert.equal(await page.evaluate(() => Boolean(window.acanvasCaptureProvider)), false);
-  assert.equal(await page.locator('.object-media').first().evaluate(element => getComputedStyle(element).opacity), '0');
+  assert.equal(await page.locator('.object-media').first().evaluate(element => getComputedStyle(element).opacity), '1'); assert.equal(presentedRequests, 0, 'Displaying the board confirms no presented frames before Done.');
   const initial = await call('/api/state?sessionId=' + session.id) as BoardState, object = initial.objects.find(value => value.assetId === image.id)!;
   await page.locator('[data-object-id="' + object.id + '"]').focus(); await page.keyboard.press('Enter');
   await markObject(object.id);
@@ -88,7 +89,7 @@ test('production ordinary browser captures the visible SceneCanvas through the p
     for (let index = 0; index < actual.length; index++) if (actual[index] !== original[index]) mismatches++;
     return { mismatches, width: canvas.width, height: canvas.height, channels: actual.length };
   }, Array.from(png));
-  assert.equal(comparison.mismatches, 0); assert.equal(context.pages().length, 1); assert.ok(Number(await page.locator('.scene-canvas').getAttribute('data-frame-seq')) > expected.seq);
+  assert.equal(comparison.mismatches, 0); assert.equal(context.pages().length, 1);
   await page.reload(); await page.waitForFunction(() => Boolean(document.querySelector('.draft-annotation img')));
   assert.equal((await call('/api/state?sessionId=' + session.id)).draft.annotations[0].capture.id, capture.id);
   await page.unroute('**/capture-views/*/presentations');
@@ -154,12 +155,14 @@ test('production ordinary browser captures the visible SceneCanvas through the p
   await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('.app-shell')?.hasAttribute('data-capturing'));
   await page.unroute('**/sessions/*/draft'); releaseSaved();
   await page.waitForFunction(() => !document.querySelector('.app-shell')?.hasAttribute('data-capturing'));
-  const lateCancelled = await call('/api/state?sessionId=' + session.id) as BoardState, cancelledAfterSave = lateCancelled.draft.annotations.find(value => value.text === 'Keep this source-save cancellation.')!;
+  // Cancellation reconciles the committed source save asynchronously after the held response is released.
+  let cancelledAfterSave = (await call('/api/state?sessionId=' + session.id) as BoardState).draft.annotations.find(value => value.text === 'Keep this source-save cancellation.')!;
+  for (let attempt = 0; attempt < 40 && cancelledAfterSave?.captureState && cancelledAfterSave.captureState.version <= savedVersion; attempt++) { await new Promise(resolve => setTimeout(resolve, 50)); cancelledAfterSave = (await call('/api/state?sessionId=' + session.id) as BoardState).draft.annotations.find(value => value.text === 'Keep this source-save cancellation.')!; }
   assert.ok(cancelledAfterSave); assert.equal(cancelledAfterSave.captureState?.status, 'incomplete'); assert.equal(cancelledAfterSave.capture, undefined); assert.ok(cancelledAfterSave.captureState!.version > savedVersion);
-  const beforeRestart = bootstrap.service.instanceId, port = Number(new URL(server.url).port), currentURL = page.url(), priorGeneration = Number(await page.locator('.scene-canvas').getAttribute('data-view-generation'));
+  const beforeRestart = bootstrap.service.instanceId, port = Number(new URL(server.url).port), currentURL = page.url(), priorGeneration = Number(await page.locator('#whiteboard').getAttribute('data-view-generation'));
   await server.close(); server = await startServer({ root, port, webRoot: resolve(process.env.ACANVAS_SCENE_WEB_ROOT || 'dist/web') }); bootstrap = await (await fetch(server.url + '/api/bootstrap')).json();
   assert.notEqual(bootstrap.service.instanceId, beforeRestart);
-  await page.waitForFunction(previous => Number(document.querySelector<HTMLElement>('.scene-canvas')?.dataset.viewGeneration) > previous, priorGeneration);
+  await page.waitForFunction(previous => Number(document.querySelector<HTMLElement>('#whiteboard')?.dataset.viewGeneration) > previous, priorGeneration);
   const documentObject = (await call('/api/state?sessionId=' + session.id) as BoardState).objects.find(value => value.assetId === markdown.id)!;
   await page.locator('[data-object-id="' + documentObject.id + '"]').focus(); await page.keyboard.press('Enter');
   await markObject(documentObject.id); await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('The same page captures after service restart.');
@@ -168,8 +171,8 @@ test('production ordinary browser captures the visible SceneCanvas through the p
   assert.equal(restartedAnnotation.captureState?.status, 'complete'); assert.equal(page.url(), currentURL);
   assert.deepEqual(errors, []);
   await page.screenshot({ path: join(output, 'final.png') });
-  const facts = { measuredAt: new Date().toISOString(), status: 'static-production-flow-passed', browser: browser.version(), dpr: 2, visibleSource: 'scene-canvas', nativeProvider: false,
-    sourceSnapshot: capture.presentation!.baseSceneId, savedFrame: capture.presentation!.frameSeq, bitmap: capture.presentation!.bitmap, comparison, reloadSameCapture: true, samePage: true, sourceDOMOpacity: 0,
+  const facts = { measuredAt: new Date().toISOString(), status: 'static-production-flow-passed', browser: browser.version(), dpr: 2, visibleSource: 'dom', evidenceSource: 'scene-evidence-canvas', nativeProvider: false,
+    sourceSnapshot: capture.presentation!.baseSceneId, savedFrame: capture.presentation!.frameSeq, bitmap: capture.presentation!.bitmap, comparison, reloadSameCapture: true, samePage: true, sourceDOMOpacity: 1,
     pendingBlobRecovery: { storedBeforeUpload: true, objectDeletedAfterDone: true, sameSource: true, savedOldFrame: restoredAnnotation.capture!.presentation!.frameSeq, comparison: restoredComparison },
     cancelBeforeSourceHold: { lateResponseReleased: true, commentRetained: true, laterBodyRetained: true, captureComplete: false }, failedResponses, output,
     cancelAfterSourceSave: { lateResponseReleased: true, savedVersion, invalidatedVersion: cancelledAfterSave.captureState!.version, commentRetained: true, captureComplete: false },

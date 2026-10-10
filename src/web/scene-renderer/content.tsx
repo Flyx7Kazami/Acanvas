@@ -1,18 +1,38 @@
-import { createContext, useContext, useEffect, useMemo } from 'react';
+import { createContext, useContext, useLayoutEffect, useRef } from 'react';
 import type { CaptureView } from '../../shared/types.js';
 import { SceneContentFrame, type SceneContentFrameInput } from './texture.js';
 export { SceneContentFrame } from './texture.js';
 export type { ContentTextRun, SceneContentFrameInput, SceneContentMetadata } from './texture.js';
 
+/** Reads the producer's currently displayed pixels; it runs only when Done freezes the scene. */
+export type SceneContentSource = () => SceneContentFrameInput | undefined;
+/** Starts in the Done task and may resolve after the displayed frame was copied. */
+export type SceneContentRefresh = () => Promise<SceneContentFrameInput | undefined>;
 export class SceneContentRegistry {
-  private frames = new Map<string, SceneContentFrame>();
-  private listeners = new Set<() => void>();
-  get(objectId: string) { return this.frames.get(objectId); }
-  publish(objectId: string, input: SceneContentFrameInput) { this.frames.set(objectId, new SceneContentFrame(document, input)); this.emit(); }
-  clear(objectId: string) { if (this.frames.delete(objectId)) this.emit(); }
-  subscribe(listener: () => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
-  requestRender() { this.emit(); }
-  private emit() { this.listeners.forEach(listener => listener()); }
+  private sources = new Map<string, SceneContentSource>();
+  private refreshes = new Map<string, SceneContentRefresh>();
+  register(objectId: string, source: SceneContentSource) { this.sources.set(objectId, source); return () => { if (this.sources.get(objectId) === source) this.sources.delete(objectId); }; }
+  registerRefresh(objectId: string, refresh: SceneContentRefresh) { this.refreshes.set(objectId, refresh); return () => { if (this.refreshes.get(objectId) === refresh) this.refreshes.delete(objectId); }; }
+  /** Unloaded content returns no frame; oversized or non-exportable content is reported and also drawn as a placeholder. */
+  capture(objectId: string, onError: (cause: unknown) => void): SceneContentFrame | undefined {
+    try { const input = this.sources.get(objectId)?.(); return input ? new SceneContentFrame(document, input) : undefined; }
+    catch (cause) { onError(cause); return undefined; }
+  }
+  /** Calls every refresh immediately. Each one is limited to two seconds and cancelled with the capture. */
+  beginRefresh(signal?: AbortSignal): Promise<ReadonlyMap<string, SceneContentFrameInput>> {
+    const jobs = [...this.refreshes].map(async ([objectId, refresh]) => {
+      if (signal?.aborted) return;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const timeout = new Promise<undefined>(resolve => { timer = setTimeout(() => resolve(undefined), 2000); });
+      const cancelled = new Promise<undefined>(resolve => signal?.addEventListener('abort', () => resolve(undefined), { once: true }));
+      try {
+        const input = await Promise.race([refresh(), timeout, cancelled]);
+        return input ? [objectId, input] as const : undefined;
+      } catch { return undefined; }
+      finally { clearTimeout(timer); }
+    });
+    return Promise.all(jobs).then(results => new Map(results.filter((value): value is readonly [string, SceneContentFrameInput] => !!value)));
+  }
 }
 
 export interface SceneContentScope {
@@ -24,15 +44,18 @@ export interface SceneContentScope {
 }
 export const SceneContentContext = createContext<SceneContentScope | undefined>(undefined);
 
-/** Optional scope keeps detailed previews native and publishes only board pixel sources. */
-export function useSceneContent() {
-  const scope = useContext(SceneContentContext);
-  const publisher = useMemo(() => scope && ({ ...scope,
-    publish: (input: SceneContentFrameInput) => scope.registry.publish(scope.objectId, input),
-    clear: () => scope.registry.clear(scope.objectId),
-    requestRender: () => scope.registry.requestRender(),
-  }), [scope?.registry, scope?.objectId, scope?.width, scope?.height, scope?.captureView?.projectId, scope?.captureView?.sessionId,
-    scope?.captureView?.documentId, scope?.captureView?.viewId, scope?.captureView?.viewGeneration]);
-  useEffect(() => () => { if (scope) scope.registry.clear(scope.objectId); }, [scope?.registry, scope?.objectId]);
-  return publisher;
+/** Board objects have a scope; detail previews render natively without one. */
+export function useSceneContent() { return useContext(SceneContentContext); }
+
+/** Registers an on-demand frame reader for the scoped board object. */
+export function useSceneCapture(source: SceneContentSource) {
+  const scope = useContext(SceneContentContext), latest = useRef(source); latest.current = source;
+  useLayoutEffect(() => scope?.registry.register(scope.objectId, () => latest.current()), [scope?.registry, scope?.objectId]);
+  return scope;
+}
+
+/** Registers a Done refresh that can replace the frame copied at the start of the gesture. */
+export function useSceneRefresh(refresh: SceneContentRefresh) {
+  const scope = useContext(SceneContentContext), latest = useRef(refresh); latest.current = refresh;
+  useLayoutEffect(() => scope?.registry.registerRefresh(scope.objectId, () => latest.current()), [scope?.registry, scope?.objectId]);
 }

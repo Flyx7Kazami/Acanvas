@@ -55,7 +55,7 @@ test('production full element captures keep copied image audio GIF video and HTM
       const original = CanvasRenderingContext2D.prototype.drawImage;
       CanvasRenderingContext2D.prototype.drawImage = function (this: CanvasRenderingContext2D, ...args: any[]) {
         const source = args[0];
-        if (source instanceof HTMLCanvasElement && source.classList.contains('scene-canvas') && args.length === 9 && this.canvas !== source) {
+        if (source instanceof HTMLCanvasElement && source.classList.contains('scene-evidence-canvas') && args.length === 9 && this.canvas !== source) {
           (window as any).elementCaptureOracle = { seq: Number(source.dataset.frameSeq), sourcePixels: { x: args[1], y: args[2], width: args[3], height: args[4] }, width: args[7], height: args[8], pixels: source.getContext('2d')!.getImageData(args[1], args[2], args[3], args[4]).data };
         }
         return (original as any).apply(this, args);
@@ -64,7 +64,7 @@ test('production full element captures keep copied image audio GIF video and HTM
     try {
       await page.goto(server.url + '/?session=' + session.id);
       await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
-      await page.waitForFunction(() => Boolean(document.querySelector('.scene-canvas')?.getAttribute('data-frame-seq')));
+      await expect(page.locator('#whiteboard')).toHaveAttribute('data-view-id', /.+/);
       if (scenario.cssZoom !== 1) { await page.evaluate(zoom => { document.body.style.zoom = String(zoom); }, scenario.cssZoom); await page.evaluate(() => new Promise(requestAnimationFrame)); }
       const target = page.locator(`[data-object-id="${object.id}"]`).first();
       const rect = await target.boundingBox(); assert(rect);
@@ -94,16 +94,15 @@ test('production full element captures keep copied image audio GIF video and HTM
       await expect(page.getByRole('textbox', { name: 'Add a comment', exact: true })).toBeHidden();
       const oracle = await page.evaluate(() => { const value = (window as any).elementCaptureOracle; return { seq: value.seq, width: value.width, height: value.height, sourcePixels: value.sourcePixels }; });
       for (let step = 0; step < 5; step++) {
-        const previous = Number(await page.locator('.scene-canvas').getAttribute('data-frame-seq'));
+        const previous = await page.locator('.zoom-label').textContent();
         await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
-        await page.waitForFunction(seq => Number(document.querySelector('.scene-canvas')?.getAttribute('data-frame-seq')) > seq, previous);
+        await expect(page.locator('.zoom-label')).not.toHaveText(previous!);
       }
       if (scenario.deleteAfterCopy) {
         await call('/api/board/operations', 'POST', { sessionId: session.id, operations: [{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: object.x + 190, y: object.y + 160 } }] });
         const moved = (await call(`/api/state?sessionId=${session.id}`) as BoardState).objects.find(value => value.id === object.id)!;
         await call('/api/board/operations', 'POST', { sessionId: session.id, operations: [{ type: 'delete', objectId: object.id, expectedVersion: moved.version }] });
       }
-      await page.waitForFunction(seq => Number(document.querySelector('.scene-canvas')?.getAttribute('data-frame-seq')) >= seq + 5, oracle.seq);
       release();
       await expect(page.locator('.draft-annotation').last()).toHaveAttribute('data-capture-state', 'complete', { timeout: 15_000 });
       const saved = await call(`/api/state?sessionId=${session.id}`) as BoardState, annotation = saved.draft.annotations.at(-1)!;
@@ -132,16 +131,16 @@ test('production full element captures keep copied image audio GIF video and HTM
       }, { bytes: Array.from(png), capture, point });
       assert.equal(comparison.mismatches, 0); assert(comparison.pinPixels > 15, JSON.stringify(comparison));
       if (scenario.kind !== 'image-partial') assert(comparison.occluderPixels > 500, JSON.stringify(comparison));
-      if (scenario.kind === 'html') assert(presentedLayer.surface?.frameSeq, 'HTML capture must retain an actual original surface frame.');
+      if (scenario.kind === 'html') assert.equal(presentedLayer.surface, undefined);
       if (scenario.kind === 'gif' || scenario.kind === 'video') assert(capture.presentation!.media.some(media => media.objectId === object.id && media.presentedTime !== undefined));
       if (scenario.kind === 'audio' || scenario.kind === 'video') { assert(capture.presentation!.media.some(media => media.objectId === object.id)); assert(annotation.timeStart! > 0); assert(annotation.timeEnd! > annotation.timeStart!); }
       assert.deepEqual(errors, []);
       await writeFile(join(output, `${scenario.kind}-capture.png`), png); await page.screenshot({ path: join(output, `${scenario.kind}-display.png`) });
-      samples.push({ kind: scenario.kind, dpr: scenario.dpr, camera: capture.presentation!.camera, cssViewport: canvasViewport, bitmap: capture.presentation!.bitmap, crop, paintBounds: presentedLayer.renderedBounds, point, copiedFrame: oracle.seq, finalFrame: Number(await page.locator('.scene-canvas').getAttribute('data-frame-seq')), comparison, originalMovedAndDeleted: Boolean(scenario.deleteAfterCopy), editorClosedDuringUpload: true, surface: presentedLayer.surface, media: capture.presentation!.media.filter(media => media.objectId === object.id) });
+      samples.push({ kind: scenario.kind, dpr: scenario.dpr, camera: capture.presentation!.camera, cssViewport: canvasViewport, bitmap: capture.presentation!.bitmap, crop, paintBounds: presentedLayer.renderedBounds, point, copiedFrame: oracle.seq, finalZoom: await page.locator('.zoom-label').textContent(), comparison, originalMovedAndDeleted: Boolean(scenario.deleteAfterCopy), editorClosedDuringUpload: true, surface: presentedLayer.surface, media: capture.presentation!.media.filter(media => media.objectId === object.id) });
     } finally { await context.tracing.stop({ path: join(output, `${scenario.kind}-trace.zip`) }); await context.close(); }
   }
-  const facts = { measuredAt: new Date().toISOString(), result: 'passed', node: process.version, browser: browser.version(), source: 'production SceneRenderer synchronous display copy', samples, output,
-    validationScope: ['complete element paint context', 'actual point marker', 'image and audio complete application capture', 'overlap kept in original display copy', 'GIF video HTML actual presented producers', 'DPR1/2 and page/canvas zoom', 'partly offscreen clipping', 'PNG equals copied N while presented frame advances N+5', 'source move and deletion after Done'],
+  const facts = { measuredAt: new Date().toISOString(), result: 'passed', node: process.version, browser: browser.version(), source: 'production offscreen evidence composition at Done', samples, output,
+    validationScope: ['complete element paint context', 'actual point marker', 'image and audio complete application capture', 'overlap kept in original display copy', 'GIF video HTML actual presented producers', 'DPR1/2 and page/canvas zoom', 'partly offscreen clipping', 'PNG equals the copied evidence frame while the displayed camera keeps changing', 'source move and deletion after Done'],
     limitations: ['one isolated Chromium application; existing cross-browser engine matrix was not repeated', 'HTML uses explicit isolated Chromium surface engine; CEF matrix remains covered by existing capture validation'] };
   await writeFile(join(output, 'element-capture-production.json'), JSON.stringify(facts, null, 2) + '\n');
   if (process.env.ACANVAS_ELEMENT_CAPTURE_FACTS) await writeFile(resolve(process.env.ACANVAS_ELEMENT_CAPTURE_FACTS), JSON.stringify(facts, null, 2) + '\n');

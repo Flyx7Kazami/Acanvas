@@ -10,8 +10,8 @@ export interface SceneTextureDrawable {
 }
 
 export type ScenePrimitive =
-  | { kind: 'rect'; bounds: SceneBounds; fill: string; radius?: number; stroke?: string; lineWidth?: number; shadow?: { color: string; y: number; blur: number } }
-  | { kind: 'ellipse'; bounds: SceneBounds; fill: string }
+  | { kind: 'rect'; bounds: SceneBounds; fill: string; radius?: number; stroke?: string; lineWidth?: number; dash?: number[]; shadow?: { color: string; y: number; blur: number } }
+  | { kind: 'ellipse'; bounds: SceneBounds; fill: string; stroke?: string; lineWidth?: number; dash?: number[] }
   | { kind: 'line'; points: { x: number; y: number }[]; stroke: string; lineWidth: number }
   | { kind: 'text'; x: number; y: number; text: string; font: string; fill: string; maxWidth?: number; ellipsis?: boolean }
   | { kind: 'texture'; bounds: SceneBounds; texture: SceneTextureDrawable; radius?: number }

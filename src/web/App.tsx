@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react';
 import { AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignStartHorizontal, AlignStartVertical, ArrowDownToLine, ArrowLeft, ArrowUp, Check, ChevronDown, Circle, Copy, Ellipsis, Hand, History, LoaderCircle, Maximize, Minus, Moon, MousePointer2, Pause, Pencil, Play, Plus, Sun, Trash2, Upload, X } from 'lucide-react';
-import type { AnnotationInput, Asset, BoardObject, BoardOperation, Draft, SessionView, Task, TaskStatus } from '../shared/types';
+import type { AnnotationInput, Asset, BaseSceneSnapshot, BoardObject, BoardOperation, CaptureView, Draft, SessionView, Task, TaskStatus } from '../shared/types';
 import { alignedPositions, fitView, screenBounds, intersects, mediaContentRect, normalizedRegion, objectRegion, rectangle, screenToWorld, resizeBounds, resizeViewportBounds, snapViewportResize, snapResize, snapTranslation, unionBounds, zoomAt, type Alignment, type Point, type Rect, type SnapGuide, type ResizeCorner, type ResizeHandle } from './geometry';
 import { useBoard } from './useBoard';
 import { useAnimatedView } from './useAnimatedView';
@@ -13,6 +13,7 @@ import { attachCanvasGestures, type CanvasPointerInput } from './canvas-gestures
 import { AssetThumb, ContentRenderer } from './ContentRenderer';
 import { contentCapabilities, resolveContentKind, resolveContentMime } from '../shared/content-types';
 import { CanvasAnnotationNote } from './CanvasAnnotationNote';
+import { annotationPinCenters } from './annotation-note-layout';
 import { NotificationStack, useNotices, type Notification } from './NotificationStack';
 import { AnnotationTimeRange } from './AnnotationTimeRange';
 import { videoFrameAt } from './videoFrameAt';
@@ -22,9 +23,8 @@ import { referenceLabel, referenceParts, snapshotReferences } from '../shared/ta
 import { annotationTarget, requestedMarkdownAnchor, presentedMarkTarget } from './annotation-scene';
 import type { BrowserCaptureIdentity, SceneEvidenceFrame } from '../shared/browser-capture';
 import { SceneContentContext, SceneContentRegistry } from './scene-renderer/content';
-import { presentedCaptureScene, useBoardScene, useProjectScene } from './scene-renderer/board';
+import { SceneEvidenceRenderer, freezeBoardScene, frozenSceneMatches, presentedCaptureScene, replaceFrozenFrames, useProjectScene, type FrozenBoardScene } from './scene-renderer/board';
 import type { PreparedSceneCapture, ProjectCaptureCoordinator } from './project-capture-provider';
-import { annotationCaptureCrop } from './scene-renderer/capture-crop';
 import { pendingEvidence, removePendingEvidence, savePendingEvidence } from './scene-renderer/pending-evidence';
 
 const statusLabels: Record<TaskStatus, string> = { queued: 'Queued', editing: 'Editing', running: 'Running', blocked: 'Needs input', interrupted: 'Interrupted', completed: 'Completed', cancelled: 'Cancelled' };
@@ -282,10 +282,9 @@ export default function App() {
   const [spacePan, setSpacePan] = useState(false);
   const [resolvingConflict, setResolvingConflict] = useState(false);
   const canvas = useRef<HTMLDivElement>(null);
-  const sceneCanvas = useRef<HTMLCanvasElement>(null);
   const sceneRegistry = useRef(new SceneContentRegistry()).current;
+  const evidenceRenderer = useRef(new SceneEvidenceRenderer()).current;
   const projectScene = useProjectScene(board.api, state?.session.id || '', state?.objects || [], board.saveCapturedDraft, board.showError, board.serviceInstance);
-  const renderedScene = useRef<ReturnType<typeof useBoardScene> | undefined>(undefined);
   const dock = useRef<HTMLElement>(null);
   const notifications = useRef<HTMLElement>(null);
   const instruction = useRef<HTMLDivElement>(null);
@@ -350,13 +349,19 @@ export default function App() {
     const object = annotationSources(annotation).find(object => object.id === annotation.objectId && (!annotation.assetId || object.assetId === annotation.assetId));
     const live = object && objects.find(current => current.id === object.id && current.assetId === object.assetId);
     const retained = [...retainedCaptures.current.values()].find(value => value.frame.identity.sessionId === state?.session.id && value.frame.identity.draftId === draft?.id && value.frame.identity.annotationId === annotation.id && value.frame.identity.version === annotation.captureState?.version);
-    return object ? objectRegion(annotation.bounds, live ? candidateContentBounds(live) : object) : annotation.capture?.worldBounds || retained?.frame.worldBounds || (captureJob.current?.owner.annotationId === annotation.id ? captureJob.current.worldBounds : undefined);
+    return object ? objectRegion(annotation.bounds, live ? contentBounds(live) : object) : annotation.capture?.worldBounds || retained?.frame.worldBounds || (captureJob.current?.owner.annotationId === annotation.id ? captureJob.current.worldBounds : undefined);
   }
   function annotationDisplayBounds(annotation: AnnotationInput): Rect {
     const sources = annotationSources(annotation);
     if (annotation.scope === 'group') return sources.length ? unionBounds(sources) : annotation.bounds;
-    return sources.length ? unionBounds(sources.map(source => { const live = objects.find(object => object.id === source.id && object.assetId === source.assetId); return live ? candidateContentBounds(live) : source; })) : annotation.capture?.worldBounds || annotation.bounds;
+    return sources.length ? unionBounds(sources.map(source => { const live = objects.find(object => object.id === source.id && object.assetId === source.assetId); return live ? contentBounds(live) : source; })) : annotation.capture?.worldBounds || annotation.bounds;
   }
+  function annotationActive(annotation: AnnotationInput & { inspectionTaskId?: string }) { return annotationRead?.id === annotation.id && ((!!annotationReader?.draftId || readingEditDraft) === !annotation.inspectionTaskId); }
+  const annotationMarks = allAnnotations.flatMap((annotation, index) => { const bounds = annotationBounds(annotation); return bounds ? [{ annotation, bounds, number: index + 1 }] : []; });
+  const annotationPins = annotationPinCenters(annotationMarks.map(mark => ({ bounds: mark.bounds, geometry: mark.annotation.geometry })), view.zoom);
+  const pinFor = new Map(annotationMarks.map((mark, index) => [mark.annotation, annotationPins[index]]));
+  const visibleOutlines = annotationMarks.filter(({ annotation }) => annotation.scope !== 'group' && !(annotating && annotation.id === comment?.value.id));
+  const noteLayoutVersion = [mode, ...allAnnotations.map(annotation => { const display = annotationDisplayBounds(annotation), mark = annotationBounds(annotation); return [annotation.id, display.x, display.y, mark?.x, mark?.y, annotation.geometry, annotationActive(annotation)].join(':'); })].join('|');
   const editingAnnotation = comment && draft?.annotations.find(annotation => annotation.id === comment.value.id) || comment?.value;
   const editingObject = editingAnnotation?.objectId ? objects.find(object => object.id === editingAnnotation.objectId) : undefined;
   const editingBounds = !inspectableTask && annotating && editingAnnotation ? markPreview || (editingAnnotation.scope === 'group' ? undefined : editingAnnotation.coordinateSpace === 'normalized' && editingObject ? objectRegion(editingAnnotation.bounds, mediaContentRect(editingObject, mediaSizes[editingObject.id])) : editingAnnotation.bounds) : undefined;
@@ -490,14 +495,8 @@ export default function App() {
     editor.current?.insertReference(entry, active || undefined);
     setMention(null); setReferencePreview([]);
   }
-  const localPoint = (event: { clientX: number; clientY: number }): Point => { const bounds = renderedScene.current?.presentation.current?.cssViewport || canvas.current!.getBoundingClientRect(), scale = bounds.width / Math.max(1, canvas.current!.clientWidth); return { x: (event.clientX - bounds.x) / scale, y: (event.clientY - bounds.y) / scale }; };
-  function contentBounds(object: BoardObject): Rect { return renderedScene.current?.presentation.current?.layers.find(layer => layer.objectId === object.id)?.contentWorldBounds || candidateContentBounds(object); }
-  function candidateContentBounds(object: BoardObject): Rect { const frame = sceneRegistry.get(object.id); return frame?.metadata.fit === 'contain' ? mediaContentRect(object, frame.metadata.bitmap) : frame?.metadata.contentBounds ? { x: object.x + frame.metadata.contentBounds.x, y: object.y + frame.metadata.contentBounds.y, width: frame.metadata.contentBounds.width, height: frame.metadata.contentBounds.height } : object; }
-  const scene = useBoardScene({ canvas: sceneCanvas, board: canvas, registry: sceneRegistry, source: projectScene, objects, assets, view, theme,
-    marks: allAnnotations.flatMap((annotation, index) => { const bounds = annotationBounds(annotation); return bounds ? [{ annotation, bounds, number: index + 1 }] : []; }), editingBounds, selection: selectionRect, guides: snapGuides, onError: board.showError,
-    onPresented: () => { if (mode === 'mark' && !spacePan && hoverPoint.current) updateMarkHover(hoverPoint.current); } });
-  renderedScene.current = scene;
-  function presentedView(): SessionView { const presentation = scene.presentation.current; if (!presentation || !canvas.current) return view; const scale = presentation.cssViewport.width / Math.max(1, canvas.current.clientWidth); return { ...view, x: presentation.camera.x / scale, y: presentation.camera.y / scale, zoom: presentation.camera.zoom / scale }; }
+  const localPoint = (event: { clientX: number; clientY: number }): Point => { const bounds = canvas.current!.getBoundingClientRect(), scale = bounds.width / Math.max(1, canvas.current!.clientWidth); return { x: (event.clientX - bounds.x) / scale, y: (event.clientY - bounds.y) / scale }; };
+  function contentBounds(object: BoardObject): Rect { return mediaContentRect(object, mediaSizes[object.id]); }
   function rememberMarkdownSelection() {
     selectedTextAnchors.current.clear();
     for (const object of objects) { const anchor = requestedMarkdownAnchor(object.id); if (anchor?.kind === 'text') selectedTextAnchors.current.set(object.id, anchor); }
@@ -507,21 +506,21 @@ export default function App() {
     return selected && current?.scroll?.x === selected.scroll?.x && current?.scroll?.y === selected.scroll?.y ? selected : current;
   }
   function targetForWorld(world: Rect, geometry: 'point' | 'rect') {
-    return presentedMarkTarget(world, geometry, scene.presentation.current, scene.layout.current?.objects || [], scene.layout.current?.snapshot.assets || []);
+    return presentedMarkTarget(world, geometry, { layers: objects.map((object, layer) => ({ objectId: object.id, layer, contentWorldBounds: contentBounds(object) })) }, objects, assets);
   }
   function updateMarkHover(point: Point | null) {
     hoverPoint.current = point;
     if (!point || mode !== 'mark' || spacePan || gesture.current) { setMarkHover(null); return; }
-    const target = targetForWorld({ ...screenToWorld(point, presentedView()), width: 0, height: 0 }, 'point');
-    const bounds = scene.presentation.current?.layers.find(layer => layer.objectId === target.objectId)?.contentWorldBounds;
-    const object = scene.layout.current?.objects.find(object => object.id === target.objectId);
-    const next = target.objectId && bounds ? { objectId: target.objectId, bounds: { ...bounds }, radius: object && resolveContentKind(assetFor(object.assetId)) === 'audio' ? Math.min(22, object.width / 2, object.height / 2) : 0 } : null;
+    const target = targetForWorld({ ...screenToWorld(point, view), width: 0, height: 0 }, 'point');
+    const object = objects.find(object => object.id === target.objectId);
+    const next = target.objectId && object ? { objectId: target.objectId, bounds: contentBounds(object), radius: resolveContentKind(assetFor(object.assetId)) === 'audio' ? Math.min(22, object.width / 2, object.height / 2) : 0 } : null;
     setMarkHover(current => JSON.stringify(current) === JSON.stringify(next) ? current : next);
   }
   useEffect(() => {
     if (mode !== 'mark' || spacePan) { hoverPoint.current = null; setMarkHover(null); return; }
     updateMarkHover(hoverPoint.current);
   }, [mode, spacePan]);
+  useEffect(() => { if (mode === 'mark' && !spacePan && hoverPoint.current) updateMarkHover(hoverPoint.current); }, [projectScene?.snapshot, preview, view, mediaSizes]);
   function applyMark(world: Rect, geometry: 'point' | 'rect', edit?: CommentEdit) {
     if (!state || !draft) return;
     const target = targetForWorld(world, geometry);
@@ -759,27 +758,16 @@ export default function App() {
       let frame: PreparedSceneCapture | SceneEvidenceFrame;
       if (retained && retained.provider === provider && JSON.stringify(retained.frame.target) === JSON.stringify(annotationTarget(expected))) frame = retained.frame;
       else {
-        const targetIsPresented = () => !!scene.layout.current?.markerBounds.has(expected.id) && JSON.stringify(scene.layout.current.markTargets.get(expected.id)) === JSON.stringify(annotationTarget(expected));
-        for (let attempt = 0; attempt < 2 && !targetIsPresented(); attempt++) await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-        if (captureJob.current !== job || controller.signal.aborted || !sameScope(owner)) return;
-        const presentation = scene.presentation.current, renderer = scene.renderer.current, layout = scene.layout.current;
-        if (!presentation || !renderer || !layout || presentation.baseSceneId !== layout.snapshot.id) throw new Error('The visible scene is still loading. Complete the annotation when it is ready.');
-        const content = expected.objectId ? presentation.layers.find(layer => layer.objectId === expected.objectId)?.contentWorldBounds : undefined;
-        const worldBounds = expected.coordinateSpace === 'normalized' && content ? objectRegion(expected.bounds, content) : expected.bounds;
-        const viewport = { x: presentation.camera.x + presentation.cssViewport.x, y: presentation.camera.y + presentation.cssViewport.y, zoom: presentation.camera.zoom, width: innerWidth, height: innerHeight, devicePixelRatio: presentation.bitmap.width / presentation.cssViewport.width };
-        const markerCSS = layout.markerBounds.get(expected.id);
-        if (!markerCSS || !targetIsPresented()) throw new Error('The visible scene is still loading. Complete the annotation when it is ready.');
-        const crop = annotationCaptureCrop({ presentation, worldBounds, objectId: expected.objectId, markerCSS });
-        // This is the Done boundary. Pixels and presentation are copied before every asynchronous save.
-        const copied = renderer.capture(crop, { x: 0, y: 0, width: innerWidth, height: innerHeight });
-        job.worldBounds = { ...worldBounds };
-        const encodePNG = () => copied.encodePNG();
+        const captureView = projectScene?.view, snapshot = projectScene?.snapshot;
+        if (!captureView || !snapshot || snapshot.view.viewId !== captureView.viewId) throw new Error('The visible scene is still loading. Complete the annotation when it is ready.');
+        // This is the Done boundary. HTML refreshes start here; the displayed scene is copied before the editor closes and before any await.
+        const pendingFrames = sceneRegistry.beginRefresh(controller.signal);
+        const frozen = freezeDisplayedScene(expected, captureView, snapshot);
+        job.worldBounds = { ...frozen.worldBounds };
         closeAnnotation();
-        const current = board.getDraftFor(owner.sessionId, owner.draftId);
-        if (!current || !annotationMatches(owner, expected)) return;
-        const held = await provider.freezeAndHold({ draft: current, annotation: expected, signal: controller.signal,
-          freeze: () => ({ presentation: copied.presentation, cropCSS: copied.crop.cropCSS, encodePNG }),
-          worldBounds, viewport, scene: presentedCaptureScene(copied.presentation, layout.snapshot, copied.crop.cropCSS, expected, layout.sources, assets.filter(asset => asset.id === expected.snapshotAssetId)) });
+        replaceFrozenFrames(frozen, await pendingFrames);
+        const held = await holdFrozenScene(frozen, expected, owner, job);
+        if (!held) return;
         if (captureJob.current !== job || controller.signal.aborted || !sameScope(owner)) { await provider.cancel(held.frame.identity); return; }
         board.acceptSavedDraft(held.draft); frame = held.frame; expected = held.draft.annotations.find(value => value.id === id)!;
         retainedCaptures.current.set(owner.sessionId + ':' + owner.draftId + ':' + id + ':' + frame.identity.version, { frame, provider });
@@ -807,6 +795,43 @@ export default function App() {
       if (cause && typeof cause === 'object' && 'draft' in cause && cause.draft && sameScope(owner)) board.acceptSavedDraft(cause.draft as Draft);
       if (sameScope(owner) && captureJob.current === job) setCaptureErrors(current => ({ ...current, [id]: cause instanceof Error ? cause.message : 'Capture failed. Retry this annotation.' }));
     } finally { if (captureJob.current === job) captureJob.current = null; setSamplingIdentity(null); setCaptureBusyId(''); setAnnotationSaving(false); }
+  }
+
+  function freezeDisplayedScene(expected: AnnotationInput, captureView: CaptureView, snapshot: BaseSceneSnapshot): FrozenBoardScene {
+    const target = expected.objectId ? objects.find(object => object.id === expected.objectId) : undefined;
+    const worldBounds = expected.coordinateSpace === 'normalized' && target ? objectRegion(expected.bounds, contentBounds(target)) : expected.bounds;
+    return freezeBoardScene({ board: canvas.current!, registry: sceneRegistry, view: captureView, snapshot, objects, assets, camera: view, contentBounds, annotations: allAnnotations,
+      outlines: visibleOutlines.map(({ annotation, bounds }) => ({ bounds, point: annotation.geometry === 'point', dashed: !annotation.inspectionTaskId })), editingBounds, selection: selectionRect, guides: snapGuides,
+      marks: annotationMarks.map((mark, index) => ({ annotationId: mark.annotation.id, pin: annotationPins[index], number: mark.number })), target: { annotation: expected, worldBounds }, clip: { x: 0, y: 0, width: innerWidth, height: innerHeight },
+      onCaptureError: (cause, asset) => board.showError(new Error(`${asset?.name || 'A file'} appears as a placeholder in the annotation image: ${cause instanceof Error ? cause.message : 'its content could not be copied.'}`)) });
+  }
+
+  /** Renders and holds the frozen scene on a base snapshot that still carries its objects; the snapshot is renewed near expiry and once after rejection. */
+  async function holdFrozenScene(frozen: FrozenBoardScene, expected: AnnotationInput, owner: { sessionId: string; draftId: string }, job: NonNullable<typeof captureJob.current>) {
+    const { provider, controller } = job, current = () => captureJob.current === job && !controller.signal.aborted && sameScope(owner);
+    const renewScene = () => new Promise<BaseSceneSnapshot>((resolve, reject) => {
+      const abort = () => reject(new DOMException('This annotation capture was cancelled.', 'AbortError'));
+      controller.signal.addEventListener('abort', abort, { once: true });
+      provider.sceneSnapshot().then(resolve, reject).finally(() => controller.signal.removeEventListener('abort', abort));
+    });
+    let snapshot = frozen.snapshot;
+    if (Date.parse(snapshot.expiresAt) - Date.now() < 60_000) snapshot = await renewScene();
+    for (let renewed = false; ; renewed = true) {
+      if (!current()) return;
+      if (!frozenSceneMatches(frozen, snapshot)) throw new Error('The visible scene is still loading. Complete the annotation when it is ready.');
+      const draft = board.getDraftFor(owner.sessionId, owner.draftId);
+      if (!draft || !annotationMatches(owner, expected)) return;
+      const evidence = evidenceRenderer.render(frozen, snapshot), presentation = evidence.presentation, cropCSS = evidence.crop.cropCSS;
+      const viewport = { x: presentation.camera.x + presentation.cssViewport.x, y: presentation.camera.y + presentation.cssViewport.y, zoom: presentation.camera.zoom, width: frozen.clip.width, height: frozen.clip.height, devicePixelRatio: presentation.bitmap.width / presentation.cssViewport.width };
+      try {
+        return await provider.freezeAndHold({ draft, annotation: expected, signal: controller.signal, freeze: () => ({ presentation, cropCSS, encodePNG: () => evidence.encodePNG() }),
+          worldBounds: frozen.worldBounds, viewport, scene: presentedCaptureScene(presentation, snapshot, cropCSS, expected, frozen.sources, assets.filter(asset => asset.id === expected.snapshotAssetId)) });
+      } catch (cause) {
+        const code = cause && typeof cause === 'object' && 'code' in cause ? String(cause.code) : '';
+        if (renewed || !current() || !['scene_source_expired', 'scene_source_missing'].includes(code)) throw cause;
+        snapshot = await renewScene();
+      }
+    }
   }
 
   function updateCaptureImageAvailability(owner: { sessionId: string; draftId: string }, expected: AnnotationInput, available: boolean) {
@@ -929,7 +954,7 @@ export default function App() {
     fitMotion.interrupt();
     canvas.current?.focus({ preventScroll: true });
     const point = localPoint(event);
-    const displayedView = presentedView();
+    const displayedView = view;
     const objectId = (event.target as HTMLElement).closest<HTMLElement>('[data-object-id]')?.dataset.objectId;
     const resizeId = (event.target as HTMLElement).closest<HTMLElement>('[data-resize-id]')?.dataset.resizeId;
     const effectiveMode = spacePan || event.button === 1 ? 'pan' : mode;
@@ -1011,7 +1036,7 @@ export default function App() {
 
   function zoom(factor: number) {
     if (disabled) return;
-    viewUpdate(zoomAt(presentedView(), factor, { x: (canvas.current?.clientWidth || 600) / 2, y: (canvas.current?.clientHeight || 600) / 2 }));
+    viewUpdate(zoomAt(view, factor, { x: (canvas.current?.clientWidth || 600) / 2, y: (canvas.current?.clientHeight || 600) / 2 }));
   }
 
   async function copyResume() {
@@ -1130,24 +1155,23 @@ export default function App() {
   if (!state || !draft) return <><main className="startup"><span className="brand">acanvas<span>●</span></span>{board.error ? <h1>Unable to open the board</h1> : <><LoaderCircle size={24} className="spin"/><p>Opening your board…</p></>}</main>{notificationList}</>;
 
   return <div className="app-shell" data-capturing={!!captureBusyId || undefined} data-sampling={!!samplingIdentity || undefined}><a className="skip-link" href="#whiteboard">Skip to canvas</a>
-    <main className="canvas-main"><div id="whiteboard" className={`whiteboard mode-${spacePan ? 'pan' : mode} ${dragOver ? 'drag-over' : ''} ${board.switching ? 'is-loading' : ''}`} ref={canvas} tabIndex={0} role="region" aria-label="Project board. Enter selects files, arrow keys move them, and Space pans the canvas." onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerLeave={() => updateMarkHover(null)} onPointerCancel={() => { gesture.current = null; updateMarkHover(null); setPreview({}); setSelectionRect(null); setSnapGuides([]); setMarkPreview(null); }} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === ' ') { event.preventDefault(); setSpacePan(true); } if (event.key === 'Enter' && mode === 'mark') { event.preventDefault(); if (selected.length === 1 && !annotationEdit) enterAnnotation(); else { const point = screenToWorld({ x: canvas.current!.clientWidth / 2, y: canvas.current!.clientHeight / 2 }, presentedView()); applyMark({ ...point, width: 0, height: 0 }, 'point', annotationEdit); } } if (event.key === 'Escape') { setReferencePreview([]); if (captureBusyId) void cancelCapture(); else if (annotationRead) closeAnnotation(); else if (annotating) { exitAnnotation(); setMode('select'); } else if (aligning) exitAlignment(); else { clearInspection(); selectObjects([]); setMode('select'); } } if (event.key === '+' || event.key === '=') { event.preventDefault(); zoom(1.2); } if (event.key === '-') { event.preventDefault(); zoom(1 / 1.2); } }} onKeyUp={event => { if (event.key === ' ') setSpacePan(false); }} onBlur={() => setSpacePan(false)} onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); setDragOver(true); } }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragOver(false); }} onDrop={event => { event.preventDefault(); setDragOver(false); void importFiles(filesFromTransfer(event.dataTransfer), localPoint(event)); }}>
-      <canvas ref={sceneCanvas} className="scene-canvas" aria-hidden="true"/>
-      <div className="canvas-world scene-semantic" style={{ transform: `translate(${view.x}px,${view.y}px) scale(${view.zoom})` }}>{objects.map((object, index) => { const asset = assetFor(object.assetId); const isSelected = selectedIds.includes(object.id); return <article key={object.id} className={`board-object object-${object.type} ${isSelected ? 'selected' : ''}`} data-object-id={object.id} data-content-kind={resolveContentKind(asset)} data-object-version={object.version} data-selected={isSelected || undefined} style={{ left: object.x, top: object.y, width: object.width, height: object.height }} tabIndex={0} role="group" aria-label={`${asset?.name || 'File'}${isSelected ? ', selected' : ''}`} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectObjects(event.shiftKey ? unique([...selectedIds, object.id]) : [object.id]); } const delta = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key]; if (delta) { event.preventDefault(); event.stopPropagation(); void board.operations([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: object.x + delta[0], y: object.y + delta[1] } }]).catch(() => undefined); } }}>
+    <main className="canvas-main"><div id="whiteboard" className={`whiteboard mode-${spacePan ? 'pan' : mode} ${dragOver ? 'drag-over' : ''} ${board.switching ? 'is-loading' : ''}`} ref={canvas} data-view-id={projectScene?.view?.viewId} data-view-generation={projectScene?.view?.viewGeneration} tabIndex={0} role="region" aria-label="Project board. Enter selects files, arrow keys move them, and Space pans the canvas." onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerLeave={() => updateMarkHover(null)} onPointerCancel={() => { gesture.current = null; updateMarkHover(null); setPreview({}); setSelectionRect(null); setSnapGuides([]); setMarkPreview(null); }} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === ' ') { event.preventDefault(); setSpacePan(true); } if (event.key === 'Enter' && mode === 'mark') { event.preventDefault(); if (selected.length === 1 && !annotationEdit) enterAnnotation(); else { const point = screenToWorld({ x: canvas.current!.clientWidth / 2, y: canvas.current!.clientHeight / 2 }, view); applyMark({ ...point, width: 0, height: 0 }, 'point', annotationEdit); } } if (event.key === 'Escape') { setReferencePreview([]); if (captureBusyId) void cancelCapture(); else if (annotationRead) closeAnnotation(); else if (annotating) { exitAnnotation(); setMode('select'); } else if (aligning) exitAlignment(); else { clearInspection(); selectObjects([]); setMode('select'); } } if (event.key === '+' || event.key === '=') { event.preventDefault(); zoom(1.2); } if (event.key === '-') { event.preventDefault(); zoom(1 / 1.2); } }} onKeyUp={event => { if (event.key === ' ') setSpacePan(false); }} onBlur={() => setSpacePan(false)} onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); setDragOver(true); } }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragOver(false); }} onDrop={event => { event.preventDefault(); setDragOver(false); void importFiles(filesFromTransfer(event.dataTransfer), localPoint(event)); }}>
+      <div className="canvas-world" style={{ transform: `translate(${view.x}px,${view.y}px) scale(${view.zoom})` }}>{objects.map((object, index) => { const asset = assetFor(object.assetId); const isSelected = selectedIds.includes(object.id); return <article key={object.id} className={`board-object object-${object.type} ${isSelected ? 'selected' : ''}`} data-object-id={object.id} data-content-kind={resolveContentKind(asset)} data-object-version={object.version} data-selected={isSelected || undefined} style={{ left: object.x, top: object.y, width: object.width, height: object.height }} tabIndex={0} role="group" aria-label={`${asset?.name || 'File'}${isSelected ? ', selected' : ''}`} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectObjects(event.shiftKey ? unique([...selectedIds, object.id]) : [object.id]); } const delta = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key]; if (delta) { event.preventDefault(); event.stopPropagation(); void board.operations([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: object.x + delta[0], y: object.y + delta[1] } }]).catch(() => undefined); } }}>
         <div className="object-media"><SceneContentContext.Provider value={{ registry: sceneRegistry, objectId: object.id, width: object.width, height: object.height, captureView: projectScene?.view }}><ContentRenderer asset={asset} src={board.api.content(object.assetId)} api={board.api} onReloadBoard={reloadBoard} onBlankPointerDown={event => { event.stopPropagation(); pointerDown(event, true); }} onFrameWheel={canvasWheel} onFrameDrag={(frame, start, event) => frameDrag(object.id, frame, start, event)} disabled={disabled || annotating} preserveScene={annotating || !!annotationRead} error={mediaErrors[object.id]} onSize={size => setMediaSizes(current => ({ ...current, [object.id]: size }))} onError={() => setMediaErrors(current => ({ ...current, [object.id]: true }))} onMediaElement={element => { const refs = resolveContentKind(asset) === 'audio' ? audioRefs.current : videoRefs.current; if (element) (refs as Map<string, HTMLMediaElement>).set(object.id, element); else refs.delete(object.id); }}/></SceneContentContext.Provider></div>
         <div className="object-caption"><span className="object-index">{String(index + 1).padStart(2, '0')}</span><span title={asset?.name}>{asset?.name || 'File'}</span>{object.sourceTaskId && <span className="generated-label">Output</span>}</div>{isSelected && ((capabilityFor(object).freeResize ? ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] : ['nw', 'ne', 'sw', 'se']) as ResizeHandle[]).map(corner => <button key={corner} type="button" className="resize-handle" data-resize-id={object.id} data-resize-corner={corner} aria-label={`Resize ${asset?.name || 'File'} ${ { nw: 'top left', n: 'top', ne: 'top right', e: 'right', se: 'bottom right', s: 'bottom', sw: 'bottom left', w: 'left' }[corner]}`} onKeyDown={event => { if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key) || layoutBusy.current || disabled) return; event.preventDefault(); event.stopPropagation(); const delta = { x: event.key === 'ArrowRight' ? 10 : event.key === 'ArrowLeft' ? -10 : 0, y: event.key === 'ArrowDown' ? 10 : event.key === 'ArrowUp' ? -10 : 0 }; const capability = capabilityFor(object), bounds = capability.freeResize ? resizeViewportBounds(object, corner, delta, capability.minimum) : resizeBounds(object, corner as ResizeCorner, delta); void writeLayout([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: bounds }], state.session.id); }}/>) }</article>; })}
-      {allAnnotations.map(annotation => { const bounds = annotationBounds(annotation); if (!bounds || annotation.scope === 'group' || annotating && annotation.id === comment?.value.id) return null; return <div className={`annotation-outline ${annotation.geometry === 'point' ? 'point-annotation' : ''} ${!annotation.inspectionTaskId ? 'draft-outline' : ''}`} key={`${annotation.inspectionTaskId || 'draft'}-${annotation.id}`} data-annotation-id={annotation.id} data-annotation-source={annotation.inspectionTaskId ? 'task' : 'draft'} data-source-removed={annotation.objectIds.some(id => !objects.some(object => object.id === id)) || undefined} style={annotation.geometry === 'point' ? { left: bounds.x - 10 / view.zoom, top: bounds.y - 10 / view.zoom, width: 20 / view.zoom, height: 20 / view.zoom } : { left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height }}/>; })}
+      {visibleOutlines.map(({ annotation, bounds }) => <div className={`annotation-outline ${annotation.geometry === 'point' ? 'point-annotation' : ''} ${!annotation.inspectionTaskId ? 'draft-outline' : ''}`} key={`${annotation.inspectionTaskId || 'draft'}-${annotation.id}`} data-annotation-id={annotation.id} data-annotation-source={annotation.inspectionTaskId ? 'task' : 'draft'} data-source-removed={annotation.objectIds.some(id => !objects.some(object => object.id === id)) || undefined} style={annotation.geometry === 'point' ? { left: bounds.x - 10 / view.zoom, top: bounds.y - 10 / view.zoom, width: 20 / view.zoom, height: 20 / view.zoom } : { left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height }}/>)}
       {editingBounds && <div className="annotation-outline editing-outline" data-annotation-source="editing" style={{ left: editingBounds.x, top: editingBounds.y, width: editingBounds.width, height: editingBounds.height }}/>}
       {!!snapGuides.length && <svg className="alignment-guides" aria-hidden="true">{snapGuides.map(guide => <line key={guide.axis} data-snap-axis={guide.axis} vectorEffect="non-scaling-stroke" x1={guide.axis === 'x' ? guide.position : guide.start} y1={guide.axis === 'y' ? guide.position : guide.start} x2={guide.axis === 'x' ? guide.position : guide.end} y2={guide.axis === 'y' ? guide.position : guide.end}/>)}</svg>}
       {selectionRect && <div className="selection-rect" style={{ left: selectionRect.x, top: selectionRect.y, width: selectionRect.width, height: selectionRect.height }}/> }</div>
       {allAnnotations.map((annotation, index) => {
         const bounds = annotationBounds(annotation); if (!bounds) return null;
-        const active = annotationRead?.id === annotation.id && ((!!annotationReader?.draftId || readingEditDraft) === !annotation.inspectionTaskId);
+        const active = annotationActive(annotation);
         const editable = active && readerEditable;
         const sources = annotationSources(annotation), sourceAssetIds = unique([...sources.map(object => object.assetId), ...[annotation.assetId, annotation.snapshotAssetId].filter((id): id is string => !!id)]);
         const creation = active && annotationEdit && annotationEdit.fresh && !annotationEdit.finished;
         const kind = resolveContentKind(assetFor(annotation.assetId || ''));
         const timeControl = editable && annotationEdit && (kind === 'audio' || kind === 'video') && annotation.assetId ? <AnnotationTimeRange key={annotation.id} kind={kind} src={board.api.content(annotation.assetId)} media={annotation.objectId ? kind === 'video' ? videoRefs.current.get(annotation.objectId) : audioRefs.current.get(annotation.objectId) : undefined} start={annotation.timeStart} end={annotation.timeEnd} fresh={annotationEdit.fresh} disabled={disabled} onCommit={(start, end) => changeAnnotationRange(annotationEdit, kind, board.api.content(annotation.assetId!), start, end)} onError={board.showError}/> : undefined;
-        return <CanvasAnnotationNote key={`${annotation.inspectionTaskId || draft?.editingTaskId || 'draft'}-${annotation.id}`} canvas={canvas} bounds={annotationDisplayBounds(annotation)} markBounds={bounds} geometry={annotation.geometry} view={view} number={index + 1} onOpen={() => openAnnotation(annotation, !annotation.inspectionTaskId)} annotationId={annotation.id} active={active} redrawing={active && mode === 'mark'} control={{ text: annotation.text, compositionRef: active ? commentComposing : undefined, mode: active ? editable ? 'edit' : 'view' : 'display', inputLabel: active ? editable ? creation ? 'Add a comment' : 'Annotation text' : 'Annotation comment' : `Comment ${index + 1}: ${annotation.text}`, inputRef: active ? annotationInput : undefined, disabled: active && disabled, onOpen: () => openAnnotation(annotation, !annotation.inspectionTaskId), onBack: closeAnnotation, onDone: editable ? () => void finishAnnotation(annotation) : undefined, onChange: changeAnnotationText, mediaControl: timeControl, children: <>
+        return <CanvasAnnotationNote key={`${annotation.inspectionTaskId || draft?.editingTaskId || 'draft'}-${annotation.id}`} canvas={canvas} bounds={annotationDisplayBounds(annotation)} markBounds={bounds} pin={pinFor.get(annotation)} geometry={annotation.geometry} view={view} layoutVersion={noteLayoutVersion} number={index + 1} onOpen={() => openAnnotation(annotation, !annotation.inspectionTaskId)} annotationId={annotation.id} active={active} redrawing={active && mode === 'mark'} control={{ text: annotation.text, compositionRef: active ? commentComposing : undefined, mode: active ? editable ? 'edit' : 'view' : 'display', inputLabel: active ? editable ? creation ? 'Add a comment' : 'Annotation text' : 'Annotation comment' : `Comment ${index + 1}: ${annotation.text}`, inputRef: active ? annotationInput : undefined, disabled: active && disabled, onOpen: () => openAnnotation(annotation, !annotation.inspectionTaskId), onBack: closeAnnotation, onDone: editable ? () => void finishAnnotation(annotation) : undefined, onChange: changeAnnotationText, mediaControl: timeControl, children: <>
           {editable && annotation.captureState && annotationEdit && <div className="annotation-target-actions"><button type="button" disabled={disabled} onClick={() => { updateMarkHover(null); setMode('mark'); }}>Redraw mark</button></div>}
           <div className="annotation-source-thumbs">{sourceAssetIds.map(id => <AssetThumb key={id} asset={assetFor(id)} src={board.api.content(id)}/>)}</div>
           {annotation.objectIds.some(id => !objects.some(object => object.id === id)) && <span className="annotation-source-status">Source removed</span>}
@@ -1155,14 +1179,14 @@ export default function App() {
           {!timeControl && (kind === 'audio' || annotation.timeStart !== undefined) && <div className="comment-video-meta"><span>{annotation.timeStart === undefined ? 'Whole audio' : `${timeLabel(annotation.timeStart)}${annotation.timeEnd !== undefined ? ` – ${timeLabel(annotation.timeEnd)}` : ''}`}</span>{annotation.timeStart !== undefined && annotation.objectId && (videoRefs.current.has(annotation.objectId) || audioRefs.current.has(annotation.objectId)) && <button type="button" className="annotation-media-action" onClick={() => { const media = videoRefs.current.get(annotation.objectId!) || audioRefs.current.get(annotation.objectId!); if (media) { media.pause(); media.currentTime = annotation.timeStart!; } }}>{kind === 'audio' ? 'Jump to time' : 'Jump to frame'}</button>}{annotationEdit?.frameNote && <span title={annotationEdit.frameNote}>Timestamp only</span>}</div>}
         </> }}/>
       })}
-      {markHover && mode === 'mark' && !spacePan && <div className="canvas-mark-guide" data-mark-target={markHover.objectId} aria-hidden="true" style={{ ...screenBounds(markHover.bounds, presentedView()), left: screenBounds(markHover.bounds, presentedView()).x, top: screenBounds(markHover.bounds, presentedView()).y, borderRadius: markHover.radius * presentedView().zoom }}/>}
+      {markHover && mode === 'mark' && !spacePan && <div className="canvas-mark-guide" data-mark-target={markHover.objectId} aria-hidden="true" style={{ ...screenBounds(markHover.bounds, view), left: screenBounds(markHover.bounds, view).x, top: screenBounds(markHover.bounds, view).y, borderRadius: markHover.radius * view.zoom }}/>}
       {mode === 'mark' && !spacePan && <div className="canvas-mark-surface" aria-hidden="true"/>}
       {dragOver && <div className="drop-indicator"><Upload size={28}/><span>Drop files onto the canvas</span></div>}
       {!annotationRead && !annotating && !!selected.length && <div ref={selectionActions} className={`selection-actions context-control ${aligning ? 'alignment-control' : 'selection-tool-control'}`} data-canvas-control onKeyDown={event => { event.stopPropagation(); if (event.key === 'Escape' && aligning) { event.preventDefault(); exitAlignment(); } }}>
         {aligning ? <><IconButton label="Back to selection tools" onClick={exitAlignment}><ArrowLeft size={15}/></IconButton><div className="alignment-actions" role="toolbar" aria-label="Align selected files"><IconButton label="Align left" disabled={disabled} onClick={() => alignSelection('left')}><AlignStartVertical size={15}/></IconButton><IconButton label="Align horizontal centers" disabled={disabled} onClick={() => alignSelection('horizontal-center')}><AlignCenterVertical size={15}/></IconButton><IconButton label="Align right" disabled={disabled} onClick={() => alignSelection('right')}><AlignEndVertical size={15}/></IconButton><IconButton label="Align top" disabled={disabled} onClick={() => alignSelection('top')}><AlignStartHorizontal size={15}/></IconButton><IconButton label="Align vertical centers" disabled={disabled} onClick={() => alignSelection('vertical-center')}><AlignCenterHorizontal size={15}/></IconButton><IconButton label="Align bottom" disabled={disabled} onClick={() => alignSelection('bottom')}><AlignEndHorizontal size={15}/></IconButton></div></> : <div className="selection-primary-tools" role="toolbar" aria-label="Selected file actions"><IconButton label="Remove selected files from canvas" disabled={disabled} onClick={() => void removeSelection()}><Trash2 size={18}/></IconButton>{selected.length > 1 && <IconButton label="Align" aria-haspopup="false" disabled={disabled} onClick={enterAlignment}><AlignStartVertical size={18}/></IconButton>}</div>}
       </div>}
       {selectedVideo && <VideoPlaybackControls key={selectedVideo.id} objectId={selectedVideo.id} videos={videoRefs.current} disabled={disabled || annotating} onError={board.showError} controlRef={playbackControls}/> }
-      <div className="canvas-toolbar" data-canvas-control role="toolbar" aria-label="Board tools"><IconButton disabled={disabled} label="Select files" aria-pressed={mode === 'select'} onClick={() => setMode('select')}><MousePointer2 size={16}/></IconButton><IconButton disabled={disabled} label="Pan canvas" aria-pressed={mode === 'pan'} onClick={() => setMode('pan')}><Hand size={16}/></IconButton><IconButton disabled={disabled} label="Mark canvas" onPointerDown={rememberMarkdownSelection} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') rememberMarkdownSelection(); }} aria-pressed={mode === 'mark'} onClick={() => { if (selected.length > 1) { enterAnnotation(); return; } clearInspection(); exitAnnotation(); setMode('mark'); setReferencePreview([]); canvas.current?.focus({ preventScroll: true }); }}><AnnotationBubble size={18} tone="neutral"/></IconButton><span className="toolbar-divider"/><IconButton disabled={disabled} label="Zoom out" onClick={() => zoom(1 / 1.2)}><Minus size={16}/></IconButton><button disabled={disabled} className="zoom-label" title="Reset zoom to 100%" aria-label="Reset zoom to 100%" onClick={() => { zoom(1 / presentedView().zoom); }}>{Math.round(view.zoom * 100)}%</button><IconButton disabled={disabled} label="Zoom in" onClick={() => zoom(1.2)}><Plus size={16}/></IconButton><span className="toolbar-divider"/><IconButton disabled={disabled} label="Fit all files" onClick={() => { const size = { width: canvas.current!.clientWidth, height: canvas.current!.clientHeight }; fitMotion.animate({ ...presentedView(), ...fitView(objects, size) }); }}><Maximize size={16}/></IconButton></div>
+      <div className="canvas-toolbar" data-canvas-control role="toolbar" aria-label="Board tools"><IconButton disabled={disabled} label="Select files" aria-pressed={mode === 'select'} onClick={() => setMode('select')}><MousePointer2 size={16}/></IconButton><IconButton disabled={disabled} label="Pan canvas" aria-pressed={mode === 'pan'} onClick={() => setMode('pan')}><Hand size={16}/></IconButton><IconButton disabled={disabled} label="Mark canvas" onPointerDown={rememberMarkdownSelection} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') rememberMarkdownSelection(); }} aria-pressed={mode === 'mark'} onClick={() => { if (selected.length > 1) { enterAnnotation(); return; } clearInspection(); exitAnnotation(); setMode('mark'); setReferencePreview([]); canvas.current?.focus({ preventScroll: true }); }}><AnnotationBubble size={18} tone="neutral"/></IconButton><span className="toolbar-divider"/><IconButton disabled={disabled} label="Zoom out" onClick={() => zoom(1 / 1.2)}><Minus size={16}/></IconButton><button disabled={disabled} className="zoom-label" title="Reset zoom to 100%" aria-label="Reset zoom to 100%" onClick={() => { zoom(1 / view.zoom); }}>{Math.round(view.zoom * 100)}%</button><IconButton disabled={disabled} label="Zoom in" onClick={() => zoom(1.2)}><Plus size={16}/></IconButton><span className="toolbar-divider"/><IconButton disabled={disabled} label="Fit all files" onClick={() => { const size = { width: canvas.current!.clientWidth, height: canvas.current!.clientHeight }; fitMotion.animate({ ...view, ...fitView(objects, size) }); }}><Maximize size={16}/></IconButton></div>
       {board.switching && <div className="canvas-busy"><LoaderCircle size={20} className="spin"/>Connecting to the board</div>}
     </div><div className="project-identity" aria-label={`acanvas project: ${state.project.name}`} title={state.project.name}><span className="brand">acanvas<span aria-hidden="true">●</span></span><span className="project-name">{state.project.name}</span></div><div className="canvas-actions"><IconButton className="floating-control import-button" label="Import files" disabled={disabled} onClick={() => boardInput.current?.click()}><Upload size={17}/></IconButton><IconButton className="floating-control" label={theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'} onClick={() => setTheme(current => current === 'light' ? 'dark' : 'light')}>{theme === 'light' ? <Moon size={17}/> : <Sun size={17}/>}</IconButton></div>{composer}</main>
     <input className="sr-only" aria-label="Import files into canvas" tabIndex={-1} type="file" multiple ref={boardInput} onChange={event => { void importFiles(Array.from(event.target.files || [])); event.target.value = ''; }}/>

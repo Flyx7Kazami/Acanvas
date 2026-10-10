@@ -23,18 +23,26 @@ test('production canvas inherits native wheel fields, accumulates bursts, and ow
     const markdown = await upload('Reading.md', 'text/markdown', '# Reading\n\n' + Array.from({ length: 80 }, (_, index) => `Paragraph ${index}: this document retains its own scrolling.`).join('\n\n'));
     await call('/api/board/operations', 'POST', { sessionId: session.id, operations: [{ type: 'create', object: { assetId: image.id, x: 490, y: 250, width: 200, height: 120 } }, { type: 'create', object: { assetId: markdown.id, x: 850, y: 120, width: 260, height: 300 } }] });
     await running.browser.open(session.id); const page = running.browser.page(session.id)!;
-    await expect(page.locator('.scene-canvas')).toHaveAttribute('data-frame-seq', /[1-9]/);
-    const reset = async (owner = session.id) => { await call(`/api/sessions/${owner}/view`, 'PUT', { x: 0, y: 0, zoom: 1, selectedObjectIds: [] }); await page.goto(`${running.url}/?session=${owner}`); await expect(page.locator('.scene-canvas')).toHaveAttribute('data-frame-seq', /[1-9]/); await expect(page.locator('.zoom-label')).toHaveText('100%'); await expect(page.locator('.board-object')).toHaveCount(2); };
+    await page.addInitScript(() => {
+      const scope = window as any; scope.boardDraws = 0;
+      for (const method of ['drawImage', 'putImageData', 'fillRect', 'strokeRect', 'clearRect', 'fill', 'stroke', 'fillText', 'strokeText'] as const) {
+        const original = CanvasRenderingContext2D.prototype[method] as (...args: unknown[]) => unknown;
+        Object.defineProperty(CanvasRenderingContext2D.prototype, method, { configurable: true, writable: true, value(this: CanvasRenderingContext2D, ...args: unknown[]) { scope.boardDraws++; return original.apply(this, args); } });
+      }
+    });
+    await expect(page.locator('#whiteboard')).toHaveAttribute('data-view-id', /.+/);
+    const reset = async (owner = session.id) => { await call(`/api/sessions/${owner}/view`, 'PUT', { x: 0, y: 0, zoom: 1, selectedObjectIds: [] }); await page.goto(`${running.url}/?session=${owner}`); await expect(page.locator('#whiteboard')).toHaveAttribute('data-view-id', /.+/); await expect(page.locator('.zoom-label')).toHaveText('100%'); await expect(page.locator('.board-object')).toHaveCount(2); };
     const burst = async (modifier: 'ctrlKey' | 'metaKey', deltaY: number, count = 24, selector = '#whiteboard') => page.evaluate(({ modifier, deltaY, count, selector }) => {
       const target = document.querySelector(selector)!; const bounds = document.querySelector('#whiteboard')!.getBoundingClientRect(), x = bounds.left + 600 * bounds.width / (document.querySelector('#whiteboard') as HTMLElement).clientWidth, y = bounds.top + 280 * bounds.height / (document.querySelector('#whiteboard') as HTMLElement).clientHeight;
-      const frame = document.querySelector('.scene-canvas')!.getAttribute('data-frame-seq'); let prevented = 0;
+      let prevented = 0;
       for (let index = 0; index < count; index++) { const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, clientX: x, clientY: y, deltaY, [modifier]: true }); target.dispatchEvent(event); if (event.defaultPrevented) prevented++; }
-      return { prevented, inheritedCtrl: !Object.hasOwn(new WheelEvent('wheel', { ctrlKey: true }), 'ctrlKey'), startFrame: frame, endFrame: document.querySelector('.scene-canvas')!.getAttribute('data-frame-seq'), viewportScale: visualViewport?.scale };
+      return { prevented, inheritedCtrl: !Object.hasOwn(new WheelEvent('wheel', { ctrlKey: true }), 'ctrlKey'), drawsBefore: (window as any).boardDraws as number, viewportScale: visualViewport?.scale };
     }, { modifier, deltaY, count, selector });
     for (const modifier of ['ctrlKey', 'metaKey'] as const) {
-      await reset(); const event = await burst(modifier, -4); assert.equal(event.prevented, 24); assert.equal(event.inheritedCtrl, true); assert.equal(event.startFrame, event.endFrame);
+      await reset(); const event = await burst(modifier, -4); assert.equal(event.prevented, 24); assert.equal(event.inheritedCtrl, true);
       const expected = canvasPinchView({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }, Math.exp(.48), { x: 600, y: 280 });
       await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(expected.zoom, 5); const actual = await camera(page); close(actual, expected); assert.equal(event.viewportScale, 1);
+      assert.equal(await page.evaluate(() => (window as any).boardDraws), event.drawsBefore, 'Pinch zoom does not draw any 2D canvas.');
       await burst(modifier, 4); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1, 5); close(await camera(page), { x: 0, y: 0, zoom: 1 });
       samples.push({ input: modifier, count: 24, expected, actual, event, reversal: await camera(page) });
     }
@@ -61,13 +69,13 @@ test('production canvas inherits native wheel fields, accumulates bursts, and ow
     samples.push({ input: 'persisted page lifecycle during unfinished WebKit gesture', camera: await camera(page), priorCameraPreserved: true, nextWheelAccepted: true });
 
     await reset(); await native('gesturestart', 1); await native('gesturechange', 1.2);
-    const oldViewId = await page.locator('.scene-canvas').getAttribute('data-view-id'); assert.ok(oldViewId);
+    const oldViewId = await page.locator('#whiteboard').getAttribute('data-view-id'); assert.ok(oldViewId);
     const oldView = running.service.captureView(session.id, oldViewId);
     await call(`/api/sessions/${session.id}/capture-views/${oldViewId}`, 'DELETE', { documentId: oldView.documentId, viewGeneration: oldView.viewGeneration, operationSeq: 1_000_000 });
-    await expect.poll(() => page.locator('.scene-canvas').getAttribute('data-view-id')).not.toBe(oldViewId);
-    await expect(page.locator('.scene-canvas')).toHaveAttribute('data-frame-seq', /[1-9]/);
+    await expect.poll(() => page.locator('#whiteboard').getAttribute('data-view-id')).not.toBe(oldViewId);
+    await expect(page.locator('#whiteboard')).toHaveAttribute('data-view-id', /.+/);
     await burst('ctrlKey', -4, 1); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.2 * Math.exp(.02), 5);
-    samples.push({ input: 'capture view retirement during unfinished WebKit gesture', oldViewId, newViewId: await page.locator('.scene-canvas').getAttribute('data-view-id'), camera: await camera(page), priorCameraPreserved: true, nextWheelAccepted: true });
+    samples.push({ input: 'capture view retirement during unfinished WebKit gesture', oldViewId, newViewId: await page.locator('#whiteboard').getAttribute('data-view-id'), camera: await camera(page), priorCameraPreserved: true, nextWheelAccepted: true });
 
     await reset(); const cdp = await page.context().newCDPSession(page), beforeTouch = await call(`/api/state?sessionId=${session.id}`);
     const touch = async (type: 'touchStart' | 'touchMove' | 'touchEnd' | 'touchCancel', points: { x: number; y: number; id: number }[]) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points });

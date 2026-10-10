@@ -26,7 +26,7 @@ export interface PreparedSceneCapture extends Omit<SceneEvidenceFrame, 'png'> { 
 export interface FreezeAndHoldInput {
   draft: Draft;
   annotation: AnnotationInput;
-  /** This callback synchronously copies the visible bitmap and its paired metadata. */
+  /** This callback synchronously supplies the composed evidence pixels and their paired presentation. */
   freeze(): CopiedSceneFrame;
   worldBounds: SceneEvidenceFrame['worldBounds'];
   viewport: SceneEvidenceFrame['viewport'];
@@ -138,10 +138,6 @@ export class ProjectCaptureCoordinator implements CaptureProvider {
     if (equal(this.presented, presentation)) return;
     const operation = { ...this.operation(view), presentation };
     await this.recover(() => this.api.confirmScenePresentation(this.sessionId, view.viewId, operation)); this.presented = structuredClone(presentation);
-  }
-  confirmPresentation(presentation: CopiedSceneFrame['presentation']): Promise<void> {
-    const paired = structuredClone(presentation) as ScenePresentation;
-    return this.ordered(async () => this.confirm(await this.ready(), paired));
   }
 
   /** Pixel copying occurs in this synchronous entry, before its first service operation. */

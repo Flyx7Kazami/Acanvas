@@ -18,16 +18,8 @@ export function AudioCanvasPlayer({ src, title, assetId, disabled = false, onEle
   const player = useRef<HTMLDivElement>(null), [layout, setLayout] = useState<'compact' | 'beside' | 'stack'>('compact');
   const audio = useRef<HTMLAudioElement>(null), wave = useRef<HTMLCanvasElement>(null), slider = useRef<HTMLDivElement>(null), current = useRef<HTMLSpanElement>(null), total = useRef<HTMLSpanElement>(null);
   const notifyElement = useRef(onElement); notifyElement.current = onElement;
-  const presentedTime = useRef(0);
-  const panel = useControlledScenePanel(player, {
-    dynamicElements: () => [wave.current, current.current, total.current].filter((element): element is HTMLElement => !!element),
-    ignoreMutation: record => record.type === 'attributes' && (record.target === wave.current && ['data-ready', 'data-progress'].includes(record.attributeName ?? '')
-      || record.target === slider.current && ['aria-valuemax', 'aria-valuenow', 'aria-valuetext'].includes(record.attributeName ?? ''))
-      || record.type === 'childList' && (record.target === current.current || record.target === total.current),
-    layoutKey: () => `${current.current?.textContent?.length}:${total.current?.textContent?.length}`,
-    metadata: () => ({ media: { playbackTime: presentedTime.current, presentedTime: presentedTime.current, timePrecision: 'playback-sampled' } }), onError,
-  });
-  const playback = useAudioWaveform(audio, { wave, slider, current, total, onFrame: frame => { presentedTime.current = frame.time; panel.publish.current(); } }, src, onError), cover = useAudioArtwork(assetId ? src : undefined);
+  useControlledScenePanel(player, { metadata: () => { const time = audio.current && Number.isFinite(audio.current.currentTime) ? audio.current.currentTime : 0; return { media: { playbackTime: time, presentedTime: time, timePrecision: 'playback-sampled' } }; } });
+  const playback = useAudioWaveform(audio, { wave, slider, current, total }, src, onError), cover = useAudioArtwork(assetId ? src : undefined);
   const drag = useRef<{ pointer: number; playing: boolean } | null>(null);
   useLayoutEffect(() => {
     const element = player.current!;

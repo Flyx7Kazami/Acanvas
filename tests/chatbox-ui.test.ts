@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { expect } from '@playwright/test';
 import type { Page } from 'playwright-core';
 import { startServer } from '../src/server/http.js';
-import type { AnnotationInput, Asset, BoardObject, HtmlSurfaceFrameMetadata, RequestReference } from '../src/shared/types.js';
+import type { AnnotationInput, Asset, BoardObject, RequestReference } from '../src/shared/types.js';
 
 async function enteredStage(stage: Promise<void>) {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -17,7 +17,7 @@ function installSceneOracle() {
   const draw = CanvasRenderingContext2D.prototype.drawImage;
   CanvasRenderingContext2D.prototype.drawImage = function (this: CanvasRenderingContext2D, ...args: any[]) {
     const source = args[0];
-    if (source instanceof HTMLCanvasElement && source.classList.contains('scene-canvas') && args.length === 9 && this.canvas !== source) {
+    if (source instanceof HTMLCanvasElement && source.classList.contains('scene-evidence-canvas') && args.length === 9 && this.canvas !== source) {
       (window as any).sceneCopyOracle = { frameSeq: Number(source.dataset.frameSeq), width: args[7], height: args[8], pixels: source.getContext('2d')!.getImageData(args[1], args[2], args[3], args[4]).data };
     }
     return (draw as any).apply(this, args);
@@ -29,11 +29,62 @@ async function assertSceneCopy(page: Page, annotation: AnnotationInput) {
     const response = await fetch(`/api/assets/${capture.screenshotAssetId}/content?sessionId=${capture.sessionId}`); if (!response.ok) throw new Error('The captured PNG is unavailable.');
     const image = await createImageBitmap(await response.blob()), canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; canvas.getContext('2d')!.drawImage(image, 0, 0); image.close();
     const actual = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data, oracle = (window as any).sceneCopyOracle;
-    if (!oracle || actual.length !== oracle.pixels.length || canvas.width !== oracle.width || canvas.height !== oracle.height) throw new Error('The saved PNG dimensions differ from the synchronously copied visible frame.');
+    if (!oracle || actual.length !== oracle.pixels.length || canvas.width !== oracle.width || canvas.height !== oracle.height) throw new Error('The saved PNG dimensions differ from the copied evidence frame.');
     let mismatches = 0; for (let index = 0; index < actual.length; index++) if (actual[index] !== oracle.pixels[index]) mismatches++;
     return { mismatches, frameSeq: oracle.frameSeq };
   }, annotation.capture!);
   assert.equal(pixels.mismatches, 0); assert.equal(pixels.frameSeq, annotation.capture!.presentation!.frameSeq); assert.equal(annotation.capture!.sceneSource!.frameSeq, pixels.frameSeq);
+}
+
+type Box = { left: number; top: number; right: number; bottom: number };
+type Area = { x: number; y: number; width: number; height: number };
+type Region = { window: Area; kind: 'red' | 'pin' | 'ink' | 'bright' | 'color'; color?: number[] };
+/** Pixel extents of one color class inside each CSS window, mapped back to CSS pixels. */
+async function colorBoxes(page: Page, image: { capture: { screenshotAssetId: string; sessionId: string; mapping: { crop: Area; scaleX: number; scaleY: number } } } | { screenshot: Buffer }, regions: Region[]): Promise<(Box | null)[]> {
+  return page.evaluate(async ({ image, regions }) => {
+    const blob = 'capture' in image ? await (await fetch(`/api/assets/${image.capture.screenshotAssetId}/content?sessionId=${image.capture.sessionId}`)).blob() : new Blob([new Uint8Array(image.screenshot)], { type: 'image/png' });
+    const bitmap = await createImageBitmap(blob), canvas = document.createElement('canvas'); canvas.width = bitmap.width; canvas.height = bitmap.height;
+    const context = canvas.getContext('2d')!; context.drawImage(bitmap, 0, 0); const data = context.getImageData(0, 0, bitmap.width, bitmap.height).data;
+    const origin = 'capture' in image ? { x: image.capture.mapping.crop.x, y: image.capture.mapping.crop.y, scaleX: image.capture.mapping.scaleX, scaleY: image.capture.mapping.scaleY } : { x: 0, y: 0, scaleX: bitmap.width / innerWidth, scaleY: bitmap.height / innerHeight };
+    return regions.map(({ window, kind, color }) => {
+      const matches = { red: (r: number, g: number, b: number) => r > 180 && g < 100 && b < 100, pin: (r: number, g: number, b: number) => b - r > 45 && g - r > 20, ink: (r: number, g: number, b: number) => Math.max(r, g, b) < 200, bright: (r: number, g: number, b: number) => Math.min(r, g, b) > 100, color: (r: number, g: number, b: number) => [r, g, b].every((channel, index) => Math.abs(channel - color![index]) <= 2) };
+      const left = Math.max(0, Math.floor((window.x - origin.x) * origin.scaleX)), top = Math.max(0, Math.floor((window.y - origin.y) * origin.scaleY));
+      const right = Math.min(bitmap.width, Math.ceil((window.x + window.width - origin.x) * origin.scaleX)), bottom = Math.min(bitmap.height, Math.ceil((window.y + window.height - origin.y) * origin.scaleY));
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (let y = top; y < bottom; y++) for (let x = left; x < right; x++) { const offset = (y * bitmap.width + x) * 4; if (matches[kind](data[offset], data[offset + 1], data[offset + 2])) { minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); } }
+      return Number.isFinite(minX) ? { left: origin.x + minX / origin.scaleX, top: origin.y + minY / origin.scaleY, right: origin.x + (maxX + 1) / origin.scaleX, bottom: origin.y + (maxY + 1) / origin.scaleY } : null;
+    });
+  }, { image: 'capture' in image ? image : { screenshot: Array.from(image.screenshot) }, regions });
+}
+/** Counts 2D canvas drawing and presentation confirms; displaying, hovering and panning the board need neither. */
+async function boardWork(page: Page) {
+  const presented: string[] = []; page.on('request', request => { if (request.method() === 'PUT' && new URL(request.url()).pathname.endsWith('/presented')) presented.push(request.url()); });
+  await page.evaluate(() => {
+    const scope = window as any; scope.boardDraws = 0;
+    for (const method of ['drawImage', 'putImageData', 'fillRect', 'strokeRect', 'clearRect', 'fill', 'stroke', 'fillText', 'strokeText'] as const) {
+      const original = CanvasRenderingContext2D.prototype[method] as (...args: unknown[]) => unknown;
+      Object.defineProperty(CanvasRenderingContext2D.prototype, method, { configurable: true, writable: true, value(this: CanvasRenderingContext2D, ...args: unknown[]) { scope.boardDraws++; return original.apply(this, args); } });
+    }
+  });
+  return async () => ({ draws: await page.evaluate(() => (window as any).boardDraws as number), presented: presented.length });
+}
+const grown = (area: Area, by: number): Area => ({ x: area.x - by, y: area.y - by, width: area.width + by * 2, height: area.height + by * 2 });
+function sameBox(actual: Box | null, expected: Box | null, label: string, tolerance = 1) {
+  assert(actual && expected, `${label}: ${JSON.stringify({ actual, expected })}`);
+  for (const edge of ['left', 'top', 'right', 'bottom'] as const) assert(Math.abs(actual[edge] - expected[edge]) <= tolerance, `${label} ${edge}: ${JSON.stringify({ actual, expected })}`);
+}
+/** Base scene responses can be marked near expiry, and the next request can be held after the service created it. */
+async function sceneRoute(page: Page) {
+  const state = { nearExpiry: false, armed: undefined as undefined | { entered: () => void; gate: Promise<void> }, snapshots: [] as { id: string; held: boolean }[] };
+  await page.route('**/capture-views/*/scenes', async route => {
+    if (route.request().method() !== 'POST') return route.continue();
+    const response = await route.fetch(), body = await response.json(), held = state.armed; state.armed = undefined;
+    if (state.nearExpiry && response.ok()) body.expiresAt = new Date(Date.now() + 30_000).toISOString();
+    state.snapshots.push({ id: body.id, held: !!held });
+    if (held) { held.entered(); await held.gate; }
+    await route.fulfill({ response, json: body }).catch(() => undefined);
+  });
+  return { state, hold: () => { let entered!: () => void, release!: () => void; const reached = new Promise<void>(resolve => entered = resolve), gate = new Promise<void>(resolve => release = resolve); state.armed = { entered, gate }; return { entered: reached, release }; } };
 }
 
 async function fixture(t: test.TestContext, narrow = false) {
@@ -85,11 +136,12 @@ async function fixture(t: test.TestContext, narrow = false) {
     await page.mouse.move(start.x, start.y); await page.mouse.down(); if (end) await page.mouse.move(end.x, end.y); await page.mouse.up();
     await expect(page.getByRole('textbox', { name: 'Add a comment', exact: true })).toBeVisible();
   };
-  const done = async (text: string) => {
+  const done = async (text: string, beforeDone?: () => Promise<void>) => {
     const editor = page.getByRole('textbox', { name: 'Add a comment', exact: true });
     const annotationId = await editor.locator('xpath=ancestor::*[@data-annotation-id][1]').getAttribute('data-annotation-id');
     assert(annotationId);
     await editor.fill(text); await expect(editor).toHaveValue(text);
+    await beforeDone?.();
     await page.getByRole('button', { name: 'Done', exact: true }).click();
     try { await expect.poll(() => {
       const annotation = running.service.draft(session.id).annotations.find(value => value.id === annotationId);
@@ -509,36 +561,36 @@ test('managed React records Markdown intent and displayed anchors and keeps the 
   await app.mark({ x: 300, y: 380 }); const annotated = await app.done('Selected document text');
   assert.equal(annotated.contentAnchor?.kind, 'text'); assert.equal(annotated.contentAnchor?.scroll?.y, 210); assert(annotated.contentAnchor?.quote); assert(annotated.contentAnchor?.path?.startsWith('rendered-dom:'));
   assert.equal(annotated.capture?.scene.objects.find(value => value.object.id === mdObject.id)?.scroll?.y, 210);
-  let latestFrame: HtmlSurfaceFrameMetadata | undefined;
-  page.on('response', response => { if (response.request().method() === 'POST' && /\/html-surfaces\/[^/]+\/sample$/.test(new URL(response.url()).pathname) && response.ok()) void response.json().then(value => { latestFrame = value; }).catch(() => undefined); });
-  const html = await app.importAsset('Live.html', 'text/html', Buffer.from('<!doctype html><style>body{background:#cff0e8;font:20px sans-serif}input{font:20px sans-serif}</style><input id="value" aria-label="Live value" value="initial"><p id="identity"></p><p id="clock">Live scene</p><script>window.identity=Math.random();document.querySelector("#identity").textContent="Instance "+window.identity;setInterval(()=>document.querySelector("#clock").style.color=["red","blue"][Math.floor(Date.now()/100)%2],100)</script>'));
+  const surfaces: string[] = [];
+  page.on('request', request => { if (request.method() === 'POST' && /\/html-surfaces$/.test(new URL(request.url()).pathname)) surfaces.push(request.url()); });
+  const html = await app.importAsset('Live.html', 'text/html', Buffer.from('<!doctype html><style>body{margin:0;background:#cff0e8;font:20px sans-serif}input{font:20px sans-serif}</style><input id="value" aria-label="Live value" value="initial"><p id="identity"></p><p id="clock">Live scene</p><script>window.identity=Math.random();document.querySelector("#identity").textContent="Instance "+window.identity;setInterval(()=>document.querySelector("#clock").style.color=["red","blue"][Math.floor(Date.now()/100)%2],100)</script>'));
   const htmlObject = await app.object(html, { x: 730, y: 250, width: 350, height: 240 }), htmlContent = page.locator(`[data-object-id="${htmlObject.id}"] .html-content`);
-  await expect(htmlContent).toHaveAttribute('data-preview-ready', 'true', { timeout: 20_000 });
-  await expect.poll(() => latestFrame?.semantics.controls.find(value => value.label === 'Live value')?.value, { timeout: 20_000 }).toBe('initial');
-  const original = latestFrame!, identity = original.semantics.readingOrder.find(value => value.text.startsWith('Instance '))?.text; assert(identity);
-  const liveInput = htmlContent.getByRole('textbox', { name: 'Live value', exact: true }); await liveInput.click(); await liveInput.press('ControlOrMeta+A'); await liveInput.press('Backspace'); await liveInput.pressSequentially('Saved live input');
-  await expect.poll(() => latestFrame?.semantics.controls.find(value => value.label === 'Live value')?.value).toBe('Saved live input');
-  await expect.poll(async () => Number(await htmlContent.locator('[data-html-semantics]').getAttribute('data-frame-seq'))).toBeGreaterThanOrEqual(latestFrame!.frameSeq);
+  await expect(htmlContent.locator('iframe, .html-snapshot').first()).toBeVisible({ timeout: 20_000 });
+  await htmlContent.hover();
+  await expect(htmlContent).toHaveAttribute('data-preview-state', 'live');
+  const frame = htmlContent.frameLocator('iframe'), liveInput = frame.getByRole('textbox', { name: 'Live value', exact: true });
+  await expect(liveInput).toHaveValue('initial');
+  const source = await htmlContent.locator('iframe').getAttribute('src');
+  await liveInput.click(); await liveInput.press('ControlOrMeta+A'); await liveInput.press('Backspace'); await liveInput.pressSequentially('Saved live input');
+  await expect(liveInput).toHaveValue('Saved live input');
   await app.mark({ x: 830, y: 280 });
   const comment = page.getByRole('textbox', { name: 'Add a comment', exact: true });
   await comment.fill('Keep the native HTML state');
-  const commentFrame = latestFrame!.frameSeq;
-  await expect.poll(() => latestFrame?.frameSeq).toBeGreaterThan(commentFrame);
   await expect(comment).toBeFocused(); await expect(comment).toHaveValue('Keep the native HTML state');
   const captured = await app.done('Keep the native HTML state'); assert.equal(captured.objectId, htmlObject.id);
-  const surface = captured.capture!.presentation!.layers.find(value => value.objectId === htmlObject.id)!.surface!; assert.equal(surface.surfaceId, original.surfaceId); assert.equal(surface.instanceId, original.instanceId);
-  const frame = await app.call(`/api/sessions/${app.session.id}/capture-views/${original.owner.viewId}/html-surfaces/${surface.surfaceId}/frames/${surface.frameSeq}?documentId=${encodeURIComponent(original.owner.documentId)}&viewGeneration=${original.owner.viewGeneration}`) as HtmlSurfaceFrameMetadata;
-  assert.equal(frame.semantics.controls.find(value => value.label === 'Live value')?.value, 'Saved live input'); assert.equal(frame.semantics.readingOrder.find(value => value.text.startsWith('Instance '))?.text, identity); assert.equal(frame.frameSeq, surface.frameSeq); assert.equal(frame.inputSeq, surface.inputSeq);
-  await expect(liveInput).toHaveValue('Saved live input'); assert.equal((latestFrame as HtmlSurfaceFrameMetadata).instanceId, original.instanceId); await expect(htmlContent.locator('iframe')).toHaveCount(0);
+  const htmlLayer = captured.capture!.presentation!.layers.find(value => value.objectId === htmlObject.id); assert(htmlLayer); assert.equal(htmlLayer.surface, undefined);
+  assert.equal(captured.capture!.presentation!.layers.filter(value => value.surface).length, 0);
+  assert.deepEqual(captured.capture!.scene.objects.find(value => value.object.id === htmlObject.id)?.scroll, { x: 0, y: 0 });
+  const htmlPixel = await page.evaluate(async capture => { const image = await createImageBitmap(await (await fetch(`/api/assets/${capture.screenshotAssetId}/content?sessionId=${capture.sessionId}`)).blob()), canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; canvas.getContext('2d')!.drawImage(image, 0, 0); return [...canvas.getContext('2d')!.getImageData(Math.floor((1000 - capture.mapping.crop.x) * capture.mapping.scaleX), Math.floor((450 - capture.mapping.crop.y) * capture.mapping.scaleY), 1, 1).data]; }, captured.capture!);
+  for (const [index, channel] of [0xcf, 0xf0, 0xe8].entries()) assert(Math.abs(htmlPixel[index] - channel) <= 3, JSON.stringify(htmlPixel));
+  await expect(liveInput).toHaveValue('Saved live input'); assert.equal(await htmlContent.locator('iframe').getAttribute('src'), source); assert.equal(surfaces.length, 0);
   const composer = page.locator('#instruction');
   await composer.click(); await composer.pressSequentially('Composer keeps focus');
-  const composerFrame = latestFrame!.frameSeq;
-  await expect.poll(() => latestFrame?.frameSeq).toBeGreaterThan(composerFrame);
   await expect(composer).toBeFocused(); assert.equal((await app.saved()).text, 'Composer keeps focus');
   await expect(liveInput).toHaveValue('Saved live input');
   await liveInput.click(); await liveInput.press('End'); await liveInput.pressSequentially(' again');
-  await expect.poll(() => latestFrame?.semantics.controls.find(value => value.label === 'Live value')?.value).toBe('Saved live input again');
-  await expect(liveInput).toBeFocused(); assert.equal(latestFrame!.instanceId, original.instanceId);
+  await expect(liveInput).toHaveValue('Saved live input again');
+  await expect(liveInput).toBeFocused(); assert.equal(await htmlContent.locator('iframe').getAttribute('src'), source);
 });
 
 test('managed React saves independent video/audio selections and actual playback positions', async t => {
@@ -648,7 +700,7 @@ test('managed marks use the top painted media owner and keep letterbox points an
   const red = await app.importAsset('Underlying red.png', 'image/png', Buffer.from(sources[0], 'base64')), blue = await app.importAsset('Letterboxed blue.png', 'image/png', Buffer.from(sources[1], 'base64'));
   const lower = await app.object(red, { x: 350, y: 220, width: 400, height: 400 }), upper = await app.object(blue, { x: 350, y: 220, width: 400, height: 400 });
   await expect.poll(() => page.locator(`[data-object-id="${upper.id}"] img`).evaluate(image => (image as HTMLImageElement).naturalHeight)).toBe(200);
-  const visiblePNG = () => page.locator('.scene-canvas').evaluate(async element => { const canvas = element as HTMLCanvasElement, blob = await new Promise<Blob>(resolve => canvas.toBlob(value => resolve(value!), 'image/png')); return Array.from(new Uint8Array(await blob.arrayBuffer())); });
+  const visiblePNG = async () => Array.from(new Uint8Array(await page.screenshot({ caret: 'hide' })));
   const wholeWithLower = await visiblePNG(), stable = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, theme: document.documentElement.dataset.theme, focusedTag: document.activeElement?.tagName }));
   await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: lower.id, expectedVersion: lower.version, changes: { x: 5000, y: 5000 } }] });
   await expect(page.locator(`[data-object-id="${lower.id}"]`)).toHaveCSS('left', '5000px'); await page.evaluate(() => new Promise(requestAnimationFrame));
@@ -748,17 +800,16 @@ test('Mark stationary hover follows committed deletion, overlap, camera and resi
   const app = await fixture(t), { page } = app;
   const bounds = { x: 350, y: 300, width: 250, height: 180 };
   const bottom = await app.object(await app.image('Bottom.png'), bounds);
-  const top = await app.object(await app.image('Top.png'), bounds);
+  const top = await app.object(await app.image('Top.png'), bounds), nextAsset = await app.image('New top.png');
+  const work = await boardWork(page);
   await page.getByRole('button', { name: 'Mark canvas', exact: true }).click();
   await page.mouse.move(470, 390);
   const guide = page.locator('.canvas-mark-guide');
   await expect(guide).toHaveAttribute('data-mark-target', top.id);
-  const firstSeq = Number(await page.locator('.scene-canvas').getAttribute('data-frame-seq'));
   await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'delete', objectId: top.id, expectedVersion: top.version }] });
   await expect(page.locator(`[data-object-id="${top.id}"]`)).toHaveCount(0);
   await expect(guide).toHaveAttribute('data-mark-target', bottom.id);
-  assert(Number(await page.locator('.scene-canvas').getAttribute('data-frame-seq')) > firstSeq);
-  const next = await app.object(await app.image('New top.png'), bounds);
+  const next = await app.object(nextAsset, bounds);
   await expect(guide).toHaveAttribute('data-mark-target', next.id);
   await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: next.id, expectedVersion: next.version, changes: { x: 900 } }] });
   await expect(guide).toHaveAttribute('data-mark-target', bottom.id);
@@ -766,6 +817,7 @@ test('Mark stationary hover follows committed deletion, overlap, camera and resi
   await page.mouse.wheel(0, -100); await expect(guide).toHaveAttribute('data-mark-target', bottom.id);
   await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: bottom.id, expectedVersion: bottom.version, changes: { height: 80 } }] });
   await expect(guide).toHaveCount(0);
+  assert.deepEqual(await work(), { draws: 0, presented: 0 });
 });
 
 test('annotation focus follows the active editor when a pending reader is closed or replaced', async t => {
@@ -791,23 +843,23 @@ test('annotation focus follows the active editor when a pending reader is closed
   assert.equal(saved.annotations.find(annotation => annotation.id === second.id)?.text, 'Second ownerZ');
 });
 
-test('refinement collapsed comment surfaces use one Canvas visual and preserve their pixels in PNG', async t => {
+test('refinement collapsed comment surfaces are displayed by the DOM and keep their displayed pixels in PNG', async t => {
   const app = await fixture(t), { page } = app;
   for (const theme of ['light', 'dark']) {
     if (theme === 'dark') await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click();
     await app.mark({ x: 900, y: theme === 'light' ? 350 : 550 }); const first = await app.done(`${theme} short comment`);
     const note = page.locator(`.canvas-annotation-comment[data-annotation-id="${first.id}"]`);
-    await expect(note).toHaveAttribute('data-scene-drawn', 'true'); await expect(note).toHaveCSS('opacity', '0');
+    await expect(note).toHaveCSS('opacity', '1'); assert.equal(await note.getAttribute('data-scene-drawn'), null);
     await note.evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
     await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
     const surface = await note.evaluate(element => { const rect = element.getBoundingClientRect(), style = getComputedStyle(element); return { x: rect.x, y: rect.y, width: rect.width, height: rect.height, padding: style.padding, radius: style.borderRadius, background: style.backgroundColor }; });
     assert.equal(surface.padding, '4px 8px'); assert.equal(surface.radius, '7px'); assert(surface.background.endsWith('0.84)'));
     const sample = { x: surface.x + 10, y: surface.y + 2 };
-    const canvasPixel = await page.locator('.scene-canvas').evaluate((element, sample) => { const canvas = element as HTMLCanvasElement, rect = canvas.getBoundingClientRect(); return [...canvas.getContext('2d')!.getImageData(Math.floor((sample.x - rect.x) * canvas.width / rect.width), Math.floor((sample.y - rect.y) * canvas.height / rect.height), 1, 1).data]; }, sample);
-    assert.deepEqual(canvasPixel.slice(0, 3), theme === 'light' ? [255, 255, 254] : [31, 31, 31]);
+    const shown = await page.evaluate(async ({ bytes, sample }) => { const image = await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: 'image/png' })), canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; canvas.getContext('2d')!.drawImage(image, 0, 0); return [...canvas.getContext('2d')!.getImageData(Math.floor(sample.x * image.width / innerWidth), Math.floor(sample.y * image.height / innerHeight), 1, 1).data]; }, { bytes: Array.from(new Uint8Array(await page.screenshot({ caret: 'hide' }))), sample });
+    for (const [index, channel] of (theme === 'light' ? [255, 255, 254] : [31, 31, 31]).entries()) assert(Math.abs(shown[index] - channel) <= 1, JSON.stringify(shown));
     await app.mark({ x: 930, y: theme === 'light' ? 410 : 610 }); const next = await app.done(`${theme} saved surface`);
     const captured = await page.evaluate(async ({ capture, sample }) => { const image = await createImageBitmap(await (await fetch(`/api/assets/${capture.screenshotAssetId}/content?sessionId=${capture.sessionId}`)).blob()); const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; canvas.getContext('2d')!.drawImage(image, 0, 0); return [...canvas.getContext('2d')!.getImageData(Math.floor((sample.x - capture.mapping.crop.x) * capture.mapping.scaleX), Math.floor((sample.y - capture.mapping.crop.y) * capture.mapping.scaleY), 1, 1).data]; }, { capture: next.capture!, sample });
-    assert.deepEqual(captured, canvasPixel);
+    for (let index = 0; index < 4; index++) assert(Math.abs(captured[index] - shown[index]) <= 1, JSON.stringify({ captured, shown }));
     await note.locator('button').focus(); await expect(page.getByRole('button', { name: `Comment ${theme === 'light' ? 1 : 3}: ${theme} short comment`, exact: true })).toBeFocused();
     await page.keyboard.press('Enter'); await expect(page.getByRole('textbox', { name: 'Annotation text', exact: true })).toBeVisible(); await page.keyboard.press('Escape');
     await page.screenshot({ path: join(app.evidence, `collapsed-comment-${theme}.png`) });
@@ -865,4 +917,116 @@ test('refinement collapsed region text keeps its padding inside a narrow scaled 
   assert(facts.summary.x >= facts.note.x + facts.padding.left - .1); assert(facts.summary.right <= facts.note.right - facts.padding.right + .1); assert(facts.note.right <= 320);
   await page.screenshot({ path: join(app.evidence, 'collapsed-region-csszoom-320.png') });
   await writeFile(join(app.evidence, 'collapsed-region-csszoom-geometry.json'), JSON.stringify(facts, null, 2));
+});
+
+test('Done composes pins, content, captions and comments at their displayed DOM positions', { timeout: 120_000 }, async t => {
+  for (const config of [{ theme: 'light', view: { x: 0, y: 0, zoom: 1 } }, { theme: 'dark', view: { x: 0, y: -60, zoom: 1.25 } }] as const) {
+    const app = await fixture(t), { page } = app;
+    await page.evaluate(theme => localStorage.setItem('acanvas-theme', theme), config.theme);
+    await app.call(`/api/sessions/${app.session.id}/view`, 'PUT', { ...config.view, selectedObjectIds: [] }); await page.reload();
+    await expect(page.locator('.zoom-label')).toHaveText(`${config.view.zoom * 100}%`); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved');
+    const screen = (x: number, y: number) => ({ x: x * config.view.zoom + config.view.x, y: y * config.view.zoom + config.view.y });
+    const encoded = await page.evaluate(() => { const canvas = document.createElement('canvas'); canvas.width = 400; canvas.height = 240; const context = canvas.getContext('2d')!; context.fillStyle = '#d93232'; context.fillRect(0, 0, 400, 240); return canvas.toDataURL('image/png').split(',')[1]; });
+    const object = await app.object(await app.importAsset('Geometry.png', 'image/png', Buffer.from(encoded, 'base64')));
+    await expect.poll(() => page.locator(`[data-object-id="${object.id}"] img`).evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(400);
+    await app.mark(screen(450, 350), screen(550, 420)); const inner = await app.done('Region inside the image'); assert.equal(inner.objectId, object.id);
+    // The outer region keeps the inner comment on the bare board while its crop still contains that comment.
+    await app.mark(screen(100, 300), screen(760, 560));
+    const rect = (selector: string) => page.locator(selector).evaluate(element => { const { x, y, width, height } = element.getBoundingClientRect(); return { x, y, width, height }; });
+    const settled = () => page.waitForFunction(() => document.getAnimations().every(animation => animation.playState !== 'running'));
+    let dom!: Record<'image' | 'innerPin' | 'outerPin' | 'caption' | 'comment', Area>, commentColor!: number[];
+    const outer = await app.done('Region around the image', async () => {
+      const outerId = await page.locator('.canvas-annotation-group[data-active="true"]').getAttribute('data-annotation-id'); await settled();
+      dom = { image: await rect(`[data-object-id="${object.id}"] img`), innerPin: await rect(`.canvas-annotation-group[data-annotation-id="${inner.id}"]>.annotation-pin`), outerPin: await rect(`.canvas-annotation-group[data-annotation-id="${outerId}"]>.annotation-pin`), caption: await rect(`[data-object-id="${object.id}"] .object-caption`), comment: await rect(`.canvas-annotation-comment[data-annotation-id="${inner.id}"]`) };
+      commentColor = await page.locator(`.canvas-annotation-comment[data-annotation-id="${inner.id}"]`).evaluate(element => {
+        const channels = (value: string) => value.match(/[\d.]+/g)!.map(Number), [r, g, b, alpha = 1] = channels(getComputedStyle(element).backgroundColor), board = channels(getComputedStyle(document.querySelector('#whiteboard')!).backgroundColor);
+        return [r, g, b].map((channel, index) => channel * alpha + board[index] * (1 - alpha));
+      });
+    });
+    assert.equal(outer.scope, 'region'); await page.mouse.move(1, 1); await settled();
+    const text = config.theme === 'light' ? 'ink' : 'bright';
+    const regions: Region[] = [{ window: grown(dom.image, 4), kind: 'red' }, { window: grown(dom.innerPin, 4), kind: 'pin' }, { window: grown(dom.outerPin, 4), kind: 'pin' }, { window: grown(dom.caption, 2), kind: text }, { window: grown(dom.comment, 4), kind: 'color', color: commentColor }, { window: dom.comment, kind: text }];
+    const captured = await colorBoxes(page, { capture: outer.capture! }, regions), displayed = await colorBoxes(page, { screenshot: await page.screenshot({ caret: 'hide' }) }, regions);
+    const box = (area: Area): Box => ({ left: area.x, top: area.y, right: area.x + area.width, bottom: area.y + area.height });
+    await writeFile(join(app.evidence, `done-geometry-${config.theme}-${config.view.zoom}.json`), JSON.stringify({ config, dom, commentColor, captured, displayed }, null, 2));
+    sameBox(captured[0], box(dom.image), 'image content');
+    for (const [index, name] of [[1, 'innerPin'], [2, 'outerPin']] as const) {
+      sameBox(captured[index], displayed[index], `${name} pixels`);
+      const pin = dom[name], found = captured[index]!;
+      assert(Math.abs((found.left + found.right) / 2 - (pin.x + 12.5 * 28 / 24)) <= 1 && Math.abs((found.top + found.bottom) / 2 - (pin.y + 14)) <= 1, `${name} center: ${JSON.stringify({ found, pin })}`);
+    }
+    sameBox(captured[3], displayed[3], 'caption text'); sameBox(captured[4], box(dom.comment), 'comment surface'); sameBox(displayed[4], box(dom.comment), 'displayed comment surface'); sameBox(captured[5], displayed[5], 'comment text');
+  }
+});
+
+test('Done validates near-expiry and expired base scenes against its frozen objects while the board changes', { timeout: 90_000 }, async t => {
+  const app = await fixture(t), { page } = app, scenes = await sceneRoute(page);
+  scenes.state.nearExpiry = true;
+  const asset = await app.image(), target = await app.object(asset), other = await app.object(asset, { x: 800, y: 300, width: 300, height: 180 });
+  const confirms: number[] = []; page.on('response', response => { if (response.request().method() === 'PUT' && /\/capture-views\/[^/]+\/presented$/.test(new URL(response.url()).pathname)) confirms.push(response.status()); });
+  await app.mark({ x: 520, y: 360 });
+  const held = scenes.hold(), frozen = app.done('Frozen while the board changes');
+  await enteredStage(held.entered);
+  await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: other.id, expectedVersion: other.version, changes: { x: 820 } }] });
+  held.release(); const first = await frozen;
+  const refreshed = scenes.state.snapshots.find(value => value.held); assert(refreshed);
+  assert.equal(first.capture!.presentation!.baseSceneId, refreshed.id); assert.equal(first.capture!.sceneSource!.baseSceneId, refreshed.id);
+  assert.equal(first.capture!.scene.objects.find(value => value.object.id === target.id)?.object.version, target.version); assert.deepEqual(confirms, [200]);
+  await expect(page.locator(`[data-object-id="${other.id}"]`)).toHaveCSS('left', '820px');
+  scenes.state.nearExpiry = false;
+  const moved = app.running.service.objects().find(value => value.id === other.id)!;
+  await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: other.id, expectedVersion: moved.version, changes: { x: 800 } }] });
+  await expect(page.locator(`[data-object-id="${other.id}"]`)).toHaveCSS('left', '800px'); await expect.poll(() => scenes.state.snapshots.length).toBeGreaterThanOrEqual(4);
+  const expired = scenes.state.snapshots.at(-1)!.id; app.running.service.db.prepare('UPDATE capture_scenes SET expires_at=0').run();
+  await app.mark({ x: 560, y: 400 }); const second = await app.done('After the base scene expired');
+  assert.deepEqual(confirms.slice(1), [409, 200]); assert.notEqual(second.capture!.presentation!.baseSceneId, expired); assert.equal(second.capture!.presentation!.baseSceneId, scenes.state.snapshots.at(-1)!.id);
+  assert(second.capture!.presentation!.frameSeq > first.capture!.presentation!.frameSeq, JSON.stringify([first.capture!.presentation!.frameSeq, second.capture!.presentation!.frameSeq]));
+});
+
+test('Escape and pagehide during the asynchronous Done phase leave no hold, source or pending evidence', { timeout: 90_000 }, async t => {
+  const app = await fixture(t), { page } = app, scenes = await sceneRoute(page);
+  scenes.state.nearExpiry = true; await app.object(await app.image());
+  const holds: string[] = []; page.on('request', request => { const path = new URL(request.url()).pathname; if (/\/capture-views\/[^/]+\/(presented|presentations)$/.test(path)) holds.push(`${request.method()} ${path}`); });
+  const pending = () => page.evaluate(() => new Promise<number>((resolve, reject) => {
+    const request = indexedDB.open('acanvas-scene-evidence', 1);
+    request.onupgradeneeded = () => { request.result.createObjectStore('pending', { keyPath: 'id' }).createIndex('session', 'sessionId'); };
+    request.onsuccess = () => { const database = request.result, count = database.transaction('pending').objectStore('pending').count(); count.onsuccess = () => { database.close(); resolve(count.result); }; count.onerror = () => reject(count.error); };
+    request.onerror = () => reject(request.error);
+  }));
+  const text = 'Cancelled during the scene check';
+  const unchanged = async () => {
+    await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 500)));
+    const annotation = (await app.saved()).annotations[0]; assert.equal(annotation.text, text); assert.equal(annotation.captureState?.status, 'incomplete'); assert.equal(annotation.sceneSource, undefined); assert.equal(annotation.capture, undefined);
+    assert.deepEqual(holds, []); assert.equal((app.running.service.db.prepare('SELECT COUNT(*) AS count FROM scene_sources').get() as { count: number }).count, 0); assert.equal(await pending(), 0);
+  };
+  // Each cancellation must end the capture while the base scene renewal is still held.
+  const stopped = () => expect(page.locator('.app-shell')).not.toHaveAttribute('data-capturing', 'true');
+  await app.mark({ x: 520, y: 360 }); await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill(text);
+  let held = scenes.hold(); await page.getByRole('button', { name: 'Done', exact: true }).click(); await enteredStage(held.entered);
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-capturing', 'true');
+  await page.keyboard.press('Escape'); await stopped(); held.release(); await unchanged();
+  await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'incomplete');
+  await page.locator('.draft-annotation .annotation-content').click(); await expect(page.getByRole('textbox', { name: 'Annotation text', exact: true })).toBeVisible();
+  held = scenes.hold(); await page.getByRole('button', { name: 'Done', exact: true }).click(); await enteredStage(held.entered);
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-capturing', 'true');
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: false }))); await stopped(); held.release(); await unchanged();
+});
+
+test('Done reports content it cannot copy and still completes with that object\'s placeholder', async t => {
+  const app = await fixture(t), { page } = app;
+  const list = await app.importAsset('Long list.md', 'text/markdown', Buffer.from(Array.from({ length: 6000 }, (_, index) => `- Item ${index}`).join('\n')));
+  const object = await app.object(list, { x: 300, y: 250, width: 340, height: 300 });
+  await expect(page.locator(`[data-object-id="${object.id}"] .markdown-body li`).first()).toBeVisible();
+  await app.mark({ x: 470, y: 400 }); const note = await app.done('Placeholder for an oversized panel');
+  assert.equal(note.objectId, object.id); assert.equal(note.capture!.scene.objects.find(value => value.object.id === object.id)?.contentAnchor, undefined);
+  await expect(page.getByText('Long list.md appears as a placeholder in the annotation image: The content layout exceeds the supported node count.')).toBeVisible();
+});
+
+test('consecutive Done frame sequences advance by one when the clock does not', async t => {
+  const app = await fixture(t), { page } = app;
+  await app.object(await app.image());
+  const fixed = await page.evaluate(() => { const now = Date.now() + 60_000; Date.now = () => now; return now; });
+  await app.mark({ x: 520, y: 360 }); const first = await app.done('First evidence frame');
+  await app.mark({ x: 560, y: 400 }); const second = await app.done('Next evidence frame');
+  assert.equal(first.capture!.presentation!.frameSeq, fixed); assert.equal(second.capture!.presentation!.frameSeq, fixed + 1);
 });

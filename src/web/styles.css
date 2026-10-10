@@ -41,10 +41,6 @@ h1,h2,h3,p { margin: 0; }
 .whiteboard.mode-pan { cursor: grab; }
 .whiteboard.mode-pan:active { cursor: grabbing; }
 .canvas-world { position: absolute; inset: 0; transform-origin: 0 0; pointer-events: none; }
-.scene-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; pointer-events:none; }
-.scene-semantic .board-object { outline:0; box-shadow:none; }
-.scene-semantic .object-media,.scene-semantic .object-caption,.scene-semantic .resize-handle,.scene-semantic .annotation-outline,.scene-semantic .alignment-guides,.scene-semantic .selection-rect { opacity:0; }
-.whiteboard:has(>.scene-canvas) .canvas-annotation-group>.annotation-pin { opacity:0; }
 .board-object { position: absolute; pointer-events: auto; border-radius: 0; outline: 1px solid color-mix(in srgb,var(--edge) 65%,transparent); box-shadow: var(--shadow); }
 .board-object.selected { outline: 2px solid var(--ink); }
 .object-media { width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: var(--surface); }
@@ -295,7 +291,6 @@ details[open] summary svg { rotate: 180deg; }
 .canvas-annotation-note { position: relative; pointer-events: auto; }
 .canvas-annotation-comment { padding: 4px 8px; border-radius: 7px; background: rgba(255,255,255,.84); }
 :root[data-theme='dark'] .canvas-annotation-comment { background: rgba(34,34,34,.84); }
-.canvas-annotation-comment[data-scene-drawn='true'] { opacity: 0; }
 .canvas-annotation-summary { display: block; width: 204px; max-width: 100%; height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; padding: 0; font-size: 13px; line-height: 20px; background: transparent; }
 .canvas-annotation-summary:hover { color: var(--annotation); }
 .annotation-full { --annotation-height: 192px; --annotation-padding: 12px; display: flex; flex-direction: column; width: min(360px,calc(100vw - 32px)); height: var(--annotation-height); max-height: calc(100dvh - 160px); padding: var(--annotation-padding); border: 0; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }

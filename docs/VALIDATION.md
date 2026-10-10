@@ -1,5 +1,16 @@
 # acanvas 验证记录
 
+## 画板 DOM 显示与按需取证（任务 1，2026-10-10）
+
+按[显示与取证分离设计](DOM_DISPLAY_CAPTURE_DESIGN.md)第 3、4 节及第 6 节任务 1 实施：画板对象回到可见 DOM，平移缩放只改变 `.canvas-world` 变换；图片、视频、GIF、Markdown、文件卡、音频与 `SceneHtmlSurface` 只登记按需取帧回调；Done 同步冻结显示状态，校验基础快照后由每个 capture view 的离屏 `SceneRenderer`（`scene-evidence-canvas`，裁剪复制前写入 `data-frame-seq`）一次性合成，HTML 图层不带 `surface`。
+
+- 类型检查、构建通过。`TMPDIR=$(realpath "$TMPDIR") npm test` 264 项：231 通过、33 个专项跳过、失败为零。使用系统默认 `TMPDIR`（`/var/folders` 符号链接）时 `html-bundle`、`native-profile-cleanup` 的 9 项因临时路径未解析而失败，未改动的基线构建结果相同；并行负载下偶见项目 Chrome 15 秒内未启动。
+- `chatbox-ui` 33 项与 `point-anchor` 2 项通过。取证预言改挂 `scene-evidence-canvas` 的裁剪复制，逐像素与 `frameSeq` 断言保留。新增：编号气泡、对象内容、标题、短评在 PNG 与 Done 时 DOM 位置一致（浅色缩放 1 与深色缩放 1.25 两种配置，实测差 0 CSS px，容差 ±1）；异步阶段编辑对象；接近过期与过期基础快照的刷新和重试；时钟不变时连续 Done 的 `frameSeq` 加一；Escape 与活页面上的 pagehide 在快照续期挂起期间结束捕获，且不留下 hold、source 与待上传证据（去掉 pagehide 取消或 `last + 1` 时对应用例失败）；无法复制的内容以占位绘制并提示错误；悬停与平移期间无 2D 画布绘制和 `presented` 请求。
+- 已改为取证画布或 DOM 状态并通过的门控专项：`canvas-gestures-production`、`element-capture-production`、`universal-scene-production`（10/10；取消对账改为轮询等待，基线同一读取 10 次中失败 1 次）、`universal-scene-types` 与 `universal-scene-geometry`（Chromium 与 Firefox；后者另修正已不存在的 `.capture-progress` 等待）、`universal-scene-prototype`（未改动）、`universal-html-popup`（CEF）。`board-html-*` 不依赖画板画布，未改动；本环境中基线同样有 2 项失败。
+- 退役：`universal-media`、`universal-markdown-anchor`、`interactive-media-pipeline` 验证的是已移除的持续发布模型（注册表订阅、逐帧发布时序、音频缓存绘制命令），夹具 `tests/fixtures/universal-media/main.jsx` 依赖已移除的 `registry.get/subscribe`。`universal-target-edit` 在本任务前已因移除 “Annotation target” 选择框失效（基线相同），仅更新加载等待。
+- 上述套件跑在 HTML 选中改动之前。改动之后 `npm run typecheck` 通过。隔离临时项目、Vite 源码和系统 Chrome 另查一块 HTML 与一张图片：页面没有 `.scene-canvas`；主键单击和双击后 `data-selected=true`；单击长任务 74ms；空白处平移没有长任务，之后仍没有 `.scene-canvas`；缩放拖动期间 `PUT .../viewport` 为 0，松手后 1 次，对象宽度 460→614.5。未写入 4317 上的用户项目。
+- 画板 HTML 随后改回沙箱 iframe，不再创建服务端 HTML 表面。`chatbox-ui` 中「Markdown 锚点与 HTML 表单」一条在新构建上通过：在线输入保留、Done 的 PNG 背景色符合 `#cff0e8`、图层无 `surface`、滚动为 `{x:0,y:0}`、没有 `POST .../html-surfaces`。隔离的三块简单 HTML 从打开页面到三块 iframe 可见为 259ms，表面请求为 0。这不是设计第 7 节的用户素材复测。依赖画板创建 CEF 表面的门控专项（`board-html-*`、`universal-html-client-controls`、`universal-html-popup`、`universal-html-recovery`）仍按旧显示路径编写，启用时会失败；服务端表面测试不依赖画板显示。
+
 ## HTML、手势与画板性能修复（2026-10-09）
 
 实际 HTML 429 项目容量、原生滚轮 getter 与连续视图覆盖、完整画板回读／分配及 Markdown 相同内容重写已定位并修复，见[专项验证](BOARD_RUNTIME_REGRESSION_VALIDATION.md)。HTML／手势／渲染性能独立验收通过，72 图层、同 N 与旧证据验证通过。两轮性能对照显著降低拖动／平移成本，原失败及 RAF 中位等待取舍分别记录。最新默认 232 项中 202 通过、30 个专项跳过，失败／取消均为零；原端口／会话已后台更新，两次公开字段和40个原素材字节比较一致，当前视口与草稿保持。

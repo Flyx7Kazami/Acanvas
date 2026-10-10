@@ -1,7 +1,6 @@
-import type { AnnotationInput, AnnotationTarget, Asset, BoardObject, ContentAnchor, SessionView, ScenePresentation } from '../shared/types.js';
+import type { AnnotationInput, AnnotationTarget, Asset, BoardObject, ContentAnchor, SessionView } from '../shared/types.js';
 import type { BrowserCaptureFrame, BrowserCaptureIdentity } from '../shared/browser-capture.js';
 import { intersects, normalizedRegion, objectRegion, screenBounds, unionBounds, type Rect } from './geometry.js';
-import type { Immutable } from './scene-renderer/types.js';
 import { resolveContentKind } from '../shared/content-types.js';
 import { readMarkdownContentAnchor } from './scene-renderer/media/markdown-anchor.js';
 
@@ -25,8 +24,9 @@ function inRoundedBody(point: { x: number; y: number }, body: Rect, radius: numb
   return Math.hypot(point.x - x, point.y - y) <= radius;
 }
 
-/** Selects content from the displayed frame, with opaque bodies shielding lower layers. */
-export function presentedMarkTarget(world: Rect, geometry: 'point' | 'rect', presentation: Immutable<ScenePresentation> | undefined, objects: BoardObject[], assets: Asset[]): Partial<AnnotationInput> {
+export interface MarkLayer { readonly objectId: string; readonly layer: number; readonly contentWorldBounds?: Rect }
+/** Selects displayed content in layer order, with opaque bodies shielding lower layers. */
+export function presentedMarkTarget(world: Rect, geometry: 'point' | 'rect', presentation: { readonly layers: readonly MarkLayer[] } | undefined, objects: BoardObject[], assets: Asset[]): Partial<AnnotationInput> {
   const layers = [...(presentation?.layers || [])].sort((a, b) => b.layer - a.layer);
   const body = (id: string) => objects.find(object => object.id === id);
   const radius = (id: string) => {

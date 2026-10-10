@@ -1,8 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react';
 import { ArrowDownToLine, Code2, RotateCw, Square } from 'lucide-react';
 import type { Asset } from '../shared/types';
-import { useSceneContent } from './scene-renderer/content';
-import { SceneHtmlSurface } from './html-surface/SceneHtmlSurface';
+import { useSceneCapture, useSceneRefresh, type SceneContentFrameInput } from './scene-renderer/content';
 import type { BoardApi, HtmlPreviewGrant } from './api';
 import { HTML_PREVIEW_LIMIT, useHtmlPreviewSlot } from './HtmlPreviewPool';
 import { rasterizeHtmlSnapshot } from './html-preview-snapshot';
@@ -16,6 +15,20 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
   const [grant, setGrant] = useState<HtmlPreviewGrant>();
   const [error, setError] = useState(''), [ready, setReady] = useState(false), [reloadRequired, setReloadRequired] = useState(false);
   const frame = useRef<HTMLIFrameElement>(null), active = useRef<HtmlPreviewGrant | undefined>(undefined), requestSequence = useRef(0);
+  const snapshotImage = useRef<HTMLImageElement>(null), pageScroll = useRef<{ x: number; y: number } | undefined>(undefined);
+  const rememberScroll = (data: { scrollX?: unknown; scrollY?: unknown }) => {
+    const x = data.scrollX, y = data.scrollY;
+    if (typeof x !== 'number' || typeof y !== 'number' || !Number.isFinite(x) || !Number.isFinite(y) || Math.abs(x) > 1_000_000 || Math.abs(y) > 1_000_000) return;
+    pageScroll.current = { x, y };
+  };
+  const displayedFrame = (): SceneContentFrameInput | undefined => {
+    const image = snapshotImage.current;
+    if (!image?.complete || image.naturalWidth < 1 || image.naturalHeight < 1) return;
+    return { pixels: image, bitmap: { width: image.naturalWidth, height: image.naturalHeight }, fit: 'fill', ...(pageScroll.current ? { scroll: { ...pageScroll.current } } : {}) };
+  };
+  const refreshLive = useRef<() => Promise<SceneContentFrameInput | undefined>>(async () => displayedFrame());
+  useSceneCapture(displayedFrame);
+  useSceneRefresh(() => refreshLive.current());
   const documentOrigin = useRef(document.querySelector<HTMLMetaElement>('meta[name="acanvas-html-preview-origin"]')?.content);
   const inputPort = useRef<MessagePort | undefined>(undefined);
   const allocated = ['capturing', 'live', 'freezing'].includes(preview.slot), live = preview.slot === 'live';
@@ -117,6 +130,7 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
       if (!['acanvas:preview-snapshot', 'acanvas:preview-snapshot-error'].includes(event.data.type)) return;
       received = true;
       if (event.data.type === 'acanvas:preview-snapshot-error') { setError('Snapshot unavailable. You can still interact or retry.'); preview.complete(preview.generation); return; }
+      rememberScroll(event.data);
       const { svg, width, height } = event.data;
       if (width !== preview.width || height !== preview.height) { setError('Snapshot size changed. Retry after resizing.'); preview.complete(preview.generation); return; }
       void rasterizeHtmlSnapshot({ svg, width, height }, controller.signal).then(image => {
@@ -130,6 +144,31 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
     return () => { controller.abort(); cancelAnimationFrame(firstFrame); cancelAnimationFrame(secondFrame); window.removeEventListener('message', message); };
   }, [grant, ready, preview.slot, preview.generation, preview.width, preview.height, preview.complete]);
 
+  refreshLive.current = async () => {
+    const iframe = frame.current, grant = active.current, target = iframe?.contentWindow;
+    if (!target || !grant || !inputState.current.live) return displayedFrame();
+    const requestId = crypto.randomUUID();
+    const payload = await new Promise<{ svg: string; width: number; height: number } | undefined>(resolve => {
+      const timer = window.setTimeout(() => { window.removeEventListener('message', onMessage); resolve(undefined); }, 1500);
+      const onMessage = (event: MessageEvent) => {
+        if (event.source !== target || event.origin !== 'null' || !event.data || event.data.instanceId !== grant.id || event.data.requestId !== requestId) return;
+        if (!['acanvas:preview-snapshot', 'acanvas:preview-snapshot-error'].includes(event.data.type)) return;
+        window.removeEventListener('message', onMessage); window.clearTimeout(timer);
+        if (event.data.type !== 'acanvas:preview-snapshot') { resolve(undefined); return; }
+        rememberScroll(event.data);
+        const { svg, width, height } = event.data;
+        resolve(typeof svg === 'string' && Number.isSafeInteger(width) && Number.isSafeInteger(height) ? { svg, width, height } : undefined);
+      };
+      window.addEventListener('message', onMessage);
+      target.postMessage({ type: 'acanvas:preview-snapshot', instanceId: grant.id, requestId }, '*');
+    });
+    if (!payload) return displayedFrame();
+    try {
+      const snapshot = await rasterizeHtmlSnapshot(payload), image = new Image();
+      image.src = snapshot.url; await image.decode();
+      return { pixels: image, bitmap: { width: image.naturalWidth, height: image.naturalHeight }, fit: 'fill' as const, ...(pageScroll.current ? { scroll: { ...pageScroll.current } } : {}) };
+    } catch { return displayedFrame(); }
+  };
   function interact(explicit = false) { if (explicit) stoppedWhileHovered.current = false; if (reloadRequired || stoppedWhileHovered.current) return; setError(''); preview.request(); }
   function hover(event: PointerEvent<HTMLDivElement>) {
     if (hoverAttempted.current || (event.target as Element).closest('.html-preview-tools')) return;
@@ -142,7 +181,7 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
     onFocus={event => { if (event.target === event.currentTarget) interact(true); }}
     onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); interact(true); } }}
     onPointerDown={event => { if (event.pointerType === 'touch' && !(event.target as Element).closest('[data-canvas-control].html-preview-tools')) interact(true); }}>
-    {preview.image && <img className="html-snapshot" src={preview.image.url} alt={`Static preview of ${asset.name}`} draggable={false} data-snapshot-width={preview.image.width} data-snapshot-height={preview.image.height}/>}
+    {preview.image && <img ref={snapshotImage} className="html-snapshot" src={preview.image.url} alt={`Static preview of ${asset.name}`} draggable={false} data-snapshot-width={preview.image.width} data-snapshot-height={preview.image.height}/>}
     {allocated && grant && <iframe ref={frame} className={live ? 'html-live-frame' : 'html-capture-frame'} style={{ visibility: preview.image && !ready ? 'hidden' : undefined }} src={grant.url} title={`HTML preview: ${asset.name}`} sandbox="allow-scripts" referrerPolicy="no-referrer" allow="" tabIndex={live ? 0 : -1} aria-hidden={!live} onLoad={() => setReady(true)}/>}
     {!preview.image && !(allocated && grant) && <div className="html-poster"><Code2 size={32} strokeWidth={1.25}/><strong>{asset.name}</strong><span>{preparing ? preview.slot === 'waiting' ? `Waiting for a preview slot · ${HTML_PREVIEW_LIMIT} at a time` : 'Preparing preview…' : 'Preview unavailable'}</span></div>}
     {pendingDrag && live && <div className="html-drag-capture" aria-hidden="true" onPointerDown={() => setPendingDrag(undefined)} onPointerMove={event => {
@@ -158,8 +197,6 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
   </div>;
 }
 
-export function HtmlCanvasContent(props: Parameters<typeof LegacyHtmlCanvasContent>[0]) {
-  const scene=useSceneContent();
-  if(scene) return <SceneHtmlSurface asset={props.asset} api={props.api} scene={scene}/>;
+export function HtmlCanvasContent(props: Parameters<typeof LegacyHtmlCanvasContent>[0] & { onBlankPointerDown?: (event: PointerEvent<HTMLElement>) => void }) {
   return <LegacyHtmlCanvasContent {...props}/>;
 }

@@ -1,11 +1,11 @@
-import type { SceneBounds, ScenePresentation, Immutable } from './types.js';
+import type { SceneBounds, ScenePresentation } from './types.js';
 import { boundsToCSS } from './geometry.js';
 
 interface AnnotationCaptureCropInput {
-  presentation: ScenePresentation | Immutable<ScenePresentation>;
+  presentation: Pick<ScenePresentation, 'camera' | 'cssViewport'> & { readonly layers: readonly { readonly objectId: string; readonly renderedBounds: SceneBounds }[] };
   worldBounds: SceneBounds;
   objectId?: string;
-  /** The marker's CSS bounds from the same presented frame. */
+  /** The marker's CSS bounds from the same frozen scene. */
   markerCSS?: SceneBounds;
 }
 
@@ -21,7 +21,7 @@ function enclosing(bounds: SceneBounds[]): SceneBounds {
   return { x, y, width: Math.max(...bounds.map(value => value.x + value.width)) - x, height: Math.max(...bounds.map(value => value.y + value.height)) - y };
 }
 
-/** Chooses context from the visible frame; SceneRenderer.capture clips it to available Canvas and page pixels. */
+/** Chooses context from the frozen scene; SceneRenderer.capture clips it to available Canvas and page pixels. */
 export function annotationCaptureCrop({ presentation, worldBounds, objectId, markerCSS }: AnnotationCaptureCropInput): SceneBounds {
   const targetCSS = boundsToCSS(worldBounds, presentation.camera, presentation.cssViewport);
   if (!objectId) return expanded(enclosing([targetCSS]), 96);

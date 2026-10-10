@@ -1,5 +1,14 @@
 import { intersects, type Point, type Rect } from './geometry';
 
+/** World centers of the numbered pins: point pins sit on their point; rect pins sit above the mark's corner and stack per corner. */
+export function annotationPinCenters(marks: { bounds: Rect; geometry?: 'point' | 'rect' }[], zoom: number): Point[] {
+  return marks.map((mark, index) => {
+    if (mark.geometry === 'point') return { x: mark.bounds.x, y: mark.bounds.y };
+    const preceding = marks.slice(0, index).filter(value => value.geometry !== 'point' && value.bounds.x === mark.bounds.x && value.bounds.y === mark.bounds.y).length;
+    return { x: mark.bounds.x + 14 / zoom, y: mark.bounds.y - (22 + preceding * 36) / zoom };
+  });
+}
+
 /** Places a comment beside a screen point while keeping its marker independent. */
 export function placePointAnnotationNote(anchor: Point, size: { width: number; height: number }, viewport: Rect, obstacles: Rect[]): Rect {
   const gap = 22;

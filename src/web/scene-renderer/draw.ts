@@ -10,12 +10,14 @@ function drawPrimitive(context: SceneContext, primitive: ScenePrimitive): void {
     const { x, y, width, height } = primitive.bounds;
     context.beginPath(); context.roundRect(x, y, width, height, primitive.radius ?? 0);
     context.fillStyle = primitive.fill; context.fill();
-    if (primitive.stroke) { context.strokeStyle = primitive.stroke; context.lineWidth = primitive.lineWidth ?? 1; context.stroke(); }
+    if (primitive.stroke) { context.strokeStyle = primitive.stroke; context.lineWidth = primitive.lineWidth ?? 1; if (primitive.dash) context.setLineDash(primitive.dash); context.stroke(); }
     context.restore();
   } else if (primitive.kind === 'ellipse') {
     const { x, y, width, height } = primitive.bounds;
-    context.beginPath(); context.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, 2 * Math.PI);
+    context.save(); context.beginPath(); context.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, 2 * Math.PI);
     context.fillStyle = primitive.fill; context.fill();
+    if (primitive.stroke) { context.strokeStyle = primitive.stroke; context.lineWidth = primitive.lineWidth ?? 1; if (primitive.dash) context.setLineDash(primitive.dash); context.stroke(); }
+    context.restore();
   } else if (primitive.kind === 'line') {
     context.beginPath(); primitive.points.forEach((point, index) => index ? context.lineTo(point.x, point.y) : context.moveTo(point.x, point.y));
     context.strokeStyle = primitive.stroke; context.lineWidth = primitive.lineWidth; context.stroke();

@@ -1,11 +1,11 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AnnotationCaptureInput, AnnotationInput, Asset, BaseSceneSnapshot, BoardObject, CaptureView, Draft, SessionView } from '../../shared/types.js';
 import { RequestError, type BoardApi } from '../api.js';
 import { contentCapabilities, resolveContentKind } from '../../shared/content-types.js';
 import { createProjectCaptureProvider, type ProjectCaptureCoordinator } from '../project-capture-provider.js';
-import { SceneRenderer, type Immutable, type SceneBounds, type SceneInput, type SceneLayer, type ScenePresentation, type ScenePrimitive } from './index.js';
-import { annotationTarget } from '../annotation-scene.js';
-import { SceneContentRegistry, type SceneContentMetadata } from './content.js';
+import { SceneRenderer, boundsToCSS, sceneCrop, type Immutable, type SceneBounds, type SceneEvidence, type SceneInput, type SceneLayer, type SceneMark, type ScenePresentation, type ScenePrimitive, type SceneSize } from './index.js';
+import { annotationCaptureCrop } from './capture-crop.js';
+import { SceneContentFrame, type SceneContentFrameInput, type SceneContentMetadata, type SceneContentRegistry } from './content.js';
 
 export interface ProjectSceneSource { provider: ProjectCaptureCoordinator; view?: CaptureView; connectingView?: CaptureView; snapshot?: BaseSceneSnapshot }
 export function useProjectScene(api: BoardApi, sessionId: string, objects: BoardObject[], saveDraft: (draft: Draft) => Promise<Draft>, onError: (cause: unknown) => void, serviceInstance: string) {
@@ -70,161 +70,161 @@ export function useProjectScene(api: BoardApi, sessionId: string, objects: Board
   return source?.provider.sessionId === sessionId ? source : undefined;
 }
 
-export interface BoardSceneMark { annotation: AnnotationInput; bounds: SceneBounds; number: number }
-export interface BoardSceneInput {
-  canvas: RefObject<HTMLCanvasElement | null>;
-  board: RefObject<HTMLElement | null>;
+export interface BoardSceneOutline { bounds: SceneBounds; point: boolean; dashed: boolean }
+export interface BoardSceneMark { annotationId: string; pin: { x: number; y: number }; number: number }
+export interface BoardSceneFreeze {
+  board: HTMLElement;
   registry: SceneContentRegistry;
-  source?: ProjectSceneSource;
+  view: CaptureView;
+  snapshot: BaseSceneSnapshot;
+  /** Displayed objects in layer order; their identities come from the displayed snapshot. */
   objects: BoardObject[];
   assets: Asset[];
-  view: SessionView;
-  marks: BoardSceneMark[];
+  camera: SessionView;
+  contentBounds: (object: BoardObject) => SceneBounds;
+  annotations: AnnotationInput[];
+  outlines: BoardSceneOutline[];
   editingBounds?: SceneBounds;
   selection?: SceneBounds | null;
   guides: { axis: 'x' | 'y'; position: number; start: number; end: number }[];
-  theme: 'light' | 'dark';
-  onError: (cause: unknown) => void;
-  onPresented?: () => void;
+  marks: BoardSceneMark[];
+  target: { annotation: AnnotationInput; worldBounds: SceneBounds };
+  clip: SceneBounds;
+  onCaptureError: (cause: unknown, asset?: Asset) => void;
 }
-const fontFamily = '"Google Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
-function contain(bounds: SceneBounds, size: { width: number; height: number }): SceneBounds {
-  const scale = Math.min(bounds.width / size.width, bounds.height / size.height), width = size.width * scale, height = size.height * scale;
-  return { x: bounds.x + (bounds.width - width) / 2, y: bounds.y + (bounds.height - height) / 2, width, height };
+export interface FrozenBoardScene {
+  view: CaptureView;
+  snapshot: BaseSceneSnapshot;
+  scene: Omit<SceneInput, 'frameSeq' | 'baseSceneId'>;
+  bitmap: SceneSize;
+  requestedCrop: SceneBounds;
+  clip: SceneBounds;
+  worldBounds: SceneBounds;
+  sources: Map<string, Immutable<SceneContentMetadata>>;
 }
 
-/** All visible evidence layers are drawn here; semantic controls remain owned by React. */
-export function useBoardScene(input: BoardSceneInput) {
-  const renderer = useRef<SceneRenderer | undefined>(undefined);
-  const latest = useRef(input);
-  useLayoutEffect(() => { latest.current = input; });
-  const seq = useRef(0), renderNow = useRef<() => void>(() => {});
-  const presentation = useRef<Immutable<ScenePresentation> | undefined>(undefined);
-  const layout = useRef<{ objects: BoardObject[]; contentBounds: Map<string, SceneBounds>; snapshot: BaseSceneSnapshot; sources: Map<string, Immutable<SceneContentMetadata>>; markerBounds: Map<string, SceneBounds>; markTargets: Map<string, ReturnType<typeof annotationTarget>> } | undefined>(undefined);
-  useLayoutEffect(() => {
-    const element = input.canvas.current, source = input.source;
-    if (!element || !source?.view) { renderer.current = undefined; presentation.current = undefined; layout.current = undefined; return; }
-    const identity = source.view;
-    renderer.current = new SceneRenderer(element, { documentId: identity.documentId, viewId: identity.viewId }); seq.current = 0;
-    let active = true, confirming = false, queued: Immutable<ScenePresentation> | undefined, renderRequest = 0;
-    let markerAnimation = 0, animatedNotes = false, alignMarkers = () => {};
-    const confirmLatest = (value: Immutable<ScenePresentation>) => {
-      queued = value;
-      const send = () => {
-        if (confirming || !active || !queued) return;
-        const paired = queued; queued = undefined; confirming = true;
-        void source.provider.confirmPresentation(paired).catch(cause => { if (active) latest.current.onError(cause); }).finally(() => { confirming = false; send(); });
-      };
-      send();
-    };
-    const render = () => {
-      const current = latest.current, board = current.board.current, display = current.canvas.current, base = current.source?.snapshot;
-      if (!board || !display || !base || current.source?.view?.viewId !== identity.viewId) return;
-      const rect = display.getBoundingClientRect(); if (rect.width <= 0 || rect.height <= 0) return;
-      const cssScale = rect.width / Math.max(1, board.clientWidth), camera = { x: current.view.x * cssScale, y: current.view.y * cssScale, zoom: current.view.zoom * cssScale };
-      const cssViewport = { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
-      const pixelRatio = Math.min(devicePixelRatio, Math.sqrt(16_000_000 / (rect.width * rect.height)));
-      const bitmap = { width: Math.max(1, Math.floor(rect.width * pixelRatio)), height: Math.max(1, Math.floor(rect.height * pixelRatio)) };
-      const palette = current.theme === 'dark' ? { canvas: '#111', surface: '#222', ink: '#f3f3f3', muted: '#aaa', edge: '#3a3a3a', annotation: '#9ed0ff', annotationFill: 'rgba(158,208,255,.14)' }
-        : { canvas: '#fcfcfa', surface: '#fff', ink: '#202020', muted: '#707070', edge: '#dedede', annotation: '#7bbcff', annotationFill: 'rgba(123,188,255,.12)' };
-      const layers: SceneLayer[] = [], media: SceneInput['media'] = [], contentBounds = new Map<string, SceneBounds>(), sources = new Map<string, Immutable<SceneContentMetadata>>();
-      for (const [index, object] of current.objects.entries()) {
-        const asset = current.assets.find(value => value.id === object.assetId), frame = current.registry.get(object.id), selected = current.view.selectedObjectIds.includes(object.id);
-        const bounds = { x: object.x, y: object.y, width: object.width, height: object.height };
-        const kind = resolveContentKind(asset);
-        const actualContentBounds = frame?.metadata.contentBounds ? { x: bounds.x + frame.metadata.contentBounds.x, y: bounds.y + frame.metadata.contentBounds.y, width: frame.metadata.contentBounds.width, height: frame.metadata.contentBounds.height } : frame?.metadata.fit === 'contain' ? contain(bounds, frame.metadata.bitmap) : bounds;
-        contentBounds.set(object.id, actualContentBounds);
-        const primitives: ScenePrimitive[] = [{ kind: 'rect', bounds, fill: kind === 'video' ? '#161616' : palette.surface, radius: kind === 'audio' ? 22 : 0, shadow: { color: current.theme === 'dark' ? '#0002' : '#20202008', y: current.theme === 'dark' ? 12 : 8, blur: 32 } }];
-        if (frame) {
-          sources.set(object.id, frame.metadata);
-          primitives.push({ kind: 'texture', bounds: frame.metadata.fit === 'contain' ? contain(bounds, frame.metadata.bitmap) : bounds, texture: frame, radius: kind === 'audio' ? 22 : 0 });
-          if (frame.metadata.media) {
-            const annotation = current.marks.find(mark => mark.annotation.objectId === object.id)?.annotation;
-            media.push({ objectId: object.id, ...frame.metadata.media, ...(annotation?.timeStart === undefined ? {} : annotation.timeEnd === undefined ? { selectedTime: annotation.timeStart } : { selectedRange: { start: annotation.timeStart, end: annotation.timeEnd } }), ...(annotation?.snapshotAssetId && annotation.timeStart !== undefined ? { representativeTime: annotation.timeStart } : {}) });
-          }
-        } else {
-          primitives.push({ kind: 'text', x: bounds.x + 16, y: bounds.y + Math.min(32, bounds.height / 2), text: 'Loading preview…', font: `11px ${fontFamily}`, fill: palette.muted, maxWidth: Math.max(1, bounds.width - 32) });
-        }
-        // Captions use the same object order and fonts as their native hit areas.
-        primitives.push({ kind: 'rect', bounds: { x: object.x, y: object.y + object.height + 12, width: 19, height: 16 }, fill: palette.surface, radius: 3 },
-          { kind: 'text', x: object.x + 4, y: object.y + object.height + 23, text: String(index + 1).padStart(2, '0'), font: `8px ${fontFamily}`, fill: palette.muted },
-          { kind: 'text', x: object.x + 26, y: object.y + object.height + 24, text: asset?.name || 'File', font: `10px ${fontFamily}`, fill: palette.muted, maxWidth: Math.max(1, object.width - 28 - (object.sourceTaskId ? 43 : 0)), ellipsis: true });
-        if (object.sourceTaskId) primitives.push({ kind: 'rect', bounds: { x: object.x + object.width - 40, y: object.y + object.height + 12, width: 40, height: 16 }, fill: palette.surface, radius: 3 }, { kind: 'text', x: object.x + object.width - 35, y: object.y + object.height + 23, text: 'Output', font: `8px ${fontFamily}`, fill: palette.ink });
-        if (selected || kind !== 'audio') primitives.push({ kind: 'rect', bounds, fill: 'transparent', radius: kind === 'audio' ? 22 : 0, stroke: selected ? palette.ink : palette.edge, lineWidth: selected ? 2 : 1 });
-        if (selected) {
-          const positions = contentCapabilities[kind].freeResize ? [[0, 0], [.5, 0], [1, 0], [1, .5], [1, 1], [.5, 1], [0, 1], [0, .5]] : [[0, 0], [1, 0], [1, 1], [0, 1]];
-          for (const [x, y] of positions) primitives.push({ kind: 'rect', bounds: { x: bounds.x + x * bounds.width - 5.5, y: bounds.y + y * bounds.height - 5.5, width: 11, height: 11 }, fill: palette.surface, stroke: palette.ink, lineWidth: 2 });
-        }
-        const semantic = board.querySelector<HTMLElement>('[data-object-id="' + CSS.escape(object.id) + '"]');
-        if (semantic && semantic === document.activeElement && semantic.matches(':focus-visible')) primitives.push({ kind: 'rect', bounds: { x: bounds.x - 5, y: bounds.y - 5, width: bounds.width + 10, height: bounds.height + 10 }, fill: 'transparent', radius: kind === 'audio' ? 27 : 0, stroke: palette.ink, lineWidth: 2 });
-        layers.push({ objectId: object.id, assetId: object.assetId, objectVersion: object.version, worldBounds: { x: object.x - 40, y: object.y - 40, width: object.width + 80, height: object.height + 92 }, contentWorldBounds: actualContentBounds, layer: index,
-          surface: frame?.metadata.surface ? structuredClone(frame.metadata.surface) : undefined, contentAnchor: frame?.metadata.contentAnchor ? structuredClone(frame.metadata.contentAnchor) : undefined, primitives });
+const fontFamily = '"Google Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
+const inset = (bounds: SceneBounds, by: number): SceneBounds => ({ x: bounds.x + by, y: bounds.y + by, width: bounds.width - by * 2, height: bounds.height - by * 2 });
+const overlaps = (a: SceneBounds, b: SceneBounds) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+function withAlpha(color: string, alpha: number) {
+  const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color)?.[1]; if (!hex) return color;
+  const digits = hex.length === 3 ? [...hex].map(value => value + value) : [hex.slice(0, 2), hex.slice(2, 4), hex.slice(4, 6)];
+  return `rgba(${digits.map(value => Number.parseInt(value, 16)).join(',')},${alpha})`;
+}
+function scenePalette() {
+  const style = getComputedStyle(document.documentElement), value = (name: string) => style.getPropertyValue(name).trim(), dark = document.documentElement.dataset.theme === 'dark';
+  return { canvas: value('--canvas'), surface: value('--surface'), ink: value('--ink'), muted: value('--muted'), edge: value('--edge'), annotation: value('--annotation'), annotationFill: value('--annotation-fill'), annotationPin: value('--annotation-pin'), annotationInk: value('--annotation-ink'), shadow: dark ? { color: '#0002', y: 12, blur: 32 } : { color: '#20202008', y: 8, blur: 32 } };
+}
+
+/** Done reads the displayed scene once, synchronously: geometry, theme, marks, comment summaries and producer pixels. */
+export function freezeBoardScene(input: BoardSceneFreeze): FrozenBoardScene {
+  const board = input.board, rect = board.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) throw new Error('The visible scene is still loading. Complete the annotation when it is ready.');
+  const cssScale = rect.width / Math.max(1, board.clientWidth), zoom = input.camera.zoom, camera = { x: input.camera.x * cssScale, y: input.camera.y * cssScale, zoom: zoom * cssScale };
+  const cssViewport = { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  const pixelRatio = Math.min(devicePixelRatio, Math.sqrt(16_000_000 / (rect.width * rect.height)));
+  const bitmap = { width: Math.max(1, Math.floor(rect.width * pixelRatio)), height: Math.max(1, Math.floor(rect.height * pixelRatio)) };
+  const palette = scenePalette(), measure = document.createElement('canvas').getContext('2d')!, family = getComputedStyle(board).fontFamily || fontFamily;
+  // DOM text baselines land on device pixels, and line boxes floor their half-leading.
+  const deviceRatio = bitmap.height / cssViewport.height, baseline = (y: number) => (Math.round((y * camera.zoom + camera.y) * deviceRatio) / deviceRatio - camera.y) / camera.zoom;
+  const line = (font: string, text: string) => { measure.font = font; const metrics = measure.measureText(text); return { width: metrics.width, ascent: metrics.fontBoundingBoxAscent, height: metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent }; };
+  /** Mirrors .object-caption: a 22px flex row 10px below the object with a padded index badge, a 7px gap, the ellipsized name and the Output label. */
+  const caption = (object: BoardObject, index: number, name: string): ScenePrimitive[] => {
+    const top = object.y + object.height + 10, small = `8px ${family}`, label = String(index + 1).padStart(2, '0'), badge = line(small, label), title = line(`10px ${family}`, name), output = object.sourceTaskId ? line(small, 'Output') : undefined;
+    const height = Math.max(22, badge.height + 6, title.height, (output?.height ?? 0) + 6), badgeWidth = badge.width + 8, outputWidth = output ? output.width + 10 : 0;
+    const primitives: ScenePrimitive[] = [{ kind: 'rect', bounds: { x: object.x, y: top + (height - badge.height - 6) / 2, width: badgeWidth, height: badge.height + 6 }, fill: palette.surface, radius: 3 },
+      { kind: 'text', x: object.x + 4, y: baseline(top + (height - badge.height - 6) / 2 + 3 + badge.ascent), text: label, font: small, fill: palette.muted },
+      { kind: 'text', x: object.x + badgeWidth + 7, y: baseline(top + (height - title.height) / 2 + title.ascent), text: name, font: `10px ${family}`, fill: palette.muted, maxWidth: Math.max(1, object.width - badgeWidth - 7 - (output ? outputWidth + 7 : 0)), ellipsis: true }];
+    if (output) primitives.push({ kind: 'rect', bounds: { x: object.x + object.width - outputWidth, y: top + (height - output.height - 6) / 2, width: outputWidth, height: output.height + 6 }, fill: palette.surface, radius: 3 }, { kind: 'text', x: object.x + object.width - outputWidth + 5, y: baseline(top + (height - output.height - 6) / 2 + 3 + output.ascent), text: 'Output', font: small, fill: palette.ink });
+    return primitives;
+  };
+  const placed = input.objects.map((object, index) => { const worldBounds = { x: object.x - 40, y: object.y - 40, width: object.width + 80, height: object.height + 92 }; return { object, index, worldBounds, renderedBounds: boundsToCSS(worldBounds, camera, cssViewport) }; });
+  const markerSize = 28 * cssScale, marker = input.marks.find(mark => mark.annotationId === input.target.annotation.id);
+  const markerCSS = marker && { x: cssViewport.x + marker.pin.x * camera.zoom + camera.x - markerSize / 2, y: cssViewport.y + marker.pin.y * camera.zoom + camera.y - markerSize / 2, width: markerSize, height: markerSize };
+  const requestedCrop = annotationCaptureCrop({ presentation: { camera, cssViewport, layers: placed.map(value => ({ objectId: value.object.id, renderedBounds: value.renderedBounds })) }, worldBounds: input.target.worldBounds, objectId: input.target.annotation.objectId, markerCSS });
+  const crop = sceneCrop(cssViewport, bitmap, requestedCrop, input.clip).cropCSS;
+  const targets = new Set([input.target.annotation.objectId, ...input.target.annotation.objectIds].filter((id): id is string => !!id));
+  const layers: SceneLayer[] = [], media: SceneInput['media'] = [], sources = new Map<string, Immutable<SceneContentMetadata>>(), handles: ScenePrimitive[] = [];
+  for (const { object, index, worldBounds, renderedBounds } of placed) {
+    const bounds = { x: object.x, y: object.y, width: object.width, height: object.height }, content = input.contentBounds(object);
+    const layer: SceneLayer = { objectId: object.id, assetId: object.assetId, objectVersion: object.version, worldBounds, contentWorldBounds: content, layer: index, primitives: [] };
+    layers.push(layer);
+    if (!targets.has(object.id) && !overlaps(renderedBounds, crop)) continue;
+    const asset = input.assets.find(value => value.id === object.assetId), kind = resolveContentKind(asset), selected = input.camera.selectedObjectIds.includes(object.id), radius = kind === 'audio' ? 22 : 0;
+    const frame = input.registry.capture(object.id, cause => input.onCaptureError(cause, asset)), primitives = layer.primitives;
+    primitives.push({ kind: 'rect', bounds, fill: kind === 'video' ? '#161616' : palette.surface, radius, shadow: palette.shadow });
+    if (frame) {
+      sources.set(object.id, frame.metadata);
+      if (frame.metadata.contentAnchor) layer.contentAnchor = structuredClone(frame.metadata.contentAnchor) as SceneLayer['contentAnchor'];
+      primitives.push({ kind: 'texture', bounds: frame.metadata.fit === 'contain' ? content : bounds, texture: frame, radius });
+      if (frame.metadata.media) {
+        const annotation = input.annotations.find(value => value.objectId === object.id);
+        media.push({ objectId: object.id, ...frame.metadata.media, ...(annotation?.timeStart === undefined ? {} : annotation.timeEnd === undefined ? { selectedTime: annotation.timeStart } : { selectedRange: { start: annotation.timeStart, end: annotation.timeEnd } }), ...(annotation?.snapshotAssetId && annotation.timeStart !== undefined ? { representativeTime: annotation.timeStart } : {}) });
       }
-      const overlays: ScenePrimitive[] = [];
-      const drawnMarks = current.marks.map(mark => {
-        const content = mark.annotation.objectId ? contentBounds.get(mark.annotation.objectId) : undefined, normalized = mark.annotation.bounds;
-        return content && mark.annotation.coordinateSpace === 'normalized' ? { ...mark, bounds: { x: content.x + normalized.x * content.width, y: content.y + normalized.y * content.height, width: normalized.width * content.width, height: normalized.height * content.height } } : mark;
-      });
-      for (const mark of drawnMarks) {
-        if (mark.annotation.geometry !== 'point') overlays.push({ kind: 'rect', bounds: mark.bounds, fill: palette.annotationFill, stroke: palette.annotation, lineWidth: 1 / current.view.zoom });
-      }
-      for (const bounds of [current.selection, current.editingBounds].filter((value): value is SceneBounds => !!value && value.width > 0 && value.height > 0 && !drawnMarks.some(mark => mark.bounds.x === value.x && mark.bounds.y === value.y && mark.bounds.width === value.width && mark.bounds.height === value.height))) overlays.push({ kind: 'rect', bounds, fill: palette.annotationFill, stroke: palette.annotation, lineWidth: 1 / current.view.zoom });
-      for (const guide of current.guides) overlays.push({ kind: 'line', points: guide.axis === 'x' ? [{ x: guide.position, y: guide.start }, { x: guide.position, y: guide.end }] : [{ x: guide.start, y: guide.position }, { x: guide.end, y: guide.position }], stroke: palette.muted, lineWidth: 1 / current.view.zoom });
-      for (const note of board.querySelectorAll<HTMLElement>('.canvas-annotation-comment[data-comment-mode="display"]')) {
-        const button = note.querySelector<HTMLElement>('.canvas-annotation-summary');
-        if (!button || getComputedStyle(note).visibility !== 'visible') continue;
-        const rect = note.getBoundingClientRect(), textRect = button.getBoundingClientRect(), style = getComputedStyle(note), textStyle = getComputedStyle(button);
-        if (rect.width <= 0 || rect.height <= 0) continue;
-        const toWorld = (x: number, y: number) => ({ x: (x - cssViewport.x - camera.x) / camera.zoom, y: (y - cssViewport.y - camera.y) / camera.zoom });
-        const position = toWorld(rect.x, rect.y), textPosition = toWorld(textRect.x, textRect.y);
-        const font = `${textStyle.fontWeight} ${textStyle.fontSize} ${textStyle.fontFamily}`;
-        const context = display.getContext('2d')!; context.save(); context.font = font;
-        const metrics = context.measureText(button.textContent || ''), lineHeight = Number.parseFloat(textStyle.lineHeight), fontSize = Number.parseFloat(textStyle.fontSize);
-        const ascent = metrics.fontBoundingBoxAscent || fontSize * .8, descent = metrics.fontBoundingBoxDescent || fontSize * .2; context.restore();
-        overlays.push({ kind: 'rect', bounds: { ...position, width: rect.width / camera.zoom, height: rect.height / camera.zoom }, fill: style.backgroundColor, radius: Number.parseFloat(style.borderRadius) * cssScale / camera.zoom },
-          { kind: 'text', x: textPosition.x, y: textPosition.y + (lineHeight * cssScale / 2 + (ascent - descent) * cssScale / 2) / camera.zoom, text: button.textContent || '', font: `${textStyle.fontWeight} ${fontSize * cssScale / camera.zoom}px ${textStyle.fontFamily}`, fill: textStyle.color, maxWidth: textRect.width / camera.zoom, ellipsis: true });
-        if (button === document.activeElement && button.matches(':focus-visible')) overlays.push({ kind: 'rect', bounds: { x: position.x - 3 / camera.zoom, y: position.y - 3 / camera.zoom, width: (rect.width + 6) / camera.zoom, height: (rect.height + 6) / camera.zoom }, fill: 'transparent', stroke: palette.ink, radius: 10 / camera.zoom, lineWidth: 2 / camera.zoom });
-        note.dataset.sceneDrawn = 'true';
-      }
-      const scene: SceneInput = { documentId: identity.documentId, viewId: identity.viewId, baseSceneId: base.id, frameSeq: ++seq.current, camera, cssViewport, background: palette.canvas, layers, media,
-        overlays,
-        marks: drawnMarks.map((mark, index) => {
-          const preceding = mark.annotation.geometry === 'point' ? 0 : drawnMarks.slice(0, index).filter(value => value.annotation.geometry !== 'point' && value.bounds.x === mark.bounds.x && value.bounds.y === mark.bounds.y).length;
-          const button = board.querySelector<HTMLElement>('.canvas-annotation-group[data-annotation-id="' + CSS.escape(mark.annotation.id) + '"]>.annotation-pin');
-          return { x: mark.bounds.x + (mark.annotation.geometry === 'point' ? 0 : 14 / current.view.zoom), y: mark.bounds.y - (mark.annotation.geometry === 'point' ? 0 : (22 + preceding * 36) / current.view.zoom), number: mark.number, fill: current.theme === 'dark' ? '#b6dfff' : '#c9e5ff', stroke: palette.annotation, textFill: current.theme === 'dark' ? '#163e63' : '#15436c', style: 'bubble' as const, size: 28 * cssScale, focused: button === document.activeElement && !!button?.matches(':focus-visible'), focusColor: palette.ink };
-        }) };
-      alignMarkers = () => {
-        for (const [index, mark] of drawnMarks.entries()) {
-          const button = board.querySelector<HTMLElement>('.canvas-annotation-group[data-annotation-id="' + CSS.escape(mark.annotation.id) + '"]>.annotation-pin'); if (!button) continue;
-          const pin = scene.marks[index], rect = button.getBoundingClientRect(), style = getComputedStyle(button), matrix = style.transform === 'none' ? new DOMMatrix() : new DOMMatrix(style.transform);
-          const left = cssViewport.x + pin.x * camera.zoom + camera.x - (pin.size ?? 28) / 2, top = cssViewport.y + pin.y * camera.zoom + camera.y - (pin.size ?? 28) / 2;
-          button.style.transform = 'translate(' + (matrix.m41 + (left - rect.left) / cssScale) + 'px,' + (matrix.m42 + (top - rect.top) / cssScale) + 'px)';
-        }
-      };
-      const animateInputs = () => { markerAnimation = 0; if (!active) return; alignMarkers(); const moving = Array.from(board.querySelectorAll('.canvas-annotation-group,.canvas-annotation-note')).some(group => group.getAnimations().some(animation => animation.playState === 'running')); if (moving || animatedNotes) { animatedNotes = moving; requestRender(); } };
-      let presentedThisFrame = false;
-      try { if (!renderer.current!.renderContent(scene, bitmap)) return; const frame = renderer.current!.presented!; presentation.current = frame; layout.current = { objects: structuredClone(current.objects), contentBounds, snapshot: base, sources,
-          markTargets: new Map(drawnMarks.map(mark => [mark.annotation.id, annotationTarget(mark.annotation)])),
-          markerBounds: new Map(drawnMarks.map((mark, index) => { const pin = scene.marks[index], size = pin.size ?? 28; return [mark.annotation.id, { x: cssViewport.x + pin.x * camera.zoom + camera.x - size / 2, y: cssViewport.y + pin.y * camera.zoom + camera.y - size / 2, width: size, height: size }]; })) }; display.dataset.frameSeq = String(frame.frameSeq); display.dataset.viewId = identity.viewId; display.dataset.viewGeneration = String(identity.viewGeneration); confirmLatest(frame); presentedThisFrame = true; }
-      catch (cause) { current.onError(cause); }
-      alignMarkers(); if (presentedThisFrame) current.onPresented?.(); if (!markerAnimation) markerAnimation = requestAnimationFrame(animateInputs);
-    };
-    // Each display frame consumes the latest complete React input and copied producer textures.
-    const requestRender = () => { if (active && !renderRequest) renderRequest = requestAnimationFrame(() => { renderRequest = 0; if (active) render(); }); };
-    renderNow.current = requestRender; const unsubscribe = input.registry.subscribe(requestRender);
-    const observer = new ResizeObserver(requestRender); observer.observe(element);
-    const comments = new MutationObserver(records => {
-      if (!records.some(record => record.target instanceof Element && record.target.closest('.canvas-annotation-group') || [...record.addedNodes, ...record.removedNodes].some(node => node instanceof Element && (node.matches('.canvas-annotation-group') || !!node.querySelector('.canvas-annotation-group'))))) return;
-      for (const note of input.board.current?.querySelectorAll('.canvas-annotation-note') || []) observer.observe(note);
-      requestRender();
-    });
-    if (input.board.current) comments.observe(input.board.current, { childList: true, subtree: true }); const resize = () => requestRender(); window.addEventListener('resize', resize);
-    input.board.current?.addEventListener('focusin', requestRender); input.board.current?.addEventListener('focusout', requestRender); input.board.current?.addEventListener('pointerover', requestRender); input.board.current?.addEventListener('pointerout', requestRender);
-    requestRender();
-    return () => { active = false; queued = undefined; cancelAnimationFrame(renderRequest); cancelAnimationFrame(markerAnimation); unsubscribe(); observer.disconnect(); comments.disconnect(); window.removeEventListener('resize', resize); input.board.current?.removeEventListener('focusin', requestRender); input.board.current?.removeEventListener('focusout', requestRender); input.board.current?.removeEventListener('pointerover', requestRender); input.board.current?.removeEventListener('pointerout', requestRender); renderNow.current = () => {}; renderer.current = undefined; presentation.current = undefined; layout.current = undefined; };
-  }, [input.source?.view?.viewId, input.registry]);
-  useLayoutEffect(() => { renderNow.current(); }, [input.source?.snapshot, input.objects, input.assets, input.view, input.theme, input.marks, input.selection, input.editingBounds, input.guides]);
-  return { renderer, presentation, layout };
+    } else primitives.push({ kind: 'text', x: bounds.x + 16, y: bounds.y + Math.min(32, bounds.height / 2), text: 'Loading preview…', font: `11px ${fontFamily}`, fill: palette.muted, maxWidth: Math.max(1, bounds.width - 32) });
+    primitives.push(...caption(object, index, asset?.name || 'File'));
+    // CSS outlines lie outside the border box.
+    if (selected || kind !== 'audio') { const width = selected ? 2 : 1; primitives.push({ kind: 'rect', bounds: inset(bounds, -width / 2), fill: 'transparent', radius: radius && radius + width / 2, stroke: selected ? palette.ink : withAlpha(palette.edge, .65), lineWidth: width }); }
+    if (selected) for (const [x, y] of contentCapabilities[kind].freeResize ? [[0, 0], [.5, 0], [1, 0], [1, .5], [1, 1], [.5, 1], [0, 1], [0, .5]] : [[0, 0], [1, 0], [1, 1], [0, 1]]) handles.push({ kind: 'rect', bounds: { x: bounds.x + x * bounds.width - 4.5, y: bounds.y + y * bounds.height - 4.5, width: 9, height: 9 }, fill: palette.surface, stroke: palette.ink, lineWidth: 2 });
+  }
+  const overlays: ScenePrimitive[] = [];
+  if (input.selection && input.selection.width > 0 && input.selection.height > 0) overlays.push({ kind: 'rect', bounds: inset(input.selection, .5), fill: withAlpha(palette.ink, .07), stroke: palette.ink, lineWidth: 1 });
+  for (const outline of [...input.outlines, ...(input.editingBounds ? [{ bounds: input.editingBounds, point: false, dashed: false }] : [])]) {
+    if (outline.point) overlays.push({ kind: 'ellipse', bounds: inset({ x: outline.bounds.x - 10 / zoom, y: outline.bounds.y - 10 / zoom, width: 20 / zoom, height: 20 / zoom }, 1), fill: palette.annotationFill, stroke: palette.annotation, lineWidth: 2, ...(outline.dashed ? { dash: [6, 6] } : {}) });
+    else overlays.push({ kind: 'rect', bounds: inset(outline.bounds, .5), fill: palette.annotationFill, stroke: palette.annotation, lineWidth: 1, ...(outline.dashed ? { dash: [3, 3] } : {}) });
+  }
+  for (const guide of input.guides) overlays.push({ kind: 'line', points: guide.axis === 'x' ? [{ x: guide.position, y: guide.start }, { x: guide.position, y: guide.end }] : [{ x: guide.start, y: guide.position }, { x: guide.end, y: guide.position }], stroke: withAlpha(palette.muted, .65), lineWidth: 1 / zoom });
+  overlays.push(...handles);
+  const toWorld = (x: number, y: number) => ({ x: (x - cssViewport.x - camera.x) / camera.zoom, y: (y - cssViewport.y - camera.y) / camera.zoom });
+  for (const note of board.querySelectorAll<HTMLElement>('.canvas-annotation-comment[data-comment-mode="display"]')) {
+    const button = note.querySelector<HTMLElement>('.canvas-annotation-summary'), style = getComputedStyle(note);
+    if (!button || style.visibility !== 'visible') continue;
+    const area = note.getBoundingClientRect(), textArea = button.getBoundingClientRect(), textStyle = getComputedStyle(button);
+    if (area.width <= 0 || area.height <= 0 || !overlaps(area, crop)) continue;
+    const position = toWorld(area.x, area.y), textPosition = toWorld(textArea.x, textArea.y), fontSize = Number.parseFloat(textStyle.fontSize), lineHeight = Number.parseFloat(textStyle.lineHeight);
+    measure.font = `${textStyle.fontWeight} ${textStyle.fontSize} ${textStyle.fontFamily}`;
+    const metrics = measure.measureText(button.textContent || ''), ascent = metrics.fontBoundingBoxAscent || fontSize * .8, descent = metrics.fontBoundingBoxDescent || fontSize * .2;
+    overlays.push({ kind: 'rect', bounds: { ...position, width: area.width / camera.zoom, height: area.height / camera.zoom }, fill: style.backgroundColor, radius: Number.parseFloat(style.borderRadius) * cssScale / camera.zoom },
+      { kind: 'text', x: textPosition.x, y: baseline(textPosition.y + (Math.floor((lineHeight - ascent - descent) / 2) + ascent) * cssScale / camera.zoom), text: button.textContent || '', font: `${textStyle.fontWeight} ${fontSize * cssScale / camera.zoom}px ${textStyle.fontFamily}`, fill: textStyle.color, maxWidth: textArea.width / camera.zoom, ellipsis: true });
+  }
+  const marks: SceneMark[] = input.marks.map(mark => ({ x: mark.pin.x, y: mark.pin.y, number: mark.number, fill: palette.annotationPin, stroke: palette.annotation, textFill: palette.annotationInk, style: 'bubble', size: markerSize }));
+  return { view: input.view, snapshot: input.snapshot, bitmap, requestedCrop, clip: input.clip, worldBounds: { ...input.target.worldBounds }, sources,
+    scene: { documentId: input.view.documentId, viewId: input.view.viewId, camera, cssViewport, background: palette.canvas, layers, media, overlays, marks } };
+}
+
+/** Replaces HTML frames that finished after the synchronous copy, including a block that was still loading. */
+export function replaceFrozenFrames(frozen: FrozenBoardScene, updates: ReadonlyMap<string, SceneContentFrameInput>) {
+  for (const [id, input] of updates) {
+    let frame: SceneContentFrame;
+    try { frame = new SceneContentFrame(document, input); } catch { continue; }
+    frozen.sources.set(id, frame.metadata);
+    const layer = frozen.scene.layers.find(value => value.objectId === id); if (!layer) continue;
+    const existing = layer.primitives.find(value => value.kind === 'texture');
+    if (existing?.kind === 'texture') { existing.texture = frame; continue; }
+    const bounds = layer.contentWorldBounds || { x: layer.worldBounds.x + 40, y: layer.worldBounds.y + 40, width: layer.worldBounds.width - 80, height: layer.worldBounds.height - 92 };
+    const placeholder = layer.primitives.findIndex(value => value.kind === 'text' && value.text === 'Loading preview…');
+    const texture: ScenePrimitive = { kind: 'texture', bounds, texture: frame };
+    if (placeholder >= 0) layer.primitives.splice(placeholder, 1, texture); else layer.primitives.splice(1, 0, texture);
+  }
+}
+
+/** A base scene can carry the frozen layers when it belongs to the same view and holds every frozen object at its frozen version. */
+export function frozenSceneMatches(frozen: FrozenBoardScene, snapshot: BaseSceneSnapshot) {
+  return snapshot.view.viewId === frozen.view.viewId && snapshot.view.viewGeneration === frozen.view.viewGeneration && frozen.scene.layers.every(layer => {
+    const object = snapshot.objects.find(value => value.id === layer.objectId);
+    return !!object && object.version === layer.objectVersion && object.assetId === layer.assetId;
+  });
+}
+
+/** One offscreen renderer per capture view; frame sequences keep increasing across Done operations and page lifetimes. */
+export class SceneEvidenceRenderer {
+  private current?: { key: string; renderer: SceneRenderer; last: number };
+  render(frozen: FrozenBoardScene, snapshot: BaseSceneSnapshot): SceneEvidence {
+    const key = `${frozen.view.viewId}:${frozen.view.viewGeneration}`;
+    if (this.current?.key !== key) { const canvas = document.createElement('canvas'); canvas.className = 'scene-evidence-canvas'; this.current = { key, renderer: new SceneRenderer(canvas, { documentId: frozen.view.documentId, viewId: frozen.view.viewId }), last: 0 }; }
+    const frameSeq = Math.max(this.current.last + 1, Date.now()); this.current.last = frameSeq;
+    return this.current.renderer.renderEvidence({ ...frozen.scene, baseSceneId: snapshot.id, frameSeq }, frozen.bitmap, frozen.requestedCrop, frozen.clip);
+  }
 }
 
 /** Reference metadata follows the presented layout and remains bounded separately from complete pixels. */

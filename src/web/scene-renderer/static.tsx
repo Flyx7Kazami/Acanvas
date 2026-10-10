@@ -1,18 +1,13 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { ArrowDownToLine, File } from 'lucide-react';
 import type { Asset } from '../../shared/types.js';
-import { useSceneContent } from './content.js';
+import { useSceneCapture } from './content.js';
 import { useControlledScenePanel } from './media/use-controlled-panel.js';
 
 export function SceneStaticImage({ src, title, onError, onSize }: { src: string; title: string; onError?: () => void; onSize?: (size: { width: number; height: number }) => void }) {
-  const content = useSceneContent(), image = useRef<HTMLImageElement>(null), layoutSeq = useRef(0);
-  const publish = () => {
-    const pixels = image.current; if (!content || !pixels?.naturalWidth) return;
-    try { content.publish({ pixels, bitmap: { width: pixels.naturalWidth, height: pixels.naturalHeight }, cssSize: { width: content.width, height: content.height }, fit: 'contain', layoutSeq: ++layoutSeq.current }); }
-    catch { onError?.(); }
-  };
-  useLayoutEffect(publish, [content, src]);
-  return <img ref={image} src={src} alt={title} draggable={false} onLoad={event => { onSize?.({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight }); publish(); }} onError={onError}/>;
+  const image = useRef<HTMLImageElement>(null);
+  useSceneCapture(() => { const pixels = image.current; return pixels?.complete && pixels.naturalWidth ? { pixels, bitmap: { width: pixels.naturalWidth, height: pixels.naturalHeight }, fit: 'contain' } : undefined; });
+  return <img ref={image} src={src} alt={title} draggable={false} onLoad={event => onSize?.({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} onError={onError}/>;
 }
 
 const bytes = (value: number) => value < 1024 * 1024 ? `${Math.max(1, Math.round(value / 1024))} KB` : `${(value / (1024 * 1024)).toFixed(1)} MB`;

@@ -21,10 +21,11 @@ function contentBounds(bounds: SceneBounds): void { for (const value of [bounds.
 function contentPrimitive(primitive: ScenePrimitive): void {
   if (primitive.kind === 'rect' || primitive.kind === 'ellipse') {
     contentBounds(primitive.bounds); contentString(primitive.fill);
+    if (primitive.stroke !== undefined) contentString(primitive.stroke);
+    if (primitive.lineWidth !== undefined) contentNumber(primitive.lineWidth);
+    for (const value of primitive.dash ?? []) contentNumber(value);
     if (primitive.kind === 'rect') {
-      if (primitive.stroke !== undefined) contentString(primitive.stroke);
       if (primitive.radius !== undefined) contentNumber(primitive.radius);
-      if (primitive.lineWidth !== undefined) contentNumber(primitive.lineWidth);
       if (primitive.shadow) { contentString(primitive.shadow.color); contentNumber(primitive.shadow.y); contentNumber(primitive.shadow.blur); }
     }
   } else if (primitive.kind === 'line') {
@@ -37,6 +38,17 @@ function contentPrimitive(primitive: ScenePrimitive): void {
     contentBounds(primitive.bounds); if (primitive.radius !== undefined) contentNumber(primitive.radius);
     if (!SceneContentFrame.isCopiedTexture(primitive.texture)) throw new TypeError('Board textures must own validated copied pixels.');
   } else throw new TypeError('Use an independent SceneFrame for image sources.');
+}
+function contentInput(input: SceneInput, bitmap: SceneSize): void {
+  requireSize(bitmap, true);
+  contentString(input.background);
+  for (const primitive of [...input.layers.flatMap(layer => layer.primitives), ...(input.overlays ?? [])]) contentPrimitive(primitive);
+  for (const mark of input.marks) {
+    contentString(mark.fill); contentString(mark.textFill); contentNumber(mark.x); contentNumber(mark.y); contentNumber(mark.number);
+    if (mark.stroke !== undefined) contentString(mark.stroke);
+    if (mark.focusColor !== undefined) contentString(mark.focusColor);
+    if (mark.size !== undefined) contentNumber(mark.size);
+  }
 }
 
 /** A candidate owns its copied pixels. Producers retain their own mutable render surfaces. */
@@ -129,15 +141,7 @@ export class SceneRenderer {
   renderContent(input: SceneInput, bitmap: SceneSize): boolean {
     try {
       if (!this.accepts(input)) return false;
-      requireSize(bitmap, true);
-      contentString(input.background);
-      for (const primitive of [...input.layers.flatMap(layer => layer.primitives), ...(input.overlays ?? [])]) contentPrimitive(primitive);
-      for (const mark of input.marks) {
-        contentString(mark.fill); contentString(mark.textFill); contentNumber(mark.x); contentNumber(mark.y); contentNumber(mark.number);
-        if (mark.stroke !== undefined) contentString(mark.stroke);
-        if (mark.focusColor !== undefined) contentString(mark.focusColor);
-        if (mark.size !== undefined) contentNumber(mark.size);
-      }
+      contentInput(input, bitmap);
       if (!this.#scratch) this.#scratch = canvas2D(this.#canvas.ownerDocument, bitmap);
       const scratch = this.#scratch;
       if (scratch.canvas.width !== bitmap.width) scratch.canvas.width = bitmap.width;
@@ -152,5 +156,16 @@ export class SceneRenderer {
     const presentation = this.#presentation; if (!presentation) throw new Error('Scene has no presented frame.');
     const crop = sceneCrop(presentation.cssViewport, presentation.bitmap, cropCSS, clipCSS);
     return SceneEvidence.copyCanvas(this.#canvas, presentation, crop);
+  }
+
+  /** An offscreen evidence canvas draws one frame, labels it with its sequence, copies the crop and releases its bitmap. */
+  renderEvidence(input: SceneInput, bitmap: SceneSize, cropCSS?: SceneBounds, clipCSS?: SceneBounds): SceneEvidence {
+    if (!this.accepts(input)) throw new RangeError('Evidence frames use increasing sequence numbers.');
+    contentInput(input, bitmap);
+    this.#canvas.width = bitmap.width; this.#canvas.height = bitmap.height;
+    try {
+      this.#presentation = drawScene(this.#context, input, bitmap); this.#canvas.dataset.frameSeq = String(input.frameSeq);
+      return this.capture(cropCSS, clipCSS);
+    } finally { this.#canvas.width = 1; this.#canvas.height = 1; }
   }
 }
