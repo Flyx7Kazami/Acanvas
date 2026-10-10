@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react';
 import type { SessionView } from '../shared/types';
 import { screenBounds, worldToScreen, type Point, type Rect } from './geometry';
-import { placePointAnnotationNote } from './annotation-note-layout';
+import { annotationBubbleTail, placePointAnnotationNote } from './annotation-note-layout';
 import { AnnotationBubble } from './AnnotationBubble';
 import { AnnotationCommentControl, type AnnotationCommentControlProps } from './AnnotationCommentControl';
 
@@ -20,10 +20,21 @@ export function CanvasAnnotationNote({ canvas, bounds, markBounds, pin, geometry
     let scale = board.getBoundingClientRect().width / Math.max(1, board.clientWidth);
     const visible = () => { const rect = board.getBoundingClientRect(), x = Math.max(0, rect.x), y = Math.max(64, rect.y), right = Math.min(innerWidth, rect.right), bottom = Math.min(innerHeight - 80, rect.bottom); return { x: (x + 8 - rect.x) / scale, y: (y - rect.y) / scale, width: Math.max(0, (right - x - 16) / scale), height: Math.max(0, (bottom - y) / scale) }; };
     // The numbered pin keeps the shared pin position; its group only places the comment.
-    const placePin = (left: number, top: number) => { const button = pinButton.current; if (!button) return; const center = pin ? worldToScreen(pin, view) : { x: left + 14, y: top + 14 }; button.style.transform = `translate(${center.x - 14 - left}px,${center.y - 14 - top}px)`; };
+    const placePin = (left: number, top: number) => {
+      const button = pinButton.current; if (!button) return;
+      if (point) {
+        const anchor = pin ? worldToScreen(pin, view) : { x: left, y: top };
+        const tail = annotationBubbleTail(button.offsetWidth || 28);
+        button.style.transform = `translate(${anchor.x - tail.x - left}px,${anchor.y - tail.y - top}px)`;
+        return;
+      }
+      const center = pin ? worldToScreen(pin, view) : { x: left + 14, y: top + 14 };
+      button.style.transform = `translate(${center.x - 14 - left}px,${center.y - 14 - top}px)`;
+    };
     const availableSize = visible();
     const leadingWidth = point ? 0 : 28 + (Number.parseFloat(getComputedStyle(node).columnGap) || 8);
-    note.style.maxWidth = `${Math.max(0, availableSize.width - leadingWidth)}px`;
+    const noteLimit = (availableWidth: number) => { const room = Math.max(0, availableWidth - leadingWidth); return expanded ? room : Math.min(220, room); };
+    note.style.maxWidth = `${noteLimit(availableSize.width)}px`;
     note.style.maxHeight = expanded ? `${availableSize.height}px` : '';
     const prior = remembered.current, before = prior?.point === point ? prior : null, changing = before && before.expanded !== expanded;
     if (prior && prior.point !== point) { animations.current.forEach(animation => animation.cancel()); animations.current = []; }
@@ -36,7 +47,7 @@ export function CanvasAnnotationNote({ canvas, bounds, markBounds, pin, geometry
     remembered.current = target;
     const fitVisibleSize = () => {
       scale = board.getBoundingClientRect().width / Math.max(1, board.clientWidth);
-      const available = visible(), width = `${Math.max(0, available.width - leadingWidth)}px`, height = expanded ? `${available.height}px` : '';
+      const available = visible(), width = `${noteLimit(available.width)}px`, height = expanded ? `${available.height}px` : '';
       if (note.style.maxWidth !== width || note.style.maxHeight !== height) {
         animations.current.forEach(animation => animation.cancel()); animations.current = [];
         note.style.maxWidth = width; note.style.maxHeight = height;
@@ -52,12 +63,13 @@ export function CanvasAnnotationNote({ canvas, bounds, markBounds, pin, geometry
       const layout = () => {
         fitVisibleSize();
         const anchor = screenBounds(markBounds!, view), viewport = board.getBoundingClientRect();
-        node.style.left = `${anchor.x}px`; node.style.top = `${anchor.y}px`; node.style.height = ''; placePin(anchor.x - 14, anchor.y - 14);
+        node.style.left = `${anchor.x}px`; node.style.top = `${anchor.y}px`; node.style.height = ''; placePin(anchor.x, anchor.y);
         node.dataset.anchorX = String(markBounds!.x); node.dataset.anchorY = String(markBounds!.y);
         const obstacles = [...precedingNotes, ...pins, ...controls].filter(value => value.closest<HTMLElement>('.canvas-annotation-group')?.dataset.anchorVisible !== 'false' && getComputedStyle(value).visibility === 'visible').map(value => { const rect = value.getBoundingClientRect(); return { x: (rect.x - viewport.x) / scale, y: (rect.y - viewport.y) / scale, width: rect.width / scale, height: rect.height / scale }; }).filter(rect => rect.width > 0 && rect.height > 0);
         const placed = placePointAnnotationNote(anchor, target, visible(), obstacles);
         note.style.left = `${placed.x - anchor.x}px`; note.style.top = `${placed.y - anchor.y}px`;
-        const shown = anchor.x + 14 > -viewport.x / scale && anchor.x - 14 < (innerWidth - viewport.x) / scale && anchor.y + 14 > -viewport.y / scale && anchor.y - 14 < (innerHeight - viewport.y) / scale;
+        const tail = annotationBubbleTail(28), box = { x: anchor.x - tail.x, y: anchor.y - tail.y, width: 28, height: 28 };
+        const shown = box.x + box.width > -viewport.x / scale && box.x < (innerWidth - viewport.x) / scale && box.y + box.height > -viewport.y / scale && box.y < (innerHeight - viewport.y) / scale;
         node.dataset.anchorVisible = String(shown); node.dataset.positioned = 'true'; node.inert = !shown;
         return { placed, viewport };
       };

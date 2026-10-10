@@ -429,7 +429,7 @@ test('managed React Done captures blank points, cross-object regions and histori
 });
 
 async function redrawAt(page: Page, x: number, y: number) {
-  await page.getByRole('button', { name: 'Redraw mark', exact: true }).click();
+  await page.getByRole('button', { name: 'Mark canvas', exact: true }).click();
   await page.mouse.click(x, y);
   await expect(page.getByRole('button', { name: 'Mark canvas', exact: true })).toHaveAttribute('aria-pressed', 'false');
 }
@@ -761,7 +761,8 @@ test('managed React 320px themes, keyboard point marking and reduced motion reta
     assert.equal(await page.locator('#whiteboard').evaluate(element => element.scrollLeft), 0);
     const bounds = await page.locator('.composer').boundingBox(); assert(bounds && bounds.x >= 0 && bounds.x + bounds.width <= 321);
     await expect(page.getByRole('button', { name: 'Send request', exact: true })).toBeVisible();
-    const marker = await page.locator('.annotation-outline.point-annotation').last().boundingBox(); assert(marker && Math.abs(marker.width - 20) < 1);
+    assert.equal(await page.locator('.annotation-outline.point-annotation').count(), 0);
+    const pin = await page.locator('.canvas-annotation-group[data-geometry="point"]>.annotation-pin').last().boundingBox(); assert(pin && Math.abs(pin.width - 28) < 1);
   }
 });
 

@@ -29,7 +29,7 @@ export interface SceneLayer {
   contentAnchor?: ContentAnchor;
   primitives: ScenePrimitive[];
 }
-export interface SceneMark { x: number; y: number; number: number; fill: string; textFill: string; style?: 'bubble'; size?: number; stroke?: string; focused?: boolean; focusColor?: string }
+export interface SceneMark { x: number; y: number; number: number; fill: string; textFill: string; style?: 'bubble'; size?: number; stroke?: string; focused?: boolean; focusColor?: string; anchor?: 'center' | 'tail' }
 export interface SceneInput {
   documentId: string;
   viewId: string;

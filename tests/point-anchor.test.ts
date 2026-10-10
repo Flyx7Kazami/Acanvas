@@ -55,8 +55,9 @@ async function fixture(t: test.TestContext, dpr = 1, touch = false) {
   const pinAt = async (id: string, x: number, y: number) => {
     const pin = page.locator(`.canvas-annotation-group[data-annotation-id="${id}"]>.annotation-pin`);
     const rect = await pin.boundingBox(); assert(rect);
-    assert(Math.abs(rect.x + rect.width / 2 - x) < .5, `Pin center x: ${JSON.stringify(rect)}, expected ${x}`);
-    assert(Math.abs(rect.y + rect.height / 2 - y) < .5, `Pin center y: ${JSON.stringify(rect)}, expected ${y}`);
+    const tailX = 4 * rect.width / 24, tailY = 21 * rect.height / 24;
+    assert(Math.abs(rect.x + tailX - x) < .5, `Pin tail x: ${JSON.stringify(rect)}, expected ${x}`);
+    assert(Math.abs(rect.y + tailY - y) < .5, `Pin tail y: ${JSON.stringify(rect)}, expected ${y}`);
     assert.equal(rect.width, 28); assert.equal(rect.height, 28); return rect;
   };
   let closed = false;
@@ -111,10 +112,11 @@ test('point pins and captured rings share actual blank and normalized clicks acr
         return { count, expected: { x, y }, centroid: { x: sumX / count, y: sumY / count }, bounds: { minX, minY, maxX, maxY }, width: bitmap.width, height: bitmap.height, scale: capture.mapping.scaleX };
       }, capture);
       assert(pixels.count > 15, JSON.stringify(pixels));
-      for (const axis of ['x', 'y'] as const) {
-        const minimum = axis === 'x' ? pixels.bounds.minX : pixels.bounds.minY, maximum = axis === 'x' ? pixels.bounds.maxX : pixels.bounds.maxY;
-        assert(minimum >= pixels.expected[axis] - 14 * pixels.scale && maximum <= pixels.expected[axis] + 14 * pixels.scale, JSON.stringify(pixels));
-      }
+      const scale = pixels.scale;
+      assert(pixels.centroid.y < pixels.expected.y - 6 * scale, JSON.stringify(pixels));
+      assert(pixels.bounds.minY <= pixels.expected.y - 18 * scale && pixels.bounds.minY >= pixels.expected.y - 32 * scale, JSON.stringify(pixels));
+      assert(pixels.bounds.maxX >= Math.min(pixels.expected.x + 16 * scale, pixels.width - 2) && pixels.bounds.maxX <= pixels.expected.x + 32 * scale, JSON.stringify(pixels));
+      assert(pixels.bounds.minX >= pixels.expected.x - 16 * scale && pixels.bounds.maxY <= pixels.expected.y + 16 * scale, JSON.stringify(pixels));
       await writeFile(join(app.evidence, `${scenario.name}-${target}-capture.png`), await readFile(app.running.service.assetPath(capture.screenshotAssetId)));
       await page.screenshot({ path: join(app.evidence, `${scenario.name}-${target}.png`) });
       samples.push({ scenario, target, editPin, pin, note, annotation, pixels });
@@ -147,7 +149,7 @@ test('same and neighboring point comments move independently during expansion wh
     animations.forEach(animation => animation.finish()); return { groupAnimations: element.getAnimations().length, samples };
   });
   assert.equal(transitions.groupAnimations, 0);
-  for (const sample of transitions.samples) for (const [index, rect] of sample.entries()) { assert.equal(rect.x + rect.width / 2, points[index].position.x); assert.equal(rect.y + rect.height / 2, points[index].position.y); }
+  for (const sample of transitions.samples) for (const [index, rect] of sample.entries()) { assert(Math.abs(rect.x + 4 * rect.width / 24 - points[index].position.x) < .5, JSON.stringify(rect)); assert(Math.abs(rect.y + 21 * rect.height / 24 - points[index].position.y) < .5, JSON.stringify(rect)); }
   await page.getByRole('textbox', { name: 'Annotation text', exact: true }).press('Escape');
   await page.emulateMedia({ reducedMotion: 'reduce' }); await page.locator('.draft-annotation .annotation-content').nth(3).click();
   for (const value of points) await app.pinAt(value.annotation.id, value.position.x, value.position.y);

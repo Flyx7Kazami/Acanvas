@@ -5,6 +5,7 @@ import { contentCapabilities, resolveContentKind } from '../../shared/content-ty
 import { createProjectCaptureProvider, type ProjectCaptureCoordinator } from '../project-capture-provider.js';
 import { SceneRenderer, boundsToCSS, sceneCrop, type Immutable, type SceneBounds, type SceneEvidence, type SceneInput, type SceneLayer, type SceneMark, type ScenePresentation, type ScenePrimitive, type SceneSize } from './index.js';
 import { annotationCaptureCrop } from './capture-crop.js';
+import { annotationBubbleTail } from '../annotation-note-layout.js';
 import { SceneContentFrame, type SceneContentFrameInput, type SceneContentMetadata, type SceneContentRegistry } from './content.js';
 
 export interface ProjectSceneSource { provider: ProjectCaptureCoordinator; view?: CaptureView; connectingView?: CaptureView; snapshot?: BaseSceneSnapshot }
@@ -71,7 +72,7 @@ export function useProjectScene(api: BoardApi, sessionId: string, objects: Board
 }
 
 export interface BoardSceneOutline { bounds: SceneBounds; point: boolean; dashed: boolean }
-export interface BoardSceneMark { annotationId: string; pin: { x: number; y: number }; number: number }
+export interface BoardSceneMark { annotationId: string; pin: { x: number; y: number }; number: number; anchor?: 'center' | 'tail' }
 export interface BoardSceneFreeze {
   board: HTMLElement;
   registry: SceneContentRegistry;
@@ -139,8 +140,8 @@ export function freezeBoardScene(input: BoardSceneFreeze): FrozenBoardScene {
     return primitives;
   };
   const placed = input.objects.map((object, index) => { const worldBounds = { x: object.x - 40, y: object.y - 40, width: object.width + 80, height: object.height + 92 }; return { object, index, worldBounds, renderedBounds: boundsToCSS(worldBounds, camera, cssViewport) }; });
-  const markerSize = 28 * cssScale, marker = input.marks.find(mark => mark.annotationId === input.target.annotation.id);
-  const markerCSS = marker && { x: cssViewport.x + marker.pin.x * camera.zoom + camera.x - markerSize / 2, y: cssViewport.y + marker.pin.y * camera.zoom + camera.y - markerSize / 2, width: markerSize, height: markerSize };
+  const markerSize = 28 * cssScale, marker = input.marks.find(mark => mark.annotationId === input.target.annotation.id), origin = marker?.anchor === 'tail' ? annotationBubbleTail(markerSize) : { x: markerSize / 2, y: markerSize / 2 };
+  const markerCSS = marker && { x: cssViewport.x + marker.pin.x * camera.zoom + camera.x - origin.x, y: cssViewport.y + marker.pin.y * camera.zoom + camera.y - origin.y, width: markerSize, height: markerSize };
   const requestedCrop = annotationCaptureCrop({ presentation: { camera, cssViewport, layers: placed.map(value => ({ objectId: value.object.id, renderedBounds: value.renderedBounds })) }, worldBounds: input.target.worldBounds, objectId: input.target.annotation.objectId, markerCSS });
   const crop = sceneCrop(cssViewport, bitmap, requestedCrop, input.clip).cropCSS;
   const targets = new Set([input.target.annotation.objectId, ...input.target.annotation.objectIds].filter((id): id is string => !!id));
@@ -187,7 +188,7 @@ export function freezeBoardScene(input: BoardSceneFreeze): FrozenBoardScene {
     overlays.push({ kind: 'rect', bounds: { ...position, width: area.width / camera.zoom, height: area.height / camera.zoom }, fill: style.backgroundColor, radius: Number.parseFloat(style.borderRadius) * cssScale / camera.zoom },
       { kind: 'text', x: textPosition.x, y: baseline(textPosition.y + (Math.floor((lineHeight - ascent - descent) / 2) + ascent) * cssScale / camera.zoom), text: button.textContent || '', font: `${textStyle.fontWeight} ${fontSize * cssScale / camera.zoom}px ${textStyle.fontFamily}`, fill: textStyle.color, maxWidth: textArea.width / camera.zoom, ellipsis: true });
   }
-  const marks: SceneMark[] = input.marks.map(mark => ({ x: mark.pin.x, y: mark.pin.y, number: mark.number, fill: palette.annotationPin, stroke: palette.annotation, textFill: palette.annotationInk, style: 'bubble', size: markerSize }));
+  const marks: SceneMark[] = input.marks.map(mark => ({ x: mark.pin.x, y: mark.pin.y, number: mark.number, fill: palette.annotationPin, stroke: palette.annotation, textFill: palette.annotationInk, style: 'bubble', size: markerSize, anchor: mark.anchor }));
   return { view: input.view, snapshot: input.snapshot, bitmap, requestedCrop, clip: input.clip, worldBounds: { ...input.target.worldBounds }, sources,
     scene: { documentId: input.view.documentId, viewId: input.view.viewId, camera, cssViewport, background: palette.canvas, layers, media, overlays, marks } };
 }

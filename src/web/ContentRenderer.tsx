@@ -1,4 +1,5 @@
-import { useEffect, useState, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowDownToLine, Code2, File, FileText, Music2, Play } from 'lucide-react';
 import type { Asset } from '../shared/types';
 import { resolveContentKind } from '../shared/content-types';
@@ -16,7 +17,91 @@ import { SceneGifContent, SceneVideoContent } from './scene-renderer/media';
 
 const bytes = (value: number) => value < 1024 * 1024 ? `${Math.max(1, Math.round(value / 1024))} KB` : `${(value / (1024 * 1024)).toFixed(1)} MB`;
 
-export function AssetThumb({ asset, src, onError, onLoad }: { asset?: Asset; src: string; onError?: () => void; onLoad?: () => void }) {
+const THUMB_PREVIEW_DELAY = 500;
+const THUMB_PREVIEW_WARM = 800;
+let thumbPreviewActive = 0;
+let thumbPreviewWarmUntil = 0;
+let thumbPreviewSerial = 0;
+const thumbPreviewListeners = new Set<(active: number) => void>();
+
+function claimThumbPreview(id: number) {
+  thumbPreviewActive = id;
+  thumbPreviewWarmUntil = Date.now() + THUMB_PREVIEW_WARM;
+  for (const listener of thumbPreviewListeners) listener(id);
+}
+
+function releaseThumbPreview(id: number) {
+  if (thumbPreviewActive !== id) return;
+  thumbPreviewActive = 0;
+  thumbPreviewWarmUntil = Date.now() + THUMB_PREVIEW_WARM;
+}
+
+export function ThumbHoverPreview({ src, label, children }: { src: string; label: string; children: ReactNode }) {
+  const anchor = useRef<HTMLSpanElement>(null), bubble = useRef<HTMLSpanElement>(null), identity = useRef(0), fadeIn = useRef(false);
+  const showTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined), hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [open, setOpen] = useState(false);
+  const [frame, setFrame] = useState(0);
+  if (identity.current === 0) identity.current = ++thumbPreviewSerial;
+  const show = () => {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    if (open || showTimer.current) return;
+    const openNow = () => {
+      showTimer.current = undefined;
+      fadeIn.current = thumbPreviewActive === 0 && Date.now() >= thumbPreviewWarmUntil;
+      claimThumbPreview(identity.current);
+      setOpen(true);
+    };
+    if (thumbPreviewActive !== 0 || Date.now() < thumbPreviewWarmUntil) openNow();
+    else showTimer.current = setTimeout(openNow, THUMB_PREVIEW_DELAY);
+  };
+  const hide = () => {
+    if (showTimer.current) { clearTimeout(showTimer.current); showTimer.current = undefined; }
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => { releaseThumbPreview(identity.current); setOpen(false); }, 80);
+  };
+  useEffect(() => {
+    const listener = (active: number) => {
+      if (active === identity.current) return;
+      if (showTimer.current) { clearTimeout(showTimer.current); showTimer.current = undefined; }
+      if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = undefined; }
+      setOpen(false);
+    };
+    thumbPreviewListeners.add(listener);
+    return () => {
+      thumbPreviewListeners.delete(listener);
+      releaseThumbPreview(identity.current);
+      if (showTimer.current) clearTimeout(showTimer.current);
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    };
+  }, []);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const host = anchor.current, tip = bubble.current;
+      if (!host || !tip) return;
+      const image = tip.querySelector('img');
+      if (!image?.complete || !image.naturalWidth) return;
+      const rect = host.getBoundingClientRect(), width = tip.offsetWidth, height = tip.offsetHeight;
+      const tail = 8, left = Math.max(8, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 8));
+      tip.style.left = `${left}px`;
+      tip.style.top = `${Math.max(8, rect.top - 4 - tail - height)}px`;
+      tip.style.setProperty('--tail', `${Math.min(Math.max(18, rect.left + rect.width / 2 - left), Math.max(18, width - 18))}px`);
+      const first = tip.dataset.placed !== 'true';
+      tip.dataset.placed = 'true';
+      if (first) tip.dataset.enter = fadeIn.current ? 'true' : 'false';
+    };
+    place();
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    return () => { window.removeEventListener('scroll', place, true); window.removeEventListener('resize', place); };
+  }, [open, src, frame]);
+  return <span ref={anchor} className="thumb-hover" onPointerEnter={show} onPointerLeave={hide} onFocus={show} onBlur={hide}>
+    {children}
+    {open && createPortal(<span ref={bubble} className="thumb-hover-bubble" role="tooltip" aria-label={label}><img src={src} alt="" onLoad={() => setFrame(value => value + 1)}/><svg className="thumb-hover-tail" viewBox="0 0 18 10" aria-hidden="true"><path d="M1.2.6 9 8.6 16.8.6"/></svg></span>, document.body)}
+  </span>;
+}
+
+export function AssetThumb({ asset, src, onError, onLoad, hoverPreview = false }: { asset?: Asset; src: string; onError?: () => void; onLoad?: () => void; hoverPreview?: boolean }) {
   const kind = resolveContentKind(asset), [frame, setFrame] = useState<{ src: string; image: string }>();
   const cover = useAudioArtwork(kind === 'audio' ? src : undefined);
   useEffect(() => {
@@ -26,7 +111,8 @@ export function AssetThumb({ asset, src, onError, onLoad }: { asset?: Asset; src
   }, [kind, src]);
   const image = kind === 'image' || kind === 'gif' ? src : kind === 'audio' ? cover.url : frame?.src === src ? frame.image : undefined;
   const Icon = kind === 'video' ? Play : kind === 'audio' ? Music2 : kind === 'markdown' ? FileText : kind === 'html' ? Code2 : File;
-  return <span className="asset-thumb" data-kind={kind}>{image ? <img src={image} alt="" loading="lazy" onLoad={onLoad} onError={() => { if (kind === 'audio') cover.onError(); onError?.(); }}/> : <Icon size={15} className="content-thumbnail-icon"/>}</span>;
+  const thumb = <span className="asset-thumb" data-kind={kind}>{image ? <img src={image} alt="" loading="lazy" onLoad={onLoad} onError={() => { if (kind === 'audio') cover.onError(); onError?.(); }}/> : <Icon size={15} className="content-thumbnail-icon"/>}</span>;
+  return hoverPreview && image ? <ThumbHoverPreview src={image} label={asset?.name || 'Preview'}>{thumb}</ThumbHoverPreview> : thumb;
 }
 
 export interface ContentRendererProps {

@@ -63,11 +63,11 @@ export function drawScene(context: SceneContext, input: SceneInput, bitmap: Scen
   for (const mark of input.marks) {
     const x = mark.x * input.camera.zoom + input.camera.x, y = mark.y * input.camera.zoom + input.camera.y;
     if (mark.style === 'bubble') {
-      const size = mark.size ?? 28; context.save(); context.translate(x - size / 2, y - size / 2); context.scale(size / 24, size / 24);
+      const size = mark.size ?? 28, originX = mark.anchor === 'tail' ? 4 * size / 24 : size / 2, originY = mark.anchor === 'tail' ? 21 * size / 24 : size / 2; context.save(); context.translate(x - originX, y - originY); context.scale(size / 24, size / 24);
       const shape = new Path2D('M7 3h10a4 4 0 0 1 4 4v7a4 4 0 0 1-4 4H9l-5 3V7a4 4 0 0 1 3-4Z');
       context.fillStyle = mark.fill; context.strokeStyle = mark.stroke ?? mark.fill; context.lineWidth = 1.5; context.lineJoin = 'round'; context.fill(shape); context.stroke(shape);
       context.fillStyle = mark.textFill; context.font = '500 10px "Google Sans",sans-serif'; context.textAlign = 'center'; context.textBaseline = 'middle'; context.fillText(String(mark.number), 12.5, 11); context.restore();
-      if (mark.focused) { const scale = size / 28, gap = 5 * scale; context.strokeStyle = mark.focusColor ?? '#202020'; context.lineWidth = 2 * scale; context.strokeRect(x - size / 2 - gap, y - size / 2 - gap, size + gap * 2, size + gap * 2); }
+      if (mark.focused) { const scale = size / 28, gap = 5 * scale; context.strokeStyle = mark.focusColor ?? '#202020'; context.lineWidth = 2 * scale; context.strokeRect(x - originX - gap, y - originY - gap, size + gap * 2, size + gap * 2); }
       continue;
     }
     context.beginPath(); context.arc(x, y, 11, 0, 2 * Math.PI); context.fillStyle = mark.fill; context.fill();
