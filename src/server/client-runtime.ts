@@ -27,7 +27,7 @@ function connectionUnavailable(error: unknown): boolean {
   return error instanceof Error && ((error.cause as NodeJS.ErrnoException | undefined)?.code === 'ECONNREFUSED' || error.name === 'TimeoutError');
 }
 
-export async function connectProject(root: string, explicitUrl?: string, start = false, port = 0, network: { bind?: string; allowedHosts?: string[] } = {}): Promise<{ base: URL; bootstrap: Bootstrap } | undefined> {
+export async function connectProject(root: string, explicitUrl?: string, start = false, port = 0, network: { bind?: string; allowedHosts?: string[]; previewPort?: string; previewHosts?: string[] } = {}): Promise<{ base: URL; bootstrap: Bootstrap } | undefined> {
   if (!Number.isSafeInteger(port) || port < 0 || port > 65535) throw new Error('Choose a valid local port.');
   if (explicitUrl) { const base = serviceUrl(explicitUrl); return { base, bootstrap: await bootstrapAt(root, base) }; }
   const saved = await readRuntime(root);
@@ -42,7 +42,7 @@ export async function connectProject(root: string, explicitUrl?: string, start =
   if (!start) return;
   if (!process.versions.node.startsWith('24.')) throw new Error('Start the project CLI with its Node 24 runtime.');
   const log = await openRuntimeLog(root);
-  const child = spawn(process.execPath, [fileURLToPath(new URL('./main.js', import.meta.url)), '--project', root, '--port', String(port), ...(network.bind ? ['--bind', network.bind] : []), ...(network.allowedHosts?.length ? ['--allow-host', network.allowedHosts.join(',')] : [])], { detached: true, stdio: ['ignore', log.fd, log.fd] });
+  const child = spawn(process.execPath, [fileURLToPath(new URL('./main.js', import.meta.url)), '--project', root, '--port', String(port), ...(network.bind ? ['--bind', network.bind] : []), ...(network.allowedHosts?.length ? ['--allow-host', network.allowedHosts.join(',')] : []), ...(network.previewPort ? ['--preview-port', network.previewPort] : []), ...(network.previewHosts?.length ? ['--preview-host', network.previewHosts.join(',')] : [])], { detached: true, stdio: ['ignore', log.fd, log.fd] });
   let launchError: Error | undefined;
   child.once('error', error => { launchError = error; });
   child.unref(); await log.close();

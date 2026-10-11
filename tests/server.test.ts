@@ -7,7 +7,7 @@ import { request as rawRequest } from 'node:http';
 import { execFile, spawn, type ChildProcess } from 'node:child_process';
 import { promisify } from 'node:util';
 import type { AnnotationInput, Asset, Claim, Draft, ResolvedRequestReference, Task } from '../src/shared/types.js';
-import { startServer, type RunningServer } from '../src/server/http.js';
+import { previewOrigin, startServer, type RunningServer } from '../src/server/http.js';
 import { cli } from '../src/cli.js';
 import { generateRequirementText } from '../src/shared/task-message.js';
 
@@ -673,4 +673,21 @@ test('opt-in bind and allowed hosts extend host and origin checks while localhos
   const open = await cli(['project', 'open', '--project', root]) as any;
   assert.equal(open.openUrl, `http://127.0.0.1:${port}/`);
   assert.deepEqual(open.urls, [`http://grok-bot:${port}/`, 'http://100.64.0.9:4317/']);
+});
+
+test('configured preview hosts serve remote boards on a distinct origin while loopback previews stay unchanged', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'acanvas-test-'));
+  const webRoot = await mkdtemp(join(tmpdir(), 'acanvas-web-'));
+  await writeFile(join(webRoot, 'index.html'), '<!doctype html><html><head></head><body></body></html>');
+  const running = await startServer({ root, port: 0, webRoot, bind: '0.0.0.0', allowedHosts: ['board.example:443', 'grok-bot'], previewPort: 0, previewHosts: ['https://board.example:8443', 'http://100.64.0.9:4318'] });
+  t.after(async () => { await running.close(); await rm(root, { recursive: true, force: true }); await rm(webRoot, { recursive: true, force: true }); });
+  const port = new URL(running.url).port;
+  const html = (host: string) => new Promise<string>((resolvePromise, reject) => { const request = rawRequest(`${running.url}/`, { headers: { Host: host } }, (response) => { let body = ''; response.on('data', chunk => { body += chunk; }); response.on('end', () => resolvePromise(`${response.statusCode} ${response.headers['content-security-policy']} ${body}`)); }); request.on('error', reject); request.end(); });
+  const meta = (value: string) => value.match(/acanvas-html-preview-origin" content="([^"]+)"/)?.[1];
+  assert.match(meta(await html(`127.0.0.1:${port}`))!, /^http:\/\/localhost:\d+$/);
+  const secure = await html('board.example');
+  assert.match(secure, /^200 /); assert.equal(meta(secure), 'https://board.example:8443'); assert.match(secure, /frame-src https:\/\/board\.example:8443/);
+  assert.equal(meta(await html(`grok-bot:${port}`)), 'http://100.64.0.9:4318');
+  assert.throws(() => previewOrigin('board.example'), /host:port/);
+  assert.equal(previewOrigin('board.example:443'), 'https://board.example');
 });

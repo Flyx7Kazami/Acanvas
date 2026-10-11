@@ -53,7 +53,8 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
       let url: URL;
       try { url = new URL(value.url); }
       catch { await revoke(value.id); throw new Error('The preview address is unavailable.'); }
-      if (url.protocol !== 'http:' || !['127.0.0.2', '127.0.0.1', 'localhost'].includes(url.hostname) || url.hostname === window.location.hostname || url.origin !== value.origin || url.username || url.password || !Number.isFinite(Date.parse(value.expiresAt))) { await revoke(value.id); throw new Error('The preview address is unavailable.'); }
+      const configuredRemote = !!documentOrigin.current && url.origin === documentOrigin.current && !['127.0.0.2', '127.0.0.1', 'localhost'].includes(url.hostname) && url.origin !== window.location.origin && (url.protocol === 'https:' || (url.protocol === 'http:' && window.location.protocol === 'http:'));
+      if (!configuredRemote && (url.protocol !== 'http:' || !['127.0.0.2', '127.0.0.1', 'localhost'].includes(url.hostname) || url.hostname === window.location.hostname) || url.origin !== value.origin || url.username || url.password || !Number.isFinite(Date.parse(value.expiresAt))) { await revoke(value.id); throw new Error('The preview address is unavailable.'); }
       if (documentOrigin.current && value.origin !== documentOrigin.current) {
         await revoke(value.id);
         if (sequence === requestSequence.current) setReloadRequired(true);

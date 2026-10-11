@@ -15,7 +15,7 @@ import { ProjectHtmlSurfaces, type HtmlSurfaceFrame, type HtmlSurfacesOptions } 
 import { htmlInputRequestBytes } from '../shared/html-surface.js';
 import { createBoardConnections, type ViewPresence } from './board-connection.js';
 
-export interface ServerOptions { root: string; port?: number; maxUploadBytes?: number; webRoot?: string; allowedOrigins?: string[]; bind?: string; allowedHosts?: string[]; browser?: ProjectBrowserOptions; htmlSurfaces?: HtmlSurfacesOptions }
+export interface ServerOptions { root: string; port?: number; maxUploadBytes?: number; webRoot?: string; allowedOrigins?: string[]; bind?: string; allowedHosts?: string[]; previewPort?: number; previewHosts?: string[]; browser?: ProjectBrowserOptions; htmlSurfaces?: HtmlSurfacesOptions }
 export interface RunningServer { service: CanvasService; browser: ProjectBrowser; url: string; urls: string[]; close: () => Promise<void> }
 const mimeTypes: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.png': 'image/png', '.ico': 'image/x-icon' };
 const send = (response: ServerResponse, status: number, value: unknown) => { response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); response.end(JSON.stringify(value)); };
@@ -34,13 +34,29 @@ export function normalizeAllowedHost(value: string): string {
   return host;
 }
 
+// Port 443 entries describe an HTTPS front (for example a TLS proxy); their browsers omit the port from Host.
+export function hostAddresses(host: string): { host: string; origins: string[] } {
+  const match = host.match(/^(.*):(\d+)$/);
+  if (!match || host.endsWith(']')) return { host, origins: [`http://${host}`, `https://${host}`] };
+  if (match[2] === '443') return { host: match[1], origins: [`https://${match[1]}`] };
+  if (match[2] === '80') return { host: match[1], origins: [`http://${match[1]}`] };
+  return { host, origins: [`http://${host}`, `https://${host}`] };
+}
+export function previewOrigin(value: string): string {
+  const secure = /^https:\/\//i.test(value), host = normalizeAllowedHost(value.replace(/^https?:\/\//i, '').replace(/\/$/, ''));
+  if (!/:\d+$/.test(host) || host.endsWith(']')) throw new Error(`Choose a preview host as host:port: ${value}`);
+  return new URL(`${secure || host.endsWith(':443') ? 'https' : 'http'}://${host}`).origin;
+}
+
 export async function startServer(options: ServerOptions): Promise<RunningServer> {
   const bind = options.bind ?? '127.0.0.1';
   if (!bindAddresses.includes(bind)) throw new Error(`Choose a bind address from ${bindAddresses.join(', ')}.`);
   const extraHosts = [...new Set((options.allowedHosts ?? []).map(normalizeAllowedHost))];
+  if (options.previewPort !== undefined && (!Number.isSafeInteger(options.previewPort) || options.previewPort < 0 || options.previewPort > 65535)) throw new Error('Choose a valid preview port.');
+  const previewOrigins = [...new Set((options.previewHosts ?? []).map(previewOrigin))];
   const service = new CanvasService(options.root);
   const artwork = new AudioArtworkReader(id => service.assetPath(id));
-  const preview = await startHtmlPreview(service).catch(error => { service.close(); throw error; });
+  const preview = await startHtmlPreview(service, { bind, port: options.previewPort, origins: previewOrigins }).catch(error => { service.close(); throw error; });
   const surfaces = new ProjectHtmlSurfaces(service, preview, options.htmlSurfaces);
   const surfaceOwners = new Map<string, CaptureView & { objectId: string; assetId: string }>();
   service.validateSurface = (owner, reference) => surfaces.validateSurface(owner, reference);
@@ -85,14 +101,15 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
       }, 5000); current.timer.unref();
     };
   };
-  const allowedHosts = () => extraHosts.map(host => /:\d+$/.test(host) && !host.endsWith(']') ? host : `${host}:${port}`);
+  const allowedHosts = () => extraHosts.map(host => hostAddresses(/:\d+$/.test(host) && !host.endsWith(']') ? host : `${host}:${port}`));
+  const requestOrigin = (request: IncomingMessage) => { const host = request.headers.host?.toLowerCase() ?? ''; return allowedHosts().find(entry => entry.host === host)?.origins[0] ?? `http://${host}`; };
   const authenticationCookieName = () => `acanvas_auth_${port}`;
   const guardSource = (request: IncomingMessage) => {
-    const hosts = [`127.0.0.1:${port}`, `localhost:${port}`, ...allowedHosts()];
+    const hosts = [`127.0.0.1:${port}`, `localhost:${port}`, ...allowedHosts().map(entry => entry.host)];
     if (!request.headers.host || !hosts.includes(request.headers.host.toLowerCase())) throw new ApiFailure(403, 'host_rejected', 'Use the local service address.');
     if (request.headers['sec-fetch-site'] === 'cross-site') throw new ApiFailure(403, 'origin_rejected', 'Cross-site access is restricted.');
     const origin = request.headers.origin;
-    const origins = hosts.map((host) => `http://${host}`).concat(options.allowedOrigins ?? []);
+    const origins = [`http://127.0.0.1:${port}`, `http://localhost:${port}`, ...allowedHosts().flatMap(entry => entry.origins)].concat(options.allowedOrigins ?? []);
     if (origin && (origin === 'null' || !origins.includes(origin))) throw new ApiFailure(403, 'origin_rejected', 'Use an approved local browser origin.');
   };
   const authenticate = (request: IncomingMessage) => {
@@ -111,7 +128,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
     try {
       if (closing) { response.setHeader('Connection', 'close'); request.resume(); send(response, 503, { error: { code: 'service_closing', message: 'Reconnect after the local service starts.' } }); return; }
       guardSource(request);
-      response.setHeader('Content-Security-Policy', parentPolicy(`http://${request.headers.host}`));
+      response.setHeader('Content-Security-Policy', parentPolicy(requestOrigin(request)));
       const url = new URL(request.url ?? '/', `http://127.0.0.1:${port}`);
       const path = url.pathname;
       const method = request.method;
@@ -198,7 +215,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
         if (previewAssetMatch && method === 'POST') {
           await payload(request);
           service.sharedAsset(decodeURIComponent(previewAssetMatch[1]));
-          send(response, 201, preview.issue(decodeURIComponent(previewAssetMatch[1]), request.headers.origin ?? `http://${request.headers.host}`)); return;
+          send(response, 201, preview.issue(decodeURIComponent(previewAssetMatch[1]), request.headers.origin ?? requestOrigin(request))); return;
         }
         const previewMatch = path.match(/^\/api\/html-previews\/([A-Za-z0-9_-]{43})$/);
         if (previewMatch && method === 'DELETE') { preview.revoke(previewMatch[1]); send(response, 200, { revoked: true }); return; }
@@ -381,7 +398,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
       if (!within(webRoot, actual) || !(await stat(actual)).isFile()) throw new ApiFailure(403, 'path_boundary', 'Open an application file.');
       if (extname(actual) === '.html') {
         const html = await readFile(actual, 'utf8');
-        const metadata = `<meta name="acanvas-html-preview-origin" content="${preview.originFor(`http://${request.headers.host}`)}">`;
+        const metadata = `<meta name="acanvas-html-preview-origin" content="${preview.originFor(requestOrigin(request))}">`;
         const document = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${metadata}</head>`) : `${metadata}${html}`;
         response.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache', 'Content-Length': Buffer.byteLength(document) });
         response.end(method === 'HEAD' ? undefined : document); return;
@@ -401,7 +418,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   const connections = createBoardConnections(server, { instanceId: service.identity().instanceId, watch: watchPresence, guard(request) {
     if (closing) throw new ApiFailure(503, 'service_closing', 'Reconnect after the local service starts.');
     guardSource(request);
-    if (!request.headers.origin || (request.headers.origin !== `http://${request.headers.host}` && !options.allowedOrigins?.includes(request.headers.origin))) throw new ApiFailure(403, 'origin_rejected', 'Use the same local browser origin.');
+    if (!request.headers.origin || (request.headers.origin !== requestOrigin(request) && !options.allowedOrigins?.includes(request.headers.origin))) throw new ApiFailure(403, 'origin_rejected', 'Use the same local browser origin.');
     const prefix = `${authenticationCookieName()}=`;
     const cookie = request.headers.cookie?.split(';').map(value => value.trim()).find(value => value.startsWith(prefix))?.slice(prefix.length);
     if (!sameToken(cookie, token)) throw new ApiFailure(401, 'authentication_required', 'Connect through this local service before using its API.');
@@ -410,7 +427,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   const heartbeat = setInterval(() => { for (const response of events) response.write(': alive\n\n'); for (const record of presences.values()) for (const response of record.connections) if ('write' in response) (response as ServerResponse).write(': alive\n\n'); }, 15_000); heartbeat.unref();
   await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, bind, () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch(async error => { clearInterval(heartbeat); connections.close(); await surfaces.close(); await preview.close(); service.close(); throw error; });
   let shutdown: Promise<void> | undefined;
-  const runtime: ServiceRuntime = { project: service.project, ...service.identity(), url: `http://127.0.0.1:${port}`, ...(bind === '127.0.0.1' ? {} : { bind }), ...(extraHosts.length ? { allowedHosts: extraHosts, urls: allowedHosts().map(host => `http://${host}`) } : {}) };
+  const runtime: ServiceRuntime = { project: service.project, ...service.identity(), url: `http://127.0.0.1:${port}`, ...(bind === '127.0.0.1' ? {} : { bind }), ...(previewOrigins.length ? { previewOrigins } : {}), ...(extraHosts.length ? { allowedHosts: extraHosts, urls: allowedHosts().map(entry => entry.origins[0]) } : {}) };
   browser = new ProjectBrowser(service, runtime.url, token, options.browser);
   stopService = () => {
     if (shutdown) return shutdown;

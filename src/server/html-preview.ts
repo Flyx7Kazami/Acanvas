@@ -26,14 +26,21 @@ const deny = (response: ServerResponse, status: number, code: string) => {
   response.end(JSON.stringify({ error: { code } }));
 };
 
-export async function startHtmlPreview(service: CanvasService, options: { lifetimeMs?: number; maxBytes?: number } = {}): Promise<HtmlPreviewRuntime> {
+export async function startHtmlPreview(service: CanvasService, options: { lifetimeMs?: number; maxBytes?: number; bind?: string; port?: number; origins?: string[] } = {}): Promise<HtmlPreviewRuntime> {
   const grants = new Map<string, Grant>();
   const active=new Map<string,number>();
   const handlers = new Set<Promise<void>>(), responses = new Set<ServerResponse>();
   const lifetime = options.lifetimeMs ?? 10 * 60 * 1000, maxBytes = options.maxBytes ?? 10 * 1024 * 1024;
   let port = 0, closing = false, shutdown: Promise<void> | undefined;
   // The preview uses the other loopback hostname so the main authentication cookie stays on its host.
-  const originFor = (parentOrigin: string) => `http://${new URL(parentOrigin).hostname === 'localhost' ? '127.0.0.1' : 'localhost'}:${port}`;
+  const loopback = (parentOrigin: string) => `http://${new URL(parentOrigin).hostname === 'localhost' ? '127.0.0.1' : 'localhost'}:${port}`;
+  // Configured origins serve remote boards; a board never receives its own origin, and an HTTPS board only receives HTTPS previews.
+  const originFor = (parentOrigin: string) => {
+    const parent = new URL(parentOrigin), configured = options.origins ?? [];
+    if (['localhost', '127.0.0.1'].includes(parent.hostname) || !configured.length) return loopback(parentOrigin);
+    const usable = configured.map(value => new URL(value)).filter(value => value.origin !== parent.origin && (parent.protocol === 'http:' || value.protocol === 'https:'));
+    return (usable.find(value => value.hostname !== parent.hostname && value.protocol === parent.protocol) ?? usable.find(value => value.hostname !== parent.hostname) ?? usable[0])?.origin ?? loopback(parentOrigin);
+  };
   const expired=(id:string,grant:Grant)=>grant.expires<=Date.now()&&!active.has(id);
   const prune = () => { for (const [id, grant] of grants) if (expired(id,grant)) grants.delete(id); };
   const handle = async (request: IncomingMessage, response: ServerResponse) => {
@@ -92,7 +99,7 @@ export async function startHtmlPreview(service: CanvasService, options: { lifeti
     const pending = handle(request, response); handlers.add(pending);
     void pending.finally(() => handlers.delete(pending));
   });
-  await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolve(); }); });
+  await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(options.port ?? 0, options.bind ?? '127.0.0.1', () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolve(); }); });
   const expiry = setInterval(prune, Math.min(lifetime, 60_000)); expiry.unref();
   return {
     originFor,

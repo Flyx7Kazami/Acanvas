@@ -138,6 +138,10 @@ R03、R10、R12 的音频预览路径已完成本轮性能修订。播放器首�
 
 已核对当前发送链路、Codex app-server 与 MCP App 消息桥的官方接口。画板发送目前创建本地持久队列任务；建议先验证受信 MCP App 组件能否通过 `ui/message` 投递到当前 Codex 桌面对话，再评估保留独立浏览器形态时的 app-server 适配。接口能力、任务归属、投递边界及待验证项见[调研文档](chatbox/CODEX_MESSAGE_BRIDGE_RESEARCH.md)。本轮仅调研，发送链路保持现状。
 
+## 最新进度 · 远程 HTML 预览与 HTTPS 前端（2026-10-11）
+
+新增可选 `--preview-port`、`--preview-host`（`ACANVAS_PREVIEW_PORT`、`ACANVAS_PREVIEW_HOSTS`）：预览服务器随 `--bind` 监听固定端口；远程白板获得配置的预览源，排除自身源，优先其他主机名，HTTPS 白板仅获得 HTTPS 预览。前端仅在预览源等于服务端声明值且不同于页面源时接受非回环预览。允许主机 `host:443` 表示 HTTPS 前端。新增 favicon。验证：typecheck 通过；`npm test` 231 通过、34 跳过、3 项既有失败（chatbox-ui 2、reference-occurrences-ui 1）。
+
 ## 最新进度 · 可选网络地址访问（2026-10-11）
 
 服务默认仍只绑定 `127.0.0.1`，仅接受 localhost Host/Origin。新增可选 `--bind`（127.0.0.1、0.0.0.0、::）与 `--allow-host host[:port]`（逗号分隔），亦可用 `ACANVAS_BIND`、`ACANVAS_ALLOWED_HOSTS`；允许主机同时扩展 Host、Origin 与同源检查，选项写入运行时元数据，`project open` 返回额外 `urls`，CLI 自身继续经 `127.0.0.1` 连接。HTML 预览帧仍位于回环地址。普通 HTTP 私网地址不属于安全上下文，前端 ID 生成改用 `randomId()`（缺少 `crypto.randomUUID` 时以 `getRandomValues` 生成 UUID v4）。验证：typecheck 通过；`npm test` 229 通过、34 跳过、3 失败，3 项失败（chatbox-ui 2 项、reference-occurrences-ui 1 项）在未修改代码上同样失败。
