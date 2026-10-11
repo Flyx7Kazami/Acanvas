@@ -1,3 +1,4 @@
+import { randomId } from './random-id.js';
 import type { AnnotationCaptureInput, AnnotationInput, BaseSceneSnapshot, CaptureResult, CaptureRetryResult, CaptureView, CaptureViewOperation, Draft, ScenePresentation, ScenePresentationOperation, SceneSource } from '../shared/types.js';
 import type { BrowserCaptureIdentity, BrowserCaptureResult, ProjectCaptureProvider as CaptureProvider, SceneEvidenceFrame } from '../shared/browser-capture.js';
 
@@ -72,7 +73,7 @@ export class ProjectCaptureCoordinator implements CaptureProvider {
   private readonly maxPendingCaptures: number;
 
   constructor(private readonly api: ProjectCaptureTransport, options: ProjectCaptureOptions) {
-    this.sessionId = options.sessionId; this.documentId = options.documentId ?? crypto.randomUUID();
+    this.sessionId = options.sessionId; this.documentId = options.documentId ?? randomId();
     this.attempts = Math.max(1, Math.min(5, options.attempts ?? 3)); this.retryDelayMs = Math.max(0, Math.min(1000, options.retryDelayMs ?? 150));
     this.maxPendingCaptures = Math.max(1, Math.min(8, options.maxPendingCaptures ?? 4));
   }

@@ -140,7 +140,7 @@ R03、R10、R12 的音频预览路径已完成本轮性能修订。播放器首�
 
 ## 最新进度 · 可选网络地址访问（2026-10-11）
 
-服务默认仍只绑定 `127.0.0.1`，仅接受 localhost Host/Origin。新增可选 `--bind`（127.0.0.1、0.0.0.0、::）与 `--allow-host host[:port]`（逗号分隔），亦可用 `ACANVAS_BIND`、`ACANVAS_ALLOWED_HOSTS`；允许主机同时扩展 Host、Origin 与同源检查，选项写入运行时元数据，`project open` 返回额外 `urls`，CLI 自身继续经 `127.0.0.1` 连接。HTML 预览帧仍位于回环地址。验证：typecheck 通过；`npm test` 229 通过、34 跳过、3 失败，3 项失败（chatbox-ui 2 项、reference-occurrences-ui 1 项）在未修改代码上同样失败。
+服务默认仍只绑定 `127.0.0.1`，仅接受 localhost Host/Origin。新增可选 `--bind`（127.0.0.1、0.0.0.0、::）与 `--allow-host host[:port]`（逗号分隔），亦可用 `ACANVAS_BIND`、`ACANVAS_ALLOWED_HOSTS`；允许主机同时扩展 Host、Origin 与同源检查，选项写入运行时元数据，`project open` 返回额外 `urls`，CLI 自身继续经 `127.0.0.1` 连接。HTML 预览帧仍位于回环地址。普通 HTTP 私网地址不属于安全上下文，前端 ID 生成改用 `randomId()`（缺少 `crypto.randomUUID` 时以 `getRandomValues` 生成 UUID v4）。验证：typecheck 通过；`npm test` 229 通过、34 跳过、3 失败，3 项失败（chatbox-ui 2 项、reference-occurrences-ui 1 项）在未修改代码上同样失败。
 
 ## 最新进度 · 历史圆角与固定角落提示（2026-10-06）
 

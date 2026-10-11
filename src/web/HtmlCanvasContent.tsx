@@ -1,3 +1,4 @@
+import { randomId } from './random-id.js';
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react';
 import { ArrowDownToLine, Code2, RotateCw, Square } from 'lucide-react';
 import type { Asset } from '../shared/types';
@@ -123,7 +124,7 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
   }, [preview.slot, preview.generation, preview.complete]);
   useEffect(() => {
     if (!grant || !ready || preview.slot !== 'capturing' && preview.slot !== 'freezing') return;
-    const controller = new AbortController(), requestId = crypto.randomUUID();
+    const controller = new AbortController(), requestId = randomId();
     let received = false, firstFrame = 0, secondFrame = 0;
     const message = (event: MessageEvent) => {
       if (received || event.source !== frame.current?.contentWindow || event.origin !== 'null' || !event.data || event.data.instanceId !== grant.id || event.data.requestId !== requestId) return;
@@ -147,7 +148,7 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
   refreshLive.current = async () => {
     const iframe = frame.current, grant = active.current, target = iframe?.contentWindow;
     if (!target || !grant || !inputState.current.live) return displayedFrame();
-    const requestId = crypto.randomUUID();
+    const requestId = randomId();
     const payload = await new Promise<{ svg: string; width: number; height: number } | undefined>(resolve => {
       const timer = window.setTimeout(() => { window.removeEventListener('message', onMessage); resolve(undefined); }, 1500);
       const onMessage = (event: MessageEvent) => {

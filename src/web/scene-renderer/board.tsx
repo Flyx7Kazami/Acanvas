@@ -1,3 +1,4 @@
+import { randomId } from '../random-id.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AnnotationCaptureInput, AnnotationInput, Asset, BaseSceneSnapshot, BoardObject, CaptureView, Draft, SessionView } from '../../shared/types.js';
 import { RequestError, type BoardApi } from '../api.js';
@@ -10,7 +11,7 @@ import { SceneContentFrame, type SceneContentFrameInput, type SceneContentMetada
 
 export interface ProjectSceneSource { provider: ProjectCaptureCoordinator; view?: CaptureView; connectingView?: CaptureView; snapshot?: BaseSceneSnapshot }
 export function useProjectScene(api: BoardApi, sessionId: string, objects: BoardObject[], saveDraft: (draft: Draft) => Promise<Draft>, onError: (cause: unknown) => void, serviceInstance: string) {
-  const documentId = useRef(crypto.randomUUID()).current;
+  const documentId = useRef(randomId()).current;
   const transport = useMemo(() => new Proxy(api, { get(target, key) { if (key === 'saveDraft') return saveDraft; const value = Reflect.get(target, key); return typeof value === 'function' ? value.bind(target) : value; } }), [api, saveDraft]);
   const [source, setSource] = useState<ProjectSceneSource>();
   const [connectionGeneration, setConnectionGeneration] = useState(0);

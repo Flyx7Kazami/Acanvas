@@ -1,3 +1,4 @@
+import { randomId } from './random-id.js';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react';
 import { AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignStartHorizontal, AlignStartVertical, ArrowDownToLine, ArrowUp, Check, ChevronDown, Circle, Copy, Ellipsis, Hand, History, LoaderCircle, Maximize, Minus, Monitor, Moon, MousePointer2, Palette, Pause, Pencil, Play, Plus, Sun, Trash2, Type, Upload, X } from 'lucide-react';
 import type { AnnotationInput, Asset, BaseSceneSnapshot, BoardObject, BoardOperation, CaptureView, Draft, SessionView, Task, TaskStatus } from '../shared/types';
@@ -575,7 +576,7 @@ export default function App() {
       const changedObject = target.objectId !== edit.value.objectId;
       patchAnnotation(edit, { ...target, ...(changedObject ? { timeStart: undefined, timeEnd: undefined, snapshotAssetId: undefined } : {}) });
     } else {
-      const value: AnnotationInput = { id: crypto.randomUUID(), scope: 'region', objectIds: [], bounds: world, coordinateSpace: 'world', text: '', geometry, captureState: { version: 1, status: 'incomplete' }, ...target };
+      const value: AnnotationInput = { id: randomId(), scope: 'region', objectIds: [], bounds: world, coordinateSpace: 'world', text: '', geometry, captureState: { version: 1, status: 'incomplete' }, ...target };
       const next: CommentEdit = { value, sessionId: state.session.id, draftId: draft.id, index: draft.annotations.length, snapshotGeneration: 0, fresh: true };
       comments.current.set(value.id, next); setAnnotationReader({ annotationId: value.id, sessionId: state.session.id, draftId: draft.id }); readerTrigger.current = canvas.current;
     }
@@ -593,7 +594,7 @@ export default function App() {
     const size = canvas.current?.getBoundingClientRect();
     const position = screenToWorld(dropPoint ?? { x: (size?.width || 600) / 2, y: (size?.height || 600) / 2 }, importView);
     for (const [index, file] of files.entries()) {
-      const id = crypto.randomUUID();
+      const id = randomId();
       const controller = new AbortController();
       setUploads(current => [...current, { id, name: file.name, controller }]);
       try {
@@ -642,7 +643,7 @@ export default function App() {
     if (!state || !draft || disabled || !selected.length) return;
     const targets = selected, bounds = unionBounds(targets.length > 1 ? targets : targets.map(contentBounds));
     const single = targets.length === 1 ? targets[0] : undefined;
-    const value: AnnotationInput = { id: crypto.randomUUID(), scope: single ? 'object' : 'region', objectId: single?.id, objectIds: single ? [single.id] : [], assetId: single?.assetId, bounds: single ? normalizedRegion(bounds, contentBounds(single)) : bounds, coordinateSpace: single ? 'normalized' : 'world', text: '', geometry: 'rect', captureState: { version: 1, status: 'incomplete' }, ...(single ? { contentAnchor: requestedAnchor(single.id) } : {}) };
+    const value: AnnotationInput = { id: randomId(), scope: single ? 'object' : 'region', objectId: single?.id, objectIds: single ? [single.id] : [], assetId: single?.assetId, bounds: single ? normalizedRegion(bounds, contentBounds(single)) : bounds, coordinateSpace: single ? 'normalized' : 'world', text: '', geometry: 'rect', captureState: { version: 1, status: 'incomplete' }, ...(single ? { contentAnchor: requestedAnchor(single.id) } : {}) };
     if (value.bounds.width <= 0 || value.bounds.height <= 0) { setNotice('Select an area inside the image or video.'); return; }
     let snapshot: Promise<Blob | undefined> | undefined;
     let frameNote: string | undefined;
