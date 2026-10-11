@@ -48,12 +48,12 @@ npm run cli -- project open --project "$PWD" --port 4317 --bind 0.0.0.0 --allow-
 
 `--bind` accepts `127.0.0.1`, `0.0.0.0` or `::`; `--allow-host` takes comma-separated `host[:port]` values (the service port is used when omitted). `ACANVAS_BIND` and `ACANVAS_ALLOWED_HOSTS` provide the same settings. Allowed hosts extend the Host, Origin and same-origin checks; the options are recorded in runtime metadata, `project open` returns the extra addresses in `urls`, and CLI calls continue to use `127.0.0.1`. Stop and reopen the project to change them. An allowed `host:443` entry describes an HTTPS front such as a TLS proxy.
 
-HTML preview frames use a separate server. Remote boards need a fixed `--preview-port` and `--preview-host` origins (`ACANVAS_PREVIEW_PORT`, `ACANVAS_PREVIEW_HOSTS`); a board never receives its own origin, prefers a preview on another hostname, and an HTTPS board only receives HTTPS previews. Example with a Tailscale HTTPS front (`tailscale serve --bg --https=443 http://127.0.0.1:4317` and `--https=8443 http://127.0.0.1:4318`):
+HTML preview frames use a separate server. Remote boards need a fixed `--preview-port` and `--preview-host` origins (`ACANVAS_PREVIEW_PORT`, `ACANVAS_PREVIEW_HOSTS`); a board never receives its own origin, prefers a preview on another hostname, and an HTTPS board only receives HTTPS previews. Use HTTPS preview origins for non-loopback hosts: browsers send the `Sec-Fetch-*` headers that the preview server requires only to secure origins, so a plain-HTTP remote preview is rejected. Example with a Tailscale HTTPS front (`tailscale serve --bg --https=443 http://127.0.0.1:4317` and `--https=8443 http://127.0.0.1:4318`):
 
 ```sh
 npm run cli -- project open --project "$PWD" --port 4317 --bind 0.0.0.0 \
   --allow-host grok-bot:4317,100.104.202.58:4317,grok-bot.example.ts.net:443 \
-  --preview-port 4318 --preview-host https://grok-bot.example.ts.net:8443,http://100.104.202.58:4318,http://grok-bot:4318
+  --preview-port 4318 --preview-host https://grok-bot.example.ts.net:8443
 ```
 
 When the HTTPS board and preview share a hostname and differ by port, browsers treat them as different origins but share cookies. The board cookie stays `HttpOnly`, `SameSite=Strict` and `Path=/api`, the preview server ignores cookies, and preview documents run sandboxed with an opaque origin.

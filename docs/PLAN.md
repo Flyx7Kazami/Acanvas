@@ -140,7 +140,7 @@ R03、R10、R12 的音频预览路径已完成本轮性能修订。播放器首�
 
 ## 最新进度 · 远程 HTML 预览与 HTTPS 前端（2026-10-11）
 
-新增可选 `--preview-port`、`--preview-host`（`ACANVAS_PREVIEW_PORT`、`ACANVAS_PREVIEW_HOSTS`）：预览服务器随 `--bind` 监听固定端口；远程白板获得配置的预览源，排除自身源，优先其他主机名，HTTPS 白板仅获得 HTTPS 预览。前端仅在预览源等于服务端声明值且不同于页面源时接受非回环预览。允许主机 `host:443` 表示 HTTPS 前端。新增 favicon。验证：typecheck 通过；`npm test` 231 通过、34 跳过、3 项既有失败（chatbox-ui 2、reference-occurrences-ui 1）。
+新增可选 `--preview-port`、`--preview-host`（`ACANVAS_PREVIEW_PORT`、`ACANVAS_PREVIEW_HOSTS`）：预览服务器随 `--bind` 监听固定端口；远程白板获得配置的预览源，排除自身源，优先其他主机名，HTTPS 白板仅获得 HTTPS 预览。前端仅在预览源等于服务端声明值且不同于页面源时接受非回环预览。允许主机 `host:443` 表示 HTTPS 前端。非回环预览源需使用 HTTPS：浏览器仅向安全源发送预览服务器要求的 `Sec-Fetch-*` 请求头。新增 favicon。验证：typecheck 通过；`npm test` 231 通过、34 跳过、3 项既有失败（chatbox-ui 2、reference-occurrences-ui 1）。
 
 ## 最新进度 · 可选网络地址访问（2026-10-11）
 
