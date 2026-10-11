@@ -8,6 +8,7 @@ import { resolveContentMime } from './shared/content-types.js';
 import { within } from './server/service.js';
 import { bundleChanged, collectHtmlBundle, sameBundleSource, verifyBundleDirectories } from './server/html-bundle-import.js';
 import { connectProject, waitForStop } from './server/client-runtime.js';
+import { readRuntime } from './server/runtime.js';
 
 const help = `acanvas: project-local whiteboard CLI (Node 24)
 
@@ -15,7 +16,8 @@ Every API call requires --project /absolute/project. Queue calls require --sessi
 Use --url http://127.0.0.1:4317 to connect to a selected local service.
 Without --url, calls discover the project's service; project open starts it when needed.
 
-project open [--host NAME --thread ID] [--session ID] [--port NUMBER]
+project open [--host NAME --thread ID] [--session ID] [--port NUMBER] [--bind 0.0.0.0] [--allow-host HOST[:PORT],...]
+  --bind/--allow-host apply when this call starts the service (also ACANVAS_BIND, ACANVAS_ALLOWED_HOSTS); localhost stays allowed.
   Explicit --session opens that scope; explicit --host/--thread binds it.
   Without either choice, CODEX_THREAD_ID can resolve the current conversation.
   Returns openUrl and the selected sessionId when a task scope is supplied.
@@ -70,7 +72,7 @@ export async function cli(args: string[]): Promise<unknown> {
     else if (!openSessionId && process.env.CODEX_THREAD_ID) { openHost = 'codex'; openThreadId = process.env.CODEX_THREAD_ID; }
   }
   const projectRoot = await realpath(required('project'));
-  const connection = await connectProject(projectRoot, options.get('url'), group === 'project' && action === 'open', options.has('port') ? Number(required('port')) : 0);
+  const connection = await connectProject(projectRoot, options.get('url'), group === 'project' && action === 'open', options.has('port') ? Number(required('port')) : 0, { bind: options.get('bind'), allowedHosts: (options.get('allow-host') ?? '').split(',').map(item => item.trim()).filter(Boolean) });
   if (!connection) {
     if (group === 'project' && ['status', 'stop'].includes(action)) return { projectRoot, status: 'stopped' };
     throw new Error('The project service is stopped. Run project open to start it.');
@@ -98,8 +100,8 @@ export async function cli(args: string[]): Promise<unknown> {
       let binding: HostBinding | undefined, sessionId = openSessionId;
       if (openHost && openThreadId) { binding = await request('/api/host-bindings', 'POST', { host: openHost, threadId: openThreadId, ...(sessionId ? { sessionId } : {}) }); sessionId = binding!.sessionId; }
       else if (sessionId) { const session = await request(`/api/state?sessionId=${encodeURIComponent(sessionId)}`); sessionId = session.session.id; }
-      const openUrl = new URL(base); if (sessionId) openUrl.searchParams.set('session', sessionId);
-      return { project: bootstrap.project, service: bootstrap.service, capabilities: bootstrap.capabilities, ...(binding ? { binding } : {}), ...(sessionId ? { sessionId } : {}), openUrl: openUrl.href };
+      const bootstrapUrls = (await readRuntime(projectRoot))?.urls ?? []; const openUrl = new URL(base); if (sessionId) openUrl.searchParams.set('session', sessionId);
+      return { project: bootstrap.project, service: bootstrap.service, capabilities: bootstrap.capabilities, ...(binding ? { binding } : {}), ...(sessionId ? { sessionId } : {}), openUrl: openUrl.href, ...(bootstrapUrls.length ? { urls: bootstrapUrls.map(url => { const value = new URL(url); value.search = openUrl.search; return value.href; }) } : {}) };
     }
   }
   if (group === 'session') {

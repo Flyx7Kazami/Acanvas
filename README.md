@@ -40,6 +40,14 @@ npm run cli -- project status --project "$PWD"
 npm run cli -- project stop --project "$PWD"
 ```
 
+By default the service binds `127.0.0.1` and accepts only `127.0.0.1`/`localhost` hosts. To reach it through a forward or private network address, opt in when the call starts the service:
+
+```sh
+npm run cli -- project open --project "$PWD" --port 4317 --bind 0.0.0.0 --allow-host grok-bot:4317,100.104.202.58:4317
+```
+
+`--bind` accepts `127.0.0.1`, `0.0.0.0` or `::`; `--allow-host` takes comma-separated `host[:port]` values (the service port is used when omitted). `ACANVAS_BIND` and `ACANVAS_ALLOWED_HOSTS` provide the same settings. Allowed hosts extend the Host, Origin and same-origin checks; the options are recorded in runtime metadata, `project open` returns the extra addresses in `urls`, and CLI calls continue to use `127.0.0.1`. Stop and reopen the project to change them. HTML preview frames remain on loopback.
+
 Use an explicit session ID or its URL to keep requests in the intended task scope. An agent can also use its host binding when available. For a foreground service, use `npm start`; Ctrl+C shuts it down normally.
 
 Dynamic HTML uses a project-installed CEF runtime. The current native package supports macOS arm64 and requires CMake and Apple Clang. Install it with:

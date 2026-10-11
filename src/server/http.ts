@@ -15,8 +15,8 @@ import { ProjectHtmlSurfaces, type HtmlSurfaceFrame, type HtmlSurfacesOptions } 
 import { htmlInputRequestBytes } from '../shared/html-surface.js';
 import { createBoardConnections, type ViewPresence } from './board-connection.js';
 
-export interface ServerOptions { root: string; port?: number; maxUploadBytes?: number; webRoot?: string; allowedOrigins?: string[]; browser?: ProjectBrowserOptions; htmlSurfaces?: HtmlSurfacesOptions }
-export interface RunningServer { service: CanvasService; browser: ProjectBrowser; url: string; close: () => Promise<void> }
+export interface ServerOptions { root: string; port?: number; maxUploadBytes?: number; webRoot?: string; allowedOrigins?: string[]; bind?: string; allowedHosts?: string[]; browser?: ProjectBrowserOptions; htmlSurfaces?: HtmlSurfacesOptions }
+export interface RunningServer { service: CanvasService; browser: ProjectBrowser; url: string; urls: string[]; close: () => Promise<void> }
 const mimeTypes: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.png': 'image/png', '.ico': 'image/x-icon' };
 const send = (response: ServerResponse, status: number, value: unknown) => { response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); response.end(JSON.stringify(value)); };
 const sameToken = (received: string | undefined, token: string): boolean => !!received && Buffer.byteLength(received) === Buffer.byteLength(token) && timingSafeEqual(Buffer.from(received), Buffer.from(token));
@@ -27,7 +27,17 @@ const payload = async (request: IncomingMessage,limit=2*1024*1024): Promise<any>
   try { const value = JSON.parse(body || '{}'); if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(); return value; } catch { throw new ApiFailure(400, 'invalid_json', 'Send a JSON object.'); }
 };
 
+export const bindAddresses = ['127.0.0.1', '0.0.0.0', '::'];
+export function normalizeAllowedHost(value: string): string {
+  const host = value.trim().toLowerCase();
+  if (!/^(\[[0-9a-f:.]+\]|[a-z0-9]([a-z0-9.-]*[a-z0-9])?)(:\d{1,5})?$/.test(host)) throw new Error(`Choose an allowed host as host[:port]: ${value}`);
+  return host;
+}
+
 export async function startServer(options: ServerOptions): Promise<RunningServer> {
+  const bind = options.bind ?? '127.0.0.1';
+  if (!bindAddresses.includes(bind)) throw new Error(`Choose a bind address from ${bindAddresses.join(', ')}.`);
+  const extraHosts = [...new Set((options.allowedHosts ?? []).map(normalizeAllowedHost))];
   const service = new CanvasService(options.root);
   const artwork = new AudioArtworkReader(id => service.assetPath(id));
   const preview = await startHtmlPreview(service).catch(error => { service.close(); throw error; });
@@ -75,9 +85,10 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
       }, 5000); current.timer.unref();
     };
   };
+  const allowedHosts = () => extraHosts.map(host => /:\d+$/.test(host) && !host.endsWith(']') ? host : `${host}:${port}`);
   const authenticationCookieName = () => `acanvas_auth_${port}`;
   const guardSource = (request: IncomingMessage) => {
-    const hosts = [`127.0.0.1:${port}`, `localhost:${port}`];
+    const hosts = [`127.0.0.1:${port}`, `localhost:${port}`, ...allowedHosts()];
     if (!request.headers.host || !hosts.includes(request.headers.host.toLowerCase())) throw new ApiFailure(403, 'host_rejected', 'Use the local service address.');
     if (request.headers['sec-fetch-site'] === 'cross-site') throw new ApiFailure(403, 'origin_rejected', 'Cross-site access is restricted.');
     const origin = request.headers.origin;
@@ -397,9 +408,9 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   } });
   service.onChange = () => { for (const response of events) response.write('event: change\ndata: {}\n\n'); connections.changed(); };
   const heartbeat = setInterval(() => { for (const response of events) response.write(': alive\n\n'); for (const record of presences.values()) for (const response of record.connections) if ('write' in response) (response as ServerResponse).write(': alive\n\n'); }, 15_000); heartbeat.unref();
-  await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch(async error => { clearInterval(heartbeat); connections.close(); await surfaces.close(); await preview.close(); service.close(); throw error; });
+  await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, bind, () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch(async error => { clearInterval(heartbeat); connections.close(); await surfaces.close(); await preview.close(); service.close(); throw error; });
   let shutdown: Promise<void> | undefined;
-  const runtime: ServiceRuntime = { project: service.project, ...service.identity(), url: `http://127.0.0.1:${port}` };
+  const runtime: ServiceRuntime = { project: service.project, ...service.identity(), url: `http://127.0.0.1:${port}`, ...(bind === '127.0.0.1' ? {} : { bind }), ...(extraHosts.length ? { allowedHosts: extraHosts, urls: allowedHosts().map(host => `http://${host}`) } : {}) };
   browser = new ProjectBrowser(service, runtime.url, token, options.browser);
   stopService = () => {
     if (shutdown) return shutdown;
@@ -423,5 +434,5 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   };
   try { await publishRuntime(runtime); }
   catch (error) { await stopService(); throw error; }
-  return { service, browser, url: runtime.url, close: stopService };
+  return { service, browser, url: runtime.url, urls: runtime.urls ?? [], close: stopService };
 }

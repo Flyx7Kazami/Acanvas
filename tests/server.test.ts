@@ -643,3 +643,34 @@ test('inline reference positions validate UTF-16 boundaries, visual order, ident
   const shorter = await f.call(`/api/sessions/${a.id}/draft`, 'PUT', { ...draft, text: '' }, 400);
   assert.equal(shorter.error.code, 'invalid_references'); assert.deepEqual((await f.state(a.id)).draft, draft);
 });
+
+test('opt-in bind and allowed hosts extend host and origin checks while localhost stays the default', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'acanvas-test-'));
+  const status = (url: string, headers: Record<string, string>) => new Promise<number>((resolvePromise, reject) => { const request = rawRequest(url, { headers }, (response) => { response.resume(); response.on('end', () => resolvePromise(response.statusCode!)); }); request.on('error', reject); request.end(); });
+  const local = await startServer({ root, port: 0 });
+  const localPort = new URL(local.url).port;
+  assert.deepEqual(local.urls, []);
+  assert.equal(await status(`${local.url}/api/bootstrap`, { Host: `grok-bot:${localPort}` }), 403);
+  const localRuntime = JSON.parse(await readFile(join(root, '.acanvas/runtime/service.json'), 'utf8'));
+  assert.equal(localRuntime.bind, undefined); assert.equal(localRuntime.allowedHosts, undefined);
+  await local.close();
+  await assert.rejects(startServer({ root, port: 0, bind: '10.0.0.1' }), /bind address/);
+  await assert.rejects(startServer({ root, port: 0, allowedHosts: ['http://evil/'] }), /allowed host/);
+  const remote = await startServer({ root, port: 0, bind: '0.0.0.0', allowedHosts: ['Grok-Bot', '100.64.0.9:4317'] });
+  t.after(async () => { await remote.close(); await rm(root, { recursive: true, force: true }); });
+  const port = new URL(remote.url).port;
+  assert.equal(remote.url, `http://127.0.0.1:${port}`);
+  assert.deepEqual(remote.urls, [`http://grok-bot:${port}`, 'http://100.64.0.9:4317']);
+  assert.equal(await status(`${remote.url}/api/bootstrap`, { Host: `grok-bot:${port}`, Origin: `http://grok-bot:${port}` }), 200);
+  assert.equal(await status(`${remote.url}/api/bootstrap`, { Host: '100.64.0.9:4317' }), 200);
+  assert.equal(await status(`${remote.url}/api/bootstrap`, { Host: `127.0.0.1:${port}` }), 200);
+  assert.equal(await status(`${remote.url}/api/bootstrap`, { Host: `grok-bot:${port}`, Origin: 'http://evil.example' }), 403);
+  assert.equal(await status(`${remote.url}/api/bootstrap`, { Host: `evil.example:${port}` }), 403);
+  const runtime = JSON.parse(await readFile(join(root, '.acanvas/runtime/service.json'), 'utf8'));
+  assert.equal(runtime.url, `http://127.0.0.1:${port}`); assert.equal(runtime.bind, '0.0.0.0');
+  assert.deepEqual(runtime.allowedHosts, ['grok-bot', '100.64.0.9:4317']);
+  assert.ok(await cli(['project', 'status', '--project', root]));
+  const open = await cli(['project', 'open', '--project', root]) as any;
+  assert.equal(open.openUrl, `http://127.0.0.1:${port}/`);
+  assert.deepEqual(open.urls, [`http://grok-bot:${port}/`, 'http://100.64.0.9:4317/']);
+});

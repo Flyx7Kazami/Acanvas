@@ -40,7 +40,7 @@ export interface SessionView { x: number; y: number; zoom: number; selectedObjec
 export interface Session { id: string; name: string; createdAt: string; view: SessionView; consumerId: string | null }
 export interface HostBinding { host: string; threadId: string; sessionId: string }
 export interface ServiceIdentity { pid: number; instanceId: string }
-export interface ServiceRuntime extends ServiceIdentity { project: Project; url: string }
+export interface ServiceRuntime extends ServiceIdentity { project: Project; url: string; bind?: string; allowedHosts?: string[]; urls?: string[] }
 export interface RequestReference { kind: 'object' | 'task'; id: string; textOffset?: number }
 export interface DraftReferences { objectIds: string[]; taskIds: string[]; order?: RequestReference[] }
 export type ResolvedRequestReference = RequestReference & (

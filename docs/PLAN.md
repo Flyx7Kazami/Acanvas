@@ -138,6 +138,10 @@ R03、R10、R12 的音频预览路径已完成本轮性能修订。播放器首�
 
 已核对当前发送链路、Codex app-server 与 MCP App 消息桥的官方接口。画板发送目前创建本地持久队列任务；建议先验证受信 MCP App 组件能否通过 `ui/message` 投递到当前 Codex 桌面对话，再评估保留独立浏览器形态时的 app-server 适配。接口能力、任务归属、投递边界及待验证项见[调研文档](chatbox/CODEX_MESSAGE_BRIDGE_RESEARCH.md)。本轮仅调研，发送链路保持现状。
 
+## 最新进度 · 可选网络地址访问（2026-10-11）
+
+服务默认仍只绑定 `127.0.0.1`，仅接受 localhost Host/Origin。新增可选 `--bind`（127.0.0.1、0.0.0.0、::）与 `--allow-host host[:port]`（逗号分隔），亦可用 `ACANVAS_BIND`、`ACANVAS_ALLOWED_HOSTS`；允许主机同时扩展 Host、Origin 与同源检查，选项写入运行时元数据，`project open` 返回额外 `urls`，CLI 自身继续经 `127.0.0.1` 连接。HTML 预览帧仍位于回环地址。验证：typecheck 通过；`npm test` 229 通过、34 跳过、3 失败，3 项失败（chatbox-ui 2 项、reference-occurrences-ui 1 项）在未修改代码上同样失败。
+
 ## 最新进度 · 历史圆角与固定角落提示（2026-10-06）
 
 历史面板下方两个角补齐为20px，空、有内容及滚动状态均保持圆角裁切。按用户最终要求，提示固定距右侧/底部16px；短消息按内容宽度，空间不足时单行省略，普通提示最窄44px且点击穿透，操作类提示保留完整按钮。构建、typecheck、定向4/4及独立验收PASS；五视口和展开/多行/history/menu状态保持固定角落，寿命与叠层保持，无未关闭P0–P3。当前浏览器已刷新，历史下角实测20px。详见[前端设计](FRONTEND.md)与[验证记录](VALIDATION.md)。
