@@ -1,6 +1,7 @@
+import { freezeGroupDecorations } from './groups.js';
 import { randomId } from '../random-id.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { AnnotationCaptureInput, AnnotationInput, Asset, BaseSceneSnapshot, BoardObject, CaptureView, Draft, SessionView } from '../../shared/types.js';
+import type { AnnotationCaptureInput, AnnotationInput, Asset, BaseSceneSnapshot, BoardGroup, BoardObject, CaptureView, Draft, SessionView } from '../../shared/types.js';
 import { RequestError, type BoardApi } from '../api.js';
 import { contentCapabilities, resolveContentKind } from '../../shared/content-types.js';
 import { createProjectCaptureProvider, type ProjectCaptureCoordinator } from '../project-capture-provider.js';
@@ -10,7 +11,7 @@ import { annotationBubbleTail } from '../annotation-note-layout.js';
 import { SceneContentFrame, type SceneContentFrameInput, type SceneContentMetadata, type SceneContentRegistry } from './content.js';
 
 export interface ProjectSceneSource { provider: ProjectCaptureCoordinator; view?: CaptureView; connectingView?: CaptureView; snapshot?: BaseSceneSnapshot }
-export function useProjectScene(api: BoardApi, sessionId: string, objects: BoardObject[], saveDraft: (draft: Draft) => Promise<Draft>, onError: (cause: unknown) => void, serviceInstance: string) {
+export function useProjectScene(api: BoardApi, sessionId: string, objects: BoardObject[], saveDraft: (draft: Draft) => Promise<Draft>, onError: (cause: unknown) => void, serviceInstance: string, groups: BoardGroup[] = []) {
   const documentId = useRef(randomId()).current;
   const transport = useMemo(() => new Proxy(api, { get(target, key) { if (key === 'saveDraft') return saveDraft; const value = Reflect.get(target, key); return typeof value === 'function' ? value.bind(target) : value; } }), [api, saveDraft]);
   const [source, setSource] = useState<ProjectSceneSource>();
@@ -18,7 +19,7 @@ export function useProjectScene(api: BoardApi, sessionId: string, objects: Board
   const currentScope = useRef({ sessionId, serviceInstance }); currentScope.current = { sessionId, serviceInstance };
   const currentSource = useRef(source); currentSource.current = source;
   const retirement = useRef<Promise<void>>(Promise.resolve());
-  const objectVersions = JSON.stringify(objects.map(object => [object.id, object.assetId, object.version]));
+  const objectVersions = JSON.stringify([objects.map(object => [object.id, object.assetId, object.version]), groups.map(group => [group.id, group.version])]);
   useEffect(() => {
     if (!sessionId) { setSource(undefined); return; }
     const provider = createProjectCaptureProvider(transport, { sessionId, documentId }); let active = true;
@@ -81,6 +82,7 @@ export interface BoardSceneFreeze {
   snapshot: BaseSceneSnapshot;
   /** Displayed objects in layer order; their identities come from the displayed snapshot. */
   objects: BoardObject[];
+  exteriorObjectIds?: string[];
   assets: Asset[];
   camera: SessionView;
   contentBounds: (object: BoardObject) => SceneBounds;
@@ -150,6 +152,7 @@ export function freezeBoardScene(input: BoardSceneFreeze): FrozenBoardScene {
   for (const { object, index, worldBounds, renderedBounds } of placed) {
     const bounds = { x: object.x, y: object.y, width: object.width, height: object.height }, content = input.contentBounds(object);
     const layer: SceneLayer = { objectId: object.id, assetId: object.assetId, objectVersion: object.version, worldBounds, contentWorldBounds: content, layer: index, primitives: [] };
+    if (input.exteriorObjectIds?.includes(object.id)) { layer.blur = 6; layer.opacity = .3; }
     layers.push(layer);
     if (!targets.has(object.id) && !overlaps(renderedBounds, crop)) continue;
     const asset = input.assets.find(value => value.id === object.assetId), kind = resolveContentKind(asset), selected = input.camera.selectedObjectIds.includes(object.id), radius = kind === 'audio' ? 22 : 0;
@@ -191,7 +194,7 @@ export function freezeBoardScene(input: BoardSceneFreeze): FrozenBoardScene {
   }
   const marks: SceneMark[] = input.marks.map(mark => ({ x: mark.pin.x, y: mark.pin.y, number: mark.number, fill: palette.annotationPin, stroke: palette.annotation, textFill: palette.annotationInk, style: 'bubble', size: markerSize, anchor: mark.anchor }));
   return { view: input.view, snapshot: input.snapshot, bitmap, requestedCrop, clip: input.clip, worldBounds: { ...input.target.worldBounds }, sources,
-    scene: { documentId: input.view.documentId, viewId: input.view.viewId, camera, cssViewport, background: palette.canvas, layers, media, overlays, marks } };
+    scene: { documentId: input.view.documentId, viewId: input.view.viewId, camera, cssViewport, background: palette.canvas, layers, media, underlays: freezeGroupDecorations(board), overlays, marks } };
 }
 
 /** Replaces HTML frames that finished after the synchronous copy, including a block that was still loading. */

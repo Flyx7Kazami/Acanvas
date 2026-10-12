@@ -10,10 +10,13 @@ The runnable P0 prototype includes a full-screen canvas, floating controls, an a
 
 Chatbox references appear inline with the text, with a separate preview for each selected material and object/task search. Point markers stay at the clicked position. Point and region annotations save the open page's displayed whiteboard pixels in the background. Task history reads the saved scene.
 
+Select multiple items to create a group frame. Store it in a folder with three item previews and a persistent geometric pattern, then click the folder to edit its contents on a second board. Back restores the main board view. Switching modes moves neighboring items to use the available space, and Ungroup keeps the original items.
+
 - [Project plan](docs/PLAN.md): requirements, architecture, implementation stages, and acceptance criteria.
 - [Frontend design](docs/FRONTEND.md): visual references, grayscale themes, and interaction rules.
 - [Multimodal canvas design](docs/MULTIMODAL_CANVAS_DESIGN.md): content types, references, and preview boundaries.
 - [Validation record](docs/VALIDATION.md): verified behavior and remaining limitations.
+- [Item groups and folders](docs/ITEM_GROUPS_DESIGN.md): interaction, layout and persistence; [validation](docs/ITEM_GROUPS_VALIDATION.md).
 - [Chatbox capture foundation](docs/chatbox/CAPTURE_FOUNDATION_DESIGN.md): background capture direction, persistent evidence APIs, and [validation](docs/chatbox/CAPTURE_FOUNDATION_VALIDATION.md).
 - [Chatbox implementation](docs/chatbox/CHATBOX_IMPLEMENTATION_DESIGN.md): references, annotations, task messages, history and the project-managed browser; [validation](docs/chatbox/CHATBOX_IMPLEMENTATION_VALIDATION.md).
 - [Inline references and point markers](docs/chatbox/INLINE_REFERENCES_POINT_ANCHOR_DESIGN.md): caret placement, saved reference positions and anchored annotation numbers; [validation](docs/chatbox/INLINE_REFERENCES_POINT_ANCHOR_VALIDATION.md).
@@ -126,6 +129,22 @@ Images, video, GIF, Markdown, audio, and HTML share import, selection, layout, a
 | Markdown | Rendered text, lists, code, and links support selection and scrolling. Ordinary wheel gestures scroll the text; Ctrl/Meta-wheel zooms the canvas. Drag blank content areas or the filename to move the block. Four corner handles and four edge midpoints resize width and height independently. |
 | Audio | A compact, unified player contains embedded artwork, the track name, playback controls, and a complete amplitude waveform. Click or drag the waveform to seek across the whole track. Audio references can include specific times or intervals. |
 | HTML | Current-page controls send pointer and keyboard input to the persistent preview. Ordinary wheel and trackpad scrolling over the preview or its controls pans the canvas; Ctrl/Meta-wheel and trackpad pinch zoom it. Each view supports four active instances, with sixteen active instances per project. Previews waiting for project-wide or retained-surface capacity continue automatically after resources are released; the per-view limit produces a clear capacity error. Drag the filename to move the block, and use eight resize handles to adjust width and height independently. |
+
+Select two or more main-board items and choose Group to frame them. Drag the group title to move its members together, rename it, or choose Store in folder. The folder stays at the frame's top-left corner and shows the first three items in creation order. Open it to edit its board; Back to board restores the main-board camera. Items added inside the folder join that group. Show as frame expands its current contents, and Ungroup keeps every item and material.
+
+Folding first brings right-hand items closer, then items below, with 24px spacing. Other groups move together. Expanding makes space in the same order. Folder colors and geometric textures persist across refreshes. Groups belong to the project and are shared across task contexts; each context retains its current board view.
+
+The CLI uses the same board operations. Read current object/group versions before changes:
+
+```json
+{"operations":[{"type":"group.create","group":{"name":"References","objectIds":["A","B"]},"expectedVersions":{"A":1,"B":1}}]}
+```
+
+```json
+{"operations":[{"type":"group.update","groupId":"GROUP_ID","expectedVersion":1,"changes":{"mode":"folder"}}]}
+```
+
+Use `group.update` with `mode: "frame"` to expand, or `group.ungroup` with `groupId` and `expectedVersion` to keep members on the main board. `create.object.groupId` adds an item to an existing group. State and board-operation responses include `groups`; object identities and original asset IDs continue to support historical references.
 
 A mixed selection can share one group annotation, with a common number and comment while preserving each material's source. Image and video region annotations retain explicit region bounds.
 

@@ -1,6 +1,6 @@
 import { BoardConnection, BoardConnectionError } from './board-connection.js';
 import { resolveContentMime } from '../shared/content-types';
-import type { AnnotationCaptureInput, ApiError, Asset, BaseSceneSnapshot, BoardOperation, BoardState, Bootstrap, CaptureResult, CaptureRetryResult, CaptureView, CaptureViewOperation, Draft, HtmlSurfaceFrameMetadata, ProjectHtmlSurface, ProjectHtmlSurfaceInput, ScenePresentation, ScenePresentationOperation, SceneSource, Session, SessionView, Task } from '../shared/types';
+import type { AnnotationCaptureInput, ApiError, Asset, BaseSceneSnapshot, BoardGroup, BoardOperation, BoardState, Bootstrap, CaptureResult, CaptureRetryResult, CaptureView, CaptureViewOperation, Draft, HtmlSurfaceFrameMetadata, ProjectHtmlSurface, ProjectHtmlSurfaceInput, ScenePresentation, ScenePresentationOperation, SceneSource, Session, SessionView, Task } from '../shared/types';
 import type { BrowserPage, BrowserStatus } from '../shared/browser-capture';
 import type {HtmlPcmBatch,HtmlInputResult} from '../shared/html-surface';
 
@@ -16,6 +16,9 @@ const errorMessages: Record<string, string> = {
   object_missing: 'A referenced object was removed from the canvas. Update the request attachments.',
   draft_conflict: 'This request has been sent or updated. Load the current draft to continue.',
   draft_revision_conflict: 'Your draft was updated elsewhere. Compare both versions to continue.',
+  group_conflict: 'This group was updated. The current canvas is ready to edit.',
+  group_missing: 'This group was removed. The board is ready to edit.',
+  invalid_group: 'Select at least two files from the main board to group them.',
   object_conflict: 'This file was updated. The latest canvas is loaded and ready to edit.',
   empty_request: 'Add request text, attachments or annotations.',
   upload_incomplete: 'The upload was interrupted. Import the complete file again.',
@@ -161,7 +164,7 @@ export class BoardApi {
   send(sessionId: string, draftId: string, expectedRevision: number) { return this.request<{ task: Task; draft: Draft }>(`/api/sessions/${encodeURIComponent(sessionId)}/tasks`, { method: 'POST', body: JSON.stringify({ draftId, expectedRevision }) }); }
   editTask(sessionId: string, taskId: string, draftId: string, expectedRevision: number, cancel = false) { return this.request<{ task: Task; draft: Draft }>(`/api/sessions/${encodeURIComponent(sessionId)}/tasks/${encodeURIComponent(taskId)}/${cancel ? 'cancel-edit' : 'edit'}`, { method: 'POST', body: JSON.stringify({ draftId, expectedRevision }) }); }
   view(sessionId: string, view: SessionView) { return this.request<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/view`, { method: 'PUT', body: JSON.stringify(view) }); }
-  operations(sessionId: string, operations: BoardOperation[]) { return this.request<{ objects: BoardState['objects'] }>('/api/board/operations', { method: 'POST', body: JSON.stringify({ sessionId, operations }) }); }
+  operations(sessionId: string, operations: BoardOperation[]) { return this.request<{ objects: BoardState['objects']; groups: BoardGroup[] }>('/api/board/operations', { method: 'POST', body: JSON.stringify({ sessionId, operations }) }); }
   upload(file: Blob, name: string, signal?: AbortSignal, mime = file.type) { return this.request<Asset>(`/api/assets?name=${encodeURIComponent(name)}&mime=${encodeURIComponent(resolveContentMime(name, mime))}`, { method: 'POST', body: file, signal }); }
   replaceContent(assetId: string, file: Blob, signal?: AbortSignal) { return this.request<Asset>(`/api/assets/${encodeURIComponent(assetId)}/content`, { method: 'PUT', body: file, signal }); }
   content(assetId: string, sessionId?: string) { return `/api/assets/${encodeURIComponent(assetId)}/content${sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : ''}`; }

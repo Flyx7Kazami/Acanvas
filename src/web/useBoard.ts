@@ -268,16 +268,18 @@ export function useBoard() {
     await refresh();
   }, [save, refresh, reflectDraft]);
 
-  const updateView = useCallback((next: SessionView, ownerSessionId = viewSessionRef.current, persist = true) => {
+  const updateView = useCallback((next: SessionView, ownerSessionId = viewSessionRef.current, persist: boolean | 'immediate' = true) => {
     if (api.projectChanged || switchingRef.current || ownerSessionId !== sessionRef.current || ownerSessionId !== viewSessionRef.current) return;
     views.current.set(ownerSessionId, next); setView(next);
     window.clearTimeout(viewTimers.current.get(ownerSessionId));
     if (!persist) return;
-    viewTimers.current.set(ownerSessionId, window.setTimeout(() => {
+    const saveView = () => {
       const previous = viewQueues.current.get(ownerSessionId) || Promise.resolve();
       const request = previous.catch(() => undefined).then(() => api.view(ownerSessionId, next));
       viewQueues.current.set(ownerSessionId, request); void request.catch(showError);
-    }, 250));
+    };
+    if (persist === 'immediate') saveView();
+    else viewTimers.current.set(ownerSessionId, window.setTimeout(saveView, 250));
   }, [api, showError]);
 
   const switchSession = useCallback(async (sessionId: string) => {

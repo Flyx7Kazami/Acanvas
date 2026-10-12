@@ -54,7 +54,7 @@ export function generateRequirementText(snapshot: TaskSnapshot): string {
   snapshot.annotations.forEach((annotation, index) => {
     const capture = annotation.capture;
     const lines = [`Annotation ${index + 1} (user_annotation):`, annotation.text,
-      `Target: ${encoded({ scope: annotation.scope, objectId: annotation.objectId, objectIds: annotation.objectIds, assetId: annotation.assetId })}`,
+      `Target: ${encoded({ scope: annotation.scope, boardGroupId: annotation.boardGroupId, objectId: annotation.objectId, objectIds: annotation.objectIds, assetId: annotation.assetId })}`,
       `Coordinates: ${encoded({ geometry: annotation.geometry ?? 'rect', coordinateSpace: annotation.coordinateSpace, bounds: annotation.bounds, contentAnchor: annotation.contentAnchor })}`];
     if (annotation.timeStart !== undefined || annotation.timeEnd !== undefined || annotation.snapshotAssetId) lines.push(`Media selection: ${encoded({ timeStart: annotation.timeStart, timeEnd: annotation.timeEnd, representativeFrameAssetId: annotation.snapshotAssetId })}`);
     if (capture) {

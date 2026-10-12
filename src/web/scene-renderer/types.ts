@@ -24,6 +24,8 @@ export interface SceneLayer {
   worldBounds: SceneBounds;
   contentWorldBounds?: SceneBounds;
   clip?: SceneBounds;
+  opacity?: number;
+  blur?: number;
   layer: number;
   surface?: SceneSurfaceFrame;
   contentAnchor?: ContentAnchor;
@@ -41,6 +43,7 @@ export interface SceneInput {
   layers: SceneLayer[];
   media: PresentedMedia[];
   marks: SceneMark[];
+  underlays?: ScenePrimitive[];
   overlays?: ScenePrimitive[];
 }
 

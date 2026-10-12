@@ -41,6 +41,7 @@ asset import --file FILE [--mime MIME] [--allow-directory DIR] [--bundle-root DI
 asset read --asset ID --out FILE [--session ID]
   Capture evidence requires its original session.
 board operations --session ID --input operations.json
+  Supports create/update/delete and group.create/group.update/group.ungroup.
 task next --session ID [--consumer ID]
 task read --session ID --task ID [--format text]
 task progress --session ID --task ID --run ID --consumer ID --message TEXT [--job ID]
@@ -53,6 +54,10 @@ task cancel --session ID --task ID --reason TEXT
 
 Completion JSON: {"summary":"Delivered","assetIds":[],"validation":[],"operations":[]}
 Board JSON: {"operations":[{"type":"create","object":{"assetId":"ID","x":0,"y":0,"width":320,"height":240}}]}
+Group JSON: {"operations":[{"type":"group.create","group":{"objectIds":["A","B"],"name":"References"},"expectedVersions":{"A":1,"B":1}}]}
+Folder JSON: {"operations":[{"type":"group.update","groupId":"ID","expectedVersion":1,"changes":{"mode":"folder"}}]}
+Use mode "frame" to expand; group.ungroup retains every member and material.
+Object creation accepts groupId for the folder board. State and operation responses include groups.
 Empty task next returns task:null and releases the queue consumer.
 The first next/resume can generate a new consumer ID; reuse the returned ID inside that loop.
 Idle and transferred consumer IDs are retired. Start a new activation with a new ID.
