@@ -2,7 +2,32 @@
 
 日期：2026-10-13（Asia/Shanghai）。分支：`codex/item-groups-folders`。范围：R14 / A15，设计见 [ITEM_GROUPS_DESIGN.md](ITEM_GROUPS_DESIGN.md)。测试数据均在独立临时项目；本轮保持用户实际白板与运行服务原状。
 
-## 服务与几何
+## 七项交互与视觉修订
+
+实施及独立验收完成。封套为 216×224，完整布局为 216×256；六种随机纯色持久保存，统一档案线条上密下疏，前 3 个实际 item 从顶部露出。悬停显示操作并保持连续命中，frame 空白处选择和拖动整组，item 保持独立操作。frame、folder 和二级导航名称均在原位置编辑，整组保持普通外框与成员外观。Ungroup 采用两个分离方块图标。进入/返回、收起/展开和缩放使用约 420ms 非线性过渡。
+
+- `npm run build:server`、`npm run typecheck` 和 `git diff --check`：通过。
+- `.runtime/node_modules/node/bin/node --test dist/tests/item-groups.test.js dist/tests/frontend-geometry.test.js`：38/38 通过（分组 22、既有几何 16），独立复验同样通过。覆盖六色随机稳定、216×224/256 几何、旧 texture 库一次迁移及原字段/成员/历史/草稿/视口/PNG 保留。
+- `.runtime/node_modules/node/bin/node node_modules/vite/bin/vite.js build --configLoader runner --outDir /private/tmp/acanvas-group-revision-web`：通过。最终资源固定复制至 `/private/tmp/acanvas-group-preview-T0z8GX`，运行资源为 `main-Lc-w5eaC.js`；工作树忽略目录 `dist/web` 同步同一构建。
+- `ACANVAS_TEST_WEB_ROOT=/private/tmp/acanvas-group-preview-T0z8GX .runtime/node_modules/node/bin/node --test dist/tests/item-groups-ui.test.js`：4/4 通过，38.94 秒。包括原有完整链路、跨层导入/吸附，以及新增 hover、三处原位编辑、IME、普通整组选中、frame Mark、camera 中间帧/累计缩放/立即刷新/手势、动态 Done 和移动邻居接管。
+
+独立真实 Chrome 核对：
+
+- 左列 14 条线同长同宽，间距为 2、2、2、2、3、4、5、6、7、8、9、10、11；右列独立对齐。DOM 与 Done 共用坐标。封套、完整占位、caption 留白、纯色与前三项预览通过。
+- hover 到操作条的 12 步移动桥接、键盘等效入口；frame/folder/navigation 三处原位位置、Enter、失焦、Escape 和 IME；frame 空白和 item 命中优先；320/390px 明暗主题、减少动态效果与颜色刷新稳定，通过。
+- 进入动画取得 camera 中间值，服务已保存目标；Back 后立即刷新还原原 camera。连续三次 Zoom 到 1.728，复位和 wheel 接管通过。
+- 动画中邻居按下前后位置相同，跳位 0px；拖 30px 跟随 30px 并保存。文件夹自身接管的差值约 0.005px，拖动与持久结果通过。
+- 动态 Done 冻结成员 scale 0.9834、opacity 0.584996，camera 与每项 worldBounds 匹配实际帧。742×492 的现场与截图像素比对平均最大通道差 0.71/255，差异超过 20 的像素占 0.6848%；人工核对图片、caption、描边/阴影及标记位置通过，文字栅格存在轻微差异。camera 动画中 Done 保存当帧 zoom 1.00919956，服务导航目标为 1.2。
+
+两项独立发现已根因修复并闭合：颜色迁移在既有 owner 成功归属的同一事务中执行，活跃旧服务被拒绝时 schema、值和 owner 保持，迁移失败回滚归属；运动中的单元从按下瞬间实际显示 pose 接管，服务 version 保持，首帧和后续指针位置连续。独立 QA 的选择器、视口与采样时序修正保留原记录，最终具体断言均实际执行。
+
+原验收页曾因旧脚本读取新颜色接口出现空白；现已使用匹配的新 API 与固定资源目录恢复，并在原 in-app tab 刷新后读取实际画板。原项目、会话、改名、内容、位置和 72% 视口保持，实际运行页零 pageerror。当前截图：[文件夹近图](evidence/item-groups/folder-closeup.png)、[原运行画板](evidence/item-groups/board-overview.png)。本轮独立代码、服务、真实浏览器、视觉与动态截图审查 PASS，无未闭合发现。
+
+## 首次实现验收（3ff4dd3）
+
+以下保留首次分组实现的实际测试记录和验证边界，当前视觉与交互规则见上方修订记录及[功能设计](ITEM_GROUPS_DESIGN.md)。
+
+### 服务与几何
 
 - `npm run build:server`：通过。
 - `env -u CODEX_THREAD_ID .runtime/node_modules/node/bin/node --test dist/tests/{item-groups,server,frontend-geometry,task-message,annotation-capture,scene-source,universal-scene-types}.test.js`：97 项，95 通过、0 失败、2 项按既有配置跳过（HTML surface transport 和 production Done 浏览器专项）。
@@ -14,7 +39,7 @@
 
 group version 表达组属性、成员归属和几何变化。文本内容继续经已有 asset 接口保存并广播；切换组状态保持同一份内容。完整目录复制验证使用临时项目停服务后的 `.acanvas/`；自动备份能力继续按项目既有范围声明。
 
-## 浏览器与视觉
+### 浏览器与视觉
 
 `.runtime/node_modules/node/bin/node --test dist/tests/item-groups-ui.test.js`：最终生产构建上 2/2 通过。使用真实 Chrome、独立项目和每轮独立输出目录。覆盖真实框选、分组与重命名、整体拖动、收起、单击进入二级、移动、便签、导入、Done 截图和返回；追加场景覆盖当前层吸附、跨层异步导入、批注回退、键盘与窄屏，以及 item/group 同 ID 时的移动与 NW 缩放吸附。
 

@@ -132,7 +132,7 @@ Images, video, GIF, Markdown, audio, and HTML share import, selection, layout, a
 
 Select two or more main-board items and choose Group to frame them. Drag the group title to move its members together, rename it, or choose Store in folder. The folder stays at the frame's top-left corner and shows the first three items in creation order. Open it to edit its board; Back to board restores the main-board camera. Items added inside the folder join that group. Show as frame expands its current contents, and Ungroup keeps every item and material.
 
-Folding first brings right-hand items closer, then items below, with 24px spacing. Other groups move together. Expanding makes space in the same order. Folder colors and geometric textures persist across refreshes. Groups belong to the project and are shared across task contexts; each context retains its current board view.
+Folding first brings right-hand items closer, then items below, with 24px spacing. Other groups move together. Expanding makes space in the same order. Folder colors persist across refreshes. The 216×224 folder cover uses aligned archive lines and the first three item previews. Creation chooses cobalt, sage, coral, lilac, ink, or sand at random; CLI creation can provide `color` explicitly. Its 216×256 layout includes the name below the cover. Groups belong to the project and are shared across task contexts; each context retains its current board view.
 
 The CLI uses the same board operations. Read current object/group versions before changes:
 

@@ -4,23 +4,27 @@
 
 ## 产品行为
 
-框选或 Shift 多选至少两个一级画板 item 后，选区工具条提供 Group。创建后出现包围成员的方框，标题为 Group，可重命名。成员继续独立选择、编辑、移动、缩放和批注；框的标题可选择整个 group 并拖动。group 提供 Store in folder、Show as frame 和 Ungroup。Ungroup 保留全部成员与素材。
+框选或 Shift 多选至少两个一级画板 item 后，选区工具条提供 Group。创建后出现包围成员的方框，标题为 Group，可在画板原名称处重命名。成员继续独立选择、编辑、移动、缩放和批注；框的标题和非 item 的空白区域均可选择整个 group 并拖动。整组选择使用独立 group 选择状态，保持普通外框和成员外观。group 提供 Store in folder、Show as frame 和 Ungroup；Ungroup 使用两个向外分离的独立方块图标。Ungroup 保留全部成员与素材。
 
-文件夹模式隐藏一级上的成员，封套视觉为 240×180，布局占位为 240×212（包含下方名称的 32px 区域），左上角锚定当前 group 外框左上角。单击文件夹进入二级画板；拖动文件夹移动其占位及全部成员。键盘聚焦后 Enter 进入。二级保留导入、便签、编辑、媒体、平移缩放、选择、对齐、批注和聊天引用；新建 item 自动加入当前 group。当前 group 的成员清晰呈现，其外围一级内容虚化且保持交互隔离。Back to board 返回一级并恢复进入前的视口。范围是一级和二级两层，分组入口用于一级成员。
+文件夹模式隐藏一级上的成员，封套视觉为 216×224，布局占位为 216×256（包含下方名称的 32px 区域），左上角锚定当前 group 外框左上角。单击文件夹进入二级画板；拖动文件夹移动其占位及全部成员。键盘聚焦后 Enter 进入。悬停文件夹时即可显示操作，操作条与文件夹之间有连续命中区域；移入操作条后保持显示。键盘聚焦提供等效入口，触屏沿用可达的组操作。二级保留导入、便签、编辑、媒体、平移缩放、选择、对齐、批注和聊天引用；新建 item 自动加入当前 group。当前 group 的成员清晰呈现，其外围一级内容虚化且保持交互隔离。Back to board 返回一级并恢复进入前的视口。范围是一级和二级两层，分组入口用于一级成员。
+
+Rename 把 frame 标题、folder 下方名称或二级导航名称原位替换为无边框、无底色、无 outline、无阴影的输入；原文字的字号、字重、位置保持。Enter 或失焦保存，Escape 取消，输入法组字期间 Enter 用于候选确认。原位编辑期间保持普通外框与成员外观，当前标题文字按原生编辑方式选取。
+
+文件夹进入/返回、外框展开/收起及周围布局切换使用约 380–460ms 的非线性过渡；组的变化与相邻 item 的位移连贯呈现。缩放按钮、百分比复位和 Fit 使用非线性 camera 过渡，快速连续点击从当前显示位置继续到累计目标。触控板连续缩放和拖动保持直接跟随，手势可随时接管动画；按下时以该单元的实际显示坐标作为拖动原点，首帧位置连续，后续跟随指针增量。导航目标即时持久保存，动画中间帧只影响显示；Back 后立即刷新恢复一级。减少动态效果设置直接到达最终状态。Done 截图采用当时实际呈现的坐标与像素，成员内容、caption、描边与阴影采用同一实际变换比例。
 
 一级外框随成员几何更新，成员视觉区域外保留 24px 留白，顶部留 40px 标题空间。底部把现有 item 的 10px 标题间隔与 22px caption 一起纳入视觉区域，然后再留 24px；item 本体坐标与尺寸保持。二级修改作用于原 item，返回、切换模式和刷新保持结果。文件夹预览采用创建顺序的前 3 个存活成员，展示实际缩略图；文本/文件提供类型与内容提示。空组显示名称与 0 items，允许导入或解组。
 
 ## 视觉
 
-沿用现有界面字体、图标、灰阶工具条和屏幕尺寸控制。文件夹采用平面、实色、无阴影、无边框的上开口造型：后页、错层预览、带标签页的前封套。纯色组合为 Cobalt #315AD9、Ink #202124、Coral #EA6848、Sage #779D85、Lilac #ADA0DE、Paper #F3EBDD；每款使用 2–3 色。预览在前封套上方露出。封套纹理采用自主绘制的六组 SVG 几何：orbit、grid、rays、steps、weave、confetti。创建时随机选定并持久保存；刷新和模式切换保持纹理。参考图仅提供形态与配色方向，图内的品牌、文字、标记和社交界面属于参考内容。
+沿用现有界面字体、图标、灰阶工具条和屏幕尺寸控制。文件夹采用平面、实色、无阴影、无边框的上开口造型：后页、对齐的错层预览、带标签页的前封套。封套宽 216、高 224，前片从约 y64 延伸至底部，增加封面纵向比例。底色为 Cobalt #315AD9、Sage #779D85、Coral #EA6848、Lilac #ADA0DE、Ink #202124、Sand #E7D9B7 之一；创建时随机选择并持久保存，刷新和模式切换保持。前后封套采用同色系的实色，前 3 个 item 的实际预览从上方露出。封面采用统一档案网格：左列细横线保持同长同线宽，顶部密集、向下间距逐步增大；右列短横线与真实 item 数量独立对齐，线条颜色实色且保持可读。名称在下方原位呈现。参考图提供网格、对齐与线条上密下疏的节奏；品牌文字和社交界面属于参考内容。DOM 与截图合成共用线条坐标。
 
 ## 数据与接口
 
-group 属于项目白板。BoardObject 增加可选 groupId，原 assetId、ID、版本、来源与历史引用保留。独立 groups 表保存 group 记录，objects.group_id 保存唯一归属；BoardGroup 返回 id、name、mode（frame/folder）、texture、x/y/width/height、version、createdAt、updatedAt 和按创建顺序排列的 objectIds。frame 模式的几何保存展开框范围；folder 模式的 x/y 保存稳定的一级锚点，width/height 保存当前成员对应的展开尺寸，展示范围由固定尺寸换算。frame 成员变化刷新完整范围，folder 内部编辑保持一级锚点并刷新展开尺寸；成员变化均更新 group version。Show as frame 时整体平移当前成员，使其外框左上角对齐文件夹锚点，然后展开。
+group 属于项目白板。BoardObject 增加可选 groupId，原 assetId、ID、版本、来源与历史引用保留。独立 groups 表保存 group 记录，objects.group_id 保存唯一归属；BoardGroup 返回 id、name、mode（frame/folder）、color、x/y/width/height、version、createdAt、updatedAt 和按创建顺序排列的 objectIds。颜色类型为 cobalt、sage、coral、lilac、ink、sand。已有库通过一次 schema 迁移把 texture 列改为 color，并按已有主色映射：orbit→cobalt、grid→sage、rays→coral、steps→lilac、weave→ink、confetti→sand。旧截图与历史来源按保存时内容保留。frame 模式的几何保存展开框范围；folder 模式的 x/y 保存稳定的一级锚点，width/height 保存当前成员对应的展开尺寸，展示范围由固定尺寸换算。frame 成员变化刷新完整范围，folder 内部编辑保持一级锚点并刷新展开尺寸；成员变化均更新 group version。Show as frame 时整体平移当前成员，使其外框左上角对齐文件夹锚点，然后展开。
 
 扩展现有 BoardOperation，UI 和 CLI 共用 POST /api/board/operations：
 
-- group.create：group={id?,name?,objectIds,texture?}，expectedVersions={objectId:version}，成员数至少 2，成员当前处于一级。
+- group.create：group={id?,name?,objectIds,color?}，expectedVersions={objectId:version}，成员数至少 2，成员当前处于一级。
 - group.update：groupId、expectedVersion、changes={name?,mode?,x?,y?}。坐标移动整体平移成员；状态切换在服务事务内计算周围布局。
 - group.ungroup：groupId、expectedVersion，保留成员并清除归属。
 - create 的 object 允许 groupId；二级创建时使用此字段。
@@ -37,12 +41,13 @@ BoardState 和 board operations 响应增加 groups，BaseSceneSnapshot 携带�
 
 ## 验收 A15
 
-1. 真实框选两项出现 Group；分组外框、成员独立编辑、整体拖动、重命名、解组全部可用。
+1. 真实框选两项出现 Group；分组外框、成员独立编辑、整体拖动、原位重命名、解组全部可用。group 非 item 空白处单击选中整组并可拖动；item 点击继续选中该 item。
 2. 文件夹锚点精确等于外框左上角；右侧先左移，下方再上移，固定间距与障碍生效；覆盖负坐标、异形布局和相邻组。
 3. 单击进入、Back 返回；一级视口恢复，二级导入/便签归组，移动/缩放/文本/媒体/批注/引用沿用当前流程。
 4. 二级外围虚化，外围对象不接受选择和拖动；一级隐藏成员不参与命中、框选、吸附或 Fit；截图反映当前可见层。
 5. 收起/展开/解组、刷新和服务重启保留成员、编辑、原素材和历史引用；跨任务范围看到同一 group。
 6. 旧版本成员/组操作返回冲突，整次事务回滚；原有数据库升级、备份恢复、成员删除和空组均可用。
-7. 浅色/深色、320/390px、键盘、减少动态效果；文件夹实色、无边框、无阴影，前 3 个预览与纹理稳定。
+7. 浅色/深色、320/390px、键盘、减少动态效果；文件夹为 216×224 的实色封套、无边框、无阴影，前 3 个预览和随机颜色稳定，网格细线对齐。悬停直接显示选项且能移入操作条；Rename 输入与原名称位置一致，整组与成员保持普通外观。解组图标清晰表达分离。
+8. 进入/返回、外框/文件夹切换与缩放存在实际中间帧，采样体现非线性；连续缩放累计到正确目标，手势中断生效，减少动态效果即时完成，动画中导航刷新与 Done 截图保持正确。
 
 验证使用独立临时项目与端口。执行者完成针对性服务/几何/真实浏览器测试、类型检查和构建；独立干净上下文审查复验。主智能体汇总实际状态并提交 Git。

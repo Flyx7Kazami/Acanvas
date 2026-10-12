@@ -8,8 +8,8 @@ export interface Asset { id: string; name: string; mime: string; size: number; k
 export interface Bounds { x: number; y: number; width: number; height: number }
 export interface BoardObject extends Bounds { id: string; assetId: string; type: AssetKind; version: number; createdAt: string; updatedAt: string; sourceTaskId?: string; sourceRunId?: string; fill?: NoteFill; groupId?: string }
 export type GroupMode = 'frame' | 'folder';
-export type GroupTexture = 'orbit' | 'grid' | 'rays' | 'steps' | 'weave' | 'confetti';
-export interface BoardGroup extends Bounds { id: string; name: string; mode: GroupMode; texture: GroupTexture; version: number; createdAt: string; updatedAt: string; objectIds: string[] }
+export type GroupColor = 'cobalt' | 'sage' | 'coral' | 'lilac' | 'ink' | 'sand';
+export interface BoardGroup extends Bounds { id: string; name: string; mode: GroupMode; color: GroupColor; version: number; createdAt: string; updatedAt: string; objectIds: string[] }
 export interface ContentAnchor { kind: 'visual' | 'text'; scroll?: { x: number; y: number }; quote?: string; context?: string; path?: string; start?: number; end?: number }
 export interface CaptureState { version: number; status: 'incomplete' | 'complete'; captureId?: string }
 export interface AnnotationInput { id: string; scope: 'object' | 'group' | 'region'; boardGroupId?: string; objectId?: string; objectIds: string[]; assetId?: string; bounds: Bounds; coordinateSpace: 'normalized' | 'world'; text: string; timeStart?: number; timeEnd?: number; snapshotAssetId?: string; geometry?: 'point' | 'rect'; contentAnchor?: ContentAnchor; captureState?: CaptureState; capture?: AnnotationCapture; sceneSource?: SceneSource }
@@ -61,7 +61,7 @@ export type BoardOperation =
   | { type: 'create'; object: { id?: string; assetId: string; x: number; y: number; width: number; height: number; groupId?: string } }
   | { type: 'update'; objectId: string; expectedVersion: number; changes: Partial<Bounds> & { fill?: NoteFill | null } }
   | { type: 'delete'; objectId: string; expectedVersion: number }
-  | { type: 'group.create'; group: { id?: string; name?: string; objectIds: string[]; texture?: GroupTexture }; expectedVersions: Record<string, number> }
+  | { type: 'group.create'; group: { id?: string; name?: string; objectIds: string[]; color?: GroupColor }; expectedVersions: Record<string, number> }
   | { type: 'group.update'; groupId: string; expectedVersion: number; changes: { name?: string; mode?: GroupMode; x?: number; y?: number } }
   | { type: 'group.ungroup'; groupId: string; expectedVersion: number };
 export interface BoardState { project: Project; sessions: Session[]; session: Session; draft: Draft; assets: Asset[]; objects: BoardObject[]; groups: BoardGroup[]; annotations: Annotation[]; tasks: Task[] }

@@ -54,8 +54,9 @@ task cancel --session ID --task ID --reason TEXT
 
 Completion JSON: {"summary":"Delivered","assetIds":[],"validation":[],"operations":[]}
 Board JSON: {"operations":[{"type":"create","object":{"assetId":"ID","x":0,"y":0,"width":320,"height":240}}]}
-Group JSON: {"operations":[{"type":"group.create","group":{"objectIds":["A","B"],"name":"References"},"expectedVersions":{"A":1,"B":1}}]}
+Group JSON: {"operations":[{"type":"group.create","group":{"objectIds":["A","B"],"name":"References","color":"cobalt"},"expectedVersions":{"A":1,"B":1}}]}
 Folder JSON: {"operations":[{"type":"group.update","groupId":"ID","expectedVersion":1,"changes":{"mode":"folder"}}]}
+Colors: cobalt, sage, coral, lilac, ink, sand. Creation chooses a random color when color is omitted.
 Use mode "frame" to expand; group.ungroup retains every member and material.
 Object creation accepts groupId for the folder board. State and operation responses include groups.
 Empty task next returns task:null and releases the queue consumer.

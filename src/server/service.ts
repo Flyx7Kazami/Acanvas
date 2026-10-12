@@ -7,7 +7,7 @@ import type { Annotation, AnnotationCapture, AnnotationCaptureInput, AnnotationI
 import { bundleLimits, bundleMime, validBundlePath } from '../shared/html-bundle.js';
 import { contentCapabilities, editableTextBytes, editableTextMime, isNoteFill, resolveContentKind } from '../shared/content-types.js';
 import { annotationTarget, sameAnnotationTarget, rasterDimensions } from './annotation-capture.js';
-import { GROUP_TEXTURES, groupDisplayBounds, groupFrameBounds, layoutGroupTransition } from '../shared/groups.js';
+import { GROUP_COLORS, groupDisplayBounds, groupFrameBounds, layoutGroupTransition } from '../shared/groups.js';
 import { generateRequirementText, referenceOrder } from '../shared/task-message.js';
 
 type Row = Record<string, any>;
@@ -91,7 +91,7 @@ export class CanvasService {
       CREATE TABLE IF NOT EXISTS drafts(id TEXT PRIMARY KEY, session_id TEXT NOT NULL UNIQUE REFERENCES sessions(id), revision INTEGER NOT NULL DEFAULT 1, text TEXT NOT NULL, attachments_json TEXT NOT NULL, annotations_json TEXT NOT NULL, references_json TEXT NOT NULL, updated_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS assets(id TEXT PRIMARY KEY, name TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, kind TEXT NOT NULL, path TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL, source_task_id TEXT, source_run_id TEXT);
       CREATE TABLE IF NOT EXISTS html_bundles(asset_id TEXT PRIMARY KEY REFERENCES assets(id), manifest_json TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS groups(id TEXT PRIMARY KEY, name TEXT NOT NULL, mode TEXT NOT NULL CHECK(mode IN ('frame','folder')), texture TEXT NOT NULL, x REAL NOT NULL, y REAL NOT NULL, width REAL NOT NULL, height REAL NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS groups(id TEXT PRIMARY KEY, name TEXT NOT NULL, mode TEXT NOT NULL CHECK(mode IN ('frame','folder')), color TEXT NOT NULL, x REAL NOT NULL, y REAL NOT NULL, width REAL NOT NULL, height REAL NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS objects(id TEXT PRIMARY KEY, asset_id TEXT NOT NULL REFERENCES assets(id), x REAL NOT NULL, y REAL NOT NULL, width REAL NOT NULL, height REAL NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, source_task_id TEXT, source_run_id TEXT, fill TEXT, group_id TEXT REFERENCES groups(id));
       CREATE TABLE IF NOT EXISTS annotations(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), task_id TEXT NOT NULL, data_json TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), draft_id TEXT NOT NULL UNIQUE, sequence INTEGER NOT NULL, status TEXT NOT NULL, snapshot_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, current_run_id TEXT, reason TEXT, receipt_json TEXT, replies_json TEXT NOT NULL DEFAULT '[]', UNIQUE(session_id, sequence));
@@ -125,6 +125,10 @@ export class CanvasService {
         if (active) fail(409, 'service_active', 'This project already has an active local service. Connect to its existing port.');
       }
       this.db.prepare("INSERT INTO metadata(key,value) VALUES('active_service',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(json({ pid: process.pid, instanceId: this.instanceId }));
+      if ((this.db.pragma('table_info(groups)') as Row[]).some(column => column.name === 'texture')) {
+        this.db.exec('ALTER TABLE groups RENAME COLUMN texture TO color');
+        this.db.exec("UPDATE groups SET color=CASE color WHEN 'orbit' THEN 'cobalt' WHEN 'grid' THEN 'sage' WHEN 'rays' THEN 'coral' WHEN 'steps' THEN 'lilac' WHEN 'weave' THEN 'ink' WHEN 'confetti' THEN 'sand' ELSE color END");
+      }
       const time = now();
       this.db.prepare("UPDATE tasks SET status='interrupted',reason='The local service restarted. Review saved progress and external jobs before resuming.',updated_at=? WHERE status='running'").run(time);
       this.db.prepare("UPDATE runs SET status='interrupted',updated_at=? WHERE status='running'").run(time);
@@ -443,7 +447,7 @@ export class CanvasService {
   object(id: string): BoardObject { nonempty(id, 'Object ID', 200); const row = this.db.prepare('SELECT * FROM objects WHERE id=?').get(id) as Row; return row ? this.objectFrom(row) : fail(404, 'object_missing', 'The referenced object is unavailable.'); }
   objects(): BoardObject[] { return (this.db.prepare('SELECT * FROM objects ORDER BY created_at,id').all() as Row[]).map((row) => this.objectFrom(row)); }
   private groupFrom(row: Row): BoardGroup {
-    return { id: row.id, name: row.name, mode: row.mode, texture: row.texture, x: row.x, y: row.y, width: row.width, height: row.height, version: row.version, createdAt: row.created_at, updatedAt: row.updated_at, objectIds: (this.db.prepare('SELECT id FROM objects WHERE group_id=? ORDER BY created_at,rowid').all(row.id) as Row[]).map(object => object.id) };
+    return { id: row.id, name: row.name, mode: row.mode, color: row.color, x: row.x, y: row.y, width: row.width, height: row.height, version: row.version, createdAt: row.created_at, updatedAt: row.updated_at, objectIds: (this.db.prepare('SELECT id FROM objects WHERE group_id=? ORDER BY created_at,rowid').all(row.id) as Row[]).map(object => object.id) };
   }
   group(id: string): BoardGroup {
     nonempty(id, 'Group ID', 200);
@@ -1067,13 +1071,14 @@ export class CanvasService {
       } else if (operation?.type === 'group.create') {
         refresh();
         const input = operation.group;
+        if (!input || typeof input !== 'object' || Object.getPrototypeOf(input) !== Object.prototype || Object.keys(input).some(key => !['id', 'name', 'objectIds', 'color'].includes(key))) fail(400, 'invalid_group', 'Group creation supports ID, name, members and color.');
         const members = ids(input?.objectIds, 'Group members');
         if (members.length < 2 || members.length !== input.objectIds.length) fail(400, 'invalid_group', 'A group starts with at least two distinct items.');
         const id = input.id === undefined ? randomUUID() : nonempty(input.id, 'Group ID', 200);
         if (this.db.prepare('SELECT id FROM groups WHERE id=?').get(id)) fail(409, 'group_conflict', 'The group ID already exists.');
         const name = input.name === undefined ? 'Group' : nonempty(input.name, 'Group name', 200);
-        const texture = input.texture ?? GROUP_TEXTURES[Math.floor(Math.random() * GROUP_TEXTURES.length)];
-        if (!GROUP_TEXTURES.includes(texture)) fail(400, 'invalid_group', 'Choose a folder texture.');
+        const color = input.color === undefined ? GROUP_COLORS[Math.floor(Math.random() * GROUP_COLORS.length)] : input.color;
+        if (!GROUP_COLORS.includes(color)) fail(400, 'invalid_group', 'Choose a folder color.');
         const objects = members.map(memberId => {
           const object = this.object(memberId);
           if (object.groupId) fail(409, 'group_membership_conflict', 'Group items from the main board.');
@@ -1081,7 +1086,7 @@ export class CanvasService {
           return object;
         });
         const bounds = groupFrameBounds(objects);
-        this.db.prepare("INSERT INTO groups VALUES(?,?,'frame',?,?,?,?,?,1,?,?)").run(id, name, texture, bounds.x, bounds.y, bounds.width, bounds.height, time, time);
+        this.db.prepare("INSERT INTO groups VALUES(?,?,'frame',?,?,?,?,?,1,?,?)").run(id, name, color, bounds.x, bounds.y, bounds.width, bounds.height, time, time);
         for (const object of objects) {
           this.db.prepare('UPDATE objects SET group_id=?,version=version+1,updated_at=? WHERE id=?').run(id, time, object.id);
           objectIds.push(object.id);

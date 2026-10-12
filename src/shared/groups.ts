@@ -1,12 +1,12 @@
-import type { BoardGroup, Bounds, GroupTexture } from './types.js';
+import type { BoardGroup, Bounds, GroupColor } from './types.js';
 
-export const GROUP_FOLDER_WIDTH = 240;
-export const GROUP_FOLDER_ART_HEIGHT = 180;
+export const GROUP_FOLDER_WIDTH = 216;
+export const GROUP_FOLDER_ART_HEIGHT = 224;
 export const GROUP_PADDING = 24;
 export const GROUP_TITLE_SPACE = 40;
 export const GROUP_CAPTION_SPACE = 32;
 export const GROUP_FOLDER_HEIGHT = GROUP_FOLDER_ART_HEIGHT + GROUP_CAPTION_SPACE;
-export const GROUP_TEXTURES: readonly GroupTexture[] = ['orbit', 'grid', 'rays', 'steps', 'weave', 'confetti'];
+export const GROUP_COLORS: readonly GroupColor[] = ['cobalt', 'sage', 'coral', 'lilac', 'ink', 'sand'];
 
 export function groupDisplayBounds(group: Pick<BoardGroup, 'x' | 'y' | 'width' | 'height' | 'mode'>): Bounds {
   return { x: group.x, y: group.y, width: group.mode === 'folder' ? GROUP_FOLDER_WIDTH : group.width, height: group.mode === 'folder' ? GROUP_FOLDER_HEIGHT : group.height };

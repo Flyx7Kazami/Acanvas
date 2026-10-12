@@ -1,3 +1,4 @@
+import { drawPrimitive } from './draw.js';
 import { freezeGroupDecorations } from './groups.js';
 import { randomId } from '../random-id.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -83,6 +84,7 @@ export interface BoardSceneFreeze {
   /** Displayed objects in layer order; their identities come from the displayed snapshot. */
   objects: BoardObject[];
   exteriorObjectIds?: string[];
+  objectStyles?: Record<string, { opacity: number; blur: number; scale?: number }>;
   assets: Asset[];
   camera: SessionView;
   contentBounds: (object: BoardObject) => SceneBounds;
@@ -142,7 +144,7 @@ export function freezeBoardScene(input: BoardSceneFreeze): FrozenBoardScene {
     if (output) primitives.push({ kind: 'rect', bounds: { x: object.x + object.width - outputWidth, y: top + (height - output.height - 6) / 2, width: outputWidth, height: output.height + 6 }, fill: palette.surface, radius: 3 }, { kind: 'text', x: object.x + object.width - outputWidth + 5, y: baseline(top + (height - output.height - 6) / 2 + 3 + output.ascent), text: 'Output', font: small, fill: palette.ink });
     return primitives;
   };
-  const placed = input.objects.map((object, index) => { const worldBounds = { x: object.x - 40, y: object.y - 40, width: object.width + 80, height: object.height + 92 }; return { object, index, worldBounds, renderedBounds: boundsToCSS(worldBounds, camera, cssViewport) }; });
+  const placed = input.objects.map((object, index) => { const scale = input.objectStyles?.[object.id]?.scale || 1, worldBounds = { x: object.x - 40 * scale, y: object.y - 40 * scale, width: object.width + 80 * scale, height: object.height + 92 * scale }; return { object, index, worldBounds, renderedBounds: boundsToCSS(worldBounds, camera, cssViewport) }; });
   const markerSize = 28 * cssScale, marker = input.marks.find(mark => mark.annotationId === input.target.annotation.id), origin = marker?.anchor === 'tail' ? annotationBubbleTail(markerSize) : { x: markerSize / 2, y: markerSize / 2 };
   const markerCSS = marker && { x: cssViewport.x + marker.pin.x * camera.zoom + camera.x - origin.x, y: cssViewport.y + marker.pin.y * camera.zoom + camera.y - origin.y, width: markerSize, height: markerSize };
   const requestedCrop = annotationCaptureCrop({ presentation: { camera, cssViewport, layers: placed.map(value => ({ objectId: value.object.id, renderedBounds: value.renderedBounds })) }, worldBounds: input.target.worldBounds, objectId: input.target.annotation.objectId, markerCSS });
@@ -150,9 +152,11 @@ export function freezeBoardScene(input: BoardSceneFreeze): FrozenBoardScene {
   const targets = new Set([input.target.annotation.objectId, ...input.target.annotation.objectIds].filter((id): id is string => !!id));
   const layers: SceneLayer[] = [], media: SceneInput['media'] = [], sources = new Map<string, Immutable<SceneContentMetadata>>(), handles: ScenePrimitive[] = [];
   for (const { object, index, worldBounds, renderedBounds } of placed) {
-    const bounds = { x: object.x, y: object.y, width: object.width, height: object.height }, content = input.contentBounds(object);
+    const scale = input.objectStyles?.[object.id]?.scale || 1, paintObject = { ...object, width: object.width / scale, height: object.height / scale };
+    const bounds = { x: object.x, y: object.y, width: paintObject.width, height: paintObject.height }, content = input.contentBounds(object), paintContent = input.contentBounds(paintObject);
     const layer: SceneLayer = { objectId: object.id, assetId: object.assetId, objectVersion: object.version, worldBounds, contentWorldBounds: content, layer: index, primitives: [] };
-    if (input.exteriorObjectIds?.includes(object.id)) { layer.blur = 6; layer.opacity = .3; }
+    if (input.objectStyles?.[object.id]) { layer.blur = input.objectStyles[object.id].blur; layer.opacity = input.objectStyles[object.id].opacity; }
+    else if (input.exteriorObjectIds?.includes(object.id)) { layer.blur = 6; layer.opacity = .3; }
     layers.push(layer);
     if (!targets.has(object.id) && !overlaps(renderedBounds, crop)) continue;
     const asset = input.assets.find(value => value.id === object.assetId), kind = resolveContentKind(asset), selected = input.camera.selectedObjectIds.includes(object.id), radius = kind === 'audio' ? 22 : 0;
@@ -161,16 +165,25 @@ export function freezeBoardScene(input: BoardSceneFreeze): FrozenBoardScene {
     if (frame) {
       sources.set(object.id, frame.metadata);
       if (frame.metadata.contentAnchor) layer.contentAnchor = structuredClone(frame.metadata.contentAnchor) as SceneLayer['contentAnchor'];
-      primitives.push({ kind: 'texture', bounds: frame.metadata.fit === 'contain' ? content : bounds, texture: frame, radius });
+      primitives.push({ kind: 'texture', bounds: frame.metadata.fit === 'contain' ? paintContent : bounds, texture: frame, radius });
       if (frame.metadata.media) {
         const annotation = input.annotations.find(value => value.objectId === object.id);
         media.push({ objectId: object.id, ...frame.metadata.media, ...(annotation?.timeStart === undefined ? {} : annotation.timeEnd === undefined ? { selectedTime: annotation.timeStart } : { selectedRange: { start: annotation.timeStart, end: annotation.timeEnd } }), ...(annotation?.snapshotAssetId && annotation.timeStart !== undefined ? { representativeTime: annotation.timeStart } : {}) });
       }
     } else primitives.push({ kind: 'text', x: bounds.x + 16, y: bounds.y + Math.min(32, bounds.height / 2), text: 'Loading preview…', font: `11px ${fontFamily}`, fill: palette.muted, maxWidth: Math.max(1, bounds.width - 32) });
-    primitives.push(...caption(object, index, asset?.name || 'File'));
+    primitives.push(...caption(paintObject, index, asset?.name || 'File'));
     // CSS outlines lie outside the border box.
     if (selected || kind !== 'audio') { const width = selected ? 2 : 1; primitives.push({ kind: 'rect', bounds: inset(bounds, -width / 2), fill: 'transparent', radius: radius && radius + width / 2, stroke: selected ? palette.ink : withAlpha(palette.edge, .65), lineWidth: width }); }
     if (selected) for (const [x, y] of contentCapabilities[kind].freeResize ? [[0, 0], [.5, 0], [1, 0], [1, .5], [1, 1], [.5, 1], [0, 1], [0, .5]] : [[0, 0], [1, 0], [1, 1], [0, 1]]) handles.push({ kind: 'rect', bounds: { x: bounds.x + x * bounds.width - 4.5, y: bounds.y + y * bounds.height - 4.5, width: 9, height: 9 }, fill: palette.surface, stroke: palette.ink, lineWidth: 2 });
+    if (Math.abs(scale - 1) > .00001) {
+      // The article's content, caption, outline and shadow share its compositor transform.
+      const copied = document.createElement('canvas'), paintWorld = { x: object.x - 40, y: object.y - 40, width: paintObject.width + 80, height: paintObject.height + 92 }, density = Math.min(camera.zoom * pixelRatio, Math.sqrt(8_000_000 / (paintWorld.width * paintWorld.height)));
+      copied.width = Math.max(1, Math.ceil(paintWorld.width * density)); copied.height = Math.max(1, Math.ceil(paintWorld.height * density));
+      const context = copied.getContext('2d')!; context.setTransform(density, 0, 0, density, -paintWorld.x * density, -paintWorld.y * density);
+      for (const primitive of primitives) drawPrimitive(context, primitive);
+      layer.primitives = [{ kind: 'texture', bounds: worldBounds, texture: new SceneContentFrame(document, { pixels: copied, bitmap: { width: copied.width, height: copied.height } }) }];
+    }
+
   }
   const overlays: ScenePrimitive[] = [];
   if (input.selection && input.selection.width > 0 && input.selection.height > 0) overlays.push({ kind: 'rect', bounds: inset(input.selection, .5), fill: withAlpha(palette.ink, .07), stroke: palette.ink, lineWidth: 1 });

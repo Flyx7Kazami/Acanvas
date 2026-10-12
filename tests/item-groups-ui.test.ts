@@ -4,6 +4,7 @@ import { mkdtemp, mkdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { expect } from '@playwright/test';
+import type { Page } from 'playwright-core';
 import { startServer } from '../src/server/http.js';
 import type { Asset, BoardObject } from '../src/shared/types.js';
 
@@ -11,10 +12,11 @@ async function fixture(t: test.TestContext) {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'acanvas-group-ui-')));
   const evidence = process.env.ACANVAS_GROUP_EVIDENCE_DIR ? resolve(process.env.ACANVAS_GROUP_EVIDENCE_DIR) : await realpath(await mkdtemp(join(tmpdir(), 'acanvas-group-ui-evidence-')));
   await mkdir(evidence, { recursive: true }); t.diagnostic(`Group evidence: ${evidence}`);
-  const running = await startServer({ root, port: 0, webRoot: resolve('dist/web'), browser: { headless: true } });
+  const running = await startServer({ root, port: 0, webRoot: resolve(process.env.ACANVAS_TEST_WEB_ROOT || 'dist/web'), browser: { headless: true } });
   const session = running.service.createSession('Group acceptance');
-  t.after(async () => { await page.screenshot({ path: join(evidence, 'final.png') }).catch(() => undefined); await writeFile(join(evidence, 'state.json'), JSON.stringify(running.service.state(session.id), null, 2)); await running.close(); await rm(root, { recursive: true, force: true }); });
-  await running.browser.open(session.id); const page = running.browser.page(session.id)!;
+  const observation: { page?: Page } = {};
+  t.after(async () => { try { await observation.page?.screenshot({ path: join(evidence, 'final.png') }).catch(() => undefined); await writeFile(join(evidence, 'state.json'), JSON.stringify(running.service.state(session.id), null, 2)); } finally { await running.close(); await rm(root, { recursive: true, force: true }); } });
+  await running.browser.open(session.id); const page = running.browser.page(session.id)!; observation.page = page;
   await page.setViewportSize({ width: 1280, height: 900 });
   await expect(page.locator('#whiteboard')).toBeVisible();
   const bootstrap = await (await fetch(`${running.url}/api/bootstrap`)).json();
@@ -70,7 +72,7 @@ test('item groups use real selection, folders, navigation, editing and current-l
   const folder = page.getByRole('button', { name: 'Open folder Color studies', exact: true });
   assert.equal(await folder.locator('.folder-preview-card').count(), 3);
   const belowAfter = f.state().objects.find(object => object.id === below.id)!; assert(belowAfter.y < below.y);
-  const captionBox = (await folder.locator('.folder-caption').boundingBox())!, belowBox = (await page.locator(`[data-object-id="${below.id}"]`).boundingBox())!;
+  const captionBox = (await page.locator('.group-folder .folder-caption').boundingBox())!, belowBox = (await page.locator(`[data-object-id="${below.id}"]`).boundingBox())!;
   assert(belowBox.y >= captionBox.y + captionBox.height + 24, 'The compacted item clears the folder caption by at least 24px.');
   assert.equal(await folder.evaluate(element => getComputedStyle(element).boxShadow), 'none');
   await page.screenshot({ path: join(evidence, 'folder.png') });
@@ -89,6 +91,7 @@ test('item groups use real selection, folders, navigation, editing and current-l
   await folder.click(); await expect(page.getByRole('button', { name: 'Back to board', exact: true })).toBeVisible();
   await expect(page.locator('.board-object:not(.group-exterior)')).toHaveCount(3);
   await expect(page.locator('.board-object.group-exterior')).toHaveCount(2);
+  await expect(page.locator('.canvas-world')).not.toHaveAttribute('data-transition-kind', /.+/);
   assert.equal(await page.locator(`[data-object-id="${c.id}"]`).getAttribute('inert'), '');
   await page.screenshot({ path: join(evidence, 'secondary.png') });
   // Existing media and text retain normal editing and keyboard movement.
@@ -113,7 +116,7 @@ test('item groups use real selection, folders, navigation, editing and current-l
   await expect(page.locator('.canvas-world')).toHaveAttribute('style', parent!);
   await expect(page.locator(`.canvas-annotation-note[data-annotation-id="${annotation.id}"]`)).toHaveCount(0);
   await expect.poll(() => f.state().session.view.activeGroupId).toBeUndefined();
-  await page.reload(); await expect(page.locator('.group-folder')).toHaveCount(1); assert.equal(f.state().groups[0].texture, group.texture);
+  await page.reload(); await expect(page.locator('.group-folder')).toHaveCount(1); assert.equal(f.state().groups[0].color, group.color);
   // Keyboard entry and responsive, dark presentation retain the same controls.
   await page.setViewportSize({ width: 390, height: 760 }); await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click();
@@ -186,6 +189,7 @@ test('layer projection excludes hidden snap targets and keeps asynchronous impor
   await expect(page.locator('.board-object:not(.group-exterior)')).toHaveCount(2);
   await expect(page.locator(`[data-object-id="${imported.id}"]`)).toHaveCount(0);
   // The free item is visible as a blurred exterior but never influences dragging inside group B.
+  await expect(page.locator('.canvas-world')).not.toHaveAttribute('data-transition-kind', /.+/);
   const member = f.state().objects.find(object => object.id === c.id)!;
   const currentFree = f.state().objects.find(object => object.id === free.id)!;
   await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'update', objectId: free.id, expectedVersion: currentFree.version, changes: { x: member.x + 117, y: member.y + 220 } }] });
@@ -202,6 +206,7 @@ test('layer projection excludes hidden snap targets and keeps asynchronous impor
   await expect.poll(() => f.state().groups.find(group => group.id === 'group-b')!.name).toBe('Second');
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByRole('button', { name: 'Back to board', exact: true }).click();
+  await expect(page.locator('.canvas-world')).not.toHaveAttribute('data-transition-kind', /.+/);
   // An object and a group may have the same persistent ID; their snap units remain distinct.
   const e = await f.add(image, 24, 40, 120, 80), h = await f.add(image, 144, 110, 72, 60);
   await createGroup(free.id, 'Shared ID collection', [e, h]);
@@ -214,11 +219,123 @@ test('layer projection excludes hidden snap targets and keeps asynchronous impor
   };
   await placeFree(500);
   const sharedCaption = (await page.locator(`[data-object-id="${free.id}"] .object-caption`).boundingBox())!;
-  await page.mouse.move(sharedCaption.x + 15, sharedCaption.y + 8); await page.mouse.down(); await page.mouse.move(sharedCaption.x + 15 - 263, sharedCaption.y + 8, { steps: 8 }); await page.mouse.up();
-  await expect.poll(() => f.state().objects.find(object => object.id === free.id)!.x).toBe(240);
+  await page.mouse.move(sharedCaption.x + 15, sharedCaption.y + 8); await page.mouse.down(); await page.mouse.move(sharedCaption.x + 15 - 287, sharedCaption.y + 8, { steps: 8 }); await page.mouse.up();
+  await expect.poll(() => f.state().objects.find(object => object.id === free.id)!.x).toBe(216);
   await placeFree(300); await page.locator(`[data-object-id="${free.id}"]`).focus(); await page.keyboard.press('Enter');
   const handle = (await page.locator(`[data-resize-id="${free.id}"][data-resize-corner="nw"]`).boundingBox())!;
-  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2); await page.mouse.down(); await page.mouse.move(handle.x + handle.width / 2 - 63, handle.y + handle.height / 2 - 50.4, { steps: 8 }); await page.mouse.up();
-  await expect.poll(() => f.state().objects.find(object => object.id === free.id)!.x).toBe(240);
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2); await page.mouse.down(); await page.mouse.move(handle.x + handle.width / 2 - 87, handle.y + handle.height / 2 - 69.6, { steps: 8 }); await page.mouse.up();
+  await expect.poll(() => f.state().objects.find(object => object.id === free.id)!.x).toBe(216);
   assert.equal(f.state().groups.find(group => group.id === free.id)!.x, 0);
+});
+
+test('group names, hover actions, independent selection and camera transitions follow native controls', { timeout: 100_000 }, async t => {
+  const f = await fixture(t), { page } = f;
+  const image = await f.picture('Archive', '#315AD9'), a = await f.add(image, 220, 210), b = await f.add(image, 430, 390);
+  await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'group.create', group: { id: 'archive', name: 'Archive', objectIds: [a.id, b.id], color: 'cobalt' }, expectedVersions: { [a.id]: a.version, [b.id]: b.version } }] });
+  const frame = page.locator('[data-group-id="archive"]'); await expect(frame).toBeVisible();
+  await page.mouse.click(600, 190); // Empty frame area selects the group.
+  await expect(page.getByRole('button', { name: 'Rename group', exact: true })).toBeVisible();
+  await expect(page.locator('.board-object.selected')).toHaveCount(0); assert.equal(await frame.getAttribute('class'), 'board-group group-frame');
+  const original = (await frame.locator('.group-name-slot').boundingBox())!;
+  await page.getByRole('button', { name: 'Rename group', exact: true }).click();
+  const input = page.getByRole('textbox', { name: 'Group name', exact: true }); await expect(input).toBeFocused();
+  const box = (await input.boundingBox())!; assert(Math.abs(box.x - original.x) < 1 && Math.abs(box.y - original.y) < 1 && Math.abs(box.width - original.width) < 1);
+  const appearance = await input.evaluate(element => { const style = getComputedStyle(element); return [style.borderWidth, style.outlineWidth, style.boxShadow, style.backgroundColor]; });
+  assert.deepEqual(appearance, ['0px', '0px', 'none', 'rgba(0, 0, 0, 0)']);
+  await input.fill('Cancel'); await input.press('Escape'); assert.equal(f.state().groups[0].name, 'Archive');
+  await page.getByRole('button', { name: 'Rename group', exact: true }).click(); await input.fill('档案');
+  await input.dispatchEvent('compositionstart'); await input.press('Enter'); await expect(input).toBeVisible(); assert.equal(f.state().groups[0].name, 'Archive');
+  await input.dispatchEvent('compositionend'); await input.press('Enter'); await expect.poll(() => f.state().groups[0].name).toBe('档案');
+  await expect(page.locator('.board-object.selected')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Select files', exact: true })).toBeEnabled();
+  const before = f.state().objects.find(object => object.id === a.id)!;
+  await page.mouse.move(600, 190); await page.mouse.down(); await page.mouse.move(630, 220, { steps: 5 }); await page.mouse.up();
+  await expect.poll(() => f.state().objects.find(object => object.id === a.id)!.x).toBe(before.x + 30);
+  await expect(page.getByRole('button', { name: 'Store in folder', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Mark canvas', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Add a comment', exact: true })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill('Whole collection'); await page.getByRole('button', { name: 'Done', exact: true }).click();
+  await expect.poll(() => f.state().draft.annotations.find(value => value.text === 'Whole collection')?.captureState?.status).toBe('complete');
+  assert.deepEqual(new Set(f.state().draft.annotations.find(value => value.text === 'Whole collection')!.objectIds), new Set([a.id, b.id]));
+  await expect(page.locator('.board-object.selected')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Store in folder', exact: true }).click();
+  await expect(page.locator('.canvas-world')).not.toHaveAttribute('data-transition-kind', /.+/);
+  await page.mouse.click(1050, 700); // Clear independent selection before testing hover.
+  const folder = page.getByRole('button', { name: 'Open folder 档案', exact: true }); await folder.hover();
+  const rename = page.getByRole('button', { name: 'Rename group', exact: true }); await expect(rename).toBeVisible();
+  const action = (await rename.boundingBox())!, folderArea = (await folder.boundingBox())!;
+  await page.mouse.move(action.x + action.width / 2, folderArea.y - 4, { steps: 4 }); await page.mouse.move(action.x + action.width / 2, action.y + action.height / 2, { steps: 4 });
+  await expect(rename).toBeVisible(); await rename.click();
+  const folderName = (await input.boundingBox())!; assert(folderName.y >= folderArea.y + 224); await input.fill('Field archive'); await input.press('Enter');
+  await expect.poll(() => f.state().groups[0].name).toBe('Field archive');
+  await page.locator('.group-folder').screenshot({ path: join(f.evidence, 'folder-closeup.png') });
+  // Repeated zoom clicks accumulate from the pending destination, while display has real eased intermediate frames.
+  const zoom = () => page.locator('.canvas-world').evaluate(element => new DOMMatrix(getComputedStyle(element).transform).a);
+  await page.evaluate(() => { const button = document.querySelector<HTMLButtonElement>('[aria-label="Zoom in"]')!; button.click(); button.click(); button.click(); });
+  await page.waitForTimeout(100); const early = await zoom(); assert(early > 1 && early < 1.35);
+  await expect.poll(zoom).toBeCloseTo(1.728, 3);
+  await page.getByRole('button', { name: 'Reset zoom to 100%', exact: true }).click(); await expect.poll(zoom).toBeCloseTo(1, 3);
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click(); await page.waitForTimeout(100);
+  await page.keyboard.down('Control'); await page.mouse.move(900, 600); await page.mouse.wheel(0, 100); await page.keyboard.up('Control'); await page.waitForTimeout(50);
+  const handoff = await zoom(); await page.waitForTimeout(500); assert(Math.abs(await zoom() - handoff) < .001);
+  await page.getByRole('button', { name: 'Reset zoom to 100%', exact: true }).click(); await expect.poll(zoom).toBeCloseTo(1, 3);
+  const parent = await page.locator('.canvas-world').getAttribute('style');
+  await page.getByRole('button', { name: 'Open folder Field archive', exact: true }).click();
+  await expect.poll(() => f.state().session.view.activeGroupId).toBe('archive');
+  await page.waitForTimeout(100); assert(await zoom() > 1 && await zoom() < 1.5);
+  await page.reload(); await expect(page.getByRole('button', { name: 'Back to board', exact: true })).toBeVisible(); await expect.poll(zoom).toBeCloseTo(1.5, 3);
+  await page.getByRole('button', { name: 'Back to board', exact: true }).click(); await expect.poll(() => f.state().session.view.activeGroupId).toBeUndefined();
+  await page.reload(); await expect(page.locator('.canvas-world')).toHaveAttribute('style', parent!);
+  await page.emulateMedia({ reducedMotion: 'reduce' }); await page.getByRole('button', { name: 'Zoom in', exact: true }).click(); assert(Math.abs(await zoom() - 1.2) < .001);
+});
+
+test('mid-collapse Done copies scaled articles and pointer gestures take over group layout', { timeout: 90_000 }, async t => {
+  const f = await fixture(t), { page } = f;
+  const image = await f.picture('Caption sample', '#315AD9'), a = await f.add(image, 260, 240), b = await f.add(image, 500, 420);
+  await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'group.create', group: { id: 'motion', name: 'Motion', objectIds: [a.id, b.id] }, expectedVersions: { [a.id]: a.version, [b.id]: b.version } }] });
+  await page.getByRole('button', { name: 'Mark canvas', exact: true }).click(); await page.mouse.move(160, 150); await page.mouse.down(); await page.mouse.move(780, 650, { steps: 5 }); await page.mouse.up();
+  const comment = page.getByRole('textbox', { name: 'Add a comment', exact: true }); await comment.fill('Moving collection'); await comment.press('Escape');
+  await page.getByRole('button', { name: 'Select group Motion', exact: true }).click(); await page.getByRole('button', { name: 'Store in folder', exact: true }).click();
+  await page.locator('.annotation-content').first().click(); await expect(page.getByRole('textbox', { name: 'Annotation text', exact: true })).toBeVisible();
+  await page.waitForTimeout(100);
+  const frozen = await page.evaluate(objectId => {
+    document.querySelectorAll<HTMLElement>('.board-object,.board-group').forEach(element => element.getAnimations().forEach(animation => animation.pause()));
+    const object = document.querySelector<HTMLElement>(`[data-object-id="${objectId}"]`)!, bounds = object.getBoundingClientRect(), caption = object.querySelector('.object-caption')!.getBoundingClientRect();
+    const scale = new DOMMatrix(getComputedStyle(object).transform).a;
+    return { scale, bounds: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }, caption: { x: caption.x, y: caption.y, width: caption.width, height: caption.height } };
+  }, a.id);
+  assert(frozen.scale > .22 && frozen.scale < 1, `Expected an intermediate compositor scale, got ${frozen.scale}`);
+  await page.screenshot({ path: join(f.evidence, 'collapse-middle.png') });
+  await page.evaluate(objectId => { document.querySelector<HTMLButtonElement>('[aria-label="Done"]')!.addEventListener('click', () => { (window as any).doneArticleWidth = document.querySelector<HTMLElement>(`[data-object-id="${objectId}"]`)!.getBoundingClientRect().width; }, { once: true, capture: true }); }, a.id);
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
+  await expect.poll(() => f.state().draft.annotations.find(value => value.text === 'Moving collection')?.captureState?.status, { timeout: 20_000 }).toBe('complete');
+  const capture = f.state().draft.annotations.find(value => value.text === 'Moving collection')!.capture!;
+  const layer = capture.presentation!.layers.find(layer => layer.objectId === a.id)!; assert(layer);
+  assert(layer.contentWorldBounds!.width > 0 && layer.contentWorldBounds!.width < a.width);
+  assert(Math.abs(layer.contentWorldBounds!.width - await page.evaluate(() => (window as any).doneArticleWidth)) < .5);
+  assert(layer.worldBounds.height < a.height + 92, 'Caption, outline and shadow remain inside the scaled article bounds.');
+  // Expanding then immediately dragging finishes the prior layout and follows the pointer directly.
+  await page.getByRole('button', { name: 'Open folder Motion', exact: true }).hover(); await page.getByRole('button', { name: 'Show as frame', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Select group Motion', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Select group Motion', exact: true }).click(); await page.getByRole('button', { name: 'Store in folder', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Select files', exact: true })).toBeEnabled();
+  const folder = page.getByRole('button', { name: 'Open folder Motion', exact: true }), box = (await folder.boundingBox())!;
+  await page.mouse.move(box.x + 100, box.y + 120); await page.mouse.down();
+  const start = (await folder.boundingBox())!; await page.mouse.move(box.x + 140, box.y + 150);
+  const moved = (await folder.boundingBox())!; assert(Math.abs(moved.x - start.x - 40) < 1 && Math.abs(moved.y - start.y - 30) < 1);
+  await page.mouse.up(); await expect(page.locator('.canvas-world')).not.toHaveAttribute('data-transition-kind', /.+/);
+  await folder.hover(); await page.getByRole('button', { name: 'Show as frame', exact: true }).click();
+  await expect(page.locator('.canvas-world')).not.toHaveAttribute('data-transition-kind', /.+/);
+  const group = f.state().groups[0], neighbor = await f.add(image, group.x + group.width + 70, group.y + 100, 120, 80);
+  await page.getByRole('button', { name: 'Select group Motion', exact: true }).click(); await page.getByRole('button', { name: 'Store in folder', exact: true }).click();
+  await page.waitForTimeout(80); const moving = page.locator(`[data-object-id="${neighbor.id}"]`), beforeGrab = (await moving.boundingBox())!;
+  await page.keyboard.down('Alt'); await page.mouse.move(beforeGrab.x + 30, beforeGrab.y + 40);
+  await moving.evaluate(element => element.addEventListener('pointerdown', () => { (window as any).grabStartLeft = element.getBoundingClientRect().x; }, { capture: true, once: true }));
+  await page.mouse.down();
+  const pressedLeft = await page.evaluate(() => (window as any).grabStartLeft);
+  const grabbed = (await moving.boundingBox())!; assert(Math.abs(grabbed.x - pressedLeft) < 1, 'Pointer down retains the displayed neighbor pose.');
+  await page.mouse.move(beforeGrab.x + 60, beforeGrab.y + 40); const dragged = (await moving.boundingBox())!;
+  assert(Math.abs(dragged.x - grabbed.x - 30) < 1, 'The grabbed neighbor follows the pointer directly.');
+  await page.mouse.up(); await page.keyboard.up('Alt');
+  await expect.poll(() => f.state().objects.find(object => object.id === neighbor.id)!.x).toBeCloseTo(grabbed.x + 30, 1);
 });

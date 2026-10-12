@@ -3,7 +3,7 @@ import type { Immutable, SceneInput, ScenePresentation, ScenePrimitive, SceneSiz
 
 type SceneContext = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
-function drawPrimitive(context: SceneContext, primitive: ScenePrimitive): void {
+export function drawPrimitive(context: SceneContext, primitive: ScenePrimitive): void {
   if (primitive.kind === 'rect') {
     context.save();
     if (primitive.shadow) { const transform = context.getTransform(), scale = Math.max(Math.abs(transform.a), Math.abs(transform.d)); context.shadowColor = primitive.shadow.color; context.shadowBlur = primitive.shadow.blur * scale; context.shadowOffsetY = primitive.shadow.y * scale; }

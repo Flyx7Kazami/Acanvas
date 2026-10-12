@@ -1,26 +1,17 @@
 import { useEffect, useState } from 'react';
-import type { Asset, BoardGroup, BoardObject, GroupTexture } from '../shared/types';
+import type { Asset, BoardGroup, BoardObject, GroupColor } from '../shared/types';
 import { resolveContentKind } from '../shared/content-types';
 import { AssetThumb } from './ContentRenderer';
 import type { BoardApi } from './api';
 
-export const folderPalettes: Record<GroupTexture, [string, string, string]> = {
-  orbit: ['#315AD9', '#202124', '#F3EBDD'], grid: ['#779D85', '#202124', '#F3EBDD'],
-  rays: ['#EA6848', '#202124', '#F3EBDD'], steps: ['#ADA0DE', '#315AD9', '#F3EBDD'],
-  weave: ['#202124', '#779D85', '#F3EBDD'], confetti: ['#F3EBDD', '#EA6848', '#315AD9'],
+export const folderPalettes: Record<GroupColor, [string, string, string]> = {
+  cobalt: ['#315AD9', '#2648AF', '#F3EBDD'], sage: ['#779D85', '#60816C', '#F3EBDD'],
+  coral: ['#EA6848', '#C3573D', '#F3EBDD'], lilac: ['#ADA0DE', '#8C7EBC', '#F3EBDD'],
+  ink: ['#202124', '#34363A', '#F3EBDD'], sand: ['#E7D9B7', '#CDBC91', '#635F50'],
 };
-export const folderBack = 'M9 47Q9 35 21 35H77L89 23H217Q231 23 231 37V165Q231 177 219 177H21Q9 177 9 165Z';
-export const folderFront = 'M0 76Q0 64 12 64H66Q74 64 80 72L88 82H228Q240 82 240 94V168Q240 180 228 180H12Q0 180 0 168Z';
-export function folderPattern(texture: GroupTexture): string[] {
-  switch (texture) {
-    case 'orbit': return ['M202 102A35 35 0 1 1 201.9 102M184 117A17 17 0 1 1 183.9 117', 'M23 115H80V123H23ZM23 131H59V139H23Z'];
-    case 'grid': return ['M25 107H41V123H25ZM49 107H65V123H49ZM73 107H89V123H73ZM25 131H41V147H25ZM49 131H65V147H49ZM73 131H89V147H73Z', 'M149 103H213V111H149ZM149 123H195V131H149ZM149 143H213V151H149Z'];
-    case 'rays': return ['M183 96L190 112L207 106L202 123L219 132L201 138L206 156L188 150L178 168L173 149L154 153L162 136L145 124L166 121L164 102L177 113Z', 'M23 108H82V115H23ZM23 124H64V131H23Z'];
-    case 'steps': return ['M25 108H49V132H73V156H97V180H25Z', 'M130 100H151V121H172V142H193V163H214V180H193V163H172V142H151V121H130Z'];
-    case 'weave': return ['M23 106H215V114H23ZM23 130H215V138H23ZM23 154H215V162H23Z', 'M49 97H57V173H49ZM97 97H105V173H97ZM145 97H153V173H145ZM193 97H201V173H193Z'];
-    case 'confetti': return ['M28 113L49 103L58 123L37 133ZM173 139L202 127L211 148L182 160ZM96 146L117 141L122 162L101 167Z', 'M159 100L167 112L159 124L151 112ZM68 139L80 151L68 163L56 151ZM116 103H139V112H116Z'];
-  }
-}
+export const folderBack = 'M7 44Q7 32 19 32H69L80 23H197Q209 23 209 35V210Q209 222 197 222H19Q7 222 7 210Z';
+export const folderFront = 'M0 77Q0 64 13 64H62Q69 64 76 73L83 82H203Q216 82 216 95V211Q216 224 203 224H13Q0 224 0 211Z';
+export const folderLinePositions = [104, 106, 108, 110, 112, 115, 119, 124, 130, 137, 145, 154, 164, 175];
 function FolderPreview({ object, asset, api }: { object: BoardObject; asset?: Asset; api: BoardApi }) {
   const kind = resolveContentKind(asset), [text, setText] = useState('');
   useEffect(() => {
@@ -34,9 +25,9 @@ function FolderPreview({ object, asset, api }: { object: BoardObject; asset?: As
   </span>;
 }
 export function GroupFolder({ group, objects, assets, api }: { group: BoardGroup; objects: BoardObject[]; assets: Asset[]; api: BoardApi }) {
-  const colors = folderPalettes[group.texture], members = group.objectIds.flatMap(id => { const object = objects.find(item => item.id === id); return object ? [object] : []; }).slice(0, 3);
-  return <><svg className="folder-back" viewBox="0 0 240 180" aria-hidden="true"><path d={folderBack} fill={colors[1]}/></svg>
+  const colors = folderPalettes[group.color], members = group.objectIds.flatMap(id => { const object = objects.find(item => item.id === id); return object ? [object] : []; }).slice(0, 3);
+  return <><svg className="folder-back" viewBox="0 0 216 224" aria-hidden="true"><path d={folderBack} fill={colors[1]}/></svg>
     <span className="folder-previews">{members.map(object => <FolderPreview key={object.id} object={object} asset={assets.find(asset => asset.id === object.assetId)} api={api}/>)}</span>
-    <svg className="folder-front" viewBox="0 0 240 180" aria-hidden="true"><path d={folderFront} fill={colors[0]}/>{folderPattern(group.texture).map((d, index) => <path key={index} d={d} fill={colors[index + 1]} fillRule="evenodd"/>)}</svg>
-    <span className="folder-caption"><span>{group.name}</span><small>{group.objectIds.length} {group.objectIds.length === 1 ? 'item' : 'items'}</small></span></>;
+    <svg className="folder-front" viewBox="0 0 216 224" aria-hidden="true"><path d={folderFront} fill={colors[0]}/><g fill="none" stroke={colors[2]} strokeWidth="1.2">{folderLinePositions.map(y => <path key={y} d={`M22 ${y}H107`}/>)}<path d="M145 109H194M145 169H194"/></g><g fill={colors[2]} fontFamily="inherit"><text x="145" y="145" fontSize="28" fontWeight="500">{String(group.objectIds.length).padStart(2, '0')}</text><text x="145" y="158" fontSize="7" letterSpacing="1.3">ITEMS</text></g></svg>
+    </>;
 }
