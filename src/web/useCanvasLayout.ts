@@ -66,7 +66,8 @@ export function useComposerLayout(input: ElementRef, dock: ElementRef, draft: Dr
       const rowChrome = Math.max(textChrome, (row.querySelector<HTMLElement>('.send-button')?.offsetHeight || 40) - 24);
       const internalHeight = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + 2 + rowChrome + blocks.reduce((height, block) => height + block.offsetHeight + parseFloat(getComputedStyle(block).marginTop) + parseFloat(getComputedStyle(block).marginBottom), 0) + (editing ? editing.offsetHeight + parseFloat(getComputedStyle(editing).marginBottom) : 0);
       const bottom = innerHeight - containerBounds.bottom;
-      const available = innerHeight - 64 - (toolbar?.offsetHeight || 226) - 12 - bottom - otherHeight - internalHeight;
+      const toolbarBottom = toolbar?.getBoundingClientRect().bottom || 64;
+      const available = innerHeight - Math.max(64, toolbarBottom) - 12 - bottom - otherHeight - internalHeight;
       const maximum = Math.max(24, Math.min(144, Math.floor(available / 24) * 24));
       editor.style.height = '24px';
       const hasContent = editor.dataset.empty !== 'true';
@@ -78,7 +79,6 @@ export function useComposerLayout(input: ElementRef, dock: ElementRef, draft: Dr
     const positionDock = () => {
       const bounds = container.getBoundingClientRect();
       container.style.setProperty('--queue-available-height', `${Math.max(76, bounds.top - 64)}px`);
-      if (toolbar) toolbar.style.top = `${Math.max(64 + toolbar.offsetHeight / 2, Math.min(innerHeight / 2, bounds.top - 12 - toolbar.offsetHeight / 2))}px`;
     };
     const observer = new ResizeObserver(entries => {
       const width = editor.getBoundingClientRect().width;
@@ -115,7 +115,7 @@ export function useContextualControls(canvas: ElementRef, actions: ElementRef, p
       }
       if (!visible) { dock?.style.removeProperty('--queue-context-limit'); return; }
       if (dock) {
-        const fixedBottom = Math.max(...persistent.filter(element => element.matches('.project-identity,.canvas-actions')).map(element => element.getBoundingClientRect().bottom));
+        const fixedBottom = Math.max(...persistent.filter(element => element.matches('.project-identity,.canvas-actions,.canvas-toolbar')).map(element => element.getBoundingClientRect().bottom));
         const queueLimit = Math.max(76, dock.getBoundingClientRect().top - fixedBottom - (actionBar?.offsetHeight || 0) - (videoBar?.offsetHeight || 0) - 24);
         dock.style.setProperty('--queue-context-limit', `${queueLimit}px`);
       }

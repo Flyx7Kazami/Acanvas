@@ -28,7 +28,7 @@ h1,h2,h3,p { margin: 0; }
 .brand { font-size: 25px; font-weight: 600; letter-spacing: -1.15px; white-space: nowrap; }
 .brand>span { font-size: 8px; vertical-align: 4px; margin-left: 4px; }
 .app-shell { height: 100dvh; overflow: hidden; }
-.canvas-main { --canvas-tool-left: 16px; --canvas-tool-width: 40px; position: relative; height: 100%; width: 100%; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.canvas-main { position: relative; height: 100%; width: 100%; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .project-identity { position: absolute; top: 16px; left: 16px; z-index: 20; display: flex; align-items: center; gap: 12px; max-width: calc(100% - 128px); min-height: 36px; padding: 7px 12px; background: var(--surface); border: 1px solid color-mix(in srgb,var(--edge) 55%,transparent); border-radius: 9px; box-shadow: var(--float-shadow); }
 .project-identity .brand { font-size: 17px; letter-spacing: -.7px; line-height: 20px; }
 .project-identity .brand>span { font-size: 5px; vertical-align: 3px; margin-left: 3px; }
@@ -103,10 +103,9 @@ h1,h2,h3,p { margin: 0; }
 .selection-actions.selection-tool-control .icon-button { width: 32px; height: 32px; flex-basis: 32px; padding: 8px; }
 .alignment-control { gap: 6px; padding: 5px; border-radius: 12px; }
 .task-annotation-frame { width: 100%; max-height: 160px; object-fit: contain; border-radius: 7px; }
-.canvas-toolbar { position: absolute; z-index: 8; display: flex; align-items: center; gap: 2px; padding: 3px; background: var(--surface); border-radius: 10px; box-shadow: var(--float-shadow); border: 1px solid color-mix(in srgb,var(--edge) 55%,transparent); }
-.canvas-toolbar { top: 50%; width: var(--canvas-tool-width); left: var(--canvas-tool-left); transform: translateY(-50%); flex-direction: column; }
-.canvas-toolbar .icon-button { width: 32px; height: 32px; flex-basis: 32px; padding: 8px; }
-.toolbar-divider { height: 1px; width: 20px; background: var(--edge); margin: 2px 0; }
+.canvas-toolbar { position: absolute; z-index: 8; top: 16px; left: 50%; display: flex; align-items: center; gap: 2px; width: max-content; max-width: calc(100% - 32px); overflow-x: auto; overflow-y: hidden; padding: 3px; background: var(--surface); border-radius: 10px; box-shadow: var(--float-shadow); border: 1px solid color-mix(in srgb,var(--edge) 55%,transparent); transform: translateX(-50%); }
+.canvas-toolbar .icon-button { width: 32px; height: 32px; flex: 0 0 32px; padding: 8px; }
+.toolbar-divider { width: 1px; height: 20px; flex: 0 0 1px; background: var(--edge); margin: 0 2px; }
 .zoom-label { width: 32px; height: 32px; flex: 0 0 32px; font-size: 8px; background: transparent; padding: 2px 0; border-radius: 4px; }
 .context-control { visibility: hidden; animation: context-reveal 180ms var(--ease); }
 .context-control[data-positioned='true'] { visibility: visible; }
@@ -135,7 +134,7 @@ h1,h2,h3,p { margin: 0; }
 .video-time { font-size: 10px; color: #fff; text-shadow: 0 1px 2px #000b; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .drop-indicator,.canvas-busy { position: absolute; inset: 0; background: color-mix(in srgb,var(--surface) 85%,transparent); z-index: 12; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; font-size: 13px; }
 .drop-indicator { border: 2px dashed var(--ink); border-radius: 14px; inset: 10px; pointer-events: none; }
-.creation-dock { --dock-width: min(720px,calc(100vw - 48px)); --tool-clearance: max(0px,calc(var(--canvas-tool-left) + var(--canvas-tool-width) + 8px - (100vw - var(--dock-width)) / 2)); position: absolute; z-index: 20; bottom: 18px; left: 50%; transform: translateX(-50%); width: var(--dock-width); pointer-events: none; }
+.creation-dock { --dock-width: min(720px,calc(100vw - 48px)); --tool-clearance: 0px; position: absolute; z-index: 20; bottom: 18px; left: 50%; transform: translateX(-50%); width: var(--dock-width); pointer-events: none; }
 .queue-stack { --queue-hover: color-mix(in srgb,var(--queue-surface) 88%,var(--ink)); position: absolute; bottom: calc(100% - 20px); left: max(16px,var(--tool-clearance)); right: max(16px,var(--tool-clearance)); padding-top: 18px; }
 .queue-peeks { position: absolute; inset: 18px 0 0; pointer-events: none; isolation: isolate; }
 .queue-peeks>span { position: absolute; inset: calc(var(--peek) * -6px) calc(var(--peek) * 8px) 0; z-index: calc(3 - var(--peek)); background: color-mix(in srgb,var(--queue-surface) calc(105% - var(--peek) * 35%),var(--canvas)); border: 0; border-radius: 20px 20px 0 0; }
@@ -273,6 +272,7 @@ details[open] summary svg { rotate: 180deg; }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes context-reveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 1000px) { .canvas-toolbar { top: 64px; } }
 @media (max-width: 760px) { .creation-dock { bottom: 14px; } }
 @media (max-width: 540px) { .project-identity { top: 14px; left: 14px; gap: 8px; padding-inline: 9px; max-width: calc(100% - 122px); } .project-name { padding-left: 8px; } .canvas-actions { top: 14px; right: 14px; } .creation-dock { --dock-width: min(720px,calc(100vw - 32px)); bottom: 12px; } .composer-input-row>.chatbox-editor,.inline-resume textarea { font-size: 16px; } .queue-list { padding-inline: 5px; } .queue-item { gap: 3px; } .queue-task { gap: 7px; padding-inline: 6px; } .queue-title { font-size: 11px; } .queue-item .status-badge { font-size: 8px; padding-inline: 4px; } .selection-actions { padding-inline: 4px; gap: 1px; max-width: calc(100% - 24px); } .selection-actions>button:not(.icon-button) { padding-inline: 4px; gap: 4px; font-size: 9px; } }
 @media (pointer: coarse) { .icon-button { min-width: 40px; min-height: 40px; } .canvas-toolbar .icon-button,.selection-actions.selection-tool-control .icon-button { min-width: 32px; min-height: 32px; } .resize-handle { width: 16px; height: 16px; } .draft-asset,.draft-annotation { height: 36px; } .draft-asset .icon-button,.draft-annotation .icon-button { min-width: 28px; min-height: 28px; width: 28px; height: 28px; flex-basis: 28px; } }
