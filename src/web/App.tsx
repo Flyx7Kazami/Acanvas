@@ -28,6 +28,7 @@ import { SceneEvidenceRenderer, freezeBoardScene, frozenSceneMatches, presentedC
 import type { PreparedSceneCapture, ProjectCaptureCoordinator } from './project-capture-provider';
 import { pendingEvidence, removePendingEvidence, savePendingEvidence } from './scene-renderer/pending-evidence';
 import { readThemePreference, themeFromPreference, type ThemePreference } from './theme';
+import { useTaskQueue } from './useTaskQueue';
 
 const statusLabels: Record<TaskStatus, string> = { queued: 'Queued', editing: 'Editing', running: 'Running', blocked: 'Needs input', interrupted: 'Interrupted', completed: 'Completed', cancelled: 'Cancelled' };
 const timeLabel = (value: number) => `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}`;
@@ -102,17 +103,17 @@ function taskReferences(task: Task) {
   return { groups, attachments, count: groups.length + attachments.length };
 }
 
-type QueueLayout = { height: number; items: Map<string, { x: number; y: number }> };
+type QueueLayout = { top: number; height: number; items: Map<string, { x: number; y: number }> };
 const queueLayouts = new WeakMap<HTMLElement, QueueLayout>();
 function rememberQueueLayout() {
   document.querySelectorAll<HTMLElement>('.queue-item').forEach(element => {
     const bounds = element.getBoundingClientRect(), items = new Map<string, { x: number; y: number }>();
     element.querySelectorAll<HTMLElement>('[data-queue-layout]').forEach(item => { if (item.offsetWidth) { const box = item.getBoundingClientRect(); items.set(item.dataset.queueLayout!, { x: box.x - bounds.x, y: box.y - bounds.y }); } });
-    queueLayouts.set(element, { height: bounds.height, items });
+    queueLayouts.set(element, { top: bounds.top, height: bounds.height, items });
   });
 }
 
-function QueueItem({ task, detailOpen, animateSend, visible, played, children }: { task: Task; detailOpen: boolean; animateSend: boolean; visible: boolean; played: Set<string>; children: ReactNode }) {
+function QueueItem({ task, detailOpen, animateSend, visible, played, exiting, collapsing, fromStatus, layoutRevision, children }: { task: Task; detailOpen: boolean; animateSend: boolean; visible: boolean; played: Set<string>; exiting: boolean; collapsing: boolean; fromStatus?: TaskStatus; layoutRevision: number; children: ReactNode }) {
   const [entering, setEntering] = useState(false);
   const element = useRef<HTMLElement>(null);
   const animations = useRef<Animation[]>([]);
@@ -130,13 +131,16 @@ function QueueItem({ task, detailOpen, animateSend, visible, played, children }:
       const x = previous ? previous.x - (box.x - bounds.x) : 0, y = previous ? previous.y - (box.y - bounds.y) : -12;
       return { item, previous, x, y };
     });
+    const vertical = Math.abs(before.top - bounds.top) > .5 ? before.top - bounds.top : 0;
+    if (vertical) animations.current.push(node.animate([{ transform: `translateY(${vertical}px)` }, { transform: 'translateY(0)' }], options));
     if (Math.abs(before.height - bounds.height) > .5) animations.current.push(node.animate([{ height: `${before.height}px` }, { height: `${bounds.height}px` }], options));
     targets.forEach(({ item, previous, x, y }) => {
       animations.current.push(item.animate([{ transform: `translate(${x}px,${y}px)`, opacity: previous ? 1 : 0 }, { transform: 'translate(0,0)', opacity: 1 }], options));
     });
-  }, [detailOpen]);
+  }, [detailOpen, layoutRevision]);
   useEffect(() => { const reduced = matchMedia('(prefers-reduced-motion: reduce)'); const stop = () => { if (reduced.matches) animations.current.forEach(animation => animation.cancel()); }; reduced.addEventListener('change', stop); return () => { reduced.removeEventListener('change', stop); animations.current.forEach(animation => animation.cancel()); }; }, []);
   useLayoutEffect(() => {
+    if (exiting) { setEntering(false); return; }
     if (!visible) { setEntering(false); return; }
     if (!animateSend || played.has(task.id)) return;
     played.add(task.id);
@@ -153,7 +157,13 @@ function QueueItem({ task, detailOpen, animateSend, visible, played, children }:
     motionChange();
     return () => { node?.removeEventListener('animationcancel', cancelled); reduced.removeEventListener('change', motionChange); };
   }, [entering]);
-  return <article ref={element} className={`queue-item${entering ? ' queue-entering' : ''}`} style={{ '--queue-preview-space': `${previewSpace(3, 24, 3, 8)}px`, '--queue-preview-space-narrow': `${previewSpace(3, 22, 2, 5)}px`, '--queue-preview-space-small': `${previewSpace(1, 22, 2, 3)}px` } as React.CSSProperties} role="listitem" data-task-id={task.id} data-status={task.status} data-detail-open={detailOpen} onAnimationEnd={event => { if (event.target === event.currentTarget) setEntering(false); }}>{children}</article>;
+  useLayoutEffect(() => {
+    const node = element.current;
+    if (!node || !exiting || !collapsing) { node?.style.removeProperty('--queue-exit-height'); return; }
+    node.style.setProperty('--queue-exit-height', `${node.getBoundingClientRect().height}px`);
+    return () => { node.style.removeProperty('--queue-exit-height'); };
+  }, [collapsing, exiting]);
+  return <article ref={element} className={`queue-item${entering ? ' queue-entering' : ''}${exiting ? ' queue-item-exiting' : ''}${exiting && collapsing ? ' queue-item-collapsing' : ''}`} style={{ '--queue-preview-space': `${previewSpace(3, 24, 3, 8)}px`, '--queue-preview-space-narrow': `${previewSpace(3, 22, 2, 5)}px`, '--queue-preview-space-small': `${previewSpace(1, 22, 2, 3)}px` } as React.CSSProperties} role="listitem" data-task-id={task.id} data-status={task.status} data-queue-status={fromStatus || task.status} data-detail-open={detailOpen} onAnimationEnd={event => { if (event.target === event.currentTarget) setEntering(false); }}>{children}</article>;
 }
 
 function MotionDisclosure({ open, children, ...props }: { open: boolean; children: ReactNode } & React.HTMLAttributes<HTMLDivElement>) {
@@ -282,8 +292,11 @@ export default function App() {
   const [queueExpanded, setQueueExpanded] = useState(false);
   const [sentTaskId, setSentTaskId] = useState('');
   const playedSendIds = useRef(new Set<string>());
+  const [queueLayoutRevision, setQueueLayoutRevision] = useState(0);
+  const queueOpenRef = useRef(false);
+  const beforeQueueItemRemove = useCallback(() => { rememberQueueLayout(); if (queueOpenRef.current) setQueueLayoutRevision(current => current + 1); }, []);
   const [taskDetailId, updateTaskDetailId] = useState('');
-  function setTaskDetailId(value: React.SetStateAction<string>) { rememberQueueLayout(); updateTaskDetailId(value); }
+  function setTaskDetailId(value: React.SetStateAction<string>) { rememberQueueLayout(); setQueueLayoutRevision(current => current + 1); updateTaskDetailId(value); }
   const [inspectedTaskId, setInspectedTaskId] = useState('');
   const [annotatingKey, setAnnotatingKey] = useState('');
   const [markPreview, setMarkPreview] = useState<Rect | null>(null);
@@ -347,14 +360,17 @@ export default function App() {
   const disabled = board.projectChanged || board.switching || board.sending || editingTask || removingObjects || layoutSaving || !!board.historyBusy;
   const historyUnavailable = disabled || board.contentComposing || (!board.contentDirty && board.mutationBusy) || !state?.history;
   const fitMotion = useAnimatedView(view, state?.session.id || '', disabled, board.updateView);
-  const queuedTasks = state?.tasks.filter(task => ['queued', 'editing', 'running', 'blocked', 'interrupted'].includes(task.status)) || [];
+  const queuedTaskState = useTaskQueue(state?.tasks || [], state?.session.id, { onBeforeRemove: beforeQueueItemRemove });
+  const queuedTasks = queuedTaskState.items;
   const pending = queuedTasks.length;
-  const queueOpen = queueExpanded || queueHovered || queueFocused || !!taskDetailId || historyOpen;
+  const queueExiting = !historyOpen && pending > 0 && queuedTasks.every(({ exiting }) => exiting);
+  const queueOpen = queueExpanded || queueHovered || queueFocused || queuedTasks.some(({ task }) => task.id === taskDetailId) || historyOpen;
+  queueOpenRef.current = queueOpen;
   const commentKey = `${state?.session.id}:${draft?.id}:${[...selectedIds].sort().join(',')}`;
   const comment = [...comments.current.values()].find(edit => edit.selectionKey === commentKey && !edit.finished);
   const annotating = mode === 'mark' || annotatingKey === commentKey && selected.length > 0;
   const inspectedTask = state?.tasks.find(task => task.id === inspectedTaskId);
-  const inspectableTask = inspectedTask && (historyOpen || queuedTasks.some(task => task.id === inspectedTaskId)) ? inspectedTask : undefined;
+  const inspectableTask = inspectedTask && (historyOpen || queuedTasks.some(({ task }) => task.id === inspectedTaskId)) ? inspectedTask : undefined;
   const viewingEditedTask = !!draft?.editingTaskId && inspectableTask?.id === draft.editingTaskId;
   const editingSourceTask = state?.tasks.find(task => task.id === draft?.editingTaskId);
   const annotationEdit = annotationReader?.draftId ? [...comments.current.values()].find(edit => edit.value.id === annotationReader.annotationId && edit.sessionId === annotationReader.sessionId && edit.draftId === annotationReader.draftId) : undefined;
@@ -1170,11 +1186,11 @@ export default function App() {
 
   const taskCard = (task: Task, compact = false) => <TaskCard compact={compact} summary={compact && taskDetailId !== task.id} task={task} assets={assets} objects={objects} content={id => board.api.content(id, state?.session.id)} api={board.api} onReloadBoard={reloadBoard} onSaveError={board.showError} locateAsset={locateAsset} onAnnotationView={(value, open, annotation) => { if (open && draft?.editingTaskId === value.id && annotation) { const current = draft.annotations.find(item => item.id === annotation.id); if (current) openAnnotation(current, true); } else if (open && annotation?.capture) { exitAnnotation(); setInspectedTaskId(''); setAnnotationReader(null); setCapturedHistory({ task: value, annotation }); } else if (open) { exitAnnotation(); setInspectedTaskId(value.id); readerTrigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; setAnnotationReader(annotation && state ? { annotationId: annotation.id, sessionId: state.session.id, taskId: value.id } : null); } else if (historyOpen) { setInspectedTaskId(current => current === value.id ? '' : current); setAnnotationReader(null); } }}/>;
   const composer = state && draft && <section ref={dock} className="creation-dock" data-canvas-control aria-label="Request composer and queue" onPointerLeave={leaveDock} onPointerEnter={() => window.clearTimeout(queueCloseTimer.current)} onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); setReferencePreview([]); setMention(null); clearInspection(); setTaskDetailId(''); setQueueExpanded(false); setQueueHovered(false); setQueueFocused(false); instruction.current?.focus(); } }} onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); event.stopPropagation(); } }} onDrop={event => { const files = filesFromTransfer(event.dataTransfer); if (files.length) { event.preventDefault(); event.stopPropagation(); void importFiles(files); } }}>
-    {(pending > 0 || historyOpen) && <div className={`queue-stack ${queueOpen ? 'expanded' : ''} ${pending > 1 && !historyOpen ? 'has-stack' : ''}`} data-pending={pending} onPointerEnter={event => { if (event.pointerType === 'mouse') hoverQueue(); }} onFocusCapture={event => { if ((event.target as HTMLElement).matches(':focus-visible')) setQueueFocused(true); }} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setQueueFocused(false); }}>
+    {(pending > 0 || historyOpen) && <div className={`queue-stack ${queueOpen ? 'expanded' : ''} ${pending > 1 && !historyOpen ? 'has-stack' : ''}${queueExiting ? ' queue-stack-exiting' : ''}`} data-pending={pending} onPointerEnter={event => { if (event.pointerType === 'mouse') hoverQueue(); }} onFocusCapture={event => { if ((event.target as HTMLElement).matches(':focus-visible')) setQueueFocused(true); }} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setQueueFocused(false); }}>
       {pending > 1 && !historyOpen && <div className="queue-peeks" aria-hidden="true">{Array.from({ length: Math.min(pending - 1, 2) }, (_, index) => <span key={index} style={{ '--peek': index + 1 } as React.CSSProperties}/>)}</div>}
       {historyOpen ? <div className="queue-list history-list" id="request-history" role="region" aria-label="Request history"><div className="inline-heading"><span>Request history</span><IconButton label="Close request history" onClick={() => { clearInspection(); setHistoryOpen(false); composerMore.current?.focus({ preventScroll: true }); }}><ChevronDown size={14}/></IconButton></div>{state.tasks.length ? [...state.tasks].reverse().map(task => <div key={task.id}>{taskCard(task)}</div>) : <p className="field-hint">Your requests, progress and receipts appear here.</p>}</div> : <div className="queue-list" id="creation-queue" role="list" aria-label="Task queue">
-        {queuedTasks.map((task, index) => <div key={task.id} className={index ? `queue-extra ${queueOpen ? 'open' : ''}` : 'queue-first'} inert={index > 0 && !queueOpen} aria-hidden={index > 0 && !queueOpen}><div className="queue-extra-content"><QueueItem task={task} detailOpen={taskDetailId === task.id} visible={queueOpen || index === 0} animateSend={sentTaskId === task.id} played={playedSendIds.current}>
-          <div className={`queue-row ${taskDetailId === task.id ? 'detail-open' : ''}`}><button type="button" className="queue-task" aria-label={`View request ${task.sequence}: ${requestTitle(task) || 'Attachments and annotations'} — ${statusLabels[task.status]}`} aria-expanded={taskDetailId === task.id} aria-controls={`request-details-${task.id}`} onClick={() => toggleTaskDetail(task)}>{['queued', 'running'].includes(task.status) && <span className="queue-task-mark" aria-hidden="true">{task.status === 'running' ? <LoaderCircle size={14} className="spin"/> : <Circle size={14}/>}</span>}<span className="queue-title" data-queue-layout="title">{requestTitle(task) || 'Create from the attachments and annotations.'}</span></button>
+        {queuedTasks.map(({ task, exiting, fromStatus }, index) => <div key={task.id} className={index ? `queue-extra ${queueOpen ? 'open' : ''}` : 'queue-first'} inert={index > 0 && !queueOpen} aria-hidden={index > 0 && !queueOpen}><div className="queue-extra-content"><QueueItem task={task} detailOpen={taskDetailId === task.id} visible={queueOpen || index === 0} animateSend={sentTaskId === task.id} played={playedSendIds.current} exiting={exiting} collapsing={queueOpen} fromStatus={fromStatus} layoutRevision={queueLayoutRevision + queuedTaskState.layoutRevision}>
+          <div className={`queue-row ${taskDetailId === task.id ? 'detail-open' : ''}`}><button type="button" className="queue-task" aria-label={`View request ${task.sequence}: ${requestTitle(task) || 'Attachments and annotations'} — ${statusLabels[task.status]}`} aria-expanded={taskDetailId === task.id} aria-controls={`request-details-${task.id}`} onClick={() => toggleTaskDetail(task)}>{task.status === 'completed' && exiting ? <span className="queue-task-mark queue-task-mark-done" aria-hidden="true"><LoaderCircle size={14} className="queue-task-mark-spinner spin"/><Check size={14} className="queue-task-mark-check"/></span> : ['queued', 'running'].includes(task.status) && <span className="queue-task-mark" aria-hidden="true">{task.status === 'running' ? <LoaderCircle size={14} className="spin"/> : <Circle size={14}/>}</span>}<span className={`queue-title${task.status === 'completed' && exiting ? ' queue-title-completing' : ''}`} data-queue-layout="title">{requestTitle(task) || 'Create from the attachments and annotations.'}</span></button>
           {['blocked', 'interrupted', 'editing'].includes(task.status) && <span className={`status-badge status-${task.status}`} aria-hidden="true">{statusLabels[task.status]}</span>}{task.status === 'queued' && <IconButton label={`Edit request ${task.sequence}`} disabled={disabled || !!draft.editingTaskId} onClick={() => void editRequest(task)}><Pencil size={14}/></IconButton>}{['queued', 'blocked', 'interrupted'].includes(task.status) && <IconButton label={`Cancel request ${task.sequence}`} disabled={disabled || !!cancellingTask} onClick={() => void cancelTask(task)}>{cancellingTask === task.id ? <LoaderCircle size={14} className="spin"/> : <Trash2 size={14}/>}</IconButton>}{taskDetailId === task.id && <IconButton label="Collapse request details" onClick={() => { clearInspection(); setTaskDetailId(''); document.querySelector<HTMLButtonElement>(`.queue-item[data-task-id="${task.id}"] .queue-task`)?.focus({ preventScroll: true }); }}><ChevronDown size={14}/></IconButton>}</div>
           <MotionDisclosure open={taskDetailId === task.id} className="inline-task-detail" id={`request-details-${task.id}`} role="region" aria-label={`Request ${task.sequence}`}>{taskCard(task, true)}</MotionDisclosure>
         </QueueItem></div></div>)}
