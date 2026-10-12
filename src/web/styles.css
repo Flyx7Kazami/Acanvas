@@ -175,7 +175,6 @@ details[open] summary svg { rotate: 180deg; }
 .task-annotations p>.annotation-bubble { display: inline-block; vertical-align: middle; margin-right: 7px; }
 .task-annotations small { font-size: 9px; color: var(--muted); }
 .task-reason { font-size: 11px; line-height: 1.7; padding: 10px; border-left: 2px solid var(--ink); background: var(--soft); margin-top: 13px; overflow-wrap: anywhere; }
-.task-progress { font-size: 10px; line-height: 1.7; margin-top: 10px; color: var(--muted); }
 .task-receipt { background: var(--canvas); border-radius: 10px; padding: 12px; margin-top: 16px; }
 .receipt-label { display: flex; align-items: center; gap: 6px; font-size: 9px; color: var(--muted); margin-bottom: 8px; }
 .task-receipt p { font-size: 11px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -232,7 +231,6 @@ details[open] summary svg { rotate: 180deg; }
 .captured-annotation-reader { max-height:min(400px,50dvh); overflow:auto; margin-bottom:8px; padding:10px; border:1px solid var(--edge); border-radius:12px; background:var(--surface); box-shadow:var(--float-shadow); pointer-events:auto; }
 .captured-annotation-reader>img { display:block; width:100%; max-height:260px; object-fit:contain; background:var(--canvas); margin-block:8px; border-radius:6px; }.captured-annotation-reader>p { font-size:12px; white-space:pre-wrap; overflow-wrap:anywhere; margin:7px 0; }.captured-annotation-reader>small { display:block; color:var(--muted); font-size:9px; margin-bottom:8px; }
 .task-explicit-references { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; font-size:10px; }.task-explicit-references>span { padding:4px 6px; background:var(--annotation-fill); border-radius:5px; }
-.task-requirement-text { margin-top:12px; font-size:10px; color:var(--muted); }.task-requirement-text summary { cursor:pointer; }.task-requirement-text pre { max-height:220px; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; font:10px/1.5 'Google Sans',sans-serif; color:var(--ink); }
 .send-button { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--on-accent); }
 .draft-attachments { position: relative; display: flex; flex: 0 0 auto; flex-wrap: nowrap; gap: 6px; overflow-x: auto; overflow-y: hidden; margin: 0 8px 4px 0; border-radius: 10px; scrollbar-width: none; }
 .draft-asset,.draft-annotation { display: flex; align-items: center; gap: 6px; height: 32px; padding: 4px; background: var(--soft); border-radius: 10px; min-width: 0; max-width: min(100%,260px); }

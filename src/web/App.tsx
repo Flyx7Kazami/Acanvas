@@ -235,9 +235,8 @@ function TaskCard({ task, assets, objects, content, api, onReloadBoard, locateAs
     </div>
     {previewAsset && <div className="task-media-preview" data-content-kind={resolveContentKind(previewAsset)} role="region" aria-label={`Preview ${previewAsset.name}`}><IconButton label="Close media preview" onClick={() => setPreviewId('')}><ChevronDown size={14}/></IconButton><ContentRenderer asset={previewAsset} src={content(previewAsset.id)} api={api} surface="detail" onReloadBoard={onReloadBoard} onSaveError={onSaveError}/></div>}
     {task.reason && <p className="task-reason">{task.reason}</p>}
-    {task.runs.at(-1)?.progress.at(-1) && <p className="task-progress">{task.runs.at(-1)?.progress.at(-1)?.message}</p>}
     {task.receipt && <div className="task-receipt"><div className="receipt-label"><Check size={13}/>Receipt</div><p>{task.receipt.summary}</p>{!!task.receipt.assetIds.length && <div className="receipt-assets">{task.receipt.assetIds.map(id => { const asset = assets.find(asset => asset.id === id); return asset ? assetAction(asset, false) : <a key={id} href={content(id)} download>Download output</a>; })}</div>}{!!task.receipt.validation.length && <details><summary>Validation<ChevronDown size={12}/></summary><ul>{task.receipt.validation.map((line, index) => <li key={index}>{line}</li>)}</ul></details>}</div>}
-    {!summary && task.requirementText && <details className="task-requirement-text"><summary>Request text</summary><pre>{task.requirementText}</pre></details>}<time dateTime={task.createdAt}>{new Date(task.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</time></div>
+    <time dateTime={task.createdAt}>{new Date(task.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</time></div>
   </article>;
 }
 
