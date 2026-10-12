@@ -1,0 +1,65 @@
+{
+  "backup": "/private/tmp/acanvas-domino-verification-20261013/live-backup",
+  "build": "/private/tmp/acanvas-domino-verification-20261013/final-web",
+  "copied": [
+    "brand/acanvas-favicon.png",
+    "brand/acanvas-icon.png"
+  ],
+  "unchanged": [
+    "assets/audioReview-BvYxC2Ek.js",
+    "assets/audioReview-Da5NcPoK.css",
+    "assets/google-sans-latin-CLLqw55C.woff2",
+    "assets/google-sans-latin-ext-D9SFGpAd.woff2",
+    "assets/main-DdLiyNbg.js",
+    "assets/main-hlbJcHTL.css",
+    "assets/theme-BsJH9bFb.css",
+    "assets/theme-Dg0yZupP.js"
+  ],
+  "served": [
+    {
+      "path": "/brand/acanvas-favicon.png",
+      "status": 200,
+      "bytes": 4259,
+      "type": "image/png",
+      "width": 64,
+      "height": 64
+    },
+    {
+      "path": "/assets/main-DdLiyNbg.js",
+      "status": 200,
+      "bytes": 362199,
+      "type": "text/javascript"
+    },
+    {
+      "path": "/assets/theme-Dg0yZupP.js",
+      "status": 200,
+      "bytes": 215190,
+      "type": "text/javascript"
+    },
+    {
+      "path": "/assets/theme-BsJH9bFb.css",
+      "status": 200,
+      "bytes": 4751,
+      "type": "text/css"
+    },
+    {
+      "path": "/assets/main-hlbJcHTL.css",
+      "status": 200,
+      "bytes": 59397,
+      "type": "text/css"
+    },
+    {
+      "path": "/brand/acanvas-icon.png",
+      "status": 200,
+      "bytes": 14796,
+      "type": "image/png",
+      "width": 128,
+      "height": 128
+    }
+  ],
+  "processBefore": "56724 /Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/dist/src/server/main.js --project /Users/yingbowu/Documents/Projects/acanvas --port 4317 --bind 127.0.0.1 --preview-port 60186",
+  "processAfter": "56724 /Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/dist/src/server/main.js --project /Users/yingbowu/Documents/Projects/acanvas --port 4317 --bind 127.0.0.1 --preview-port 60186",
+  "servedIndexMatchesAfterPreviewMetadata": true,
+  "backupNote": "The previous index was already written by the reviewer build; it is not the pristine pre-task index.",
+  "updatedAt": "2026-10-12T20:40:23.451Z"
+}

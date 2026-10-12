@@ -1,0 +1,266 @@
+{
+  "url": "file:///Users/yingbowu/Documents/Projects/acanvas/assets/brand/domino/index.html",
+  "engine": "155.0.8059.39",
+  "checks": [
+    {
+      "name": "offline startup",
+      "value": {
+        "errors": [],
+        "requests": [
+          "file:///Users/yingbowu/Documents/Projects/acanvas/assets/brand/domino/index.html"
+        ],
+        "time": 266.6,
+        "playing": "true",
+        "running": "true",
+        "readout": "Together",
+        "value": "270",
+        "aria": "0.3 seconds of 8.6 seconds. Together."
+      }
+    },
+    {
+      "name": "play/pause",
+      "value": {
+        "a": {
+          "time": 266.6,
+          "playing": "true",
+          "running": "true",
+          "readout": "Together",
+          "value": "270",
+          "aria": "0.3 seconds of 8.6 seconds. Together."
+        },
+        "b": {
+          "time": 483.3,
+          "playing": "true",
+          "running": "true",
+          "readout": "Together",
+          "value": "480",
+          "aria": "0.5 seconds of 8.6 seconds. Together."
+        },
+        "c": {
+          "time": 516.6,
+          "playing": "false",
+          "running": "false",
+          "readout": "Together",
+          "value": "520",
+          "aria": "0.5 seconds of 8.6 seconds. Together."
+        },
+        "d": {
+          "time": 516.6,
+          "playing": "false",
+          "running": "false",
+          "readout": "Together",
+          "value": "520",
+          "aria": "0.5 seconds of 8.6 seconds. Together."
+        }
+      }
+    },
+    {
+      "name": "range and keyboard",
+      "value": {
+        "time": 183.3,
+        "playing": "false",
+        "running": "false",
+        "readout": "Together",
+        "value": "180",
+        "aria": "0.2 seconds of 8.6 seconds. Together."
+      }
+    },
+    {
+      "name": "native buttons keyboard",
+      "value": {
+        "time": 0,
+        "playing": "false",
+        "running": "false",
+        "readout": "Together",
+        "value": "0",
+        "aria": "0.0 seconds of 8.6 seconds. Together."
+      }
+    },
+    {
+      "name": "full timeline stage bounds",
+      "value": {
+        "frames": 87,
+        "minX": 164,
+        "maxX": 612.5,
+        "minY": 23.600000381469727,
+        "maxY": 501.79998779296875
+      }
+    },
+    {
+      "name": "phone layout",
+      "value": {
+        "viewport": 390,
+        "width": 390,
+        "buttons": [
+          {
+            "id": "theme",
+            "x": 298.5625,
+            "y": 24,
+            "w": 75.4375,
+            "h": 40
+          },
+          {
+            "id": "play",
+            "x": 33,
+            "y": 406.9375,
+            "w": 42,
+            "h": 42
+          },
+          {
+            "id": "replay",
+            "x": 82,
+            "y": 406.9375,
+            "w": 36,
+            "h": 42
+          }
+        ]
+      }
+    },
+    {
+      "name": "pointer scrub",
+      "value": {
+        "time": 6630,
+        "playing": "false",
+        "running": "false",
+        "readout": "Together",
+        "value": "6630",
+        "aria": "6.6 seconds of 8.6 seconds. Together."
+      }
+    },
+    {
+      "name": "offscreen suspension",
+      "value": {
+        "a": {
+          "time": 100,
+          "playing": "true",
+          "running": "false",
+          "readout": "Together",
+          "value": "100",
+          "aria": "0.1 seconds of 8.6 seconds. Together."
+        },
+        "b": {
+          "time": 100,
+          "playing": "true",
+          "running": "false",
+          "readout": "Together",
+          "value": "100",
+          "aria": "0.1 seconds of 8.6 seconds. Together."
+        },
+        "c": {
+          "time": 283.3,
+          "playing": "true",
+          "running": "true",
+          "readout": "Together",
+          "value": "280",
+          "aria": "0.3 seconds of 8.6 seconds. Together."
+        }
+      }
+    },
+    {
+      "name": "aria during playback",
+      "value": {
+        "time": 1683.2,
+        "playing": "true",
+        "running": "true",
+        "readout": "Unfolding",
+        "value": "1680",
+        "aria": "1.7 seconds of 8.6 seconds. Unfolding."
+      }
+    },
+    {
+      "name": "timeline focus pauses with current accessible value",
+      "value": {
+        "a": {
+          "time": 1800,
+          "playing": "false",
+          "running": "false",
+          "readout": "Unfolding",
+          "value": "1800",
+          "aria": "1.8 seconds of 8.6 seconds. Unfolding."
+        },
+        "b": {
+          "time": 1800,
+          "playing": "false",
+          "running": "false",
+          "readout": "Unfolding",
+          "value": "1800",
+          "aria": "1.8 seconds of 8.6 seconds. Unfolding."
+        }
+      }
+    },
+    {
+      "name": "synthetic document visibility handler",
+      "value": {
+        "scope": "Synthetic hidden property and visibilitychange event, not actual browser visibility",
+        "a": {
+          "time": 83.3,
+          "playing": "true",
+          "running": "false",
+          "readout": "Together",
+          "value": "80",
+          "aria": "0.1 seconds of 8.6 seconds. Together."
+        },
+        "b": {
+          "time": 83.3,
+          "playing": "true",
+          "running": "false",
+          "readout": "Together",
+          "value": "80",
+          "aria": "0.1 seconds of 8.6 seconds. Together."
+        },
+        "c": {
+          "time": 233.3,
+          "playing": "true",
+          "running": "true",
+          "readout": "Together",
+          "value": "230",
+          "aria": "0.2 seconds of 8.6 seconds. Together."
+        }
+      }
+    },
+    {
+      "name": "headless tab visibility observation - unsupported",
+      "value": {
+        "a": {
+          "hidden": false,
+          "time": 573.8,
+          "playing": "true",
+          "running": "true",
+          "readout": "Together",
+          "value": "570",
+          "aria": "0.6 seconds of 8.6 seconds. Together."
+        },
+        "b": {
+          "time": 823.6,
+          "playing": "true",
+          "running": "true",
+          "readout": "Together",
+          "value": "820",
+          "aria": "0.8 seconds of 8.6 seconds. Together."
+        },
+        "c": {
+          "hidden": false,
+          "time": 1016.3,
+          "playing": "true",
+          "running": "true",
+          "readout": "Together",
+          "value": "1020",
+          "aria": "1.0 seconds of 8.6 seconds. Together."
+        }
+      }
+    },
+    {
+      "name": "reduced motion",
+      "value": {
+        "time": 0,
+        "playing": "false",
+        "running": "false",
+        "disabled": true
+      }
+    }
+  ],
+  "errors": [],
+  "requests": [
+    "file:///Users/yingbowu/Documents/Projects/acanvas/assets/brand/domino/index.html"
+  ]
+}

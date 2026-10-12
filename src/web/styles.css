@@ -25,13 +25,12 @@ h1,h2,h3,p { margin: 0; }
 .icon-button:hover:not(:disabled) { background: var(--soft); color: var(--ink); }
 .icon-button[aria-pressed='true'] { background: var(--ink); color: var(--surface); }
 .icon-button svg,.button svg { flex-shrink: 0; }
-.brand { font-size: 25px; font-weight: 600; letter-spacing: -1.15px; white-space: nowrap; }
-.brand>span { font-size: 8px; vertical-align: 4px; margin-left: 4px; }
+.brand { display: inline-flex; align-items: center; flex-shrink: 0; font-size: 25px; font-weight: 600; letter-spacing: -1.15px; white-space: nowrap; }
+.brand-icon { width: 1.3em; height: 1.3em; margin-right: .3em; border-radius: .2em; object-fit: contain; }
 .app-shell { height: 100dvh; overflow: hidden; }
 .canvas-main { --canvas-tool-left: 16px; --canvas-tool-width: 40px; position: relative; height: 100%; width: 100%; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .project-identity { position: absolute; top: 16px; left: 16px; z-index: 20; display: flex; align-items: center; gap: 12px; max-width: calc(100% - 128px); min-height: 36px; padding: 7px 12px; background: var(--surface); border: 1px solid color-mix(in srgb,var(--edge) 55%,transparent); border-radius: 9px; box-shadow: var(--float-shadow); }
 .project-identity .brand { font-size: 17px; letter-spacing: -.7px; line-height: 20px; }
-.project-identity .brand>span { font-size: 5px; vertical-align: 3px; margin-left: 3px; }
 .project-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; color: var(--muted); border-left: 1px solid var(--edge); padding-left: 12px; }
 .canvas-actions { position: absolute; top: 16px; right: 16px; z-index: 20; display: flex; gap: 8px; pointer-events: none; }
 .theme-control { position: relative; display: flex; pointer-events: auto; }

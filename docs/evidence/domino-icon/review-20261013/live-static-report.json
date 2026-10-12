@@ -1,0 +1,51 @@
+{
+  "scope": "Read-only static HTTP delivery check after implementer web-only update",
+  "origin": "http://127.0.0.1:4317",
+  "results": [
+    {
+      "path": "/",
+      "status": 200,
+      "bytes": 743,
+      "expectedBytes": 669,
+      "runtimePreviewMetadataElements": 1,
+      "servedIndexMatchesAfterRuntimeMetadata": true,
+      "onDiskIndexByteEqualFinalBuild": true
+    },
+    {
+      "path": "/brand/acanvas-icon.png",
+      "status": 200,
+      "bytes": 14796,
+      "byteEqualFinalBuild": true
+    },
+    {
+      "path": "/brand/acanvas-favicon.png",
+      "status": 200,
+      "bytes": 4259,
+      "byteEqualFinalBuild": true
+    },
+    {
+      "path": "/assets/main-DdLiyNbg.js",
+      "status": 200,
+      "bytes": 362199,
+      "byteEqualFinalBuild": true
+    },
+    {
+      "path": "/assets/theme-Dg0yZupP.js",
+      "status": 200,
+      "bytes": 215190,
+      "byteEqualFinalBuild": true
+    },
+    {
+      "path": "/assets/theme-BsJH9bFb.css",
+      "status": 200,
+      "bytes": 4751,
+      "byteEqualFinalBuild": true
+    },
+    {
+      "path": "/assets/main-hlbJcHTL.css",
+      "status": 200,
+      "bytes": 59397,
+      "byteEqualFinalBuild": true
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "checks": [
+    "autoplay advances from the resting pose",
+    "pointer pause freezes the common timeline",
+    "keyboard arrow steps 100ms",
+    "shift-arrow steps 500ms and clamps start",
+    "End reaches 8.6 second composed pose",
+    "Home returns to composed pose",
+    "Space resumes playback",
+    "Escape pauses playback",
+    "Replay starts from beginning",
+    "R replays the same timeline",
+    "native button Enter toggles exactly once",
+    "real pointer timeline scrub pauses and updates geometry",
+    "timeline changes card geometry",
+    "loop end returns exactly to resting geometry",
+    "all sampled motion stays within stage",
+    "theme button switches to dark",
+    "390px view has no sideways scroll",
+    "390px playback controls remain visible and touch sized",
+    "offscreen stage freezes playback",
+    "visible stage resumes from paused time",
+    "CDP lifecycle probe: {\"frozenVisibility\":\"CDP frozen state released\",\"visibility\":{\"hidden\":false,\"state\":\"visible\",\"running\":\"true\"}}",
+    "reduced motion opens still at recognizable resting pose",
+    "reduced motion permits direct keyboard timeline inspection",
+    "reduced motion permits direct pointer timeline inspection",
+    "reduced motion Replay returns still pose",
+    "standalone page requests only its own offline file/data icon",
+    "standalone page has no uncaught browser errors"
+  ],
+  "bounds": {
+    "x0": 164,
+    "y0": 23.600000381469727,
+    "x1": 612.5,
+    "y1": 501.79998779296875
+  },
+  "errors": [],
+  "requests": [
+    "file:///Users/yingbowu/Documents/Projects/acanvas/assets/brand/domino/index.html",
+    "file:///Users/yingbowu/Documents/Projects/acanvas/assets/brand/domino/index.html"
+  ]
+}

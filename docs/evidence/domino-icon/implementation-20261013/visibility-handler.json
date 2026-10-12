@@ -1,0 +1,5 @@
+{
+  "check": "Synthetic hidden-property + visibilitychange handler freezes time and resumes; real Chrome tabs reported visible in this environment.",
+  "hiddenTime": 0,
+  "pass": true
+}
