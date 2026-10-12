@@ -6,6 +6,7 @@ import { BoardApi, RequestError } from './api';
 
 type SavingDraft = { value: Draft; editRevision: number; expectedRevision: number };
 type LocalDraft = { value: Draft; serverAnnotations: AnnotationInput[]; editRevision: number; savedEditRevision: number; confirmedRevision: number; epoch: number; failed?: boolean; conflict?: Draft; inflight?: SavingDraft; lastAttempt?: SavingDraft };
+export type HistoryAction = 'undo' | 'redo';
 export type SaveState = 'saved' | 'saving' | 'unsaved' | 'failed';
 const comparableReferences = (references: Draft['references']) => ({ objectIds: references.objectIds, taskIds: references.taskIds, order: referenceOrder(references).map(reference => ({ kind: reference.kind, id: reference.id, ...(reference.textOffset === undefined ? {} : { textOffset: reference.textOffset }) })) });
 const draftContent = (value: Draft) => JSON.stringify({ text: value.text, attachments: value.attachments, annotations: value.annotations, references: comparableReferences(value.references) });
@@ -33,6 +34,8 @@ export function useBoard() {
   const [saveState, setSaveState] = useState<SaveState>('saved');
   const [switching, setSwitching] = useState(false);
   const [sending, setSending] = useState(false);
+  const [historyBusy, setHistoryBusy] = useState<HistoryAction | null>(null);
+  const [mutationBusy, setMutationBusy] = useState(false);
   const [projectChanged, setProjectChanged] = useState(false);
   const streamRef = useRef<AbortController | null>(null);
   const reconnectTimerRef = useRef(0);
@@ -45,7 +48,10 @@ export function useBoard() {
   const draftQueues = useRef(new Map<string, Promise<void>>());
   const viewTimers = useRef(new Map<string, number>());
   const viewQueues = useRef(new Map<string, Promise<unknown>>());
+  const mutationQueues = useRef(new Map<string, Promise<void>>());
+  const mutationPending = useRef(new Map<string, number>());
   const loadSequence = useRef(0);
+  const historyBusyRef = useRef<HistoryAction | null>(null);
   const showError = useCallback((cause: unknown) => {
     if (cause instanceof RequestError && cause.code === 'project_changed') {
       setProjectChanged(true); streamRef.current?.abort(); window.clearTimeout(reconnectTimerRef.current); reconnectTimerRef.current = 0;
@@ -89,6 +95,7 @@ export function useBoard() {
     setState(next);
     reflectDraft(local);
     setView(nextView);
+    setMutationBusy((mutationPending.current.get(next.session.id) || 0) > 0);
     const url = new URL(window.location.href); url.searchParams.set('session', next.session.id); window.history.replaceState(null, '', url);
   }, [reflectDraft]);
 
@@ -98,6 +105,26 @@ export function useBoard() {
     if (sequence === loadSequence.current && (!sessionId || sessionId === sessionRef.current)) adopt(next);
     return next;
   }, [api, adopt]);
+
+  const enqueueMutation = useCallback(<T,>(sessionId: string, mutation: () => Promise<T>) => {
+    const previous = mutationQueues.current.get(sessionId) || Promise.resolve();
+    mutationPending.current.set(sessionId, (mutationPending.current.get(sessionId) || 0) + 1);
+    if (sessionRef.current === sessionId) setMutationBusy(true);
+    const request = previous.catch(() => undefined).then(mutation);
+    const settled = request.then(value => {
+      const remaining = Math.max(0, (mutationPending.current.get(sessionId) || 1) - 1);
+      if (remaining) mutationPending.current.set(sessionId, remaining); else mutationPending.current.delete(sessionId);
+      if (sessionRef.current === sessionId) setMutationBusy(remaining > 0);
+      return value;
+    }, cause => {
+      const remaining = Math.max(0, (mutationPending.current.get(sessionId) || 1) - 1);
+      if (remaining) mutationPending.current.set(sessionId, remaining); else mutationPending.current.delete(sessionId);
+      if (sessionRef.current === sessionId) setMutationBusy(remaining > 0);
+      throw cause;
+    });
+    mutationQueues.current.set(sessionId, settled.then(() => undefined, () => undefined));
+    return settled;
+  }, []);
 
   useEffect(() => {
     let alive = true, events: AbortController | undefined, reconnectingRequest: Promise<unknown> | undefined, timer = 0;
@@ -337,13 +364,44 @@ export function useBoard() {
   }, [api, flushDraft, refresh, reflectDraft, showError, adopt]);
 
   const operations = useCallback(async (operations: BoardOperation[], sessionId = sessionRef.current) => {
-    try { await api.operations(sessionId, operations); await refresh(); }
-    catch (cause) { await refresh().catch(() => undefined); showError(cause); throw cause; }
-  }, [api, refresh, showError]);
+    return enqueueMutation(sessionId, async () => {
+      try {
+        await api.operations(sessionId, operations);
+        if (sessionRef.current === sessionId) await refresh();
+      } catch (cause) {
+        if (sessionRef.current === sessionId) await refresh().catch(() => undefined);
+        showError(cause); throw cause;
+      }
+    });
+  }, [api, enqueueMutation, refresh, showError]);
+
+  const historyAction = useCallback(async (action: HistoryAction, sessionId = sessionRef.current) => {
+    if (!sessionId || switchingRef.current || api.projectChanged || historyBusyRef.current) return;
+    const available = action === 'undo' ? state?.history.canUndo : state?.history.canRedo;
+    const queuedMutation = (mutationPending.current.get(sessionId) || 0) > 0;
+    if (!available && !queuedMutation) return;
+    historyBusyRef.current = action; setHistoryBusy(action);
+    try {
+      await enqueueMutation(sessionId, async () => {
+        try {
+          if (action === 'undo') await api.undo(sessionId);
+          else await api.redo(sessionId);
+          if (sessionRef.current === sessionId) await refresh();
+        } catch (cause) {
+          if (sessionRef.current === sessionId) await refresh().catch(() => undefined);
+          showError(cause); throw cause;
+        }
+      });
+    } finally {
+      if (historyBusyRef.current === action) { historyBusyRef.current = null; setHistoryBusy(null); }
+    }
+  }, [api, enqueueMutation, refresh, showError, state]);
+  const undo = useCallback((sessionId?: string) => historyAction('undo', sessionId), [historyAction]);
+  const redo = useCallback((sessionId?: string) => historyAction('redo', sessionId), [historyAction]);
 
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => { if ([...drafts.current.values()].some(value => value.editRevision !== value.savedEditRevision)) event.preventDefault(); };
     window.addEventListener('beforeunload', handler); return () => window.removeEventListener('beforeunload', handler);
   }, []);
-  return { api, state, draft, draftConflict, view, error, errorRevision: failure.revision, connection, serviceInstance, saveState, switching, sending, projectChanged, setError, showError, refresh, changeDraft, changeDraftFor, getDraftFor, acceptSavedDraft, saveCapturedDraft, updateView, switchSession, createSession, send, editTask, operations, flushDraft, resolveDraftConflict };
+  return { api, state, draft, draftConflict, view, error, errorRevision: failure.revision, connection, serviceInstance, saveState, switching, sending, historyBusy, mutationBusy, projectChanged, setError, showError, refresh, changeDraft, changeDraftFor, getDraftFor, acceptSavedDraft, saveCapturedDraft, updateView, switchSession, createSession, send, editTask, operations, undo, redo, flushDraft, resolveDraftConflict };
 }

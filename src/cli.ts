@@ -40,6 +40,7 @@ asset import --file FILE [--mime MIME] [--allow-directory DIR] [--bundle-root DI
   Outputs also require --session ID --task ID --run ID --consumer ID.
 asset read --asset ID --out FILE [--session ID]
   Capture evidence requires its original session.
+board history --session ID | board undo --session ID | board redo --session ID
 board operations --session ID --input operations.json
 task next --session ID [--consumer ID]
 task read --session ID --task ID [--format text]
@@ -148,7 +149,11 @@ export async function cli(args: string[]): Promise<unknown> {
     if (action === 'close') return request(path, 'DELETE', await input());
   }
   if (group === 'view' && action === 'save') return request(`${sessionPath()}/view`, 'PUT', await input());
-  if (group === 'board' && action === 'operations') { const value = await input(); return request('/api/board/operations', 'POST', { sessionId: required('session'), operations: value.operations }); }
+  if (group === 'board') {
+    if (action === 'history') return request(`/api/board/history?sessionId=${encodeURIComponent(required('session'))}`);
+    if (action === 'undo' || action === 'redo') return request(`/api/board/${action}`, 'POST', { sessionId: required('session') });
+    if (action === 'operations') { const value = await input(); return request('/api/board/operations', 'POST', { sessionId: required('session'), operations: value.operations }); }
+  }
   if (group === 'asset') {
     if (action === 'import') {
       if (options.has('bundle-root')) {

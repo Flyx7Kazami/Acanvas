@@ -210,6 +210,9 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
           }
           if (!surfaceMatch[4] && method === 'DELETE') { await surfaces.closeSurface(surfaceId!); surfaceOwners.delete(surfaceId!); send(response, 200, { closed: true }); return; }
         }
+        if (path === '/api/board/history' && method === 'GET') { send(response, 200, service.boardHistory(url.searchParams.get('sessionId') ?? '')); return; }
+        if (path === '/api/board/undo' && method === 'POST') { const input = await payload(request); send(response, 200, service.boardUndo(input.sessionId)); return; }
+        if (path === '/api/board/redo' && method === 'POST') { const input = await payload(request); send(response, 200, service.boardRedo(input.sessionId)); return; }
         if (path === '/api/board/operations' && method === 'POST') { const input = await payload(request); send(response, 200, service.boardOperations(input.sessionId, input.operations)); return; }
         const previewAssetMatch = path.match(/^\/api\/assets\/([^/]+)\/html-preview$/);
         if (previewAssetMatch && method === 'POST') {

@@ -14,6 +14,7 @@ Chatbox references appear inline with the text, with a separate preview for each
 - [Frontend design](docs/FRONTEND.md): visual references, grayscale themes, and interaction rules.
 - [Multimodal canvas design](docs/MULTIMODAL_CANVAS_DESIGN.md): content types, references, and preview boundaries.
 - [Validation record](docs/VALIDATION.md): verified behavior and remaining limitations.
+- [Board history](docs/BOARD_HISTORY_DESIGN.md): persistent Undo/Redo for object edits and queue running indicators.
 - [Chatbox capture foundation](docs/chatbox/CAPTURE_FOUNDATION_DESIGN.md): background capture direction, persistent evidence APIs, and [validation](docs/chatbox/CAPTURE_FOUNDATION_VALIDATION.md).
 - [Chatbox implementation](docs/chatbox/CHATBOX_IMPLEMENTATION_DESIGN.md): references, annotations, task messages, history and the project-managed browser; [validation](docs/chatbox/CHATBOX_IMPLEMENTATION_VALIDATION.md).
 - [Inline references and point markers](docs/chatbox/INLINE_REFERENCES_POINT_ANCHOR_DESIGN.md): caret placement, saved reference positions and anchored annotation numbers; [validation](docs/chatbox/INLINE_REFERENCES_POINT_ANCHOR_VALIDATION.md).
@@ -130,6 +131,10 @@ Images, video, GIF, Markdown, audio, and HTML share import, selection, layout, a
 A mixed selection can share one group annotation, with a common number and comment while preserving each material's source. Image and video region annotations retain explicit region bounds.
 
 Canvas controls, including audio timelines, inherit canvas pan and zoom gestures. Components that need ordinary content scrolling declare a content wheel region; click, drag, and keyboard controls retain their own behavior. See [canvas input responsibilities](docs/CANVAS_INPUT.md) when adding a component.
+
+Use **Undo** and **Redo** on the left toolbar to step through object creation, deletion, movement, resizing, alignment and note color changes. A submitted group operation is one step. History belongs to the current task scope and continues after refresh or service restart. A new object edit ends the Redo branch. Objects keep their IDs, materials and output provenance when restored; competing edits to the same object produce a conflict.
+
+Canvas shortcuts are **Cmd/Ctrl+Z** for Undo, **Cmd/Ctrl+Shift+Z** for Redo, and **Ctrl+Y** for Redo. Text editors retain their own text history. View navigation, annotations and request execution keep their existing controls.
 
 HTML previews support self-contained files and explicitly imported local resource bundles in an isolated origin. A persistent project renderer produces the displayed pixels; current-page controls forward input to that instance. Closing the owning page or removing its preview releases the running instances. Brief connection interruptions retain state; a restarted instance starts its script state again. Retained pixels and completed evidence preserve their captured view. Remote resources and host-specific APIs require further integration. Markdown displays raw HTML as text and uses source placeholders for embedded images.
 

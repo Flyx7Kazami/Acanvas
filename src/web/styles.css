@@ -414,7 +414,7 @@ details[open] summary svg { rotate: 180deg; }
 .queue-stack.expanded .queue-peeks { opacity: 0; transform: translateY(-8px); }
 .queue-row.detail-open .queue-title { margin-left: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .queue-item[data-detail-open='false'] .inline-task-detail { position: absolute; top: 6px; left: 30px; pointer-events: none; }
-.queue-item[data-status='running'][data-detail-open='false'] .inline-task-detail,.queue-item[data-status='editing'][data-detail-open='false'] .inline-task-detail,.queue-item[data-status='blocked'][data-detail-open='false'] .inline-task-detail,.queue-item[data-status='interrupted'][data-detail-open='false'] .inline-task-detail { left: 8px; }
+.queue-item[data-status='editing'][data-detail-open='false'] .inline-task-detail,.queue-item[data-status='blocked'][data-detail-open='false'] .inline-task-detail,.queue-item[data-status='interrupted'][data-detail-open='false'] .inline-task-detail { left: 8px; }
 .queue-item[data-detail-open='false'] .task-detail-content { margin: 0; }
 .queue-item[data-detail-open='false'] .task-detail-content>:not(.task-reference-groups) { display: none; }
 .queue-item[data-detail-open='false'] .task-reference-groups { display: flex; align-items: center; gap: 3px; }
