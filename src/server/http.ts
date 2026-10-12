@@ -5,7 +5,7 @@ import { open, mkdir, readFile, realpath, rename, rm, stat } from 'node:fs/promi
 import { dirname, extname, resolve, relative } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import type { AnnotationCaptureInput, Asset, Bootstrap, CaptureView, CaptureViewOperation, CompleteInput, Draft, ServiceRuntime, SessionView } from '../shared/types.js';
-import { editableTextBytes, editableTextMime, resolveContentKind, resolveContentMime, storageAssetKind } from '../shared/content-types.js';
+import { editableTextBytes, resolveContentKind, resolveContentMime, storageAssetKind } from '../shared/content-types.js';
 import { ApiFailure, CanvasService, within } from './service.js';
 import { AudioArtworkReader } from './audio-artwork.js';
 import { clearRuntime, publishRuntime } from './runtime.js';
@@ -213,7 +213,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
         if (path === '/api/board/history' && method === 'GET') { send(response, 200, service.boardHistory(url.searchParams.get('sessionId') ?? '')); return; }
         if (path === '/api/board/undo' && method === 'POST') { const input = await payload(request); send(response, 200, service.boardUndo(input.sessionId)); return; }
         if (path === '/api/board/redo' && method === 'POST') { const input = await payload(request); send(response, 200, service.boardRedo(input.sessionId)); return; }
-        if (path === '/api/board/operations' && method === 'POST') { const input = await payload(request); send(response, 200, service.boardOperations(input.sessionId, input.operations)); return; }
+        if (path === '/api/board/operations' && method === 'POST') { const input = await payload(request, editableTextBytes * 6 + 64 * 1024); send(response, 200, service.boardOperations(input.sessionId, input.operations)); return; }
         const previewAssetMatch = path.match(/^\/api\/assets\/([^/]+)\/html-preview$/);
         if (previewAssetMatch && method === 'POST') {
           await payload(request);
@@ -310,28 +310,9 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
         const assetMatch = path.match(/^\/api\/assets\/([^/]+)\/content$/);
         if (assetMatch && method === 'PUT') {
           const assetId = decodeURIComponent(assetMatch[1]);
-          let current: Asset;
-          try { current = service.sharedAsset(assetId); }
-          catch (error) { request.resume(); throw error; }
-          if (current.htmlBundle || !editableTextMime(current.mime)) { request.resume(); throw new ApiFailure(400, 'content_readonly', 'Only notes and Markdown can be edited.'); }
-          const declared = Number(request.headers['content-length']);
-          if (Number.isFinite(declared) && declared > editableTextBytes) { request.resume(); throw new ApiFailure(413, 'content_too_large', 'Notes and Markdown stay within 2 MB.'); }
-          const temporary = resolve(service.dataDir, 'tmp', `${randomUUID()}.text`);
-          await mkdir(dirname(temporary), { recursive: true, mode: 0o700 });
-          if (!within(service.dataDir, await realpath(dirname(temporary)))) throw new ApiFailure(403, 'path_boundary', 'Upload storage must remain inside this project.');
-          let file: Awaited<ReturnType<typeof open>> | undefined = await open(temporary, 'wx', 0o600), size = 0, consumed = false;
-          try {
-            for await (const chunk of request) {
-              size += chunk.length;
-              if (size > editableTextBytes) throw new ApiFailure(413, 'content_too_large', 'Notes and Markdown stay within 2 MB.');
-              await file.write(chunk);
-            }
-            if (!request.complete) throw new ApiFailure(400, 'upload_incomplete', 'The upload ended before its text was complete.');
-            await file.sync(); await file.close(); file = undefined;
-            const saved = service.replaceAssetContent(assetId, temporary);
-            consumed = true;
-            send(response, 200, saved);
-          } finally { await file?.close().catch(() => {}); if (!consumed) await rm(temporary, { force: true }); }
+          service.sharedAsset(assetId);
+          request.resume();
+          throw new ApiFailure(400, 'content_readonly', 'Asset content is immutable. Edit it through a board content operation.');
           return;
         }
         if (assetMatch && (method === 'GET' || method === 'HEAD')) {

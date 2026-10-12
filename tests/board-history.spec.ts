@@ -128,7 +128,7 @@ test('keyboard undo queues behind a delayed import create', async ({ page, app }
   await page.unroute('**/api/board/operations');
 });
 
-test('board shortcuts work on the canvas while note and HTML native undo stay local', async ({ page, app }) => {
+test('board shortcuts work on the canvas and note content while HTML native undo stays local', async ({ page, app }) => {
   await open(page, app);
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
   await expect(page.locator('.board-object')).toHaveCount(1);
@@ -139,7 +139,7 @@ test('board shortcuts work on the canvas while note and HTML native undo stay lo
   const boardBox = (await page.locator('#whiteboard').boundingBox())!;
   await page.mouse.click(boardBox.x + boardBox.width / 2, boardBox.y + boardBox.height / 2);
   const note = page.locator('.board-object[data-content-kind="note"]'); await expect(note).toBeVisible();
-  const noteEditor = note.locator('textarea.note-editor'); await expect(noteEditor).toBeVisible(); await noteEditor.click(); await page.keyboard.type('native note text'); const noteBeforeUndo = await noteEditor.inputValue(); await noteEditor.press('Meta+Z'); await expect.poll(() => noteEditor.inputValue()).not.toBe(noteBeforeUndo);
+  const noteEditor = note.locator('textarea.note-editor'); await expect(noteEditor).toBeVisible(); await noteEditor.click(); await page.keyboard.type('native note text'); await noteEditor.press('Meta+Z'); await expect.poll(() => noteEditor.inputValue()).toBe(''); await noteEditor.press('Meta+Shift+Z'); await expect.poll(() => noteEditor.inputValue()).toBe('native note text');
   await expect(page.locator('.board-object[data-content-kind="note"]')).toHaveCount(1);
 
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'history-frame.html', mimeType: 'text/html', buffer: Buffer.from('<style>body{margin:0}input{margin:20px}</style><input aria-label="Inside HTML text"><button>Board content</button>') });

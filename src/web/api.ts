@@ -167,7 +167,6 @@ export class BoardApi {
   undo(sessionId: string) { return this.request<{ objects: BoardState['objects']; history: BoardHistory }>('/api/board/undo', { method: 'POST', body: JSON.stringify({ sessionId }) }); }
   redo(sessionId: string) { return this.request<{ objects: BoardState['objects']; history: BoardHistory }>('/api/board/redo', { method: 'POST', body: JSON.stringify({ sessionId }) }); }
   upload(file: Blob, name: string, signal?: AbortSignal, mime = file.type) { return this.request<Asset>(`/api/assets?name=${encodeURIComponent(name)}&mime=${encodeURIComponent(resolveContentMime(name, mime))}`, { method: 'POST', body: file, signal }); }
-  replaceContent(assetId: string, file: Blob, signal?: AbortSignal) { return this.request<Asset>(`/api/assets/${encodeURIComponent(assetId)}/content`, { method: 'PUT', body: file, signal }); }
   content(assetId: string, sessionId?: string) { return `/api/assets/${encodeURIComponent(assetId)}/content${sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : ''}`; }
   private capturePath(sessionId: string, draftId: string, annotationId: string, version: number) { return `/api/sessions/${encodeURIComponent(sessionId)}/drafts/${encodeURIComponent(draftId)}/annotations/${encodeURIComponent(annotationId)}/captures/${version}`; }
   prepareCapture(sessionId: string, draftId: string, annotationId: string, version: number, input: AnnotationCaptureInput) { return this.request<CaptureResult>(this.capturePath(sessionId, draftId, annotationId, version), { method: 'POST', body: JSON.stringify(input) }); }

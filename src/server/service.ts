@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import { randomUUID } from 'node:crypto';
-import { mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync } from 'node:fs';
-import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
+import { mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import type { Annotation, AnnotationCapture, AnnotationCaptureInput, AnnotationInput, AnnotationTarget, Asset, BaseSceneSnapshot, BoardHistory, BoardObject, BoardOperation, BoardState, CaptureResult, CaptureRetryResult, CaptureView, CaptureViewOperation, Claim, CompleteInput, ContentAnchor, Draft, DraftReferences, HostBinding, HtmlBundle, HtmlSurfaceReference, Project, ResolvedRequestReference, Run, RunIdentity, ScenePresentation, ScenePresentationOperation, SceneSource, ServiceIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
 import { bundleLimits, bundleMime, validBundlePath } from '../shared/html-bundle.js';
@@ -12,7 +12,7 @@ import { generateRequirementText, referenceOrder } from '../shared/task-message.
 type Row = Record<string, any>;
 interface SceneSourceContext { source: SceneSource; snapshot: BaseSceneSnapshot; presentation: ScenePresentation; target?: AnnotationTarget; auxiliaryAssets?: Asset[] }
 type BoardHistorySnapshot = Record<string, BoardObject | null>;
-interface AppliedBoardOperations { objectIds: string[]; before: BoardHistorySnapshot; after: BoardHistorySnapshot }
+interface AppliedBoardOperations { objectIds: string[]; before: BoardHistorySnapshot; after: BoardHistorySnapshot; createdAssetIds: string[] }
 interface BoardHistoryStep { before: BoardHistorySnapshot; after: BoardHistorySnapshot }
 const sceneLifetimeMs = 10 * 60 * 1000;
 export class ApiFailure extends Error {
@@ -425,24 +425,35 @@ export class CanvasService {
     if (stale) fail(409, 'stale_run', 'The output has been retained for review. Resume with the current execution attempt.', { assetId: asset.id });
     return this.asset(asset.id);
   }
-  replaceAssetContent(id: string, temporary: string): Asset {
-    const asset = this.sharedAsset(id);
-    if (asset.htmlBundle || !editableTextMime(asset.mime)) fail(400, 'content_readonly', 'Only notes and Markdown can be edited.');
-    const info = statSync(temporary);
-    if (!info.isFile() || info.size > editableTextBytes) fail(413, 'content_too_large', 'Notes and Markdown stay within 2 MB.');
-    const destination = this.assetPath(id);
-    const backup = `${destination}.${randomUUID()}.previous`;
-    renameSync(destination, backup);
+  private createContentAsset(current: Asset, textValue: string, createdPaths: string[], source?: { taskId: string; runId: string }): Asset | undefined {
+    if (current.htmlBundle || !editableTextMime(current.mime)) fail(400, 'content_readonly', 'Only notes and Markdown can be edited through a board content operation.');
+    const bytes = Buffer.from(textValue, 'utf8');
+    if (bytes.byteLength > editableTextBytes) fail(413, 'content_too_large', 'Notes and Markdown stay within 2 MiB.');
+    const currentPath = this.assetPath(current.id);
+    if (statSync(currentPath).size === bytes.byteLength && readFileSync(currentPath).equals(bytes)) return undefined;
+    const id = randomUUID();
+    const relativePath = source ? `outputs/${source.taskId}/${source.runId}/${id}.content` : `assets/${id}.content`;
+    const destination = resolve(this.dataDir, relativePath);
+    const temporary = resolve(this.dataDir, 'tmp', `${id}.content`);
+    if (!within(this.dataDir, destination) || !within(this.dataDir, temporary)) fail(403, 'path_boundary', 'Content storage must remain inside the project.');
+    mkdirSync(dirname(destination), { recursive: true, mode: 0o700 });
+    if (!within(this.dataDir, realpathSync(dirname(destination))) || !within(this.dataDir, realpathSync(dirname(temporary)))) fail(403, 'path_boundary', 'Content storage must remain inside the project.');
     let published = false;
     try {
+      writeFileSync(temporary, bytes, { flag: 'wx', mode: 0o600 });
       renameSync(temporary, destination);
       published = true;
-      this.transaction(() => { this.db.prepare('UPDATE assets SET size=? WHERE id=?').run(info.size, id); });
-      rmSync(backup, { force: true });
-      return this.asset(id);
+      createdPaths.push(destination);
+      const created: Asset = { id, name: current.name, mime: current.mime, size: bytes.byteLength, kind: current.kind, createdAt: now(), ...(source ? { sourceTaskId: source.taskId, sourceRunId: source.runId } : {}) };
+      this.db.prepare('INSERT INTO assets VALUES(?,?,?,?,?,?,?,?,?)').run(created.id, created.name, created.mime, created.size, created.kind, relativePath, created.createdAt, created.sourceTaskId ?? null, created.sourceRunId ?? null);
+      return created;
     } catch (error) {
-      if (published) rmSync(destination, { force: true });
-      try { renameSync(backup, destination); } catch { /* The original file is already back in place. */ }
+      if (published) {
+        try { rmSync(destination, { force: true }); } catch { /* Preserve the original failure. */ }
+        const index = createdPaths.lastIndexOf(destination);
+        if (index >= 0) createdPaths.splice(index, 1);
+      }
+      try { rmSync(temporary, { force: true }); } catch { /* Preserve the original failure. */ }
       throw error;
     }
   }
@@ -1034,9 +1045,19 @@ export class CanvasService {
       this.historyHead(sessionId, objectId, object?.version ?? this.objectVersion(objectId), !!object, version);
     }
   }
-  private applyOperations(operations: BoardOperation[], source?: { taskId: string; runId: string }): AppliedBoardOperations {
+  private withBoardFileCleanup<T>(operation: (createdPaths: string[]) => T): T {
+    const createdPaths: string[] = [];
+    try { return operation(createdPaths); }
+    catch (error) {
+      for (const path of [...createdPaths].reverse()) {
+        try { rmSync(path, { force: true }); } catch { /* Preserve the mutation failure. */ }
+      }
+      throw error;
+    }
+  }
+  private applyOperations(operations: BoardOperation[], source?: { taskId: string; runId: string }, createdPaths: string[] = []): AppliedBoardOperations {
     if (!Array.isArray(operations) || operations.length > 1000) fail(400, 'invalid_operations', 'Board operations must be a list.');
-    const objectIds: string[] = [], before: BoardHistorySnapshot = {}, seen = new Set<string>(), time = now();
+    const objectIds: string[] = [], before: BoardHistorySnapshot = {}, seen = new Set<string>(), createdAssetIds: string[] = [], time = now();
     for (const operation of operations) {
       if (operation?.type === 'create') {
         const object = operation.object;
@@ -1049,6 +1070,21 @@ export class CanvasService {
         const version = this.nextObjectVersion(id, 0);
         this.db.prepare('INSERT INTO objects(id, asset_id, x, y, width, height, version, created_at, updated_at, source_task_id, source_run_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(id, asset.id, object.x, object.y, object.width, object.height, version, time, time, source?.taskId ?? null, source?.runId ?? null);
         before[id] = null; seen.add(id); objectIds.push(id);
+      } else if (operation?.type === 'content') {
+        const id = nonempty(operation.objectId, 'Object ID', 200);
+        if (seen.has(id)) fail(400, 'duplicate_operation', 'Submit one operation for each object.');
+        seen.add(id);
+        const object = this.object(id);
+        if (!Number.isSafeInteger(operation.expectedVersion) || object.version !== operation.expectedVersion) fail(409, 'object_conflict', 'The object changed. Read its current version before updating.', { objectId: id, currentVersion: object.version });
+        if (typeof operation.text !== 'string') fail(400, 'invalid_input', 'Content text must be text.');
+        if (Buffer.byteLength(operation.text, 'utf8') > editableTextBytes) fail(413, 'content_too_large', 'Notes and Markdown stay within 2 MiB.');
+        const current = this.sharedAsset(object.assetId);
+        const asset = this.createContentAsset(current, operation.text, createdPaths, source);
+        if (asset) {
+          const version = this.nextObjectVersion(id, object.version);
+          this.db.prepare('UPDATE objects SET asset_id=?,version=?,updated_at=? WHERE id=? AND version=?').run(asset.id, version, time, id, operation.expectedVersion);
+          before[id] = object; objectIds.push(id); createdAssetIds.push(asset.id);
+        }
       } else if (operation?.type === 'update' || operation?.type === 'delete') {
         const id = nonempty(operation.objectId, 'Object ID', 200);
         if (seen.has(id)) fail(400, 'duplicate_operation', 'Submit one operation for each object.');
@@ -1085,10 +1121,10 @@ export class CanvasService {
       const row = this.db.prepare('SELECT * FROM objects WHERE id=?').get(objectId) as Row | undefined;
       after[objectId] = row ? this.objectFrom(row) : null;
     }
-    return { objectIds, before, after };
+    return { objectIds, before, after, createdAssetIds };
   }
   boardOperations(sessionId: string, operations: BoardOperation[]): { objects: BoardObject[]; history: BoardHistory } {
-    return this.transaction(() => { this.sessionRow(sessionId); const applied = this.applyOperations(operations); this.recordHistory(sessionId, applied); return { objects: this.objects(), history: this.boardHistory(sessionId) }; });
+    return this.withBoardFileCleanup(createdPaths => this.transaction(() => { this.sessionRow(sessionId); const applied = this.applyOperations(operations, undefined, createdPaths); this.recordHistory(sessionId, applied); return { objects: this.objects(), history: this.boardHistory(sessionId) }; }));
   }
   boardUndo(sessionId: string): { objects: BoardObject[]; history: BoardHistory } {
     return this.transaction(() => {
@@ -1120,7 +1156,7 @@ export class CanvasService {
     const prior = this.taskRow(sessionId, taskId);
     if (prior.status === 'completed' && prior.current_run_id === input.runId && this.runRow(input.runId).consumer_id === input.consumerId) return this.task(sessionId, taskId);
     this.requireCurrent(sessionId, taskId, input, { action: 'complete', input });
-    return this.transaction(() => {
+    return this.withBoardFileCleanup(createdPaths => this.transaction(() => {
       const summary = nonempty(input.summary, 'Completion summary');
       const assetIds = this.expandAssetIds(ids(input.assetIds, 'Result assets'));
       for (const assetId of assetIds) { const asset = this.asset(assetId); if (asset.sourceTaskId !== taskId) fail(409, 'output_ownership', 'Result assets must belong to this task.'); this.assetPath(assetId); }
@@ -1132,13 +1168,18 @@ export class CanvasService {
       }
       if (!Array.isArray(input.validation) || input.validation.length > 100) fail(400, 'invalid_validation', 'Supply the applicable validation records.');
       const validation = input.validation.map((value) => nonempty(value, 'Validation record'));
-      const applied = this.applyOperations(input.operations, { taskId, runId: input.runId });
+      const applied = this.applyOperations(input.operations, { taskId, runId: input.runId }, createdPaths);
       this.recordHistory(sessionId, applied);
       const objectIds = applied.objectIds;
-      const receipt = { summary, assetIds, objectIds, validation, createdAt: now() };
+      const publishedAssetIds = [...new Set([...assetIds, ...applied.createdAssetIds])];
+      if (applied.createdAssetIds.length) {
+        const run = this.runRow(input.runId), outputs = parse<string[]>(run.output_asset_ids_json);
+        this.db.prepare('UPDATE runs SET output_asset_ids_json=? WHERE id=?').run(json([...new Set([...outputs, ...applied.createdAssetIds])]), input.runId);
+      }
+      const receipt = { summary, assetIds: publishedAssetIds, objectIds, validation, createdAt: now() };
       this.db.prepare("UPDATE tasks SET status='completed',receipt_json=?,reason=NULL,updated_at=? WHERE id=?").run(json(receipt), now(), taskId);
       this.db.prepare("UPDATE runs SET status='completed',updated_at=? WHERE id=?").run(now(), input.runId);
       return this.task(sessionId, taskId);
-    });
+    }));
   }
 }

@@ -39,6 +39,8 @@ async function assertSceneCopy(page: Page, annotation: AnnotationInput) {
 type Box = { left: number; top: number; right: number; bottom: number };
 type Area = { x: number; y: number; width: number; height: number };
 type Region = { window: Area; kind: 'red' | 'pin' | 'ink' | 'bright' | 'color'; color?: number[] };
+type Point = { x: number; y: number };
+type Pixel = readonly [number, number, number];
 /** Pixel extents of one color class inside each CSS window, mapped back to CSS pixels. */
 async function colorBoxes(page: Page, image: { capture: { screenshotAssetId: string; sessionId: string; mapping: { crop: Area; scaleX: number; scaleY: number } } } | { screenshot: Buffer }, regions: Region[]): Promise<(Box | null)[]> {
   return page.evaluate(async ({ image, regions }) => {
@@ -56,6 +58,71 @@ async function colorBoxes(page: Page, image: { capture: { screenshotAssetId: str
     });
   }, { image: 'capture' in image ? image : { screenshot: Array.from(image.screenshot) }, regions });
 }
+
+function annotationBubblePolygon(anchor: Point, scaleX: number, scaleY: number): Point[] {
+  const sizeX = 28 * scaleX, sizeY = 28 * scaleY, left = anchor.x - 4 * sizeX / 24, top = anchor.y - 21 * sizeY / 24;
+  const points: Point[] = [], add = (x: number, y: number) => points.push({ x: left + x * sizeX / 24, y: top + y * sizeY / 24 });
+  add(7, 3); add(17, 3);
+  for (let index = 1; index <= 8; index++) { const angle = -Math.PI / 2 + index * Math.PI / 16; add(17 + 4 * Math.cos(angle), 7 + 4 * Math.sin(angle)); }
+  add(21, 14);
+  for (let index = 1; index <= 8; index++) { const angle = index * Math.PI / 16; add(17 + 4 * Math.cos(angle), 14 + 4 * Math.sin(angle)); }
+  add(9, 18); add(4, 21); add(4, 7);
+  for (let index = 1; index <= 8; index++) { const angle = Math.PI + index * Math.PI / 16; add(7 + 4 * Math.cos(angle), 7 + 4 * Math.sin(angle)); }
+  return points;
+}
+
+function pointInPolygon(point: Point, polygon: Point[]) {
+  let inside = false;
+  for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index++) {
+    const current = polygon[index], prior = polygon[previous];
+    if ((current.y > point.y) !== (prior.y > point.y) && point.x < (prior.x - current.x) * (point.y - current.y) / (prior.y - current.y) + current.x) inside = !inside;
+  }
+  return inside;
+}
+
+function distanceToSegmentSquared(point: Point, start: Point, end: Point) {
+  const dx = end.x - start.x, dy = end.y - start.y, length = dx * dx + dy * dy;
+  if (length === 0) return (point.x - start.x) ** 2 + (point.y - start.y) ** 2;
+  const ratio = Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / length));
+  const nearest = { x: start.x + ratio * dx, y: start.y + ratio * dy };
+  return (point.x - nearest.x) ** 2 + (point.y - nearest.y) ** 2;
+}
+
+/** The scene renderer paints this exact 28px bubble path; the edge allowance covers its 1.5px stroke and one raster fringe. */
+function annotationBubblePixel(anchor: Point, scaleX: number, scaleY: number, column: number, row: number) {
+  const polygon = annotationBubblePolygon(anchor, scaleX, scaleY), point = { x: column + .5, y: row + .5 };
+  if (pointInPolygon(point, polygon)) return true;
+  const edgeAllowance = (1.5 * (28 / 24) / 2 + .5) * Math.max(scaleX, scaleY);
+  return polygon.some((start, index) => distanceToSegmentSquared(point, start, polygon[(index + 1) % polygon.length]) <= edgeAllowance ** 2);
+}
+
+function isCanvasBackground(pixel: Pixel) {
+  return Math.abs(pixel[0] - 252) <= 3 && Math.abs(pixel[1] - 252) <= 3 && Math.abs(pixel[2] - 250) <= 3;
+}
+
+function isBlueAnnotationPixel(pixel: Pixel) {
+  return pixel[2] - pixel[0] > 45 && pixel[1] - pixel[0] > 20;
+}
+
+function scenePixelStats(pixels: ArrayLike<number>, width: number, height: number, anchor: Point, scaleX: number, scaleY: number) {
+  let blue = 0, outside = 0;
+  for (let row = 0; row < height; row++) for (let column = 0; column < width; column++) {
+    const offset = (row * width + column) * 4, pixel = [pixels[offset], pixels[offset + 1], pixels[offset + 2]] as Pixel;
+    const bubble = annotationBubblePixel(anchor, scaleX, scaleY, column, row);
+    if (bubble && isBlueAnnotationPixel(pixel)) blue++;
+    if (!isCanvasBackground(pixel) && !bubble) outside++;
+  }
+  return { blue, outside };
+}
+
+test('point bubble mask follows the tail anchor and rejects stray control pixels', () => {
+  const anchor = { x: 96, y: 96 }, mask = (column: number, row: number) => annotationBubblePixel(anchor, 1, 1, column, row);
+  assert.equal(mask(105, 80), true); assert.equal(mask(96, 96), true);
+  assert.equal(mask(90, 80), false); assert.equal(mask(116, 96), false);
+  const pixels = new Uint8ClampedArray(121 * 126 * 4); for (let offset = 0; offset < pixels.length; offset += 4) pixels.set([252, 252, 250, 255], offset);
+  pixels.set([123, 188, 255, 255], (80 * 121 + 105) * 4); pixels.set([123, 188, 255, 255], (96 * 121 + 96) * 4); pixels.set([32, 32, 32, 255], (20 * 121 + 20) * 4);
+  assert.deepEqual(scenePixelStats(pixels, 121, 126, anchor, 1, 1), { blue: 2, outside: 1 });
+});
 /** Counts 2D canvas drawing and presentation confirms; displaying, hovering and panning the board need neither. */
 async function boardWork(page: Page) {
   const presented: string[] = []; page.on('request', request => { if (request.method() === 'PUT' && new URL(request.url()).pathname.endsWith('/presented')) presented.push(request.url()); });
@@ -528,19 +595,13 @@ test('visible Canvas evidence excludes native controls while capture cancellatio
   await expect(page.locator('.app-shell')).toHaveAttribute('data-capturing', 'true'); await expect(page.getByText(/Capturing|Capture required|Retry/, { exact: false })).toHaveCount(0); await expect(page.locator('.project-identity')).toBeVisible(); await expect(page.getByRole('button', { name: 'Zoom in', exact: true })).toBeEnabled();
   assert.equal(await page.locator('.app-shell').getAttribute('data-sampling'), null);
   const uploaded = page.waitForResponse(response => response.request().method() === 'PUT' && /\/captures\/[^/]+\/content$/.test(new URL(response.url()).pathname) && response.ok()); release(); await (await uploaded).finished(); await page.unroute('**/captures/*/content'); await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'complete'); const corner = (await app.saved()).annotations[0]; await assertSceneCopy(page, corner);
-  const stats = await page.evaluate(async capture => {
-    const response = await fetch(`/api/assets/${capture.screenshotAssetId}/content?sessionId=${capture.sessionId}`); const bitmap = await createImageBitmap(await response.blob());
-    const canvas = document.createElement('canvas'); canvas.width = bitmap.width; canvas.height = bitmap.height; const context = canvas.getContext('2d')!; context.drawImage(bitmap, 0, 0);
-    const data = context.getImageData(0, 0, bitmap.width, bitmap.height).data;
-    const x = (capture.worldBounds.x * capture.viewport.zoom + capture.viewport.x - capture.mapping.crop.x) * capture.mapping.scaleX, y = (capture.worldBounds.y * capture.viewport.zoom + capture.viewport.y - capture.mapping.crop.y) * capture.mapping.scaleY;
-    let blue = 0, outside = 0;
-    for (let row = 0; row < bitmap.height; row++) for (let column = 0; column < bitmap.width; column++) {
-      const offset = (row * bitmap.width + column) * 4, pixel = [data[offset], data[offset + 1], data[offset + 2]];
-      if (Math.abs(column - x) <= 14 && Math.abs(row - y) <= 14) { if (pixel[2] - pixel[0] > 45 && pixel[1] - pixel[0] > 20) blue++; }
-      else if (Math.abs(pixel[0] - 252) > 3 || Math.abs(pixel[1] - 252) > 3 || Math.abs(pixel[2] - 250) > 3) outside++;
-    }
-    return { blue, outside };
-  }, corner.capture!);
+  const capture = corner.capture!, anchor = { x: (capture.worldBounds.x * capture.viewport.zoom + capture.viewport.x - capture.mapping.crop.x) * capture.mapping.scaleX, y: (capture.worldBounds.y * capture.viewport.zoom + capture.viewport.y - capture.mapping.crop.y) * capture.mapping.scaleY }, cssScale = capture.presentation!.camera.zoom / capture.viewport.zoom;
+  const bitmap = await page.evaluate(async value => {
+    const response = await fetch(`/api/assets/${value.screenshotAssetId}/content?sessionId=${value.sessionId}`); const image = await createImageBitmap(await response.blob());
+    const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; canvas.getContext('2d')!.drawImage(image, 0, 0); image.close();
+    return { width: canvas.width, height: canvas.height, pixels: Array.from(canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data) };
+  }, capture);
+  const stats = scenePixelStats(bitmap.pixels, bitmap.width, bitmap.height, anchor, cssScale * capture.mapping.scaleX, cssScale * capture.mapping.scaleY);
   assert(stats.blue > 15); assert.equal(stats.outside, 0);
   await app.mark({ x: 8, y: 8 }, { x: 1432, y: 992 }); const full = await app.done('Whole visible scene');
   const pixels = await page.evaluate(async capture => {

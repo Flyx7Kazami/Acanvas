@@ -54,6 +54,7 @@ task cancel --session ID --task ID --reason TEXT
 
 Completion JSON: {"summary":"Delivered","assetIds":[],"validation":[],"operations":[]}
 Board JSON: {"operations":[{"type":"create","object":{"assetId":"ID","x":0,"y":0,"width":320,"height":240}}]}
+Content operation: {"operations":[{"type":"content","objectId":"ID","expectedVersion":1,"text":"Updated text"}]}
 Empty task next returns task:null and releases the queue consumer.
 The first next/resume can generate a new consumer ID; reuse the returned ID inside that loop.
 Idle and transferred consumer IDs are retired. Start a new activation with a new ID.

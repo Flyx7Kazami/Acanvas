@@ -2,13 +2,13 @@
 
 - 日期：2026-10-13（Asia/Shanghai）。
 - 阶段：P2；需求 R14 / A15，以及 R06 / A13 的运行状态显示。
-- 状态：实现与独立验收完成；既有 Chatbox 验证边界见执行记录。
+- 状态：对象属性与[正文扩展](OBJECT_CONTENT_HISTORY_DESIGN.md)实现及独立验收完成。
 
 ## 产品行为
 
-左侧白板工具栏增加 Undo 和 Redo 图标按钮。无可用历史时禁用；请求处理中保持单次执行。快捷键为 Cmd/Ctrl+Z、Cmd/Ctrl+Shift+Z，以及 Ctrl+Y。输入框、便签、Markdown 源码、批注编辑器和嵌入内容继续使用自己的文字撤销。
+左侧白板工具栏提供 Undo 和 Redo 图标按钮。无可用历史时禁用；请求按发起顺序执行。快捷键为 Cmd/Ctrl+Z、Cmd/Ctrl+Shift+Z，以及 Ctrl+Y。便签和 Markdown 正文编辑统一使用白板历史；聊天输入、批注草稿和嵌入 HTML 的运行交互使用各自的编辑行为。
 
-每次已成功提交的白板对象操作形成一步历史：导入和新增便签、删除、移动、缩放、多选对齐、便签颜色。一轮多对象提交作为一步，拖动的预览帧保持临时显示。平移、缩放视图、选择、草稿文字、批注和队列执行状态沿用各自状态管理。素材文字在原生编辑器内撤销。
+每次已成功提交的白板对象操作形成一步历史：导入和新增便签、删除、移动、缩放、多选对齐、便签颜色及正文编辑。一轮多对象提交作为一步，拖动的预览帧保持临时显示。连续文字输入按编辑段合并，Undo 前收束未保存的输入。平移、缩放视图、选择、草稿文字、批注和队列执行状态沿用各自状态管理。
 
 历史按项目与任务范围保存；刷新和服务重启后仍可继续。执行 Undo 后产生新的对象操作，当前范围的 Redo 分支结束。恢复对象保留 ID、素材、颜色、创建顺序和产物来源；移除对象保留素材文件与任务快照。Agent 完成任务时发布的内容按已有发布事务处理。
 
@@ -50,11 +50,13 @@ Undo/Redo 只作用于该步涉及的对象，其他任务范围新增或修改�
 
 | 用例 | 实际失败 |
 | --- | --- |
-| `visible Canvas evidence excludes native controls while capture cancellation stays usable` | 原生控件相关断言实际 228，期望 0 |
+| `visible Canvas evidence excludes native controls while capture cancellation stays usable` | 气泡范围之外的非底色像素实际 228，期望 0 |
 | `managed React records Markdown intent and displayed anchors and keeps the native HTML source instance and form` | HTML 输入为 ` againSaved live input`，期望 `Saved live input again` |
 | `refinement collapsed comment surfaces are displayed by the DOM and keep their displayed pixels in PNG` | 找不到可见的 `Add a comment` 文本框 |
 
-首轮失败与对照结果保留。定向复跑日志为 `/private/tmp/acanvas-history-current.log`，Git 对照日志为 `/private/tmp/acanvas-history-head-n7sWnO-targeted.log`。最终 Chatbox 套件为 32/33，通过后两项，仍有原生控件计数 `228 !== 0` 这一已有失败。
+首轮失败与对照结果保留。定向复跑日志为 `/private/tmp/acanvas-history-current.log`，Git 对照日志为 `/private/tmp/acanvas-history-head-n7sWnO-targeted.log`。最终 Chatbox 套件为 32/33，通过后两项，仍有截图像素范围断言 `228 !== 0` 这一已有失败。
+
+后续核对失败 PNG 与断言，228 个像素全部位于尾尖锚定的气泡主体内。测试按点击点 ±14px 排除气泡，与当前气泡几何不同；本次对象正文扩展中同步按气泡真实路径、描边与栅格边缘范围修订测试，保留严格背景和控件排除检查，正反例与浏览器定向各 1/1 通过。
 
 验证使用隔离临时项目；已有用户白板和运行服务保持。
 
@@ -64,4 +66,4 @@ Undo/Redo 只作用于该步涉及的对象，其他任务范围新增或修改�
 
 - `board-history.spec.ts` 与队列定向浏览器 6/6 通过，覆盖延迟 update、延迟 import create、原生 note/HTML 撤销、双 session、320/390/560/768/1440px、真实 running claim、滚动、明暗主题、减少动态效果及触屏外部点击收起。
 - `board-history.test.js + scene-source.test.js`：23 通过、1 跳过、0 失败。
-- `chatbox-ui.test.js`：32 通过、1 失败；唯一失败为已对照确认的原生控件计数 `228 !== 0`。本轮相关功能范围内的 P1/P2 发现已闭合。
+- `chatbox-ui.test.js`：32 通过、1 失败；唯一失败为已对照确认的截图像素范围断言 `228 !== 0`。本轮相关功能范围内的 P1/P2 发现已闭合。

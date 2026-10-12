@@ -5,14 +5,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { startServer } from '../src/server/http.js';
 import { editableTextBytes } from '../src/shared/content-types.js';
-import type { Asset } from '../src/shared/types.js';
+import type { Asset, BoardObject } from '../src/shared/types.js';
 
-test('notes and Markdown keep their asset id when text is replaced', async (t) => {
+test('text assets are read-only and board content operations publish new assets', async t => {
   const root = await mkdtemp(join(tmpdir(), 'acanvas-text-content-'));
   const server = await startServer({ root, port: 0 });
   t.after(async () => { await server.close(); await rm(root, { recursive: true, force: true }); });
   const token = (await (await fetch(`${server.url}/api/bootstrap`)).json()).token;
-  const call = async (path: string, method: string, body?: BodyInit, mime?: string) => {
+  const call = async (path: string, method = 'GET', body?: BodyInit, mime?: string) => {
     const headers = new Headers({ Authorization: `Bearer ${token}` });
     if (mime) headers.set('Content-Type', mime);
     const response = await fetch(`${server.url}${path}`, { method, headers, body });
@@ -25,28 +25,18 @@ test('notes and Markdown keep their asset id when text is replaced', async (t) =
     assert.equal(created.status, 201);
     return created.json as Asset;
   };
-  const note = await upload('Note', 'text/x-acanvas-note', '');
+  const note = await upload('Note', 'text/x-acanvas-note', 'Original note');
   assert.equal(note.mime, 'text/x-acanvas-note');
   assert.equal(note.kind, 'file');
-  assert.equal(note.size, 0);
-  const saved = await call(`/api/assets/${note.id}/content`, 'PUT', '第一行\nSecond line', 'text/plain');
-  assert.equal(saved.status, 200);
-  assert.equal(saved.json.id, note.id);
-  assert.equal(saved.json.mime, 'text/x-acanvas-note');
-  assert.equal(saved.json.size, Buffer.byteLength('第一行\nSecond line'));
-  const read = await call(`/api/assets/${note.id}/content`, 'GET');
-  assert.equal(read.status, 200);
-  assert.equal(read.text, '第一行\nSecond line');
-  const emptied = await call(`/api/assets/${note.id}/content`, 'PUT', '');
-  assert.equal(emptied.status, 200);
-  assert.equal(emptied.json.size, 0);
+  assert.equal(note.size, Buffer.byteLength('Original note'));
+  const rejected = await call(`/api/assets/${note.id}/content`, 'PUT', 'Changed note', 'text/plain');
+  assert.equal(rejected.status, 400);
+  assert.equal(rejected.json.error.code, 'content_readonly');
+  assert.equal((await call(`/api/assets/${note.id}/content`, 'GET')).text, 'Original note');
 
   const markdown = await upload('Notes.md', 'text/markdown', '# Old\n');
-  const edited = await call(`/api/assets/${markdown.id}/content`, 'PUT', '# New\n\nEdited.');
-  assert.equal(edited.status, 200);
-  assert.equal(edited.json.id, markdown.id);
-  assert.equal((await call(`/api/assets/${markdown.id}/content`, 'GET')).text, '# New\n\nEdited.');
-
+  assert.equal((await call(`/api/assets/${markdown.id}/content`, 'PUT', '# New\n')).status, 400);
+  assert.equal((await call(`/api/assets/${markdown.id}/content`, 'GET')).text, '# Old\n');
   const image = await upload('pixel.png', 'image/png', 'png');
   assert.equal((await call(`/api/assets/${image.id}/content`, 'PUT', 'nope')).status, 400);
   assert.equal((await call(`/api/assets/${image.id}/content`, 'GET')).text, 'png');
@@ -54,30 +44,20 @@ test('notes and Markdown keep their asset id when text is replaced', async (t) =
   assert.equal((await call(`/api/assets/${plain.id}/content`, 'PUT', 'changed')).status, 400);
   assert.equal((await call(`/api/assets/${plain.id}/content`, 'GET')).text, 'plain');
   assert.equal((await call('/api/assets/missing/content', 'PUT', 'x')).status, 404);
-  assert.equal((await call(`/api/assets/${note.id}/content`, 'PUT', 'x'.repeat(editableTextBytes + 1))).status, 413);
-  assert.equal((await call(`/api/assets/${note.id}/content`, 'GET')).text, '');
 
-  const session = await call('/api/sessions', 'POST', JSON.stringify({ name: 'Colors' }), 'application/json');
-  assert.equal(session.status, 201);
-  const place = async (operations: unknown) => call('/api/board/operations', 'POST', JSON.stringify({ sessionId: session.json.id, operations }), 'application/json');
+  const session = (await call('/api/sessions', 'POST', JSON.stringify({ name: 'Content' }), 'application/json')).json as { id: string };
+  const place = async (operations: unknown) => call('/api/board/operations', 'POST', JSON.stringify({ sessionId: session.id, operations }), 'application/json');
   const placed = await place([{ type: 'create', object: { assetId: note.id, x: 10, y: 20, width: 240, height: 128 } }]);
   assert.equal(placed.status, 200);
-  const noteObject = placed.json.objects.find((item: { assetId: string }) => item.assetId === note.id);
-  assert.equal(noteObject.fill, undefined);
-  const colored = await place([{ type: 'update', objectId: noteObject.id, expectedVersion: noteObject.version, changes: { fill: 'sage' } }]);
-  const sage = colored.json.objects.find((item: { id: string }) => item.id === noteObject.id);
-  assert.equal(colored.status, 200);
-  assert.equal(sage.fill, 'sage');
-  assert.equal(sage.x, 10);
-  const moved = await place([{ type: 'update', objectId: noteObject.id, expectedVersion: sage.version, changes: { x: 48 } }]);
-  const shifted = moved.json.objects.find((item: { id: string }) => item.id === noteObject.id);
-  assert.equal(shifted.fill, 'sage');
-  assert.equal(shifted.x, 48);
-  const cleared = await place([{ type: 'update', objectId: noteObject.id, expectedVersion: shifted.version, changes: { fill: null } }]);
-  const restored = cleared.json.objects.find((item: { id: string }) => item.id === noteObject.id);
-  assert.equal(restored.fill, undefined);
-  assert.equal((await place([{ type: 'update', objectId: noteObject.id, expectedVersion: restored.version, changes: { fill: 'neon' } }])).status, 400);
-  const imageObject = (await place([{ type: 'create', object: { assetId: image.id, x: 300, y: 20, width: 80, height: 80 } }])).json.objects.find((item: { assetId: string }) => item.assetId === image.id);
-  assert.equal((await place([{ type: 'update', objectId: imageObject.id, expectedVersion: imageObject.version, changes: { fill: 'sand' } }])).status, 400);
-  assert.equal((await call(`/api/state?sessionId=${encodeURIComponent(session.json.id)}`, 'GET')).json.objects.find((item: { id: string }) => item.id === noteObject.id).fill, undefined);
+  const object = placed.json.objects.find((item: BoardObject) => item.assetId === note.id) as BoardObject;
+  const changed = await place([{ type: 'content', objectId: object.id, expectedVersion: object.version, text: '第一行\nSecond line' }]);
+  assert.equal(changed.status, 200);
+  const updated = changed.json.objects.find((item: BoardObject) => item.id === object.id) as BoardObject;
+  assert.notEqual(updated.assetId, object.assetId);
+  assert.equal(updated.id, object.id);
+  assert.deepEqual({ x: updated.x, y: updated.y, width: updated.width, height: updated.height, fill: updated.fill }, { x: object.x, y: object.y, width: object.width, height: object.height, fill: object.fill });
+  assert.ok(updated.version > object.version);
+  assert.equal((await call(`/api/assets/${note.id}/content`, 'GET')).text, 'Original note');
+  assert.equal((await call(`/api/assets/${updated.assetId}/content`, 'GET')).text, '第一行\nSecond line');
+  assert.equal((await place([{ type: 'content', objectId: object.id, expectedVersion: updated.version, text: 'x'.repeat(editableTextBytes + 1) }])).status, 413);
 });
