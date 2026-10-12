@@ -2,6 +2,17 @@
 
 日期：2026-10-13（Asia/Shanghai）。分支：`codex/item-groups-folders`。范围：R14 / A15，设计见 [ITEM_GROUPS_DESIGN.md](ITEM_GROUPS_DESIGN.md)。测试数据均在独立临时项目；本轮保持用户实际白板与运行服务原状。
 
+## Group 操作文字
+
+实施及独立验收完成。Group、Rename、Store in folder、Expand on board、Ungroup 与 Back to board 采用始终可见的 12px 正文色文字和辅助色图标，控件高度 32px。悬停操作条和二级导航共用动作，窄屏自然分行。
+
+- `npm run typecheck`、`git diff --check`：通过。
+- `.runtime/node_modules/node/bin/node node_modules/vite/bin/vite.js build --configLoader runner --outDir /private/tmp/acanvas-group-action-labels-web-r2`：通过，候选资源 `main-CCrP2pxO.js` / `main-pML5kT0l.css`。
+- `ACANVAS_TEST_WEB_ROOT=/private/tmp/acanvas-group-action-labels-web-r2 .runtime/node_modules/node/bin/node --test dist/tests/item-groups-ui.test.js`：四项业务场景均取得通过结果。整轮为 3 通过、1 项 Chrome 启动阶段 CVDisplayLink/15 秒超时，该项尚未建立页面和对象；按相同候选、相同命令增加 `--test-name-pattern='group names, hover actions'` 定向复验 1/1 通过。原始失败与复验输出保留，无产品重试逻辑。
+- 独立 Chrome：1280px 浅色、390px 浅色、320px 深色、390px 触屏/coarse 均通过。创建、改名与取消、收纳/展开、返回、解组保留成员，hover 桥接及键盘/触屏均实际操作。文字与按钮在 viewport 内完整呈现；320px folder 工具条 296×74、二级导航 292×111，自动换行。三处名称输入内容盒位置/尺寸差小于 1px，普通外观保持。
+
+原 58785 项目和会话使用该固定资源目录，页面实际加载新资源，零 pageerror；本次服务更新未提交白板变更。主智能体刷新原 in-app tab，并恢复更新前的 Group 选择与两项引用预览，实际可见 Rename、Store in folder、Ungroup 文字。源码与文档独立审查 PASS，无阻断问题。截图：[操作近图](evidence/item-groups/action-labels-closeup.png)、[宽屏](evidence/item-groups/action-labels.png)、[320px](evidence/item-groups/action-labels-320.png)、[390px](evidence/item-groups/action-labels-390.png)。
+
 ## 七项交互与视觉修订
 
 实施及独立验收完成。封套为 216×224，完整布局为 216×256；六种随机纯色持久保存，统一档案线条上密下疏，前 3 个实际 item 从顶部露出。悬停显示操作并保持连续命中，frame 空白处选择和拖动整组，item 保持独立操作。frame、folder 和二级导航名称均在原位置编辑，整组保持普通外框与成员外观。Ungroup 采用两个分离方块图标。进入/返回、收起/展开和缩放使用约 420ms 非线性过渡。

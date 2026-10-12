@@ -53,10 +53,10 @@ test('item groups use real selection, folders, navigation, editing and current-l
   // A native marquee selects exactly the three members.
   await page.mouse.move(190, 180); await page.mouse.down(); await page.mouse.move(650, 550, { steps: 8 }); await page.mouse.up();
   await expect(page.locator('.board-object.selected')).toHaveCount(3);
-  await page.getByRole('button', { name: 'Group selected files', exact: true }).click();
+  await page.getByRole('button', { name: 'Group', exact: true }).click();
   await expect(page.locator('.group-frame')).toHaveCount(1);
   let group = f.state().groups[0]; assert.deepEqual(new Set(group.objectIds), new Set([a.id, b.id, n.id]));
-  await page.getByRole('button', { name: 'Rename group', exact: true }).click();
+  await page.getByRole('button', { name: 'Rename', exact: true }).click();
   const name = page.getByRole('textbox', { name: 'Group name', exact: true }); await name.fill('Color studies'); await name.press('Enter');
   await expect.poll(() => f.state().groups[0].name).toBe('Color studies');
   await page.screenshot({ path: join(evidence, 'frame.png') });
@@ -124,7 +124,7 @@ test('item groups use real selection, folders, navigation, editing and current-l
   const narrowFolder = page.getByRole('button', { name: 'Open folder Color studies', exact: true }); await narrowFolder.focus(); await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Back to board', exact: true })).toBeVisible();
   await page.screenshot({ path: join(evidence, 'secondary-dark-390.png') });
-  await page.getByRole('button', { name: 'Show as frame', exact: true }).click(); await expect(page.locator('.group-frame')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Expand on board', exact: true }).click(); await expect(page.locator('.group-frame')).toHaveCount(1);
   await page.getByRole('button', { name: 'Select group Color studies', exact: true }).focus(); await page.keyboard.press('Enter');
   await page.getByRole('button', { name: 'Ungroup', exact: true }).click(); await expect(page.locator('.board-group')).toHaveCount(0);
   assert.equal(f.state().objects.length, 7); assert(f.state().objects.every(object => !object.groupId));
@@ -201,7 +201,7 @@ test('layer projection excludes hidden snap targets and keeps asynchronous impor
   await page.setViewportSize({ width: 320, height: 700 });
   const navigation = (await page.locator('.group-navigation').boundingBox())!;
   assert(navigation.x >= 0 && navigation.x + navigation.width <= 320);
-  await page.getByRole('button', { name: 'Rename group', exact: true }).click();
+  await page.getByRole('button', { name: 'Rename', exact: true }).click();
   const name = page.getByRole('textbox', { name: 'Group name', exact: true }); await name.fill('Second'); await name.press('Enter');
   await expect.poll(() => f.state().groups.find(group => group.id === 'group-b')!.name).toBe('Second');
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -234,16 +234,16 @@ test('group names, hover actions, independent selection and camera transitions f
   await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'group.create', group: { id: 'archive', name: 'Archive', objectIds: [a.id, b.id], color: 'cobalt' }, expectedVersions: { [a.id]: a.version, [b.id]: b.version } }] });
   const frame = page.locator('[data-group-id="archive"]'); await expect(frame).toBeVisible();
   await page.mouse.click(600, 190); // Empty frame area selects the group.
-  await expect(page.getByRole('button', { name: 'Rename group', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Rename', exact: true })).toBeVisible();
   await expect(page.locator('.board-object.selected')).toHaveCount(0); assert.equal(await frame.getAttribute('class'), 'board-group group-frame');
   const original = (await frame.locator('.group-name-slot').boundingBox())!;
-  await page.getByRole('button', { name: 'Rename group', exact: true }).click();
+  await page.getByRole('button', { name: 'Rename', exact: true }).click();
   const input = page.getByRole('textbox', { name: 'Group name', exact: true }); await expect(input).toBeFocused();
   const box = (await input.boundingBox())!; assert(Math.abs(box.x - original.x) < 1 && Math.abs(box.y - original.y) < 1 && Math.abs(box.width - original.width) < 1);
   const appearance = await input.evaluate(element => { const style = getComputedStyle(element); return [style.borderWidth, style.outlineWidth, style.boxShadow, style.backgroundColor]; });
   assert.deepEqual(appearance, ['0px', '0px', 'none', 'rgba(0, 0, 0, 0)']);
   await input.fill('Cancel'); await input.press('Escape'); assert.equal(f.state().groups[0].name, 'Archive');
-  await page.getByRole('button', { name: 'Rename group', exact: true }).click(); await input.fill('档案');
+  await page.getByRole('button', { name: 'Rename', exact: true }).click(); await input.fill('档案');
   await input.dispatchEvent('compositionstart'); await input.press('Enter'); await expect(input).toBeVisible(); assert.equal(f.state().groups[0].name, 'Archive');
   await input.dispatchEvent('compositionend'); await input.press('Enter'); await expect.poll(() => f.state().groups[0].name).toBe('档案');
   await expect(page.locator('.board-object.selected')).toHaveCount(0);
@@ -262,7 +262,7 @@ test('group names, hover actions, independent selection and camera transitions f
   await expect(page.locator('.canvas-world')).not.toHaveAttribute('data-transition-kind', /.+/);
   await page.mouse.click(1050, 700); // Clear independent selection before testing hover.
   const folder = page.getByRole('button', { name: 'Open folder 档案', exact: true }); await folder.hover();
-  const rename = page.getByRole('button', { name: 'Rename group', exact: true }); await expect(rename).toBeVisible();
+  const rename = page.getByRole('button', { name: 'Rename', exact: true }); await expect(rename).toBeVisible();
   const action = (await rename.boundingBox())!, folderArea = (await folder.boundingBox())!;
   await page.mouse.move(action.x + action.width / 2, folderArea.y - 4, { steps: 4 }); await page.mouse.move(action.x + action.width / 2, action.y + action.height / 2, { steps: 4 });
   await expect(rename).toBeVisible(); await rename.click();
@@ -315,7 +315,7 @@ test('mid-collapse Done copies scaled articles and pointer gestures take over gr
   assert(Math.abs(layer.contentWorldBounds!.width - await page.evaluate(() => (window as any).doneArticleWidth)) < .5);
   assert(layer.worldBounds.height < a.height + 92, 'Caption, outline and shadow remain inside the scaled article bounds.');
   // Expanding then immediately dragging finishes the prior layout and follows the pointer directly.
-  await page.getByRole('button', { name: 'Open folder Motion', exact: true }).hover(); await page.getByRole('button', { name: 'Show as frame', exact: true }).click();
+  await page.getByRole('button', { name: 'Open folder Motion', exact: true }).hover(); await page.getByRole('button', { name: 'Expand on board', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Select group Motion', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Select group Motion', exact: true }).click(); await page.getByRole('button', { name: 'Store in folder', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Select files', exact: true })).toBeEnabled();
@@ -324,7 +324,7 @@ test('mid-collapse Done copies scaled articles and pointer gestures take over gr
   const start = (await folder.boundingBox())!; await page.mouse.move(box.x + 140, box.y + 150);
   const moved = (await folder.boundingBox())!; assert(Math.abs(moved.x - start.x - 40) < 1 && Math.abs(moved.y - start.y - 30) < 1);
   await page.mouse.up(); await expect(page.locator('.canvas-world')).not.toHaveAttribute('data-transition-kind', /.+/);
-  await folder.hover(); await page.getByRole('button', { name: 'Show as frame', exact: true }).click();
+  await folder.hover(); await page.getByRole('button', { name: 'Expand on board', exact: true }).click();
   await expect(page.locator('.canvas-world')).not.toHaveAttribute('data-transition-kind', /.+/);
   const group = f.state().groups[0], neighbor = await f.add(image, group.x + group.width + 70, group.y + 100, 120, 80);
   await page.getByRole('button', { name: 'Select group Motion', exact: true }).click(); await page.getByRole('button', { name: 'Store in folder', exact: true }).click();

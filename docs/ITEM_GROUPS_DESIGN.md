@@ -4,7 +4,9 @@
 
 ## 产品行为
 
-框选或 Shift 多选至少两个一级画板 item 后，选区工具条提供 Group。创建后出现包围成员的方框，标题为 Group，可在画板原名称处重命名。成员继续独立选择、编辑、移动、缩放和批注；框的标题和非 item 的空白区域均可选择整个 group 并拖动。整组选择使用独立 group 选择状态，保持普通外框和成员外观。group 提供 Store in folder、Show as frame 和 Ungroup；Ungroup 使用两个向外分离的独立方块图标。Ungroup 保留全部成员与素材。
+框选或 Shift 多选至少两个一级画板 item 后，选区工具条提供带可见文字的 Group。创建后出现包围成员的方框，标题为 Group，可在画板原名称处重命名。成员继续独立选择、编辑、移动、缩放和批注；框的标题和非 item 的空白区域均可选择整个 group 并拖动。整组选择使用独立 group 选择状态，保持普通外框和成员外观。group 提供 Rename、Store in folder、Expand on board 和 Ungroup 文字按钮；图标为辅助识别，产品动作由始终可见的文字表达。Ungroup 保留全部成员与素材。
+
+悬停操作条与二级导航共用相同的名称和顺序，当前模式显示对应切换动作；二级导航的返回按钮可见文字为 Back to board。按钮采用项目字体、12px 正文色文字、32px 高度和轻量悬停反馈，辅助图标使用次要色。320px/390px 时通过合理换行或分行组织名称与操作，保证全部文字、按钮和原位名称输入可读可达。键盘及触屏入口与鼠标一致，操作条保持原有 hover 连续命中，名称编辑保持原位普通外观。
 
 文件夹模式隐藏一级上的成员，封套视觉为 216×224，布局占位为 216×256（包含下方名称的 32px 区域），左上角锚定当前 group 外框左上角。单击文件夹进入二级画板；拖动文件夹移动其占位及全部成员。键盘聚焦后 Enter 进入。悬停文件夹时即可显示操作，操作条与文件夹之间有连续命中区域；移入操作条后保持显示。键盘聚焦提供等效入口，触屏沿用可达的组操作。二级保留导入、便签、编辑、媒体、平移缩放、选择、对齐、批注和聊天引用；新建 item 自动加入当前 group。当前 group 的成员清晰呈现，其外围一级内容虚化且保持交互隔离。Back to board 返回一级并恢复进入前的视口。范围是一级和二级两层，分组入口用于一级成员。
 
@@ -20,7 +22,7 @@ Rename 把 frame 标题、folder 下方名称或二级导航名称原位替换�
 
 ## 数据与接口
 
-group 属于项目白板。BoardObject 增加可选 groupId，原 assetId、ID、版本、来源与历史引用保留。独立 groups 表保存 group 记录，objects.group_id 保存唯一归属；BoardGroup 返回 id、name、mode（frame/folder）、color、x/y/width/height、version、createdAt、updatedAt 和按创建顺序排列的 objectIds。颜色类型为 cobalt、sage、coral、lilac、ink、sand。已有库通过一次 schema 迁移把 texture 列改为 color，并按已有主色映射：orbit→cobalt、grid→sage、rays→coral、steps→lilac、weave→ink、confetti→sand。旧截图与历史来源按保存时内容保留。frame 模式的几何保存展开框范围；folder 模式的 x/y 保存稳定的一级锚点，width/height 保存当前成员对应的展开尺寸，展示范围由固定尺寸换算。frame 成员变化刷新完整范围，folder 内部编辑保持一级锚点并刷新展开尺寸；成员变化均更新 group version。Show as frame 时整体平移当前成员，使其外框左上角对齐文件夹锚点，然后展开。
+group 属于项目白板。BoardObject 增加可选 groupId，原 assetId、ID、版本、来源与历史引用保留。独立 groups 表保存 group 记录，objects.group_id 保存唯一归属；BoardGroup 返回 id、name、mode（frame/folder）、color、x/y/width/height、version、createdAt、updatedAt 和按创建顺序排列的 objectIds。颜色类型为 cobalt、sage、coral、lilac、ink、sand。已有库通过一次 schema 迁移把 texture 列改为 color，并按已有主色映射：orbit→cobalt、grid→sage、rays→coral、steps→lilac、weave→ink、confetti→sand。旧截图与历史来源按保存时内容保留。frame 模式的几何保存展开框范围；folder 模式的 x/y 保存稳定的一级锚点，width/height 保存当前成员对应的展开尺寸，展示范围由固定尺寸换算。frame 成员变化刷新完整范围，folder 内部编辑保持一级锚点并刷新展开尺寸；成员变化均更新 group version。Expand on board 时整体平移当前成员，使其外框左上角对齐文件夹锚点，然后展开。
 
 扩展现有 BoardOperation，UI 和 CLI 共用 POST /api/board/operations：
 
