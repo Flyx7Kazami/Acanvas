@@ -42,7 +42,7 @@ function contentPrimitive(primitive: ScenePrimitive): void {
 function contentInput(input: SceneInput, bitmap: SceneSize): void {
   requireSize(bitmap, true);
   contentString(input.background);
-  for (const primitive of [...input.layers.flatMap(layer => layer.primitives), ...(input.overlays ?? [])]) contentPrimitive(primitive);
+  for (const primitive of [...input.layers.flatMap(layer => layer.primitives), ...(input.underlays ?? []), ...(input.overlays ?? [])]) contentPrimitive(primitive);
   for (const mark of input.marks) {
     contentString(mark.fill); contentString(mark.textFill); contentNumber(mark.x); contentNumber(mark.y); contentNumber(mark.number);
     if (mark.stroke !== undefined) contentString(mark.stroke);

@@ -1,6 +1,6 @@
 import { BoardConnection, BoardConnectionError } from './board-connection.js';
 import { resolveContentMime } from '../shared/content-types';
-import type { AnnotationCaptureInput, ApiError, Asset, BaseSceneSnapshot, BoardHistory, BoardOperation, BoardState, Bootstrap, CaptureResult, CaptureRetryResult, CaptureView, CaptureViewOperation, Draft, HtmlSurfaceFrameMetadata, ProjectHtmlSurface, ProjectHtmlSurfaceInput, ScenePresentation, ScenePresentationOperation, SceneSource, Session, SessionView, Task } from '../shared/types';
+import type { AnnotationCaptureInput, ApiError, Asset, BaseSceneSnapshot, BoardGroup, BoardHistory, BoardVersionChanges, BoardOperation, BoardState, Bootstrap, CaptureResult, CaptureRetryResult, CaptureView, CaptureViewOperation, Draft, HtmlSurfaceFrameMetadata, ProjectHtmlSurface, ProjectHtmlSurfaceInput, ScenePresentation, ScenePresentationOperation, SceneSource, Session, SessionView, Task } from '../shared/types';
 import type { BrowserPage, BrowserStatus } from '../shared/browser-capture';
 import type {HtmlPcmBatch,HtmlInputResult} from '../shared/html-surface';
 
@@ -16,6 +16,9 @@ const errorMessages: Record<string, string> = {
   object_missing: 'A referenced object was removed from the canvas. Update the request attachments.',
   draft_conflict: 'This request has been sent or updated. Load the current draft to continue.',
   draft_revision_conflict: 'Your draft was updated elsewhere. Compare both versions to continue.',
+  group_conflict: 'This group was updated. The current canvas is ready to edit.',
+  group_missing: 'This group was removed. The board is ready to edit.',
+  invalid_group: 'Select at least two files from the main board to group them.',
   object_conflict: 'This file was updated. The latest canvas is loaded and ready to edit.',
   history_conflict: 'This board changed elsewhere. The latest canvas is loaded and ready to edit.',
   empty_request: 'Add request text, attachments or annotations.',
@@ -162,10 +165,10 @@ export class BoardApi {
   send(sessionId: string, draftId: string, expectedRevision: number) { return this.request<{ task: Task; draft: Draft }>(`/api/sessions/${encodeURIComponent(sessionId)}/tasks`, { method: 'POST', body: JSON.stringify({ draftId, expectedRevision }) }); }
   editTask(sessionId: string, taskId: string, draftId: string, expectedRevision: number, cancel = false) { return this.request<{ task: Task; draft: Draft }>(`/api/sessions/${encodeURIComponent(sessionId)}/tasks/${encodeURIComponent(taskId)}/${cancel ? 'cancel-edit' : 'edit'}`, { method: 'POST', body: JSON.stringify({ draftId, expectedRevision }) }); }
   view(sessionId: string, view: SessionView) { return this.request<Session>(`/api/sessions/${encodeURIComponent(sessionId)}/view`, { method: 'PUT', body: JSON.stringify(view) }); }
-  operations(sessionId: string, operations: BoardOperation[]) { return this.request<{ objects: BoardState['objects']; history: BoardHistory }>('/api/board/operations', { method: 'POST', body: JSON.stringify({ sessionId, operations }) }); }
+  operations(sessionId: string, operations: BoardOperation[]) { return this.request<{ objects: BoardState['objects']; groups: BoardGroup[]; history: BoardHistory; versionChanges: BoardVersionChanges }>('/api/board/operations', { method: 'POST', body: JSON.stringify({ sessionId, operations }) }); }
   history(sessionId: string) { return this.request<BoardHistory>(`/api/board/history?sessionId=${encodeURIComponent(sessionId)}`); }
-  undo(sessionId: string) { return this.request<{ objects: BoardState['objects']; history: BoardHistory }>('/api/board/undo', { method: 'POST', body: JSON.stringify({ sessionId }) }); }
-  redo(sessionId: string) { return this.request<{ objects: BoardState['objects']; history: BoardHistory }>('/api/board/redo', { method: 'POST', body: JSON.stringify({ sessionId }) }); }
+  undo(sessionId: string) { return this.request<{ objects: BoardState['objects']; groups: BoardGroup[]; history: BoardHistory; versionChanges: BoardVersionChanges }>('/api/board/undo', { method: 'POST', body: JSON.stringify({ sessionId }) }); }
+  redo(sessionId: string) { return this.request<{ objects: BoardState['objects']; groups: BoardGroup[]; history: BoardHistory; versionChanges: BoardVersionChanges }>('/api/board/redo', { method: 'POST', body: JSON.stringify({ sessionId }) }); }
   upload(file: Blob, name: string, signal?: AbortSignal, mime = file.type) { return this.request<Asset>(`/api/assets?name=${encodeURIComponent(name)}&mime=${encodeURIComponent(resolveContentMime(name, mime))}`, { method: 'POST', body: file, signal }); }
   content(assetId: string, sessionId?: string) { return `/api/assets/${encodeURIComponent(assetId)}/content${sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : ''}`; }
   private capturePath(sessionId: string, draftId: string, annotationId: string, version: number) { return `/api/sessions/${encodeURIComponent(sessionId)}/drafts/${encodeURIComponent(draftId)}/annotations/${encodeURIComponent(annotationId)}/captures/${version}`; }

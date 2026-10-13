@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { AnnotationInput, BoardObject, BoardOperation, BoardState, Draft, SessionView } from '../shared/types';
+import type { AnnotationInput, BoardObject, BoardOperation, BoardVersionChanges, BoardState, Draft, SessionView } from '../shared/types';
 import { referenceOrder } from '../shared/task-message';
 import { annotationTarget } from './annotation-scene';
 import { BoardApi, RequestError } from './api';
+import { ownExpectedVersion, rememberVersionChanges, type OwnVersions } from './board-versions';
 import type { ContentEditorRegistration, ContentSaveResult } from './content-editing';
 
 type SavingDraft = { value: Draft; editRevision: number; expectedRevision: number };
@@ -10,7 +11,7 @@ type LocalDraft = { value: Draft; serverAnnotations: AnnotationInput[]; editRevi
 type ContentBoardOperation = Extract<BoardOperation, { type: 'content' }>;
 export type HistoryAction = 'undo' | 'redo';
 export type SaveState = 'saved' | 'saving' | 'unsaved' | 'failed';
-const comparableReferences = (references: Draft['references']) => ({ objectIds: references.objectIds, taskIds: references.taskIds, order: referenceOrder(references).map(reference => ({ kind: reference.kind, id: reference.id, ...(reference.textOffset === undefined ? {} : { textOffset: reference.textOffset }) })) });
+const comparableReferences = (references: Draft['references']) => ({ objectIds: references.objectIds, groupIds: references.groupIds || [], taskIds: references.taskIds, order: referenceOrder(references).map(reference => ({ kind: reference.kind, id: reference.id, ...(reference.textOffset === undefined ? {} : { textOffset: reference.textOffset }) })) });
 const draftContent = (value: Draft) => JSON.stringify({ text: value.text, attachments: value.attachments, annotations: value.annotations, references: comparableReferences(value.references) });
 const freshDraft = (value: Draft, epoch = 0): LocalDraft => ({ value, serverAnnotations: value.annotations, editRevision: 0, savedEditRevision: 0, confirmedRevision: value.revision, epoch });
 const sameTarget = (a: AnnotationInput, b: AnnotationInput) => JSON.stringify(annotationTarget(a)) === JSON.stringify(annotationTarget(b));
@@ -55,7 +56,8 @@ export function useBoard() {
   const mutationQueues = useRef(new Map<string, Promise<void>>());
   const mutationPending = useRef(new Map<string, number>());
   const objectsBySession = useRef(new Map<string, BoardObject[]>());
-  const ownContentVersions = useRef(new Map<string, Map<string, number>>());
+  const ownGroupVersions = useRef(new Map<string, OwnVersions>());
+  const ownObjectVersions = useRef(new Map<string, OwnVersions>());
   const contentEditors = useRef(new Map<string, ContentEditorRegistration>());
   const contentDirtyByEditor = useRef(new Map<string, boolean>());
   const loadSequence = useRef(0);
@@ -79,14 +81,16 @@ export function useBoard() {
 
   const adopt = useCallback((next: BoardState) => {
     objectsBySession.current.set(next.session.id, next.objects);
-    const ownVersions = ownContentVersions.current.get(next.session.id);
+    const ownVersions = ownObjectVersions.current.get(next.session.id);
     if (ownVersions) {
       for (const [objectId, version] of ownVersions) {
         const object = next.objects.find(value => value.id === objectId);
-        if (!object || object.version !== version) ownVersions.delete(objectId);
+        if (!object || object.version !== version.current) ownVersions.delete(objectId);
       }
-      if (!ownVersions.size) ownContentVersions.current.delete(next.session.id);
+      if (!ownVersions.size) ownObjectVersions.current.delete(next.session.id);
     }
+    const groupVersions = ownGroupVersions.current.get(next.session.id);
+    if (groupVersions) for (const [id, version] of groupVersions) { if (next.groups.find(group => group.id === id)?.version !== version.current) groupVersions.delete(id); }
     let local = drafts.current.get(next.session.id);
     const remote = next.draft;
     if (!local) local = freshDraft(remote);
@@ -181,21 +185,21 @@ export function useBoard() {
     if (sessionId === sessionRef.current) setContentDirtyState(contentDirtyForSession(sessionId));
   }, []);
 
-  const markOwnObjectVersions = useCallback((sessionId: string, objects: BoardObject[], removedObjectIds: string[] = []) => {
-    let versions = ownContentVersions.current.get(sessionId);
-    if (!versions) ownContentVersions.current.set(sessionId, versions = new Map());
-    for (const object of objects) versions.set(object.id, object.version);
-    for (const objectId of removedObjectIds) versions.delete(objectId);
-    if (!versions.size) ownContentVersions.current.delete(sessionId);
+  const markOwnVersions = useCallback((sessionId: string, changes: BoardVersionChanges) => {
+    const objects = ownObjectVersions.current.get(sessionId) || new Map();
+    const groups = ownGroupVersions.current.get(sessionId) || new Map();
+    rememberVersionChanges(objects, changes.objects); rememberVersionChanges(groups, changes.groups);
+    ownObjectVersions.current.set(sessionId, objects); ownGroupVersions.current.set(sessionId, groups);
   }, []);
 
   const rebaseOwnVersions = useCallback((sessionId: string, operations: BoardOperation[]) => {
-    const versions = ownContentVersions.current.get(sessionId);
-    if (!versions) return operations;
+    const versions = ownObjectVersions.current.get(sessionId);
+    const groupVersions = ownGroupVersions.current.get(sessionId);
     return operations.map(operation => {
-      if (operation.type !== 'update' && operation.type !== 'delete') return operation;
-      const confirmed = versions.get(operation.objectId);
-      return confirmed !== undefined && confirmed > operation.expectedVersion ? { ...operation, expectedVersion: confirmed } : operation;
+      if (operation.type === 'group.create') return { ...operation, expectedVersions: Object.fromEntries(Object.entries(operation.expectedVersions).map(([id, version]) => [id, ownExpectedVersion(versions, id, version)])) };
+      if (operation.type === 'group.update' || operation.type === 'group.ungroup') return { ...operation, expectedVersion: ownExpectedVersion(groupVersions, operation.groupId, operation.expectedVersion) };
+      if (operation.type !== 'update' && operation.type !== 'delete' && operation.type !== 'content') return operation;
+      return { ...operation, expectedVersion: ownExpectedVersion(versions, operation.objectId, operation.expectedVersion) };
     });
   }, []);
 
@@ -368,16 +372,18 @@ export function useBoard() {
     await refresh();
   }, [save, refresh, reflectDraft]);
 
-  const updateView = useCallback((next: SessionView, ownerSessionId = viewSessionRef.current, persist = true) => {
+  const updateView = useCallback((next: SessionView, ownerSessionId = viewSessionRef.current, persist: boolean | 'immediate' = true) => {
     if (api.projectChanged || switchingRef.current || ownerSessionId !== sessionRef.current || ownerSessionId !== viewSessionRef.current) return;
     views.current.set(ownerSessionId, next); setView(next);
     window.clearTimeout(viewTimers.current.get(ownerSessionId));
     if (!persist) return;
-    viewTimers.current.set(ownerSessionId, window.setTimeout(() => {
+    const saveView = () => {
       const previous = viewQueues.current.get(ownerSessionId) || Promise.resolve();
       const request = previous.catch(() => undefined).then(() => api.view(ownerSessionId, next));
       viewQueues.current.set(ownerSessionId, request); void request.catch(showError);
-    }, 250));
+    };
+    if (persist === 'immediate') saveView();
+    else viewTimers.current.set(ownerSessionId, window.setTimeout(saveView, 250));
   }, [api, showError]);
 
   const switchSession = useCallback(async (sessionId: string) => {
@@ -450,13 +456,12 @@ export function useBoard() {
       try {
         const object = objectsBySession.current.get(sessionId)?.find(value => value.id === objectId);
         if (!object) throw new RequestError('A referenced file was removed from the canvas.', 409, 'object_missing');
-        const confirmed = ownContentVersions.current.get(sessionId)?.get(objectId);
-        const version = expectedVersion !== undefined && (confirmed === undefined || confirmed < expectedVersion) ? expectedVersion : confirmed ?? expectedVersion ?? object.version;
+        const version = ownExpectedVersion(ownObjectVersions.current.get(sessionId), objectId, expectedVersion ?? object.version);
         const operation: ContentBoardOperation = { type: 'content', objectId, expectedVersion: version, text };
         const response = await api.operations(sessionId, [operation]);
         const updated = response.objects.find(value => value.id === objectId);
         if (!updated) throw new RequestError('The edited file is no longer on the canvas.', 409, 'object_missing');
-        markOwnObjectVersions(sessionId, [updated]);
+        markOwnVersions(sessionId, response.versionChanges);
         if (sessionRef.current === sessionId) await refresh();
         return { objectId, assetId: updated.assetId, version: updated.version };
       } catch (cause) {
@@ -464,15 +469,14 @@ export function useBoard() {
         showError(cause); throw cause;
       }
     });
-  }, [api, enqueueMutation, markOwnObjectVersions, refresh, showError]);
+  }, [api, enqueueMutation, markOwnVersions, refresh, showError]);
 
   const operations = useCallback(async (operations: BoardOperation[], sessionId = sessionRef.current) => {
     await flushContent(sessionId);
     return enqueueMutation(sessionId, async () => {
       try {
         const response = await api.operations(sessionId, rebaseOwnVersions(sessionId, operations));
-        const touchedIds = new Set(operations.flatMap(operation => operation.type === 'create' ? operation.object.id ? [operation.object.id] : [] : [operation.objectId]));
-        markOwnObjectVersions(sessionId, response.objects.filter(object => touchedIds.has(object.id)), operations.filter(operation => operation.type === 'delete').map(operation => operation.objectId));
+        markOwnVersions(sessionId, response.versionChanges);
         if (sessionRef.current === sessionId) await refresh();
         return response;
       } catch (cause) {
@@ -480,7 +484,7 @@ export function useBoard() {
         showError(cause); throw cause;
       }
     });
-  }, [api, enqueueMutation, flushContent, markOwnObjectVersions, rebaseOwnVersions, refresh, showError]);
+  }, [api, enqueueMutation, flushContent, markOwnVersions, rebaseOwnVersions, refresh, showError]);
 
   const historyAction = useCallback(async (action: HistoryAction, sessionId = sessionRef.current) => {
     if (!sessionId || switchingRef.current || api.projectChanged || historyBusyRef.current || contentComposingForSession(sessionId)) return;
@@ -496,6 +500,7 @@ export function useBoard() {
       await enqueueMutation(sessionId, async () => {
         try {
           const response = action === 'undo' ? await api.undo(sessionId) : await api.redo(sessionId);
+          markOwnVersions(sessionId, response.versionChanges);
           if (sessionRef.current === sessionId) await refresh();
         } catch (cause) {
           if (sessionRef.current === sessionId) await refresh().catch(() => undefined);
@@ -505,7 +510,7 @@ export function useBoard() {
     } finally {
       if (historyBusyRef.current === action) { historyBusyRef.current = null; setHistoryBusy(null); }
     }
-  }, [api, enqueueMutation, flushContent, refresh, showError, state]);
+  }, [api, enqueueMutation, flushContent, markOwnVersions, refresh, showError, state]);
   const undo = useCallback((sessionId?: string) => historyAction('undo', sessionId), [historyAction]);
   const redo = useCallback((sessionId?: string) => historyAction('redo', sessionId), [historyAction]);
 

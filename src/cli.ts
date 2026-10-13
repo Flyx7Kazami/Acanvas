@@ -3,8 +3,9 @@ import { lstat, open, readFile, realpath, stat, writeFile } from 'node:fs/promis
 import { basename, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import type { HostBinding } from './shared/types.js';
+import type { BoardState, HostBinding } from './shared/types.js';
 import { resolveContentMime } from './shared/content-types.js';
+import { groupDisplayBounds } from './shared/groups.js';
 import { within } from './server/service.js';
 import { bundleChanged, collectHtmlBundle, sameBundleSource, verifyBundleDirectories } from './server/html-bundle-import.js';
 import { connectProject, waitForStop } from './server/client-runtime.js';
@@ -40,8 +41,14 @@ asset import --file FILE [--mime MIME] [--allow-directory DIR] [--bundle-root DI
   Outputs also require --session ID --task ID --run ID --consumer ID.
 asset read --asset ID --out FILE [--session ID]
   Capture evidence requires its original session.
+group list --session ID
+group read --session ID --group ID
+  Returns group metadata and ordered member objects with original file metadata. Coordinates are project world coordinates.
+group put --session ID --group ID --object ID --version NUMBER [--x NUMBER --y NUMBER]
+  Moves an existing item into the group while retaining identity, file and dimensions. Omitted coordinates keep its current position.
 board history --session ID | board undo --session ID | board redo --session ID
 board operations --session ID --input operations.json
+  Supports create/update/delete and group.create/group.update/group.ungroup.
 task next --session ID [--consumer ID]
 task read --session ID --task ID [--format text]
 task progress --session ID --task ID --run ID --consumer ID --message TEXT [--job ID]
@@ -54,6 +61,12 @@ task cancel --session ID --task ID --reason TEXT
 
 Completion JSON: {"summary":"Delivered","assetIds":[],"validation":[],"operations":[]}
 Board JSON: {"operations":[{"type":"create","object":{"assetId":"ID","x":0,"y":0,"width":320,"height":240}}]}
+Group JSON: {"operations":[{"type":"group.create","group":{"objectIds":["A","B"],"name":"References","color":"cobalt"},"expectedVersions":{"A":1,"B":1}}]}
+Folder JSON: {"operations":[{"type":"group.update","groupId":"ID","expectedVersion":1,"changes":{"mode":"folder"}}]}
+Colors: cobalt, sage, coral, lilac, ink, sand. Creation chooses a random color when color is omitted.
+Use mode "frame" to expand; group.ungroup retains every member and material.
+Object creation accepts groupId for the folder board. Object update changes.groupId moves an existing item; null returns it to the main board.
+State and operation responses include groups. Both canvas levels use project world coordinates.
 Content operation: {"operations":[{"type":"content","objectId":"ID","expectedVersion":1,"text":"Updated text"}]}
 Empty task next returns task:null and releases the queue consumer.
 The first next/resume can generate a new consumer ID; reuse the returned ID inside that loop.
@@ -150,6 +163,20 @@ export async function cli(args: string[]): Promise<unknown> {
     if (action === 'close') return request(path, 'DELETE', await input());
   }
   if (group === 'view' && action === 'save') return request(`${sessionPath()}/view`, 'PUT', await input());
+  if (group === 'group') {
+    const sessionId = required('session');
+    if (action === 'list' || action === 'read') {
+      const state = await request(`/api/state?sessionId=${encodeURIComponent(sessionId)}`) as BoardState;
+      if (action === 'list') return state.groups;
+      const groupId = required('group'), selected = state.groups.find(item => item.id === groupId);
+      if (!selected) throw new Error('The referenced group is unavailable.');
+      return { projectId: state.project.id, group: selected, coordinateSpace: 'world', displayBounds: groupDisplayBounds(selected), members: selected.objectIds.map(id => {
+        const object = state.objects.find(item => item.id === id)!;
+        return { object, asset: state.assets.find(asset => asset.id === object.assetId)! };
+      }) };
+    }
+    if (action === 'put') return request('/api/board/operations', 'POST', { sessionId, operations: [{ type: 'update', objectId: required('object'), expectedVersion: Number(required('version')), changes: { groupId: required('group'), ...(options.has('x') ? { x: Number(required('x')) } : {}), ...(options.has('y') ? { y: Number(required('y')) } : {}) } }] });
+  }
   if (group === 'board') {
     if (action === 'history') return request(`/api/board/history?sessionId=${encodeURIComponent(required('session'))}`);
     if (action === 'undo' || action === 'redo') return request(`/api/board/${action}`, 'POST', { sessionId: required('session') });

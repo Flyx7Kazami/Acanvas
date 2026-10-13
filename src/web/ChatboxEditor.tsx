@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import type { Asset, BoardObject, Draft, DraftReferences, RequestReference, Task } from '../shared/types';
+import type { Asset, BoardGroup, BoardObject, Draft, DraftReferences, RequestReference, Task } from '../shared/types';
 import { referenceOrder, referenceParts } from '../shared/task-message';
 import { ChatboxReference } from './ChatboxReferences';
 
@@ -53,7 +53,7 @@ function serialize(parts: Part[]): EditorValue {
     if (part.kind === 'text') text += part.text;
     else if (!part.preview) order.push({ kind: part.reference.kind, id: part.reference.id, textOffset: text.length });
   }
-  return { text, references: { objectIds: [...new Set(order.filter(entry => entry.kind === 'object').map(entry => entry.id))], taskIds: [...new Set(order.filter(entry => entry.kind === 'task').map(entry => entry.id))], order } };
+  return { text, references: { objectIds: [...new Set(order.filter(entry => entry.kind === 'object').map(entry => entry.id))], taskIds: [...new Set(order.filter(entry => entry.kind === 'task').map(entry => entry.id))], groupIds: [...new Set(order.filter(entry => entry.kind === 'group').map(entry => entry.id))], order } };
 }
 
 /** Browser text and immutable reference hosts share one editable document. */
@@ -78,7 +78,7 @@ function readParts(root: Node, leadingReferenceLine = referenceLeadingLine(root)
       const block = isBlock(node), visible = block || node instanceof HTMLElement && !!node.dataset.editorReference || !!node.textContent || node instanceof HTMLBRElement;
       if (visible && previousLine && (block || previousBlock && !(node instanceof HTMLElement && node.dataset.editorReference))) append('\n');
       if (node.nodeType === Node.TEXT_NODE) append(node.textContent || '');
-      else if (node instanceof HTMLElement && node.dataset.editorReference) parts.push({ kind: 'reference', reference: { kind: node.dataset.editorKind as 'object' | 'task', id: node.dataset.editorReference }, preview: node.dataset.editorPreview === 'true', hostKey: node.dataset.editorHost });
+      else if (node instanceof HTMLElement && node.dataset.editorReference) parts.push({ kind: 'reference', reference: { kind: node.dataset.editorKind as RequestReference['kind'], id: node.dataset.editorReference }, preview: node.dataset.editorPreview === 'true', hostKey: node.dataset.editorHost });
       else if (node instanceof HTMLBRElement) append('\n');
       else visit(node);
       if (visible) { previousLine = true; previousBlock = block; }
@@ -144,16 +144,16 @@ function caretIn(parts: Part[], selection: EditorSelection): EditorCaret {
   return { text: serialize(parts).text, caret, segmentStart, collapsed: selection.start === selection.end };
 }
 
-export function ChatboxEditor({ draft, preview, objects, assets, tasks, content, inputRef, controller, composing, disabled, placeholder, expanded, activeDescendant, onChange, onCaret, onConsumePreview, onPreviewRemove, onUserPointer, onFocus, onComposition, onKeyDown }: {
-  draft: Draft; preview: string[]; objects: BoardObject[]; assets: Asset[]; tasks: Task[]; content: (id: string) => string;
+export function ChatboxEditor({ draft, preview, groups, objects, assets, tasks, content, inputRef, controller, composing, disabled, placeholder, expanded, activeDescendant, onChange, onCaret, onConsumePreview, onPreviewRemove, onUserPointer, onFocus, onComposition, onKeyDown }: {
+  draft: Draft; preview: RequestReference[]; groups: BoardGroup[]; objects: BoardObject[]; assets: Asset[]; tasks: Task[]; content: (id: string) => string;
   inputRef: RefObject<HTMLDivElement | null>; controller: RefObject<ChatboxEditorHandle | null>; composing: RefObject<boolean>; disabled: boolean;
   placeholder: string; expanded: boolean; activeDescendant?: string; onChange: (value: EditorValue) => void; onCaret: (caret: EditorCaret) => void;
-  onConsumePreview: () => void; onPreviewRemove: (id: string) => void; onUserPointer: () => void; onFocus: () => void; onComposition: (active: boolean) => void; onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void;
+  onConsumePreview: () => void; onPreviewRemove: (reference: RequestReference) => void; onUserPointer: () => void; onFocus: () => void; onComposition: (active: boolean) => void; onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void;
 }) {
   const props = useRef({ draft, disabled, onChange, onCaret, onConsumePreview, onPreviewRemove });
   props.current = { draft, disabled, onChange, onCaret, onConsumePreview, onPreviewRemove };
   const parts = useRef<Part[]>([]), savedSelection = useRef<EditorSelection>({ start: 0, end: 0 });
-  const currentDraft = useRef(''), previewProp = useRef<string[]>([]), lastValue = useRef('');
+  const currentDraft = useRef(''), previewProp = useRef<RequestReference[]>([]), lastValue = useRef('');
   const normalizeFrame = useRef(0);
   const nativeEdit = useRef<{ draftId: string; parts: Part[]; selection: EditorSelection; applied: boolean } | null>(null);
   const hosts = useRef(new Map<string, HTMLSpanElement>());
@@ -207,7 +207,7 @@ export function ChatboxEditor({ draft, preview, objects, assets, tasks, content,
     const value = serialize(next), key = valueKey(value);
     if (key !== lastValue.current) { lastValue.current = key; props.current.onChange(value); }
     if (!composing.current) props.current.onCaret(caretIn(next, selection));
-    removedPreviews.forEach(part => props.current.onPreviewRemove(part.reference.id));
+    removedPreviews.forEach(part => props.current.onPreviewRemove(part.reference));
   }
 
   function settleNative() {
@@ -266,7 +266,7 @@ export function ChatboxEditor({ draft, preview, objects, assets, tasks, content,
     if (previewProp.current !== preview) {
       const activeSelection = readSelection(), base = withoutPreview(parts.current, activeSelection);
       const anchor = Math.min(documentLength(base.parts), base.selection.backward ? base.selection.start : base.selection.end);
-      const next = splice(base.parts, anchor, anchor, preview.map(id => ({ kind: 'reference' as const, reference: { kind: 'object' as const, id }, preview: true })));
+      const next = splice(base.parts, anchor, anchor, preview.map(reference => ({ kind: 'reference' as const, reference, preview: true })));
       const focused = document.activeElement === root;
       render(next, focused ? base.selection : undefined);
       if (!focused) savedSelection.current = base.selection;
@@ -343,5 +343,5 @@ export function ChatboxEditor({ draft, preview, objects, assets, tasks, content,
     event.preventDefault();
     if (event.key === 'Backspace' || event.key === 'Delete') emit(splice(next, token.start, token.start + 1, []), { start: token.start, end: token.start });
     else { const caret = current.start + (backward ? -1 : 1); const selected = event.shiftKey ? { start: Math.min(current.start, caret), end: Math.max(current.end, caret), backward } : { start: caret, end: caret }; savedSelection.current = selected; placeSelection(inputRef.current!, selected); props.current.onCaret(caretIn(next, selected)); }
-  }}/>{slots.map(slot => createPortal(<ChatboxReference entry={slot.part.reference} draft={draft} preview={slot.part.preview} objects={objects} assets={assets} tasks={tasks} content={content} disabled={disabled} onConfirm={confirmPreview} onRemove={() => remove(slot.part)}/>, slot.host, slot.key))}</>;
+  }}/>{slots.map(slot => createPortal(<ChatboxReference entry={slot.part.reference} draft={draft} preview={slot.part.preview} groups={groups} objects={objects} assets={assets} tasks={tasks} content={content} disabled={disabled} onConfirm={confirmPreview} onRemove={() => remove(slot.part)}/>, slot.host, slot.key))}</>;
 }

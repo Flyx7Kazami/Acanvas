@@ -18,7 +18,7 @@ type AppFixture = {
 const test = base.extend<{ app: AppFixture }>({
   app: async ({}, use) => {
     const root = await mkdtemp(join(tmpdir(), 'acanvas-object-content-history-browser-'));
-    const server = await startServer({ root, port: 0, webRoot: resolve('dist/web') });
+    const server = await startServer({ root, port: 0, webRoot: resolve(process.env.ACANVAS_TEST_WEB_ROOT || 'dist/web') });
     const bootstrap = await (await fetch(`${server.url}/api/bootstrap`)).json() as { token: string };
     const call = async <T = any>(path: string, method = 'GET', body?: unknown): Promise<T> => {
       const response = await fetch(`${server.url}${path}`, { method, headers: { Authorization: `Bearer ${bootstrap.token}`, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
