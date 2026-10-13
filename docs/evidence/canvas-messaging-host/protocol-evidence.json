@@ -1,0 +1,498 @@
+[
+  {
+    "time": 1791824741.916,
+    "kind": "owner_started",
+    "pid": 32847,
+    "binary": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+    "transport": "unix:///tmp/acanvas-host-probe-xslv4o3z/owner.sock",
+    "configOverrides": false
+  },
+  {
+    "time": 1791824741.95,
+    "kind": "stderr_condition",
+    "process": "owner",
+    "condition": "Operation not permitted"
+  },
+  {
+    "time": 1791824741.981,
+    "kind": "stderr_condition",
+    "process": "owner",
+    "condition": "Operation not permitted"
+  },
+  {
+    "time": 1791824742.018,
+    "kind": "blocked",
+    "reason": "experiment Unix socket did not appear within 10 seconds",
+    "ownerReturncode": 1
+  },
+  {
+    "time": 1791824742.018,
+    "kind": "process_stopped",
+    "pid": 32847,
+    "exitCode": 1
+  },
+  {
+    "time": 1791824772.637,
+    "kind": "owner_started",
+    "pid": 33470,
+    "binary": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+    "transport": "unix:///tmp/acanvas-host-probe-xslv4o3z/owner.sock",
+    "configOverrides": false
+  },
+  {
+    "time": 1791824773.114,
+    "kind": "proxy_started",
+    "client": "A",
+    "pid": 33479,
+    "ownerPid": 33470,
+    "socket": "/tmp/acanvas-host-probe-xslv4o3z/owner.sock"
+  },
+  {
+    "time": 1791824773.114,
+    "kind": "request",
+    "client": "A",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "clientInfo": {
+        "name": "acanvas_host_probe_A",
+        "title": "Isolated Canvas host feasibility probe",
+        "version": "0.1"
+      }
+    }
+  },
+  {
+    "time": 1791824803.117,
+    "kind": "harness_failed",
+    "errorType": "TimeoutError",
+    "message": ""
+  },
+  {
+    "time": 1791824803.12,
+    "kind": "process_stopped",
+    "pid": 33479,
+    "exitCode": -15
+  },
+  {
+    "time": 1791824803.133,
+    "kind": "process_stopped",
+    "pid": 33470,
+    "exitCode": 0
+  },
+  {
+    "time": 1791824846.78,
+    "kind": "owner_started",
+    "pid": 34099,
+    "binary": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+    "transport": "unix:///tmp/acanvas-host-probe-xslv4o3z/owner.sock",
+    "configOverrides": false
+  },
+  {
+    "time": 1791824847.092,
+    "kind": "proxy_started",
+    "client": "A",
+    "pid": 34104,
+    "ownerPid": 34099,
+    "socket": "/tmp/acanvas-host-probe-xslv4o3z/owner.sock"
+  },
+  {
+    "time": 1791824847.093,
+    "kind": "request",
+    "client": "A",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "clientInfo": {
+        "name": "acanvas_host_probe_A",
+        "title": "Isolated Canvas host feasibility probe",
+        "version": "0.1"
+      }
+    }
+  },
+  {
+    "time": 1791824877.097,
+    "kind": "harness_failed",
+    "errorType": "TimeoutError",
+    "message": ""
+  },
+  {
+    "time": 1791824877.1,
+    "kind": "process_stopped",
+    "pid": 34104,
+    "exitCode": -15
+  },
+  {
+    "time": 1791824877.111,
+    "kind": "process_stopped",
+    "pid": 34099,
+    "exitCode": 0
+  },
+  {
+    "time": 1791824922.957,
+    "kind": "owner_started",
+    "pid": 35291,
+    "binary": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+    "transport": "unix:///tmp/acanvas-host-probe-xslv4o3z/owner.sock",
+    "configOverrides": false
+  },
+  {
+    "time": 1791824923.391,
+    "kind": "ws_client_connected",
+    "client": "A",
+    "ownerPid": 35291,
+    "socket": "/tmp/acanvas-host-probe-xslv4o3z/owner.sock"
+  },
+  {
+    "time": 1791824923.391,
+    "kind": "request",
+    "client": "A",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "clientInfo": {
+        "name": "acanvas_host_probe_A",
+        "title": "Isolated Canvas host feasibility probe",
+        "version": "0.1"
+      }
+    }
+  },
+  {
+    "time": 1791824923.394,
+    "kind": "response",
+    "client": "A",
+    "id": 1,
+    "method": "initialize",
+    "result": {
+      "userAgent": "codex_work_desktop/0.162.0-alpha.17.2 (Mac OS 15.4.0; arm64) dumb (acanvas_host_probe_A; 0.1)",
+      "platformFamily": "unix",
+      "platformOs": "macos"
+    }
+  },
+  {
+    "time": 1791824923.395,
+    "kind": "ws_client_connected",
+    "client": "B",
+    "ownerPid": 35291,
+    "socket": "/tmp/acanvas-host-probe-xslv4o3z/owner.sock"
+  },
+  {
+    "time": 1791824923.395,
+    "kind": "request",
+    "client": "B",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "clientInfo": {
+        "name": "acanvas_host_probe_B",
+        "title": "Isolated Canvas host feasibility probe",
+        "version": "0.1"
+      }
+    }
+  },
+  {
+    "time": 1791824923.396,
+    "kind": "response",
+    "client": "B",
+    "id": 1,
+    "method": "initialize",
+    "result": {
+      "userAgent": "codex_work_desktop/0.162.0-alpha.17.2 (Mac OS 15.4.0; arm64) dumb (acanvas_host_probe_B; 0.1)",
+      "platformFamily": "unix",
+      "platformOs": "macos"
+    }
+  },
+  {
+    "time": 1791824923.397,
+    "kind": "request",
+    "client": "A",
+    "id": 2,
+    "method": "thread/loaded/list",
+    "params": {}
+  },
+  {
+    "time": 1791824923.398,
+    "kind": "response",
+    "client": "A",
+    "id": 2,
+    "method": "thread/loaded/list",
+    "result": {
+      "data": [],
+      "nextCursor": null
+    }
+  },
+  {
+    "time": 1791824923.398,
+    "kind": "request",
+    "client": "A",
+    "id": 3,
+    "method": "thread/start",
+    "params": {
+      "cwd": "/tmp/acanvas-host-probe-xslv4o3z",
+      "ephemeral": true,
+      "serviceName": "acanvas-isolated-probe"
+    }
+  },
+  {
+    "time": 1791824923.755,
+    "kind": "notification",
+    "client": "A",
+    "method": "thread/started",
+    "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+    "status": null
+  },
+  {
+    "time": 1791824923.757,
+    "kind": "response",
+    "client": "A",
+    "id": 3,
+    "method": "thread/start",
+    "result": {
+      "thread": {
+        "id": "01a13116-8b09-7410-a3cc-c637e5383c99",
+        "ephemeral": true,
+        "status": {
+          "type": "idle"
+        }
+      },
+      "model": "gpt-6.1-sol",
+      "modelProvider": "openai",
+      "cwd": "/tmp/acanvas-host-probe-xslv4o3z",
+      "approvalPolicy": "on-request",
+      "approvalsReviewer": "user",
+      "sandbox": {
+        "type": "readOnly",
+        "networkAccess": false
+      }
+    }
+  },
+  {
+    "time": 1791824923.757,
+    "kind": "request",
+    "client": "B",
+    "id": 2,
+    "method": "thread/loaded/list",
+    "params": {}
+  },
+  {
+    "time": 1791824923.758,
+    "kind": "notification",
+    "client": "B",
+    "method": "thread/started",
+    "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+    "status": null
+  },
+  {
+    "time": 1791824923.758,
+    "kind": "response",
+    "client": "B",
+    "id": 2,
+    "method": "thread/loaded/list",
+    "result": {
+      "data": [
+        "01a13116-8b09-7410-a3cc-c637e5383c99"
+      ],
+      "nextCursor": null
+    }
+  },
+  {
+    "time": 1791824923.759,
+    "kind": "request",
+    "client": "B",
+    "id": 3,
+    "method": "turn/steer",
+    "params": {
+      "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+      "expectedTurnId": "no-active-turn",
+      "input": [
+        {
+          "type": "text",
+          "text": "ACANVAS_NO_ACTIVE_MUST_REJECT"
+        }
+      ]
+    }
+  },
+  {
+    "time": 1791824923.76,
+    "kind": "response",
+    "client": "B",
+    "id": 3,
+    "method": "turn/steer",
+    "error": {
+      "code": -32600,
+      "message": "no active turn to steer"
+    }
+  },
+  {
+    "time": 1791824923.761,
+    "kind": "ready",
+    "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+    "ownerPid": 35291
+  },
+  {
+    "time": 1791824933.521,
+    "kind": "request",
+    "client": "B",
+    "id": 4,
+    "method": "turn/start",
+    "params": {
+      "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+      "clientUserMessageId": "acanvas-probe-idle-1",
+      "input": [
+        {
+          "type": "text",
+          "text": "This is an isolated host ingress experiment. Reply with exactly ACANVAS_IDLE_OK. Do not use tools or read files."
+        }
+      ]
+    }
+  },
+  {
+    "time": 1791824933.566,
+    "kind": "response",
+    "client": "B",
+    "id": 4,
+    "method": "turn/start",
+    "result": {
+      "turn": {
+        "id": "01a13116-b296-7612-8575-b30c07536b5e",
+        "rootTurnId": "01a13116-b296-7612-8575-b30c07536b5e",
+        "items": [],
+        "itemsView": "notLoaded",
+        "status": "inProgress",
+        "error": null,
+        "startedAt": null,
+        "completedAt": null,
+        "durationMs": null
+      }
+    }
+  },
+  {
+    "time": 1791824934.093,
+    "kind": "notification",
+    "client": "A",
+    "method": "thread/status/changed",
+    "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+    "status": {
+      "type": "active",
+      "activeFlags": []
+    }
+  },
+  {
+    "time": 1791824934.094,
+    "kind": "notification",
+    "client": "A",
+    "method": "turn/started",
+    "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+    "turn": {
+      "id": "01a13116-b296-7612-8575-b30c07536b5e",
+      "status": "inProgress",
+      "error": null
+    }
+  },
+  {
+    "time": 1791824934.094,
+    "kind": "notification",
+    "client": "B",
+    "method": "thread/status/changed",
+    "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+    "status": {
+      "type": "active",
+      "activeFlags": []
+    }
+  },
+  {
+    "time": 1791824935.352,
+    "kind": "notification",
+    "client": "A",
+    "method": "item/started",
+    "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+    "turnId": "01a13116-b296-7612-8575-b30c07536b5e",
+    "item": {
+      "id": "01a13116-b9b0-7160-8b66-31799f512bdc",
+      "type": "userMessage",
+      "content": [
+        {
+          "type": "text",
+          "text": "This is an isolated host ingress experiment. Reply with exactly ACANVAS_IDLE_OK. Do not use tools or read files.",
+          "text_elements": []
+        }
+      ]
+    }
+  },
+  {
+    "time": 1791824935.377,
+    "kind": "notification",
+    "client": "A",
+    "method": "item/completed",
+    "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+    "turnId": "01a13116-b296-7612-8575-b30c07536b5e",
+    "item": {
+      "id": "01a13116-b9b0-7160-8b66-31799f512bdc",
+      "type": "userMessage",
+      "content": [
+        {
+          "type": "text",
+          "text": "This is an isolated host ingress experiment. Reply with exactly ACANVAS_IDLE_OK. Do not use tools or read files.",
+          "text_elements": []
+        }
+      ]
+    }
+  },
+  {
+    "time": 1791824936.985,
+    "kind": "notification",
+    "client": "A",
+    "method": "item/started",
+    "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+    "turnId": "01a13116-b296-7612-8575-b30c07536b5e",
+    "item": {
+      "id": "msg_0a19fafd63ecc0cf016acd1428ad0c819a9c5d79730583c373",
+      "type": "agentMessage",
+      "text": ""
+    }
+  },
+  {
+    "time": 1791824937.617,
+    "kind": "notification",
+    "client": "A",
+    "method": "item/completed",
+    "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+    "turnId": "01a13116-b296-7612-8575-b30c07536b5e",
+    "item": {
+      "id": "msg_0a19fafd63ecc0cf016acd1428ad0c819a9c5d79730583c373",
+      "type": "agentMessage",
+      "text": "ACANVAS_IDLE_OK"
+    }
+  },
+  {
+    "time": 1791824937.71,
+    "kind": "notification",
+    "client": "B",
+    "method": "thread/status/changed",
+    "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+    "status": {
+      "type": "idle"
+    }
+  },
+  {
+    "time": 1791824937.71,
+    "kind": "notification",
+    "client": "A",
+    "method": "thread/status/changed",
+    "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+    "status": {
+      "type": "idle"
+    }
+  },
+  {
+    "time": 1791824937.711,
+    "kind": "notification",
+    "client": "A",
+    "method": "turn/completed",
+    "threadId": "01a13116-8b09-7410-a3cc-c637e5383c99",
+    "turn": {
+      "id": "01a13116-b296-7612-8575-b30c07536b5e",
+      "status": "completed",
+      "error": null
+    }
+  }
+]

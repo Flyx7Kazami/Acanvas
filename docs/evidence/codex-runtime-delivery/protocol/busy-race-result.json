@@ -1,0 +1,370 @@
+{
+  "binary": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+  "version": "codex-cli 0.162.0-alpha.17.2",
+  "scratch": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-busy-race-zl0GVD",
+  "socketPath": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-busy-race-zl0GVD/owner.sock",
+  "configOverrides": false,
+  "productThreadCreation": false,
+  "events": [
+    {
+      "at": "2026-10-12T18:33:05.677Z",
+      "kind": "initialize",
+      "client": "original_host",
+      "userAgent": "codex_work_desktop/0.162.0-alpha.17.2 (Mac OS 15.4.0; arm64) dumb (acanvas_busy_probe_original_host; 0.1.0)"
+    },
+    {
+      "at": "2026-10-12T18:33:05.829Z",
+      "kind": "scratch_thread_created",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "inherited": {
+        "model": "gpt-6.1-sol",
+        "approvalPolicy": "on-request",
+        "approvalsReviewer": "user",
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        }
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:05.832Z",
+      "kind": "initialize",
+      "client": "second_client",
+      "userAgent": "codex_work_desktop/0.162.0-alpha.17.2 (Mac OS 15.4.0; arm64) dumb (acanvas_busy_probe_second_client; 0.1.0)"
+    },
+    {
+      "at": "2026-10-12T18:33:05.853Z",
+      "kind": "notification",
+      "client": "second_client",
+      "method": "thread/status/changed",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "status": {
+        "type": "active",
+        "activeFlags": []
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:05.853Z",
+      "kind": "notification",
+      "client": "original_host",
+      "method": "thread/status/changed",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "status": {
+        "type": "active",
+        "activeFlags": []
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:05.853Z",
+      "kind": "notification",
+      "client": "original_host",
+      "method": "turn/started",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "turn": {
+        "id": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+        "status": "inProgress"
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:05.853Z",
+      "kind": "first_turn_start",
+      "result": {
+        "turn": {
+          "id": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+          "rootTurnId": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+          "items": [],
+          "itemsView": "notLoaded",
+          "status": "inProgress",
+          "error": null,
+          "startedAt": null,
+          "completedAt": null,
+          "durationMs": null
+        }
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:05.964Z",
+      "kind": "target_metadata_before_race",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "status": {
+        "type": "active",
+        "activeFlags": []
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:05.965Z",
+      "kind": "busy_turn_start_response",
+      "result": {
+        "turn": {
+          "id": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+          "rootTurnId": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+          "items": [],
+          "itemsView": "notLoaded",
+          "status": "inProgress",
+          "error": null,
+          "startedAt": null,
+          "completedAt": null,
+          "durationMs": null
+        }
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:09.346Z",
+      "kind": "owned_target_user_message",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "turnId": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+      "itemId": "01a13163-d7e2-77d2-9006-35f0ec2422ed",
+      "marker": "first"
+    },
+    {
+      "at": "2026-10-12T18:33:12.044Z",
+      "kind": "owned_target_model_reply",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "turnId": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+      "text": "ACANVAS_BUSY_FIRST_OK"
+    },
+    {
+      "at": "2026-10-12T18:33:12.109Z",
+      "kind": "owned_target_user_message",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "turnId": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+      "itemId": "01a13163-e276-7a50-8405-d60ac4e14a69",
+      "marker": "second"
+    },
+    {
+      "at": "2026-10-12T18:33:14.389Z",
+      "kind": "owned_target_model_reply",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "turnId": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+      "text": "ACANVAS_BUSY_SECOND_OK."
+    },
+    {
+      "at": "2026-10-12T18:33:14.473Z",
+      "kind": "notification",
+      "client": "second_client",
+      "method": "thread/status/changed",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "status": {
+        "type": "idle"
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:14.473Z",
+      "kind": "notification",
+      "client": "original_host",
+      "method": "thread/status/changed",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "status": {
+        "type": "idle"
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:14.474Z",
+      "kind": "notification",
+      "client": "original_host",
+      "method": "turn/completed",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "turn": {
+        "id": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+        "status": "completed"
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:14.474Z",
+      "kind": "result",
+      "result": "active-turn-input-accepted-same-turn",
+      "completion": {
+        "turnId": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+        "status": "completed"
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:14.478Z",
+      "kind": "owned_socket_metadata",
+      "socket": false,
+      "symlink": true,
+      "canonicalSocket": true,
+      "canonicalSymlink": false,
+      "canonicalPath": "/private/tmp/codex-daemon-501/35004f703f1a1b8c3d386b04c22f36fa08bc212f7b2d3cbf2a7233e02248ca37"
+    },
+    {
+      "at": "2026-10-12T18:33:14.888Z",
+      "kind": "notification",
+      "client": "original_host",
+      "method": "thread/status/changed",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "status": {
+        "type": "active",
+        "activeFlags": []
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:14.888Z",
+      "kind": "notification",
+      "client": "original_host",
+      "method": "turn/started",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "turn": {
+        "id": "01a13163-ed62-71d0-962f-1cd69ea1efec",
+        "status": "inProgress"
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:14.889Z",
+      "kind": "notification",
+      "client": "second_client",
+      "method": "thread/status/changed",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "status": {
+        "type": "active",
+        "activeFlags": []
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:14.920Z",
+      "kind": "owned_target_user_message",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "turnId": "01a13163-ed62-71d0-962f-1cd69ea1efec",
+      "itemId": "01a13163-eda7-7ee3-bce6-afcfbd6bf241",
+      "marker": "first"
+    },
+    {
+      "at": "2026-10-12T18:33:17.441Z",
+      "kind": "owned_target_model_reply",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "turnId": "01a13163-ed62-71d0-962f-1cd69ea1efec",
+      "text": "ACANVAS_PRODUCT_CLIENT_OK"
+    },
+    {
+      "at": "2026-10-12T18:33:17.485Z",
+      "kind": "notification",
+      "client": "second_client",
+      "method": "thread/status/changed",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "status": {
+        "type": "idle"
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:17.485Z",
+      "kind": "notification",
+      "client": "original_host",
+      "method": "thread/status/changed",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "status": {
+        "type": "idle"
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:17.485Z",
+      "kind": "notification",
+      "client": "original_host",
+      "method": "turn/completed",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "turn": {
+        "id": "01a13163-ed62-71d0-962f-1cd69ea1efec",
+        "status": "completed"
+      }
+    },
+    {
+      "at": "2026-10-12T18:33:17.485Z",
+      "kind": "product_client_same_existing_thread_pass",
+      "modulePath": "/tmp/acanvas-protocol-candidate.XkHa59/dist/src/server/codex-runtime.js",
+      "identity": {
+        "endpoint": "unix:///private/tmp/codex-daemon-501/35004f703f1a1b8c3d386b04c22f36fa08bc212f7b2d3cbf2a7233e02248ca37",
+        "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+        "fingerprint": "16777230:312283597:501",
+        "userAgent": "codex_work_desktop/0.162.0-alpha.17.2 (Mac OS 15.4.0; arm64) dumb (acanvas; 0.1.0)"
+      },
+      "checkedTarget": {
+        "loaded": true,
+        "status": "idle"
+      },
+      "accepted": {
+        "turnId": "01a13163-ed62-71d0-962f-1cd69ea1efec"
+      },
+      "completion": {
+        "turnId": "01a13163-ed62-71d0-962f-1cd69ea1efec",
+        "status": "completed"
+      }
+    }
+  ],
+  "ownerPid": 6225,
+  "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+  "inherited": {
+    "model": "gpt-6.1-sol",
+    "approvalPolicy": "on-request",
+    "approvalsReviewer": "user",
+    "sandbox": {
+      "type": "readOnly",
+      "networkAccess": false
+    }
+  },
+  "firstResponse": {
+    "id": 3,
+    "result": {
+      "turn": {
+        "id": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+        "rootTurnId": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+        "items": [],
+        "itemsView": "notLoaded",
+        "status": "inProgress",
+        "error": null,
+        "startedAt": null,
+        "completedAt": null,
+        "durationMs": null
+      }
+    }
+  },
+  "beforeStatus": {
+    "type": "active",
+    "activeFlags": []
+  },
+  "racedResponse": {
+    "id": 4,
+    "result": {
+      "turn": {
+        "id": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+        "rootTurnId": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+        "items": [],
+        "itemsView": "notLoaded",
+        "status": "inProgress",
+        "error": null,
+        "startedAt": null,
+        "completedAt": null,
+        "durationMs": null
+      }
+    }
+  },
+  "completion": {
+    "turnId": "01a13163-ca2f-73a3-8441-0fb3590bacbc",
+    "status": "completed"
+  },
+  "result": "active-turn-input-accepted-same-turn",
+  "productClient": {
+    "modulePath": "/tmp/acanvas-protocol-candidate.XkHa59/dist/src/server/codex-runtime.js",
+    "identity": {
+      "endpoint": "unix:///private/tmp/codex-daemon-501/35004f703f1a1b8c3d386b04c22f36fa08bc212f7b2d3cbf2a7233e02248ca37",
+      "threadId": "01a13163-c992-72a0-9757-7842ea135327",
+      "fingerprint": "16777230:312283597:501",
+      "userAgent": "codex_work_desktop/0.162.0-alpha.17.2 (Mac OS 15.4.0; arm64) dumb (acanvas; 0.1.0)"
+    },
+    "checkedTarget": {
+      "loaded": true,
+      "status": "idle"
+    },
+    "accepted": {
+      "turnId": "01a13163-ed62-71d0-962f-1cd69ea1efec"
+    },
+    "completion": {
+      "turnId": "01a13163-ed62-71d0-962f-1cd69ea1efec",
+      "status": "completed"
+    }
+  },
+  "cleanup": {
+    "scratchPreserved": true,
+    "ownerStopped": true,
+    "ownerExitCode": 0,
+    "ownerSignal": null
+  }
+}

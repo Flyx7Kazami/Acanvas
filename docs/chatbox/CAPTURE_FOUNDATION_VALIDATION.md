@@ -12,11 +12,11 @@
 
 本机安装为 `/Applications/ChatGPT.app`，包标识 `com.openai.codex`，版本 `26.1002.52244`、build `13536`。执行调研保存[源码事实记录](../evidence/chatbox-capture/codex-source-observations.json)，独立审查重新核对了安装信息与关键函数。
 
-保存评论后，主进程关闭编辑浮层，并让原页面 preload 重新解析目标、保留标记；下一帧 ready 后调用同一页面的零参数 `webContents.capturePage()`，再裁切、缩放和编码。该后台宿主结构是本轮原型依据。acanvas 的版本归属、捕获时新视口及完整证据要求按自己的服务语义验证。
+保存评论后，主进程关闭编辑浮层，并让原页面 preload 重新解析目标、保留标记；下一帧 ready 后调用同一页面的零参数 `webContents.capturePage()`，再裁切、缩放和编码。该后台宿主结构是本轮原型依据。Acanvas 的版本归属、捕获时新视口及完整证据要求按自己的服务语义验证。
 
 ## 3. 截图环境与媒体
 
-Chrome 154.0.8037.98 使用独立浏览器 context 和隔离真实 acanvas 项目。最终[后台报告](../evidence/chatbox-capture/background-report.json)及[宿主链路报告](../evidence/chatbox-capture/background-host-report.json)为 20/20 PASS，包含 6 项原页面媒体/映射检查和 14 项后台生命周期检查，12.38 秒、exit 0；执行细节见[原型观察](../evidence/chatbox-capture/CAPTURE_PROTOTYPE_OBSERVATIONS.md)。独立审查以独立输出目录复跑同脚本，20/20、后台 14/14、exit 0，并实际查看最终图片。
+Chrome 154.0.8037.98 使用独立浏览器 context 和隔离真实 Acanvas 项目。最终[后台报告](../evidence/chatbox-capture/background-report.json)及[宿主链路报告](../evidence/chatbox-capture/background-host-report.json)为 20/20 PASS，包含 6 项原页面媒体/映射检查和 14 项后台生命周期检查，12.38 秒、exit 0；执行细节见[原型观察](../evidence/chatbox-capture/CAPTURE_PROTOTYPE_OBSERVATIONS.md)。独立审查以独立输出目录复跑同脚本，20/20、后台 14/14、exit 0，并实际查看最终图片。
 
 | 内容 | 实际验证 |
 | --- | --- |

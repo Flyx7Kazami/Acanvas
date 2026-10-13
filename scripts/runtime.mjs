@@ -6,7 +6,7 @@ const local = resolve('.runtime/node_modules/node/bin/node');
 const node = existsSync(local) ? local : process.execPath;
 const version = spawnSync(node, ['--version'], { encoding: 'utf8' }).stdout?.trim();
 if (!version?.startsWith('v24.')) {
-  console.error('acanvas requires Node 24. Install the project runtime with: npm install --prefix .runtime --no-save --package-lock=false node@24');
+  console.error('Acanvas requires Node 24. Install the project runtime with: npm install --prefix .runtime --no-save --package-lock=false node@24');
   process.exit(1);
 }
 const execute = (args) => {

@@ -6,6 +6,7 @@ import { useSceneCapture, useSceneRefresh, type SceneContentFrameInput } from '.
 import type { BoardApi, HtmlPreviewGrant } from './api';
 import { HTML_PREVIEW_LIMIT, useHtmlPreviewSlot } from './HtmlPreviewPool';
 import { rasterizeHtmlSnapshot } from './html-preview-snapshot';
+import { DominoLoader } from './DominoLoader';
 
 import type { CanvasWheelInput } from './canvas-wheel';
 
@@ -177,7 +178,7 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
     hoverAttempted.current = true; interact();
   }
   function reload() { setAttempt(value => value + 1); setError(''); }
-  const preparing = preview.slot === 'capturing' || preview.slot === 'freezing' || preview.slot === 'waiting';
+  const preparing = preview.slot === 'capturing' || preview.slot === 'freezing' || preview.slot === 'waiting' || !!(allocated && grant && !ready);
   return <div ref={container} className="html-content" data-preview-state={preview.slot} data-preview-ready={allocated && ready || undefined} tabIndex={0} aria-label={`HTML preview: ${asset.name}`}
     onPointerEnter={event => { preview.setHovered(true); hover(event); }} onPointerMove={hover} onPointerLeave={() => { preview.setHovered(false); stoppedWhileHovered.current = false; hoverAttempted.current = false; }}
     onFocus={event => { if (event.target === event.currentTarget) interact(true); }}
@@ -185,7 +186,7 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
     onPointerDown={event => { if (event.pointerType === 'touch' && !(event.target as Element).closest('[data-canvas-control].html-preview-tools')) interact(true); }}>
     {preview.image && <img ref={snapshotImage} className="html-snapshot" src={preview.image.url} alt={`Static preview of ${asset.name}`} draggable={false} data-snapshot-width={preview.image.width} data-snapshot-height={preview.image.height}/>}
     {allocated && grant && <iframe ref={frame} className={live ? 'html-live-frame' : 'html-capture-frame'} style={{ visibility: preview.image && !ready ? 'hidden' : undefined }} src={grant.url} title={`HTML preview: ${asset.name}`} sandbox="allow-scripts" referrerPolicy="no-referrer" allow="" tabIndex={live ? 0 : -1} aria-hidden={!live} onLoad={() => setReady(true)}/>}
-    {!preview.image && !(allocated && grant) && <div className="html-poster"><Code2 size={32} strokeWidth={1.25}/><strong>{asset.name}</strong><span>{preparing ? preview.slot === 'waiting' ? `Waiting for a preview slot · ${HTML_PREVIEW_LIMIT} at a time` : 'Preparing preview…' : 'Preview unavailable'}</span></div>}
+    {!preview.image && !(allocated && grant && ready) && <div className="html-poster" role={preparing ? 'status' : undefined}>{preparing ? <DominoLoader size={40}/> : <Code2 size={32} strokeWidth={1.25}/>}<strong>{asset.name}</strong><span>{preparing ? preview.slot === 'waiting' ? `Waiting for a preview slot · ${HTML_PREVIEW_LIMIT} at a time` : 'Preparing preview…' : 'Preview unavailable'}</span></div>}
     {pendingDrag && live && <div className="html-drag-capture" aria-hidden="true" onPointerDown={() => setPendingDrag(undefined)} onPointerMove={event => {
       if (!event.isTrusted || !(event.buttons & 1)) { setPendingDrag(undefined); return; }
       if (event.pointerId === pendingDrag.pointerId && frame.current) { event.stopPropagation(); onFrameDrag?.(frame.current, pendingDrag, event); setPendingDrag(undefined); }

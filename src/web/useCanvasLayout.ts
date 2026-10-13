@@ -101,7 +101,8 @@ export function useContextualControls(canvas: ElementRef, actions: ElementRef, p
     const board = canvas.current, actionBar = actions.current, videoBar = playback.current;
     const dock = document.querySelector<HTMLElement>('.creation-dock');
     if (!board || (!actionBar && !videoBar) || !selected.length) { dock?.style.removeProperty('--queue-context-limit'); return; }
-    const persistent = [...document.querySelectorAll<HTMLElement>('.project-identity,.canvas-actions,.canvas-toolbar,.composer,.composer-menu,.draft-attachments,.draft-conflict,.inline-resume,.unavailable-comments,.queue-stack,.annotation-pin,.canvas-annotation-note')];
+    const groupTitles = [...board.querySelectorAll<HTMLElement>('.group-frame-title')].filter(element => !element.closest('[inert],[aria-hidden="true"]') && element.getClientRects().length > 0);
+    const persistent = [...document.querySelectorAll<HTMLElement>('.project-identity,.canvas-actions,.canvas-toolbar,.composer,.composer-menu,.draft-attachments,.draft-conflict,.inline-resume,.unavailable-comments,.queue-stack,.annotation-pin,.canvas-annotation-note'), ...groupTitles];
     const layout = () => {
       const bounds = board.getBoundingClientRect();
       const viewport = { x: 0, y: 0, width: bounds.width, height: bounds.height };

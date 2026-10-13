@@ -64,3 +64,5 @@
 .html-preview-tools { z-index:5; }
 
 .html-content:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.content-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:20px; color:var(--muted); font-size:11px; }
+.html-surface-loading { position:absolute; inset:0; background:var(--surface); pointer-events:none; }

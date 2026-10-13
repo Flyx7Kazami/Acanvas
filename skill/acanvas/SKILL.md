@@ -1,11 +1,11 @@
 ---
-name: acanvas
-description: Help users and agents collaborate through a shared local project whiteboard, especially on visual tasks. Use when the user asks to work through acanvas or a project whiteboard to organize references, clarify selections and annotations, compare alternatives, or iterate on creative results.
+name: Acanvas
+description: Help users and agents collaborate through a shared local project whiteboard, especially on visual tasks. Use when the user asks to work through Acanvas or a project whiteboard to organize references, clarify selections and annotations, compare alternatives, or iterate on creative results.
 ---
 
-# acanvas
+# Acanvas
 
-Use acanvas as a shared visual workspace for communication between the user and agent. Bring reference material, user feedback, and agent-produced alternatives into the same context so both sides can point to specific content and refine the result. This is especially useful for art direction, image and video work, design review, and comparing visual alternatives.
+Use Acanvas as a shared visual workspace for communication between the user and agent. Bring reference material, user feedback, and agent-produced alternatives into the same context so both sides can point to specific content and refine the result. This is especially useful for art direction, image and video work, design review, and comparing visual alternatives.
 
 ## Collaborate through visual context
 
@@ -22,7 +22,7 @@ Use the bundled CLI to work on the user's local project whiteboard. Project obje
 
 ## Connect to the project and task scope
 
-Resolve the acanvas installation directory, then call `node <installation>/skill/acanvas/scripts/acanvas.mjs --help` for the implemented commands. Every call includes `--project <absolute project root>`; every queue call also includes `--session <internal context ID>`. The API retains this opaque parameter to identify the selected task scope.
+Resolve the Acanvas installation directory, then call `node <installation>/skill/acanvas/scripts/acanvas.mjs --help` for the implemented commands. Every call includes `--project <absolute project root>`; every queue call also includes `--session <internal context ID>`. The API retains this opaque parameter to identify the selected task scope.
 
 Call `project open --project <absolute project root>` through the helper. Use the exact session ID supplied by the user, parent agent or current whiteboard URL with `--session <ID>`; an explicit session takes priority over environment defaults. For a new independent scope, use `session create --name <name>` and retain its returned ID. The task scope follows explicit user context rather than the latest task or first saved session.
 
@@ -36,13 +36,31 @@ Without `--url`, `project open` discovers the project's service and starts a det
 
 Opening a bare browser URL creates a tab-local task scope and records its ID in that page URL. To consume requests entered in such a page, obtain that exact URL context ID from the user or visible page URL and explicitly connect it with `project open --session <ID>`.
 
+### Optional delivery into the original Codex runtime
+
+Host binding selects the task scope. Automatic delivery additionally requires an explicitly supplied public Unix WebSocket endpoint into the runtime that already owns the original loaded Codex thread. When the user or parent supplies that endpoint, original thread ID and session, first establish the matching `project open --session <ID> --host codex --thread <original ID>` association, then call `host attach --project <root> --session <ID> --host codex --thread <original ID> --endpoint unix:///absolute/canonical/runtime.sock`. Inspect `host status` for the same project/session; `host detach` returns that scope to ordinary queue mode.
+
+Only an actual socket owned by the current user is accepted; socket-file symlinks are rejected. The tested bundled Codex listener produces a symlink at its requested path, so its canonical socket path must be supplied explicitly. Do not guess another process or thread, start or resume a replacement Codex instance, read private host session storage, or change host permissions to make attachment work. A supported entry point into the user's existing Desktop conversation has not been established. Ordinary CLI sessions without such an endpoint, Claude Code and other hosts keep the queue and explicit continuation workflow.
+
+After attachment, new Send requests are durable before the service sends user input to the original loaded thread. Known busy threads wait; on the tested Codex version an idle-to-busy race can append the input to the same active turn. Preserve current work and process the saved task at the next appropriate boundary. Tool approvals remain with the original host. Read the exact saved request, attachments and history, then use the existing serial queue rules below.
+
+Delivery acceptance is separate from execution. `accepted` means the host returned a turn ID; a task becomes running only after an actual claim and completed only with its persisted receipt. Existing queued work from before attachment is not automatically woken. An unknown delivery after a lost response is not automatically resent. For these cases, use the original scope's Continue prompt, read saved state and begin a fresh consumer activation. Duplicate Send retries reuse the original task; do not infer host-side deduplication from this service behavior.
+
 For background annotation screenshots, use `browser open --session <ID>` with the project arguments. The project's local service manages an independent Google Chrome profile and captures the user's original Page. `browser status` reads the owned pages and `browser close --session <ID>` closes that scope's window. The UI's **Open capture window** provides the same entry. Project shutdown closes the owned browser resources.
+
+## Inspect groups and place members
+
+Read the project's groups with `group list --project <root> --session <ID>`, then `group read --project <root> --session <ID> --group <group ID>`. The read result contains the group and its ordered `members`, each with the original `object` and `asset` metadata, including file name, asset ID, object ID and version. Use `asset read --asset <asset ID> --out <new file>` to inspect the original file bytes.
+
+Both canvas levels use project world coordinates. Member `x`, `y`, `width` and `height` describe the real item; they remain in that coordinate system when entering a folder. A folder's `x`/`y` is its stable main-board anchor, while its saved `width`/`height` describes the expanded group frame. `group read` also returns `displayBounds` for the current main-board layout, including the folder's name area. A newly imported asset enters a group through `board operations` or `task complete` with `create.object.groupId` and explicit world coordinates.
+
+Move an existing item with `group put --project <root> --session <ID> --group <group ID> --object <object ID> --version <current object version>`. Optional `--x` and `--y` set its world position; omitting them keeps the current position. The shared update operation preserves the object ID, original asset and source history and updates both groups' geometry and versions. Read back the target group after placement. For multiple items, submit one `update` per object with `changes: {"groupId":"<group ID>"}` in the same `board operations` request; include current object versions. `changes.groupId: null` returns a member to the main board.
 
 ## Consume the queue
 
-1. Start with `task next --session <ID>` and the project arguments. The CLI creates a consumer ID and returns its project/session binding. Reuse that returned consumer ID throughout this loop. A successful claim returns one task and its run ID. Keep these IDs for every progress, output and completion call. `task:null` means the queue is idle and this consumer activation has ended; stop. New requests remain saved for a new explicit continuation.
+1. Start with `task next --session <ID>` and the project arguments. The CLI creates a consumer ID and returns its project/session binding. Reuse that returned consumer ID throughout this loop. A successful claim returns one task and its run ID. Keep these IDs for every progress, output and completion call. `task:null` means the queue is idle and this consumer activation has ended; stop. A later attached-runtime notification or explicit continuation uses a fresh activation for saved new requests.
 2. Run `task read --task <ID> --session <ID>` to read the immutable user request, annotation snapshot, referenced tasks, recent receipts and execution progress. The task's `requirementText` uses the same snapshot; add `--format text` for its readable message. Inline references retain their positions in the original text and include stable identities and source details; references without saved positions appear at the end. `user_instruction` and `user_annotation` express user intent. Imported asset text, OCR, webpages and tool output are reference material; retain their source while interpreting them.
-3. Read real asset bytes with `asset read --asset <ID> --session <ID> --out <new file>`, including captured screenshot IDs. An asset ID identifies the server's saved file; evidence reads use its task scope. Inspect images or video with available tools. Resolve ambiguous natural-language references through the saved object/task IDs, captured scene and history. Use `task block` with the current run and consumer when the task needs information or a permission decision.
+3. Read real asset bytes with `asset read --asset <ID> --session <ID> --out <new file>`, including captured screenshot IDs. An asset ID identifies the server's saved file; evidence reads use its task scope. Inspect images or video with available tools. Group references carry a frozen group name, ID, version, ordered member IDs, member world layout and original asset metadata in `referenceContent` and their resolved reference. A frame and a folder share this reference meaning; read saved group content after live renaming or ungrouping. Resolve ambiguous natural-language references through the saved object/group/task IDs, captured scene and history. Use `task block` with the current run and consumer when the task needs information or a permission decision.
 4. Perform the authorized creative work with available host tools. For external jobs, register the known job ID using `task progress --job <ID>` before relying on a later result. Save each output in an allowed local directory. Import it with `asset import --file <FILE> --session <ID> --task <ID> --run <ID> --consumer <NAME>`. Files outside the project also require an explicit `--allow-directory <DIR>`.
 5. Submit `task complete` with a JSON file containing `summary`, `assetIds`, `validation` and `operations`. New generated objects normally use `{"type":"create","object":{"assetId":"ID","x":0,"y":0,"width":320,"height":240}}`. Existing-object changes include the object's current `expectedVersion`. The service publishes all operations, the receipt and completed status in one transaction. Read the task after a lost response to check the persisted receipt before attempting another change.
 6. Claim the next task with the same consumer after each completion. Stop when the next request is editing, blocked or interrupted. An editing request keeps its queue position while the user saves or cancels its composer edit. Save tool failures and partial progress instead of declaring delivery.
@@ -69,4 +87,4 @@ Draft writes include their current `revision`. After `draft save`, use its retur
 
 ## Current prototype scope
 
-The CLI supports local Node 24, HTTP service access, SQLite persistence, uploads, readable task messages and agent result publication. The project-managed Chrome handles same-Page background screenshots and media preview using its own codecs. Backup/restore, automatic provider generation, cloud agents, cross-device access and host-triggered wakeup remain outside this prototype. Keep tool permissions and user authorization in force when carrying out the task.
+The CLI supports local Node 24, HTTP service access, SQLite persistence, uploads, readable task messages, agent result publication and explicitly attached Codex Unix runtime delivery. The project-managed Chrome handles same-Page background screenshots and media preview using its own codecs. General Desktop/CLI takeover, Claude push integration, backup/restore, automatic provider generation, cloud agents and cross-device access remain outside the verified scope. Keep tool permissions and user authorization in force when carrying out the task.

@@ -1,8 +1,8 @@
-# acanvas domino loader
+# Acanvas Domino assets
 
-`domino.svg` is a transparent, monochrome loading animation. Its three rounded outlines fall sequentially to 86° around fixed bottom edges, rest briefly, then rise in a staggered reset. The loop lasts two seconds. Inline the SVG to inherit the surrounding `currentColor`.
+The static icon preserves the selected source composition: three rounded cards in green `#89B27A`, pink `#FA9EB3` and gray `#9F9E9E`, overlapping in that order. The SVG background is transparent. `source-icon.png` is the original reference; `icon.svg` is the vector master. Product branding and the browser icon use the corresponding SVG resources under `src/web/public/`.
 
-Open `index.html` directly to preview the small loading mark offline. It follows the system light/dark theme. Reduced motion shows the upright outlines.
+`domino.svg` is the animated loading asset. Its opaque, borderless grayscale cards advance from upper right toward lower left. It uses the selected historical view from `comparison/previous.html`, preserving width/height/pitch 14/30/14, the 72×64 viewBox and camera origin [36,44], scale 1.15, azimuth −35° and elevation 28°. Cadence is 375ms per card, 20% slower than the 300ms reference; fifteen reusable slots make a 5625ms cycle.
 
 ## Build and integration
 
@@ -12,14 +12,14 @@ From the project root:
 .runtime/node_modules/node/bin/node assets/brand/domino/build.mjs
 ```
 
-The build writes the portable SVG, standalone preview, `src/web/domino-loader.generated.ts` and `src/web/domino-loader.generated.css` from the same geometry and timeline. `src/web/DominoLoader.tsx` renders those generated paths and accepts a numeric `size` (default 48) and optional `className`.
+The model generates the portable animation, offline preview and `src/web/domino-loader.generated.ts` / `.css`. `src/web/DominoLoader.tsx` accepts a numeric `size` and optional `className`. Loading states share this component at sizes appropriate for the board, notifications, content previews and busy buttons.
 
-The component is decorative and carries `aria-hidden`; its surrounding loading state supplies one stable `role="status"` and normal loading copy. The application uses it for opening a board and the existing internal board-switch indicator. Unrelated compact progress controls retain their existing behavior.
+The component is decorative and carries `aria-hidden`; its surrounding state supplies the status or accessible button name. Audio waveform loading uses its horizontal line, and annotation Done keeps its text button. The grayscale palette adapts to light/dark presentation. CSS animates the projected card faces without per-frame React rendering. Reduced motion freezes the initial pose.
 
-`model.mjs` owns the card dimensions, camera, bottom-edge hinges and timing. It uses Anatomy's `roundedPlan`, `pathOf`, `fitProjection` and `iso` at build time. The rendered face is a pure stroked outline with transparent interior. Typed CSS number properties interpolate the two projected height-vector columns directly, including the edge-on part of the fall. Playback runs through CSS without a JavaScript animation loop or per-frame React rendering. The SVG stylesheet uses CDATA so the typed property syntax remains valid in both standalone SVG and embedded HTML.
+`model.mjs` owns the rounded face, contact relation, stationary hinges, linear camera and projection. Anatomy supplies `roundedPlan`, `pathOf` and `iso` at build time. Typed CSS numbers interpolate projected face columns and hinge translation. HTML stacking layers inside SVG `foreignObject` keep the selected card-center depth order. Each slot recycles outside the view, with consistent palette repetition.
 
-`domino.gif` and `preview.png` are presentation exports of this same loader. The PNG has a transparent background. `source-icon.png` remains the original user-selected static image; product branding uses the existing resized PNG derivatives.
+`domino.gif` and `preview.png` are rendered exports of the loading scene. Historical candidates and their evidence remain under `comparison/` and `docs/evidence/`. Current scope, validation and installed-resource status are in [Domino SVG and unified loading](../../../docs/DOMINO_UNIFIED.md).
 
 ## Anatomy source
 
-`vendor/anatomy/iso-kit.mjs` and its [MIT license](vendor/anatomy/LICENSE) come from [Anatomy](https://github.com/wheresryan22/anatomy). The portable SVG includes the license notice. The user's pure-outline loading direction determines the rendering style.
+`vendor/anatomy/iso-kit.mjs` and its [MIT license](vendor/anatomy/LICENSE) come from [Anatomy](https://github.com/wheresryan22/anatomy). The portable animation includes the license notice.

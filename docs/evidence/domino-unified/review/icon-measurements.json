@@ -1,0 +1,87 @@
+{
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "measurement": "Nearest sampled palette segmentation within RGB distance 75; edge anti-aliasing and texture make this approximate. Visual inspection is primary.",
+  "stats": [
+    {
+      "color": "green",
+      "sourceMedianRGB": [
+        137.0,
+        177.0,
+        122.0
+      ],
+      "vectorRGB": [
+        137,
+        178,
+        122
+      ],
+      "visibleMaskIoU": 0.9888882276425529,
+      "sourceBounds": [
+        238,
+        173,
+        570,
+        799
+      ],
+      "vectorBounds": [
+        238,
+        173,
+        569,
+        799
+      ]
+    },
+    {
+      "color": "pink",
+      "sourceMedianRGB": [
+        250.0,
+        159.0,
+        179.0
+      ],
+      "vectorRGB": [
+        250,
+        158,
+        179
+      ],
+      "visibleMaskIoU": 0.9830519886500264,
+      "sourceBounds": [
+        389,
+        303,
+        1035,
+        1075
+      ],
+      "vectorBounds": [
+        388,
+        304,
+        1034,
+        1075
+      ]
+    },
+    {
+      "color": "gray",
+      "sourceMedianRGB": [
+        159.0,
+        159.0,
+        159.0
+      ],
+      "vectorRGB": [
+        159,
+        158,
+        158
+      ],
+      "visibleMaskIoU": 0.9844610644896943,
+      "sourceBounds": [
+        237,
+        173,
+        1035,
+        1075
+      ],
+      "vectorBounds": [
+        237,
+        173,
+        1034,
+        1075
+      ]
+    }
+  ]
+}

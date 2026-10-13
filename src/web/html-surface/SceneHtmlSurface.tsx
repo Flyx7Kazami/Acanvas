@@ -8,6 +8,7 @@ import {HtmlSurfaceControls} from './Controls';
 import {HtmlInputProxy,htmlSurfacePoint,htmlInputEditsControl,attachHtmlFocusOwnership,type HtmlInputAction} from './InputProxy';
 import {HtmlPcmPlayer} from './PcmPlayer';
 import {htmlClipboardHandlers,type HtmlClipboardRequest} from './Clipboard';
+import {DominoLoader} from '../DominoLoader';
 
 function chrome(context:CanvasRenderingContext2D,width:number,height:number,scale:number,error:string,readOnly:boolean){
   context.save();context.scale(scale,scale);
@@ -96,6 +97,7 @@ export function SceneHtmlSurface({asset,api,scene,onBlankPointerDown}:{asset:Ass
     {interactive&&frame&&<HtmlSurfaceControls key={frame.instanceId} canProject={()=>input.current?.canProjectEdits(frame)??false} clientFocus={{owns:()=>focusOwnership.current?.owns()??false,focus:()=>{const current=canvas.current;if(current&&document.activeElement!==current)current.focus({preventScroll:true})},popup:()=>!!frame.popup}} snapshot={frame.semantics} surface={frame} frameSeq={frame.frameSeq} onInput={action=>send(action,frame.instanceId)} onClipboard={clipboard} onError={report}/>}
     {interactive&&frame&&popupBounds&&<div ref={popup} tabIndex={0} data-html-popup data-canvas-control data-canvas-wheel="canvas" data-popup-frame-seq={frame.popup!.frameSeq} aria-label="HTML picker" style={{position:'absolute',zIndex:20,left:`${Math.max(0,popupBounds.x)/frame.viewport.width*100}%`,top:`${Math.max(0,popupBounds.y)/frame.viewport.height*100}%`,width:`${Math.max(0,Math.min(frame.viewport.width,popupBounds.x+popupBounds.width)-Math.max(0,popupBounds.x))/frame.viewport.width*100}%`,height:`${Math.max(0,Math.min(frame.viewport.height,popupBounds.y+popupBounds.height)-Math.max(0,popupBounds.y))/frame.viewport.height*100}%`,outline:'none'}} onPointerDown={event=>pointer(event,'down')} onPointerMove={event=>pointer(event,'move')} onPointerUp={event=>pointer(event,'up')} onPointerCancel={event=>pointer(event,'up')} onKeyDown={event=>key(event,'down')} onKeyUp={event=>key(event,'up')}/>}
     <div className="html-preview-tools" data-canvas-control onPointerDown={event=>event.stopPropagation()}><a href={api.content(asset.id)} download={asset.name} aria-label={`Download ${asset.name}`} title="Download original HTML">↓</a></div>
+    {!ready&&!error&&<div className="content-loading html-surface-loading" role="status"><DominoLoader size={40}/><span>Preparing preview…</span></div>}
     {(inputError||error)&&<div className="html-preview-error" role="status"><p>{inputError||error}</p>{error&&<button type="button" data-canvas-control onClick={()=>setAttempt(value=>value+1)}>Retry preview</button>}</div>}
   </div>;
 }

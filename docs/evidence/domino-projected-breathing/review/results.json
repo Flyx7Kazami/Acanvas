@@ -1,0 +1,141 @@
+{
+  "node": "v24.21.0",
+  "browser": "155.0.8059.40",
+  "errors": [],
+  "forward": [
+    -1.0623794943056382,
+    -0.33806235876210167
+  ],
+  "screenSpeed": 30.873338370728764,
+  "oldScreenSpeed": 76.86852570550418,
+  "speedRatio": 0.4016382269254069,
+  "areas": [
+    {
+      "age": 0,
+      "det": -0.5388282778467425
+    },
+    {
+      "age": 100,
+      "det": -0.478729245431902
+    },
+    {
+      "age": 200,
+      "det": -0.4151055281957974
+    },
+    {
+      "age": 300,
+      "det": -0.34842556117250184
+    },
+    {
+      "age": 400,
+      "det": -0.2791802812953645
+    },
+    {
+      "age": 500,
+      "det": -0.20787951283198933
+    },
+    {
+      "age": 600,
+      "det": -0.13504821375963866
+    },
+    {
+      "age": 700,
+      "det": -0.06171883749987432
+    },
+    {
+      "age": 800,
+      "det": 0.008588625624462859
+    },
+    {
+      "age": 900,
+      "det": 0.07494924773917619
+    },
+    {
+      "age": 1000,
+      "det": 0.1371330006580402
+    },
+    {
+      "age": 1100,
+      "det": 0.195080569146635
+    },
+    {
+      "age": 1200,
+      "det": 0.24886708624149995
+    },
+    {
+      "age": 1300,
+      "det": 0.29866634769921474
+    },
+    {
+      "age": 1400,
+      "det": 0.34353315646378124
+    },
+    {
+      "age": 1500,
+      "det": 0.38292081953073354
+    },
+    {
+      "age": 1600,
+      "det": 0.417598231966821
+    },
+    {
+      "age": 1700,
+      "det": 0.4482491366790595
+    },
+    {
+      "age": 1800,
+      "det": 0.47547010675340995
+    },
+    {
+      "age": 1900,
+      "det": 0.4997754766217626
+    },
+    {
+      "age": 2000,
+      "det": 0.5214667155786734
+    }
+  ],
+  "occlusion": {
+    "overlaps": 2215,
+    "mismatches": 0,
+    "examples": []
+  },
+  "seamMatrixError": 0,
+  "offscreenRecycle": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+  ],
+  "maxMatrixError": 0.0027398351194681814,
+  "generatedCssMatches": true,
+  "previewMatches": true,
+  "generatedTsMatches": true,
+  "reducedAnimations": 0
+}

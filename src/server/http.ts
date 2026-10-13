@@ -5,7 +5,7 @@ import { open, mkdir, readFile, realpath, rename, rm, stat } from 'node:fs/promi
 import { dirname, extname, resolve, relative } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import type { AnnotationCaptureInput, Asset, Bootstrap, CaptureView, CaptureViewOperation, CompleteInput, Draft, ServiceRuntime, SessionView } from '../shared/types.js';
-import { editableTextBytes, editableTextMime, resolveContentKind, resolveContentMime, storageAssetKind } from '../shared/content-types.js';
+import { editableTextBytes, resolveContentKind, resolveContentMime, storageAssetKind } from '../shared/content-types.js';
 import { ApiFailure, CanvasService, within } from './service.js';
 import { AudioArtworkReader } from './audio-artwork.js';
 import { clearRuntime, publishRuntime } from './runtime.js';
@@ -14,9 +14,10 @@ import { ProjectBrowser, type ProjectBrowserOptions } from './browser-capture.js
 import { ProjectHtmlSurfaces, type HtmlSurfaceFrame, type HtmlSurfacesOptions } from './render-surface/html.js';
 import { htmlInputRequestBytes } from '../shared/html-surface.js';
 import { createBoardConnections, type ViewPresence } from './board-connection.js';
+import { HostDeliveryManager, type HostDeliveryOptions } from './host-delivery.js';
 
-export interface ServerOptions { root: string; port?: number; maxUploadBytes?: number; webRoot?: string; allowedOrigins?: string[]; bind?: string; allowedHosts?: string[]; previewPort?: number; previewHosts?: string[]; browser?: ProjectBrowserOptions; htmlSurfaces?: HtmlSurfacesOptions }
-export interface RunningServer { service: CanvasService; browser: ProjectBrowser; url: string; urls: string[]; close: () => Promise<void> }
+export interface ServerOptions { root: string; port?: number; maxUploadBytes?: number; webRoot?: string; allowedOrigins?: string[]; bind?: string; allowedHosts?: string[]; previewPort?: number; previewHosts?: string[]; browser?: ProjectBrowserOptions; htmlSurfaces?: HtmlSurfacesOptions; hostRuntime?: HostDeliveryOptions }
+export interface RunningServer { service: CanvasService; browser: ProjectBrowser; hostDelivery: HostDeliveryManager; url: string; urls: string[]; close: () => Promise<void> }
 const mimeTypes: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.png': 'image/png', '.ico': 'image/x-icon' };
 const send = (response: ServerResponse, status: number, value: unknown) => { response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); response.end(JSON.stringify(value)); };
 const sameToken = (received: string | undefined, token: string): boolean => !!received && Buffer.byteLength(received) === Buffer.byteLength(token) && timingSafeEqual(Buffer.from(received), Buffer.from(token));
@@ -58,6 +59,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   const artwork = new AudioArtworkReader(id => service.assetPath(id));
   const preview = await startHtmlPreview(service, { bind, port: options.previewPort, origins: previewOrigins }).catch(error => { service.close(); throw error; });
   const surfaces = new ProjectHtmlSurfaces(service, preview, options.htmlSurfaces);
+  const hostDelivery = new HostDeliveryManager(service, options.hostRuntime);
   const surfaceOwners = new Map<string, CaptureView & { objectId: string; assetId: string }>();
   service.validateSurface = (owner, reference) => surfaces.validateSurface(owner, reference);
   service.retainSurface = (owner, reference) => surfaces.retainSurface(owner, reference);
@@ -118,6 +120,11 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
     const cookie = request.headers.cookie?.split(';').map((item) => item.trim()).find((item) => item.startsWith(cookiePrefix))?.slice(cookiePrefix.length);
     if (!sameToken(bearer, token) && !(['GET', 'HEAD'].includes(request.method ?? '') && sameToken(cookie, token))) throw new ApiFailure(401, 'authentication_required', 'Connect through this local service before using its API.');
   };
+  const authenticateHostRuntime = (request: IncomingMessage) => {
+    const bearer = request.headers.authorization?.startsWith('Bearer ') ? request.headers.authorization.slice(7) : undefined;
+    if (!sameToken(bearer, token)) throw new ApiFailure(401, 'authentication_required', 'Use the authenticated project CLI to inspect or attach a host runtime.');
+    if (request.headers.origin || request.headers.cookie || request.headers['sec-fetch-site']) throw new ApiFailure(403, 'host_runtime_cli_required', 'Runtime attachments require the original host CLI channel.');
+  };
   const handle = async (request: IncomingMessage, response: ServerResponse) => {
     requests.add(request); responses.add(response);
     response.on('close', () => responses.delete(response));
@@ -134,11 +141,19 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
       const method = request.method;
       if (path === '/api/bootstrap' && method === 'GET') {
         response.setHeader('Set-Cookie', `${authenticationCookieName()}=${token}; HttpOnly; SameSite=Strict; Path=/api`);
-        const bootstrap: Bootstrap = { project: service.project, token, service: service.identity(), capabilities: { maxUploadBytes, backup: false, recovery: true, mediaPreview: 'browser', generation: 'host_tools' } };
+        const bootstrap: Bootstrap = { project: service.project, token, service: service.identity(), capabilities: { maxUploadBytes, backup: false, recovery: true, mediaPreview: 'browser', generation: 'host_tools', hostWakeup: 'explicit-codex-unix' } };
         send(response, 200, bootstrap); return;
       }
       if (path.startsWith('/api/')) {
         authenticate(request);
+        const hostRuntimeMatch = path.match(/^\/api\/sessions\/([^/]+)\/host-runtime$/);
+        if (hostRuntimeMatch) {
+          authenticateHostRuntime(request);
+          const sessionId = decodeURIComponent(hostRuntimeMatch[1]);
+          if (method === 'GET') { send(response, 200, hostDelivery.status(sessionId)); return; }
+          if (method === 'POST') { send(response, 200, await hostDelivery.attach(sessionId, await payload(request, 16 * 1024))); return; }
+          if (method === 'DELETE') { await payload(request, 16 * 1024); send(response, 200, await hostDelivery.detach(sessionId)); return; }
+        }
         if (path === '/api/project/status' && method === 'GET') { send(response, 200, { project: service.project, service: service.identity(), status: 'running' }); return; }
         if (path === '/api/project/stop' && method === 'POST') {
           const input = await payload(request);
@@ -210,7 +225,10 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
           }
           if (!surfaceMatch[4] && method === 'DELETE') { await surfaces.closeSurface(surfaceId!); surfaceOwners.delete(surfaceId!); send(response, 200, { closed: true }); return; }
         }
-        if (path === '/api/board/operations' && method === 'POST') { const input = await payload(request); send(response, 200, service.boardOperations(input.sessionId, input.operations)); return; }
+        if (path === '/api/board/history' && method === 'GET') { send(response, 200, service.boardHistory(url.searchParams.get('sessionId') ?? '')); return; }
+        if (path === '/api/board/undo' && method === 'POST') { const input = await payload(request); send(response, 200, service.boardUndo(input.sessionId)); return; }
+        if (path === '/api/board/redo' && method === 'POST') { const input = await payload(request); send(response, 200, service.boardRedo(input.sessionId)); return; }
+        if (path === '/api/board/operations' && method === 'POST') { const input = await payload(request, editableTextBytes * 6 + 64 * 1024); send(response, 200, service.boardOperations(input.sessionId, input.operations)); return; }
         const previewAssetMatch = path.match(/^\/api\/assets\/([^/]+)\/html-preview$/);
         if (previewAssetMatch && method === 'POST') {
           await payload(request);
@@ -307,28 +325,9 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
         const assetMatch = path.match(/^\/api\/assets\/([^/]+)\/content$/);
         if (assetMatch && method === 'PUT') {
           const assetId = decodeURIComponent(assetMatch[1]);
-          let current: Asset;
-          try { current = service.sharedAsset(assetId); }
-          catch (error) { request.resume(); throw error; }
-          if (current.htmlBundle || !editableTextMime(current.mime)) { request.resume(); throw new ApiFailure(400, 'content_readonly', 'Only notes and Markdown can be edited.'); }
-          const declared = Number(request.headers['content-length']);
-          if (Number.isFinite(declared) && declared > editableTextBytes) { request.resume(); throw new ApiFailure(413, 'content_too_large', 'Notes and Markdown stay within 2 MB.'); }
-          const temporary = resolve(service.dataDir, 'tmp', `${randomUUID()}.text`);
-          await mkdir(dirname(temporary), { recursive: true, mode: 0o700 });
-          if (!within(service.dataDir, await realpath(dirname(temporary)))) throw new ApiFailure(403, 'path_boundary', 'Upload storage must remain inside this project.');
-          let file: Awaited<ReturnType<typeof open>> | undefined = await open(temporary, 'wx', 0o600), size = 0, consumed = false;
-          try {
-            for await (const chunk of request) {
-              size += chunk.length;
-              if (size > editableTextBytes) throw new ApiFailure(413, 'content_too_large', 'Notes and Markdown stay within 2 MB.');
-              await file.write(chunk);
-            }
-            if (!request.complete) throw new ApiFailure(400, 'upload_incomplete', 'The upload ended before its text was complete.');
-            await file.sync(); await file.close(); file = undefined;
-            const saved = service.replaceAssetContent(assetId, temporary);
-            consumed = true;
-            send(response, 200, saved);
-          } finally { await file?.close().catch(() => {}); if (!consumed) await rm(temporary, { force: true }); }
+          service.sharedAsset(assetId);
+          request.resume();
+          throw new ApiFailure(400, 'content_readonly', 'Asset content is immutable. Edit it through a board content operation.');
           return;
         }
         if (assetMatch && (method === 'GET' || method === 'HEAD')) {
@@ -423,9 +422,9 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
     const cookie = request.headers.cookie?.split(';').map(value => value.trim()).find(value => value.startsWith(prefix))?.slice(prefix.length);
     if (!sameToken(cookie, token)) throw new ApiFailure(401, 'authentication_required', 'Connect through this local service before using its API.');
   } });
-  service.onChange = () => { for (const response of events) response.write('event: change\ndata: {}\n\n'); connections.changed(); };
+  service.onChange = () => { for (const response of events) response.write('event: change\ndata: {}\n\n'); connections.changed(); hostDelivery.schedule(); };
   const heartbeat = setInterval(() => { for (const response of events) response.write(': alive\n\n'); for (const record of presences.values()) for (const response of record.connections) if ('write' in response) (response as ServerResponse).write(': alive\n\n'); }, 15_000); heartbeat.unref();
-  await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, bind, () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch(async error => { clearInterval(heartbeat); connections.close(); await surfaces.close(); await preview.close(); service.close(); throw error; });
+  await new Promise<void>((resolvePromise, reject) => { server.once('error', reject); server.listen(port, bind, () => { server.off('error', reject); port = (server.address() as AddressInfo).port; resolvePromise(); }); }).catch(async error => { clearInterval(heartbeat); connections.close(); await hostDelivery.close(); await surfaces.close(); await preview.close(); service.close(); throw error; });
   let shutdown: Promise<void> | undefined;
   const runtime: ServiceRuntime = { project: service.project, ...service.identity(), url: `http://127.0.0.1:${port}`, ...(bind === '127.0.0.1' ? {} : { bind }), ...(previewOrigins.length ? { previewOrigins } : {}), ...(extraHosts.length ? { allowedHosts: extraHosts, urls: allowedHosts().map(entry => entry.origins[0]) } : {}) };
   browser = new ProjectBrowser(service, runtime.url, token, options.browser);
@@ -433,6 +432,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
     if (shutdown) return shutdown;
     shutdown = (async () => {
       closing = true; clearInterval(heartbeat); connections.close();
+      await hostDelivery.close();
       // Cancel captures while the business service can still invalidate versions.
       await browser.close();
       const stopped = new Promise<void>((resolvePromise, reject) => server.close((error) => error ? reject(error) : resolvePromise()));
@@ -451,5 +451,6 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
   };
   try { await publishRuntime(runtime); }
   catch (error) { await stopService(); throw error; }
-  return { service, browser, url: runtime.url, urls: runtime.urls ?? [], close: stopService };
+  hostDelivery.start();
+  return { service, browser, hostDelivery, url: runtime.url, urls: runtime.urls ?? [], close: stopService };
 }

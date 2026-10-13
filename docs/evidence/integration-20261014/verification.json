@@ -1,0 +1,44 @@
+{
+  "candidate": "/private/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-delivery-build-uF2eFb",
+  "node": "v24.21.0",
+  "typecheck": {
+    "server": "passed",
+    "web": "passed"
+  },
+  "build": "passed",
+  "checks": {
+    "related": {
+      "passed": 103,
+      "failed": 0,
+      "skipped": 0
+    },
+    "groupsUi": {
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0
+    },
+    "historyContentUi": {
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0
+    },
+    "zoomUi": {
+      "passed": 6,
+      "failed": 0,
+      "pageErrors": 0
+    }
+  },
+  "candidateInputs": {
+    "compared": 243,
+    "mismatches": []
+  },
+  "logs": {
+    "related": "/tmp/acanvas-merge-validation-20261014.log",
+    "groupsUi": "/tmp/acanvas-merge-group-ui-20261014.log",
+    "historyContentUi": "/tmp/acanvas-merge-history-ui-20261014.log",
+    "zoomUi": "/tmp/acanvas-merge-zoom-ui-20261014.log"
+  },
+  "zoomEvidence": "/private/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-merge-zoom-evidence-AHS9Lv",
+  "temporaryTestProcesses": "all exited with code 0; fixture finally hooks closed services",
+  "liveServiceChanged": false
+}

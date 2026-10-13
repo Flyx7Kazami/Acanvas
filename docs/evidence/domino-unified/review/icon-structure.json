@@ -1,0 +1,14 @@
+{
+  "paths": 3,
+  "rasters": false,
+  "allIdentical": true,
+  "sizes": [
+    16,
+    32,
+    64,
+    128,
+    512,
+    1254
+  ],
+  "browser": "155.0.8059.40"
+}

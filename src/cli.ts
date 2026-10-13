@@ -3,14 +3,15 @@ import { lstat, open, readFile, realpath, stat, writeFile } from 'node:fs/promis
 import { basename, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import type { HostBinding } from './shared/types.js';
+import type { BoardState, HostBinding } from './shared/types.js';
 import { resolveContentMime } from './shared/content-types.js';
+import { groupDisplayBounds } from './shared/groups.js';
 import { within } from './server/service.js';
 import { bundleChanged, collectHtmlBundle, sameBundleSource, verifyBundleDirectories } from './server/html-bundle-import.js';
 import { connectProject, waitForStop } from './server/client-runtime.js';
 import { readRuntime } from './server/runtime.js';
 
-const help = `acanvas: project-local whiteboard CLI (Node 24)
+const help = `Acanvas: project-local whiteboard CLI (Node 24)
 
 Every API call requires --project /absolute/project. Queue calls require --session ID.
 Use --url http://127.0.0.1:4317 to connect to a selected local service.
@@ -25,6 +26,11 @@ project open [--host NAME --thread ID] [--session ID] [--port NUMBER] [--bind 0.
 project status | project stop
 browser open|status|close --session ID
   Opens the project-managed canvas window; screenshots run on that live page.
+host attach --session ID --host codex --thread ORIGINAL_ID --endpoint unix:///absolute/runtime.sock
+host status|detach --session ID
+  Requires an existing project open --host codex --thread ORIGINAL_ID --session ID binding.
+  Attaches only to an explicitly selected, already loaded runtime thread; no Desktop discovery.
+  Status details use the authenticated CLI channel. Without an attachment, use the saved queue and continue prompt.
 session create --name NAME | session list | session read --session ID
 session resume --session ID [--consumer ID] --expected-consumer ID|none --resolution TEXT
 draft save --session ID --input draft.json | draft send --session ID --draft ID --revision NUMBER
@@ -40,7 +46,14 @@ asset import --file FILE [--mime MIME] [--allow-directory DIR] [--bundle-root DI
   Outputs also require --session ID --task ID --run ID --consumer ID.
 asset read --asset ID --out FILE [--session ID]
   Capture evidence requires its original session.
+group list --session ID
+group read --session ID --group ID
+  Returns group metadata and ordered member objects with original file metadata. Coordinates are project world coordinates.
+group put --session ID --group ID --object ID --version NUMBER [--x NUMBER --y NUMBER]
+  Moves an existing item into the group while retaining identity, file and dimensions. Omitted coordinates keep its current position.
+board history --session ID | board undo --session ID | board redo --session ID
 board operations --session ID --input operations.json
+  Supports create/update/delete and group.create/group.update/group.ungroup.
 task next --session ID [--consumer ID]
 task read --session ID --task ID [--format text]
 task progress --session ID --task ID --run ID --consumer ID --message TEXT [--job ID]
@@ -53,6 +66,13 @@ task cancel --session ID --task ID --reason TEXT
 
 Completion JSON: {"summary":"Delivered","assetIds":[],"validation":[],"operations":[]}
 Board JSON: {"operations":[{"type":"create","object":{"assetId":"ID","x":0,"y":0,"width":320,"height":240}}]}
+Group JSON: {"operations":[{"type":"group.create","group":{"objectIds":["A","B"],"name":"References","color":"cobalt"},"expectedVersions":{"A":1,"B":1}}]}
+Folder JSON: {"operations":[{"type":"group.update","groupId":"ID","expectedVersion":1,"changes":{"mode":"folder"}}]}
+Colors: cobalt, sage, coral, lilac, ink, sand. Creation chooses a random color when color is omitted.
+Use mode "frame" to expand; group.ungroup retains every member and material.
+Object creation accepts groupId for the folder board. Object update changes.groupId moves an existing item; null returns it to the main board.
+State and operation responses include groups. Both canvas levels use project world coordinates.
+Content operation: {"operations":[{"type":"content","objectId":"ID","expectedVersion":1,"text":"Updated text"}]}
 Empty task next returns task:null and releases the queue consumer.
 The first next/resume can generate a new consumer ID; reuse the returned ID inside that loop.
 Idle and transferred consumer IDs are retired. Start a new activation with a new ID.
@@ -72,6 +92,18 @@ export async function cli(args: string[]): Promise<unknown> {
     if (options.has('host') || options.has('thread')) { openHost = required('host'); openThreadId = required('thread'); }
     else if (!openSessionId && process.env.CODEX_THREAD_ID) { openHost = 'codex'; openThreadId = process.env.CODEX_THREAD_ID; }
   }
+  if (group === 'host') {
+    if (!['attach', 'status', 'detach'].includes(action)) throw new Error('Choose host attach, status or detach.');
+    if (!required('session').trim()) throw new Error('--session is required.');
+    if (action === 'attach') {
+      if (required('host') !== 'codex') throw new Error('Only an explicitly selected Codex runtime is supported.');
+      if (!required('thread').trim()) throw new Error('--thread is required.');
+      const endpoint = required('endpoint');
+      let socket: URL;
+      try { socket = new URL(endpoint); } catch { throw new Error('--endpoint must be unix:///absolute/runtime.sock.'); }
+      if (socket.protocol !== 'unix:' || socket.hostname || !socket.pathname.startsWith('/') || socket.pathname === '/' || socket.search || socket.hash || socket.username || socket.password) throw new Error('--endpoint must be unix:///absolute/runtime.sock.');
+    }
+  }
   const projectRoot = await realpath(required('project'));
   const connection = await connectProject(projectRoot, options.get('url'), group === 'project' && action === 'open', options.has('port') ? Number(required('port')) : 0, { bind: options.get('bind'), allowedHosts: (options.get('allow-host') ?? '').split(',').map(item => item.trim()).filter(Boolean), previewPort: options.get('preview-port'), previewHosts: (options.get('preview-host') ?? '').split(',').map(item => item.trim()).filter(Boolean) });
   if (!connection) {
@@ -89,6 +121,12 @@ export async function cli(args: string[]): Promise<unknown> {
   const taskPath = () => `${sessionPath()}/tasks/${encodeURIComponent(required('task'))}`;
   const identity = () => ({ runId: required('run'), consumerId: required('consumer') });
   const input = async () => JSON.parse(await readFile(required('input'), 'utf8'));
+  if (group === 'host') {
+    const path = `${sessionPath()}/host-runtime`;
+    if (action === 'attach') return request(path, 'POST', { host: required('host'), threadId: required('thread'), endpoint: required('endpoint') });
+    if (action === 'status') return request(path);
+    if (action === 'detach') return request(path, 'DELETE');
+  }
   if (group === 'project') {
     if (action === 'status') return request('/api/project/status');
     if (action === 'stop') {
@@ -148,7 +186,25 @@ export async function cli(args: string[]): Promise<unknown> {
     if (action === 'close') return request(path, 'DELETE', await input());
   }
   if (group === 'view' && action === 'save') return request(`${sessionPath()}/view`, 'PUT', await input());
-  if (group === 'board' && action === 'operations') { const value = await input(); return request('/api/board/operations', 'POST', { sessionId: required('session'), operations: value.operations }); }
+  if (group === 'group') {
+    const sessionId = required('session');
+    if (action === 'list' || action === 'read') {
+      const state = await request(`/api/state?sessionId=${encodeURIComponent(sessionId)}`) as BoardState;
+      if (action === 'list') return state.groups;
+      const groupId = required('group'), selected = state.groups.find(item => item.id === groupId);
+      if (!selected) throw new Error('The referenced group is unavailable.');
+      return { projectId: state.project.id, group: selected, coordinateSpace: 'world', displayBounds: groupDisplayBounds(selected), members: selected.objectIds.map(id => {
+        const object = state.objects.find(item => item.id === id)!;
+        return { object, asset: state.assets.find(asset => asset.id === object.assetId)! };
+      }) };
+    }
+    if (action === 'put') return request('/api/board/operations', 'POST', { sessionId, operations: [{ type: 'update', objectId: required('object'), expectedVersion: Number(required('version')), changes: { groupId: required('group'), ...(options.has('x') ? { x: Number(required('x')) } : {}), ...(options.has('y') ? { y: Number(required('y')) } : {}) } }] });
+  }
+  if (group === 'board') {
+    if (action === 'history') return request(`/api/board/history?sessionId=${encodeURIComponent(required('session'))}`);
+    if (action === 'undo' || action === 'redo') return request(`/api/board/${action}`, 'POST', { sessionId: required('session') });
+    if (action === 'operations') { const value = await input(); return request('/api/board/operations', 'POST', { sessionId: required('session'), operations: value.operations }); }
+  }
   if (group === 'asset') {
     if (action === 'import') {
       if (options.has('bundle-root')) {

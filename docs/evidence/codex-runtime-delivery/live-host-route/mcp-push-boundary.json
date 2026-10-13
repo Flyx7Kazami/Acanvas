@@ -1,0 +1,204 @@
+{
+  "observedAtUtc": "2026-10-12T20:07:32.103Z",
+  "conclusion": "Codex MCP is a possible route. Ordinary MCP tool access is documented; this bundled CLI also exposes experimental thread-bound MCP event-stream methods. Whether the current original kind=codex, hostId=durable conversation can subscribe and automatically run a model turn from a Canvas event remains unverified.",
+  "scope": {
+    "existingThreadId": "01a1310e-f0a0-739d-840b-74713f7ba0e9",
+    "backingKind": "codex",
+    "hostId": "durable",
+    "threadMetadataSource": "Reported by parent from public read_thread metadata.",
+    "nativeMessageDelivery": "Parent's previously authorized one-message app-tools test succeeded; it was not repeated and is separate from MCP event delivery.",
+    "existingLocalPidThreadOwnershipProofObtained": false
+  },
+  "publicCli": {
+    "executable": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+    "version": "0.162.0-alpha.17.2",
+    "mcpHelp": {
+      "command": [
+        "mcp",
+        "--help"
+      ],
+      "exitCode": 0,
+      "description": "Manage external MCP servers for Codex",
+      "listedCommands": [
+        "list",
+        "get",
+        "add",
+        "remove",
+        "login",
+        "logout",
+        "help"
+      ],
+      "configOrCredentialCommandsInvoked": []
+    },
+    "schemaGeneration": {
+      "command": [
+        "app-server",
+        "generate-json-schema",
+        "--experimental",
+        "--out",
+        "/tmp/acanvas-mcp-public-schema-6onvep_7"
+      ],
+      "exitCode": 0,
+      "generatedJsonFileCount": 447,
+      "transportOrRuntimeStarted": false,
+      "source": "Version-specific static schema generated from the installed bundled executable.",
+      "summaryFile": "mcp-schema-summary.json"
+    },
+    "typescriptGeneration": {
+      "command": [
+        "app-server",
+        "generate-ts",
+        "--experimental",
+        "--out",
+        "/tmp/acanvas-mcp-public-schema-6onvep_7/ts"
+      ],
+      "exitCode": 0,
+      "descriptionsForEventTypesPresent": false
+    },
+    "defaultSchemaComparison": {
+      "command": [
+        "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+        "app-server",
+        "generate-json-schema",
+        "--out",
+        "/tmp/acanvas-mcp-public-schema-default-gwu59di0"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "WARNING: proceeding, even though we could not create PATH aliases: Operation not permitted (os error 1)\n",
+      "generatedJsonFileCount": 317,
+      "eventMethodsPresentInDefaultOutput": {
+        "mcpServer/event/stream/start": false,
+        "mcpServer/event/stream/stop": false,
+        "mcpServer/event/stream/notification": true
+      },
+      "boundary": "Static default-vs-experimental schema comparison only; no feature flag, server configuration, runtime or subscription was changed."
+    }
+  },
+  "staticEventStreamDefinitions": {
+    "clientMethods": [
+      "mcpServer/event/stream/start",
+      "mcpServer/event/stream/stop"
+    ],
+    "serverNotification": "mcpServer/event/stream/notification",
+    "startParams": {
+      "required": [
+        "arguments",
+        "name",
+        "server",
+        "subscriptionId",
+        "threadId"
+      ],
+      "properties": {
+        "arguments": "JSON value",
+        "name": "string",
+        "server": "string",
+        "subscriptionId": "string",
+        "threadId": "string",
+        "_meta": "optional JSON value"
+      }
+    },
+    "startResponse": "object with no documented fields",
+    "stopParams": {
+      "required": [
+        "subscriptionId"
+      ],
+      "properties": {
+        "subscriptionId": "string"
+      }
+    },
+    "notificationParams": {
+      "required": [
+        "notification",
+        "subscriptionId"
+      ],
+      "properties": {
+        "subscriptionId": "string",
+        "notification": {
+          "required": [
+            "method",
+            "params"
+          ],
+          "properties": {
+            "method": "string",
+            "params": "JSON value"
+          }
+        }
+      }
+    },
+    "positiveEvidence": "There is an explicit threadId binding and a named server/event/subscription in this experimental public schema.",
+    "inferenceBoundary": "The notification envelope exposes event data to an app-server client. The generated schema has no description establishing whether the Desktop client starts a model turn from it; it cannot establish either automatic wake or lack of automatic wake.",
+    "configuredServerAndAuthenticationBoundary": "The start request names server and threadId. Resolving that server for the existing thread, its configured authentication, the host's consumption behavior and an externally reachable owning app-server transport were not inspected or changed.",
+    "currentThreadSubscriptionAttempted": false,
+    "currentThreadWakeTested": false,
+    "defaultOutputContainsEventMethods": {
+      "mcpServer/event/stream/start": false,
+      "mcpServer/event/stream/stop": false,
+      "mcpServer/event/stream/notification": true
+    },
+    "parameterSchemaHashes": {
+      "McpServerEventStreamStartParams.json": "cb138f1f98b619f887efd692067af6f3c9c03041887daa928c3362e1f8c22e54",
+      "McpServerEventStreamNotification.json": "44b04b6cc079ec0b99b4d29af1a69d99037505c19a2a07cff955aa298d7c181b"
+    }
+  },
+  "protocolDistinctions": [
+    {
+      "capability": "MCP tools",
+      "source": "https://developers.openai.com/plugins/concepts/mcp-server",
+      "documentedMeaning": "Model discovers a tool, calls it with structured arguments, and consumes the result.",
+      "currentCanvasImplementationFactSource": "Parent's repository review",
+      "currentCanvasImplementation": "No MCP server/event subscription implementation found in src, package.json or skill/acanvas during the parent's bounded review.",
+      "boundary": "MCP tool access can expose Canvas operations when implemented; it does not by itself establish server-triggered model activation."
+    },
+    {
+      "capability": "notifications/tools/list_changed",
+      "source": "https://modelcontextprotocol.io/specification/2025-11-25/server/tools",
+      "protocolVersion": "2025-11-25",
+      "documentedMeaning": "Signals a change to the available tools catalog when listChanged capability is declared.",
+      "boundary": "This catalog notification is distinct from a user input or event subscription. The current Codex client's handling was not tested."
+    },
+    {
+      "capability": "notifications/message (logging)",
+      "source": "https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/logging",
+      "protocolVersion": "2025-11-25",
+      "documentedMeaning": "Carries structured log severity, optional logger and JSON data to the client; presentation is implementation-defined.",
+      "boundary": "The logging protocol does not mandate a model/user interaction pattern. It does not establish current-thread wake; current Codex handling was not tested."
+    },
+    {
+      "capability": "MCP Events",
+      "source": "https://developers.openai.com/plugins/build/mcp-events",
+      "protocolVersion": "2026-07-28 (MCP 2.0)",
+      "documentedMeaning": "ChatGPT creates an event subscription with a callback/signing secret, then receives verified matching webhook events and performs the requested action.",
+      "documentedSurfaces": [
+        "Work chats on ChatGPT web",
+        "Work chats in desktop app with Cloud selected",
+        "dots"
+      ],
+      "boundary": "This documented webhook integration does not establish support for the current kind=codex conversation. It also must not be used to dismiss the separate experimental app-server stream schema."
+    }
+  ],
+  "publicSourceLookup": {
+    "unauthenticatedRequest": "https://api.github.com/repos/openai/codex/git/trees/main?recursive=1",
+    "result": "HTTP 403: rate limit exceeded",
+    "matchingImplementationFetched": false,
+    "desktopAutomaticWakeImplementationEstablished": false,
+    "boundary": "A blocked public source lookup is not evidence of absent functionality. No private installed application source/IPC/configuration/logs were inspected."
+  },
+  "openQuestions": [
+    "Does the owning host of the original durable Codex thread support and permit this event-stream method for that exact thread?",
+    "How does that host establish the named MCP server's event subscription and authenticate it?",
+    "Does the Desktop client consume an event-stream notification by submitting input or starting model work, and with what retry/busy semantics?",
+    "What supported external-service route can establish or maintain that binding without a persistent LLM bridge?"
+  ],
+  "actionsNotPerformed": {
+    "configurationRead": false,
+    "credentialsRead": false,
+    "privateSessionOrLogsRead": false,
+    "newMcpConfiguration": false,
+    "subscriptionStarted": false,
+    "probeMessageSent": false,
+    "newRuntimeStarted": false,
+    "productionServiceChanged": false,
+    "gitCommitCreated": false
+  }
+}

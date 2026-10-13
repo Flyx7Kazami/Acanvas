@@ -27,5 +27,53 @@
     "maximumChannelDifference": 20,
     "timeMs": 450,
     "observation": "One edge pixel differed in independent rasterization; implementation-side zero-difference result above is retained."
+  },
+  "comparisonClockOffsetsMs": [
+    0,
+    425,
+    845
+  ],
+  "comparisonClockMeaning": "Previous/v1/refined raw times begin at 0, 425, 845ms, aligning the first onset pose; each version advances at its own cadence.",
+  "currentUprightEntry": {
+    "fallAtBeforeMs": 1800,
+    "fallAtAfterMs": 2400,
+    "firstFullUprightWith1UnitMarginMs": 2155.347913577948,
+    "uprightDwellMs": 244.65208642205198
+  },
+  "refinement": {
+    "previousAndCurrentPreserved": true,
+    "height": 36,
+    "width": 18,
+    "spacing": 24,
+    "scale": 1.1,
+    "origin": [
+      36,
+      54
+    ],
+    "fallAtMs": 2225,
+    "report": "../../../../docs/evidence/domino-breathing/verification.json"
+  },
+  "currentRefinement": {
+    "sourceFiles": [
+      "previous.html",
+      "refined-v1.html",
+      "refined.html"
+    ],
+    "width": 24,
+    "height": 34,
+    "spacing": 18,
+    "cadenceMs": 650,
+    "camera": {
+      "origin": [
+        36,
+        44
+      ],
+      "scale": 0.95,
+      "azimuth": -65,
+      "elevation": 28,
+      "roll": 30
+    },
+    "fallAtMs": 4745,
+    "report": "../../../../docs/evidence/domino-breathing-v2/verification.json"
   }
 }

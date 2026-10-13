@@ -1,0 +1,85 @@
+[
+  {
+    "time": 1791826420.66,
+    "kind": "request",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "clientInfo": {
+        "name": "acanvas_recovery_B",
+        "version": "0.1"
+      }
+    }
+  },
+  {
+    "time": 1791826420.66,
+    "kind": "response",
+    "method": "initialize",
+    "response": {
+      "id": 1,
+      "result": {
+        "userAgent": "codex_work_desktop/0.162.0-alpha.17.2 (Mac OS 15.4.0; arm64) dumb (acanvas_recovery_B; 0.1)",
+        "platformFamily": "unix",
+        "platformOs": "macos"
+      }
+    }
+  },
+  {
+    "time": 1791826420.661,
+    "kind": "request",
+    "id": 2,
+    "method": "thread/loaded/list",
+    "params": {}
+  },
+  {
+    "time": 1791826420.663,
+    "kind": "response",
+    "method": "thread/loaded/list",
+    "response": {
+      "id": 2,
+      "result": {
+        "data": [
+          "01a1312d-632a-7481-aebc-15c3a58d7be2"
+        ],
+        "nextCursor": null
+      }
+    }
+  },
+  {
+    "time": 1791826429.695,
+    "kind": "request",
+    "id": 3,
+    "method": "turn/start",
+    "params": {
+      "threadId": "01a1312d-632a-7481-aebc-15c3a58d7be2",
+      "clientUserMessageId": "acanvas-recovery-model-queue-1",
+      "input": [
+        {
+          "type": "text",
+          "text": "Continue this same live experimental thread by processing its explicitly bound acanvas scratch task through actual command tools. The prior experiment ended after claim/read without external jobs, outputs, progress or receipt. The public task resume has preserved that history and assigned run 3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f, consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf.\n+Project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E; session 892f0bef-1666-4811-9115-180cf37010f3; exact service http://127.0.0.1:54712; task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c. These scratch operations are explicitly user-authorized. Preserve inherited permissions. Request individual normal command approval for localhost CLI if necessary; do not change policies. Use workdir /Users/yingbowu/Documents/Projects/acanvas and command /Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli <command> --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712.\n+1. Actual task read --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c; inspect requirementText and saved run history.\n+2. Actual task progress --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --run 3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf --message \"Actual model read the recovered scratch request and acknowledges it.\".\n+3. Actual task complete --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --run 3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf --input /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-recovery-gf2rizvk/completion.json. That owned precreated JSON is a textual receipt with no assets or canvas operations.\n+4. Actual task next --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf to release idle. Actual task read --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c to confirm receipt.\n+Only these exact CLI commands; no shell chains, redirects, created files, settings, other projects, external jobs, app controls or person-directed messages. Use the existing run/consumer, not a new claim. Reply ACANVAS_QUEUE_MODEL_OK with the task ID and completed receipt after actual success. If a command fails, preserve exact error and request the normal individual approval for this exact command. This followup is from Client B on the same live owner and ready thread; older ephemeral threads are not restored."
+        }
+      ]
+    }
+  },
+  {
+    "time": 1791826429.714,
+    "kind": "response",
+    "method": "turn/start",
+    "response": {
+      "id": 3,
+      "result": {
+        "turn": {
+          "id": "01a1312d-8700-7052-b2a3-82f25411efeb",
+          "rootTurnId": "01a1312d-8700-7052-b2a3-82f25411efeb",
+          "items": [],
+          "itemsView": "notLoaded",
+          "status": "inProgress",
+          "error": null,
+          "startedAt": null,
+          "completedAt": null,
+          "durationMs": null
+        }
+      }
+    }
+  }
+]

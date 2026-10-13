@@ -1,0 +1,22 @@
+{
+  "project": "/private/tmp/acanvas-domino-independent/project-X7M0Dj",
+  "base": "http://127.0.0.1:62492",
+  "browser": "155.0.8059.40",
+  "checks": [
+    "delayed real startup and decorative SVG semantics",
+    "Markdown preview/source and Note loading in actual390 light/dark",
+    "text loaders end with source and note controls ready",
+    "Send busy keeps accessible name and ends in queue",
+    "Cancel busy ends with completed cancellation"
+  ],
+  "errors": [],
+  "limits": [
+    "Backend SceneHtmlSurface uses actual component lifecycle with controlled API fixture; default production path uses iframe preview.",
+    "Session switch branch retains original component source; product currently exposes no switch control."
+  ],
+  "failure": {
+    "message": "expect(locator).toHaveAttribute(expected) failed\n\nLocator: getByRole('button', { name: 'Done', exact: true })\nExpected string: \"true\"\nReceived: <element(s) not found>\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"to.have.attribute.value\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'Done', exact: true })\u001b[22m\n",
+    "stack": "Error: expect(locator).toHaveAttribute(expected) failed\n\nLocator: getByRole('button', { name: 'Done', exact: true })\nExpected string: \"true\"\nReceived: <element(s) not found>\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"to.have.attribute.value\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'Done', exact: true })\u001b[22m\n\n    at Proxy.<anonymous> (/Users/yingbowu/Documents/Projects/acanvas/node_modules/playwright/lib/matchers/expect.js:221:24)\n    at file:///private/tmp/acanvas-domino-independent/loading-review.mjs:32:500"
+  },
+  "completedAt": "2026-10-13T05:51:19.284Z"
+}

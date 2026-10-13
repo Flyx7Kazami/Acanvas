@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-13T03:43:34.561Z",
+  "root": "/private/tmp/acanvas-camera-review-project-6B5g2L",
+  "webRoot": "/private/tmp/acanvas-domino-camera-20261013/web",
+  "errors": [],
+  "requests": [
+    {
+      "url": "http://127.0.0.1:57756/?session=556d3be5-0d9a-4715-a703-0af81e881228",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:57756/assets/main-Bco47MIn.js",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:57756/assets/theme-Dg0yZupP.js",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:57756/assets/theme-BsJH9bFb.css",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:57756/assets/main-BRWuh61W.css",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:57756/assets/google-sans-latin-CLLqw55C.woff2",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:57756/brand/acanvas-icon.png",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:57756/api/bootstrap",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:57756/brand/acanvas-favicon.png",
+      "method": "GET"
+    }
+  ],
+  "checks": []
+}

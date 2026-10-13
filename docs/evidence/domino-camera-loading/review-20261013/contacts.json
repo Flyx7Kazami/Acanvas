@@ -1,0 +1,11 @@
+{
+  "status": "superseded candidate",
+  "pairs": 37814,
+  "observedDurationMs": 13500,
+  "stepMs": 5,
+  "maxPenetrationRadians": 2.220446049250313e-16,
+  "maxNeighborReversalRadians": 0,
+  "formula": "theta_back <= theta_front + asin((pitch/height)*cos(theta_front))",
+  "interpretation": "Adjacent hinged faces meet at contact or remain separated throughout the advancing fall; the relation excludes interior face crossings.",
+  "supersededReason": "Human requested restoration of the earlier individual eased free-fall cadence; contact-driven ribbon motion is superseded."
+}

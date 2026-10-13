@@ -1,0 +1,87 @@
+{
+  "size": [
+    160,
+    128
+  ],
+  "frames": 135,
+  "duration": 4500,
+  "delays": [
+    30,
+    40
+  ],
+  "samples": [
+    {
+      "index": 0,
+      "diff": {
+        "mean": 0,
+        "max": 0,
+        "changed": 0
+      }
+    },
+    {
+      "index": 1,
+      "diff": {
+        "mean": 0,
+        "max": 0,
+        "changed": 0
+      }
+    },
+    {
+      "index": 17,
+      "diff": {
+        "mean": 0,
+        "max": 0,
+        "changed": 0
+      }
+    },
+    {
+      "index": 67,
+      "diff": {
+        "mean": 0,
+        "max": 0,
+        "changed": 0
+      }
+    },
+    {
+      "index": 133,
+      "diff": {
+        "mean": 0,
+        "max": 0,
+        "changed": 0
+      }
+    },
+    {
+      "index": 134,
+      "diff": {
+        "mean": 0,
+        "max": 0,
+        "changed": 0
+      }
+    }
+  ],
+  "wrap": {
+    "mean": 0.882470703125,
+    "max": 136,
+    "changed": 1624
+  },
+  "firstAdjacent": {
+    "mean": 0.93551025390625,
+    "max": 136,
+    "changed": 1653
+  },
+  "lastAdjacent": {
+    "mean": 0.9106689453125,
+    "max": 136,
+    "changed": 1656
+  },
+  "previewDiff": {
+    "mean": 0,
+    "max": 0,
+    "changed": 0
+  },
+  "previewHasTransparency": true,
+  "externalSvg": {
+    "loaded": true,
+    "width": 64
+  }
+}

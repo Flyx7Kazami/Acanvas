@@ -1,0 +1,16 @@
+{
+  "base": "http://127.0.0.1:50847",
+  "session": "1d5864a8-9fc2-4bbb-a291-453cd9ffa117",
+  "checks": [
+    "success moves upward into place, corner fixed, focus and click-through retained",
+    "2800ms expiry starts upward exit, immediately inert, DOM removed after motion",
+    "rapid burst keeps latest full notice, two thin backplates, no replay on older expiry",
+    "error transient follows the same enter and exit lifetime",
+    "upload enter/exit preserve Cancel operation and hover-locked layout",
+    "390 light/dark and reduced-motion immediate completion",
+    "same-id connection exit reversal survives old completion and updates content",
+    "zero browser exceptions",
+    "actionable save error enters, real Retry saving succeeds, status exits inert"
+  ],
+  "errors": []
+}

@@ -1,0 +1,43 @@
+{
+  "origin": "http://127.0.0.1:4317",
+  "entryMatches": true,
+  "resources": [
+    {
+      "path": "/favicon.svg",
+      "status": 200,
+      "bytes": 670,
+      "matches": true
+    },
+    {
+      "path": "/assets/main-BgxEzg2y.js",
+      "status": 200,
+      "bytes": 363122,
+      "matches": true
+    },
+    {
+      "path": "/assets/theme-Jefsv8aK.js",
+      "status": 200,
+      "bytes": 217168,
+      "matches": true
+    },
+    {
+      "path": "/assets/theme-C9t-xkMM.css",
+      "status": 200,
+      "bytes": 57106,
+      "matches": true
+    },
+    {
+      "path": "/assets/main-BeyK8uRr.css",
+      "status": 200,
+      "bytes": 59727,
+      "matches": true
+    },
+    {
+      "path": "/brand/acanvas-icon.svg",
+      "status": 200,
+      "bytes": 670,
+      "matches": true
+    }
+  ],
+  "passed": true
+}

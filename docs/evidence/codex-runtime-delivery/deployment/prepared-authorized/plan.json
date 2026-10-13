@@ -1,0 +1,23 @@
+{
+  "createdAt": "2026-10-12T19:04:27.234Z",
+  "executeApproved": false,
+  "candidateBuildSha256": "ae4ed3cabefa567c8e32fe273465bd62f2c3f6b863c221cfafaab6f9068d841d",
+  "candidateDistFiles": 255,
+  "quiescent": false,
+  "stoppedTaskException": {
+    "identitySha256": "ae0ee6d05b155e913f09094ffeacbae56cdf4c861a46d22eb281f74f199daeb6",
+    "basis": "The user explicitly confirmed the original execution stopped and authorized restart, as relayed by the parent agent.",
+    "expectedTransition": "Only the identified task/run become interrupted with the normal restart reason/time and its session consumer becomes null; all other public business fields and bytes remain exact."
+  },
+  "originalDistSha256": "6608743d8cce1aabdcc1886ad009dd6be1c4ef87e9881c2af83580d29c786c19",
+  "backup": "Original served dist retained in an owned protected deployment directory; no original runtime data is copied.",
+  "actions": [
+    "Fresh public API and all asset byte hashes; require zero activity, or only the explicitly authorized exact stopped-task identity; always require zero edits.",
+    "Normal project stop using the served CLI; explicitly verify readRuntime is empty.",
+    "Move the original dist into owned rollback storage, copy the exact validated candidate dist, and verify its manifest.",
+    "Normal project open with an explicit existing session, original port/network/preview configuration, and cleaned automatic binding environment.",
+    "Restore only previously owned managed browser sessions; do not open ordinary user pages or attach host runtimes.",
+    "Compare every original public business field and asset byte hash twice, allowing only the explicit stopped-task normal restart transition; verify the frozen build manifest, static HTTP resources, service health, and host status for every existing session.",
+    "On failure, reconcile fresh runtime identity, normally stop only the known current service, and restore/reopen the owned original dist only after runtime is empty; retain all evidence."
+  ]
+}

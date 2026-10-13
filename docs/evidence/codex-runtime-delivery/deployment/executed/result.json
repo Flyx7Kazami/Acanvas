@@ -1,0 +1,225 @@
+{
+  "status": "updated",
+  "candidateBuildSha256": "ae4ed3cabefa567c8e32fe273465bd62f2c3f6b863c221cfafaab6f9068d841d",
+  "deployedDistSha256": "ae4ed3cabefa567c8e32fe273465bd62f2c3f6b863c221cfafaab6f9068d841d",
+  "actualHttpResourcesSha256": "81fc7d02d5ccd7a5d7e68d9fe1e88c3b22a3eccbe0e216ec5d828771ab256727",
+  "projectId": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+  "serviceBefore": {
+    "pid": 17152,
+    "instanceId": "60180ca7-544b-4322-aa1f-75ed15c4d7ed"
+  },
+  "serviceAfter": {
+    "pid": 56724,
+    "instanceId": "6cc3b872-3c47-4ba3-b2c8-adc08f89a910"
+  },
+  "openResponseReconciled": false,
+  "originalBusinessFieldsPreservedTwice": true,
+  "authorizedStoppedTaskTransitionVerifiedTwice": true,
+  "stoppedTaskException": {
+    "identitySha256": "ae0ee6d05b155e913f09094ffeacbae56cdf4c861a46d22eb281f74f199daeb6",
+    "basis": "The user explicitly confirmed the original execution stopped and authorized restart, as relayed by the parent agent.",
+    "expectedTransition": "Only the identified task/run become interrupted with the normal restart reason/time and its session consumer becomes null; all other public business fields and bytes remain exact."
+  },
+  "allOriginalAssetBytesEqualTwice": true,
+  "originalNetworkAndPreviewEqualTwice": true,
+  "originalOwnedBrowserContextsEqualTwice": true,
+  "hostStatusesRead": 6,
+  "hostAttachments": 0,
+  "scopeCountUnchanged": true,
+  "queuedTasksUnchanged": true,
+  "before": {
+    "capturedAt": "2026-10-12T19:15:42.539Z",
+    "service": {
+      "pid": 17152,
+      "instanceId": "60180ca7-544b-4322-aa1f-75ed15c4d7ed"
+    },
+    "projectId": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+    "sessions": 6,
+    "drafts": 6,
+    "tasks": 38,
+    "taskStatuses": {
+      "cancelled": 30,
+      "queued": 7,
+      "running": 1
+    },
+    "runs": 1,
+    "receipts": 0,
+    "lateResults": 0,
+    "assets": 137,
+    "assetBytes": 97762241,
+    "objects": 40,
+    "annotations": 15,
+    "quiescence": {
+      "activeConsumers": 1,
+      "runningTasks": 1,
+      "runningRuns": 1,
+      "editingTasks": 0,
+      "editingDrafts": 0
+    },
+    "businessSha256": "8753339028a530ca1893df4d1820991afd7db92ecef5fd7a547896357261dd26",
+    "assetBytesSha256": "b7010ba25a2831e8d48820da00044dca8b3ba7b8d4aba67e25adc36cbbe65e5c",
+    "sessionsSha256": "7187fe1e1ef07e432de87608a7fb9e6bc7b4b45f806ba842accb2739eb89282f",
+    "network": {
+      "url": "http://127.0.0.1:4317",
+      "bind": "127.0.0.1",
+      "allowedHosts": [],
+      "previewOrigins": [],
+      "urls": [],
+      "loopbackPreviewOrigins": [
+        "http://localhost:60186"
+      ]
+    },
+    "managedBrowser": {
+      "running": false,
+      "pages": 0,
+      "contextSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "httpResources": {
+      "files": 11,
+      "sha256": "dc281403950a5720d750bda1549a1e30ee11078f01c33ae15ec5c631b6ba4e8c"
+    },
+    "dist": {
+      "files": 247,
+      "sha256": "6608743d8cce1aabdcc1886ad009dd6be1c4ef87e9881c2af83580d29c786c19"
+    },
+    "stableDuringCapture": true
+  },
+  "after": [
+    {
+      "capturedAt": "2026-10-12T19:15:47.608Z",
+      "service": {
+        "pid": 56724,
+        "instanceId": "6cc3b872-3c47-4ba3-b2c8-adc08f89a910"
+      },
+      "projectId": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+      "sessions": 6,
+      "drafts": 6,
+      "tasks": 38,
+      "taskStatuses": {
+        "cancelled": 30,
+        "interrupted": 1,
+        "queued": 7
+      },
+      "runs": 1,
+      "receipts": 0,
+      "lateResults": 0,
+      "assets": 137,
+      "assetBytes": 97762241,
+      "objects": 40,
+      "annotations": 15,
+      "quiescence": {
+        "activeConsumers": 0,
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0
+      },
+      "businessSha256": "95713e0bd2580f794d47bb358d66ee92eb22a4294925ff9afeb482f70c8b17e6",
+      "assetBytesSha256": "b7010ba25a2831e8d48820da00044dca8b3ba7b8d4aba67e25adc36cbbe65e5c",
+      "sessionsSha256": "cd9ec8319fc55b106e73e8a7a8f6724d8c4bdb481e91ce8489c76b034b0d6b92",
+      "network": {
+        "url": "http://127.0.0.1:4317",
+        "bind": "127.0.0.1",
+        "allowedHosts": [],
+        "previewOrigins": [],
+        "urls": [],
+        "loopbackPreviewOrigins": [
+          "http://localhost:60186"
+        ]
+      },
+      "managedBrowser": {
+        "running": false,
+        "pages": 0,
+        "contextSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "httpResources": {
+        "files": 11,
+        "sha256": "81fc7d02d5ccd7a5d7e68d9fe1e88c3b22a3eccbe0e216ec5d828771ab256727"
+      },
+      "dist": {
+        "files": 255,
+        "sha256": "ae4ed3cabefa567c8e32fe273465bd62f2c3f6b863c221cfafaab6f9068d841d"
+      },
+      "stableDuringCapture": true
+    },
+    {
+      "capturedAt": "2026-10-12T19:15:48.195Z",
+      "service": {
+        "pid": 56724,
+        "instanceId": "6cc3b872-3c47-4ba3-b2c8-adc08f89a910"
+      },
+      "projectId": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+      "sessions": 6,
+      "drafts": 6,
+      "tasks": 38,
+      "taskStatuses": {
+        "cancelled": 30,
+        "interrupted": 1,
+        "queued": 7
+      },
+      "runs": 1,
+      "receipts": 0,
+      "lateResults": 0,
+      "assets": 137,
+      "assetBytes": 97762241,
+      "objects": 40,
+      "annotations": 15,
+      "quiescence": {
+        "activeConsumers": 0,
+        "runningTasks": 0,
+        "runningRuns": 0,
+        "editingTasks": 0,
+        "editingDrafts": 0
+      },
+      "businessSha256": "95713e0bd2580f794d47bb358d66ee92eb22a4294925ff9afeb482f70c8b17e6",
+      "assetBytesSha256": "b7010ba25a2831e8d48820da00044dca8b3ba7b8d4aba67e25adc36cbbe65e5c",
+      "sessionsSha256": "cd9ec8319fc55b106e73e8a7a8f6724d8c4bdb481e91ce8489c76b034b0d6b92",
+      "network": {
+        "url": "http://127.0.0.1:4317",
+        "bind": "127.0.0.1",
+        "allowedHosts": [],
+        "previewOrigins": [],
+        "urls": [],
+        "loopbackPreviewOrigins": [
+          "http://localhost:60186"
+        ]
+      },
+      "managedBrowser": {
+        "running": false,
+        "pages": 0,
+        "contextSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "httpResources": {
+        "files": 11,
+        "sha256": "81fc7d02d5ccd7a5d7e68d9fe1e88c3b22a3eccbe0e216ec5d828771ab256727"
+      },
+      "dist": {
+        "files": 255,
+        "sha256": "ae4ed3cabefa567c8e32fe273465bd62f2c3f6b863c221cfafaab6f9068d841d"
+      },
+      "stableDuringCapture": true
+    }
+  ],
+  "phases": [
+    {
+      "phase": "normal-stop-completed",
+      "at": "2026-10-12T19:15:43.360Z"
+    },
+    {
+      "phase": "old-dist-retained",
+      "at": "2026-10-12T19:15:43.425Z"
+    },
+    {
+      "phase": "exact-candidate-installed",
+      "at": "2026-10-12T19:15:44.158Z"
+    },
+    {
+      "phase": "original-context-reopened",
+      "at": "2026-10-12T19:15:45.058Z"
+    },
+    {
+      "phase": "two-comparisons-passed",
+      "at": "2026-10-12T19:15:48.246Z"
+    }
+  ]
+}

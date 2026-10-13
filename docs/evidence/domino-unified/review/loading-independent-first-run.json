@@ -1,0 +1,18 @@
+{
+  "project": "/private/tmp/acanvas-domino-independent/project-tEAys4",
+  "base": "http://127.0.0.1:61322",
+  "browser": "155.0.8059.40",
+  "checks": [
+    "delayed real startup and decorative SVG semantics"
+  ],
+  "errors": [],
+  "limits": [
+    "Backend SceneHtmlSurface uses actual component lifecycle with controlled API fixture; default production path uses iframe preview.",
+    "Session switch branch retains original component source; product currently exposes no switch control."
+  ],
+  "failure": {
+    "message": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Edit Markdown source', exact: true })\u001b[22m\n",
+    "stack": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Edit Markdown source', exact: true })\u001b[22m\n\n    at /private/tmp/acanvas-domino-independent/loading-review.mjs:29:412"
+  },
+  "completedAt": "2026-10-13T05:49:33.727Z"
+}

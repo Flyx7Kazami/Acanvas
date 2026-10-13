@@ -1,48 +1,79 @@
-# Domino loading animation
+# Continuous grayscale domino loading
 
 Date: 2026-10-13 (Asia/Shanghai).
 
 ## Requirement
 
-The user requests a loading animation built from the selected three-card domino mark: pure outlines, a clear sequential domino collapse, and continuous looping. Use the installed Anatomy skill's projection and rounded geometry tools. The requested outline style determines the rendering.
+### Current selection: upper-right to lower-left, unified loading (2026-10-13)
 
-The selected PNG remains the static product icon. The loading mark is a small monochrome outline that inherits the surrounding text color and works on transparent backgrounds.
+The user chooses the preserved upper-right-to-lower-left grayscale version, requests a modest speed reduction and applies it to existing loading states. The selected 14/30/14 geometry and −35° camera remain; cadence changes from 300ms to 375ms, with proportional timing. Static branding becomes a faithful SVG of the selected green/pink/gray icon. Current implementation and validation are recorded in [Domino SVG and unified loading](DOMINO_UNIFIED.md). The following sections preserve the preceding candidate work.
 
-## Behavior and implementation
+### Current correction: projected contraction and slower travel (2026-10-13)
 
-- Three rounded upright domino outlines topple in sequence, rotating around their bottom edges until clearly lying down. Use actual projected rotation so the movement reads as falling in depth.
-- A brief settled pose and smooth staggered reset join the next fall into a continuous periodic loop, approximately two seconds long.
-- Render strokes with transparent interiors. Keep the mark free of fills, surface shading, gradients, shadows, pips and framing.
-- Provide a reusable React loading component and a portable animated SVG. Precompute projection with Anatomy; prefer CSS/SVG animation with no per-frame React render.
-- Use the component for opening a board and the board-switch loading indicator. Keep unrelated compact progress controls in their existing form.
-- The product loading state presents only its normal product copy and the loader. The standalone preview opens directly to the small loading animation, with its current theme colors.
-- Reduced motion presents a still recognizable outline mark. Expose a single stable loading status rather than announcements from each frame.
+The user rejected the density/height candidate's perceived breathing and speed. The supplied comparison shows the earlier view's faces contracting toward an edge-on pose and then reopening, while the newer view retains broad overlapping faces. Acceptance now requires a clearly visible narrowing/opening arc and negative space between the upright group and falling tail, with materially slower screen travel. Height and pitch alone do not establish this result. Keep the bottom-right-to-top-left travel direction where compatible with the projected pose, use coherent projection rather than an independent face-width scaling effect, and compare actual rendered phases before exporting. Preserve the preceding candidate as a separate reference. This supersedes the preceding refinement's appearance acceptance; prior technical checks remain historical evidence.
 
-## Acceptance
+For the existing upright, parallel, bottom-hinged contact chain, the signed projected area is proportional to `sin(theta) * sin(elevation) - cos(theta) * cos(azimuth) * cos(elevation)`. At azimuth −145°, it keeps one sign throughout the fall. At −35°, it crosses zero and reopens. Rotating the whole projection retains that contraction and the physical contact geometry while changing screen travel direction, and also tilts upright cards on screen. The next preview compares the preserved earlier view at a slower cadence with a rolled-camera candidate, making this appearance/direction tradeoff visible before selecting a production candidate.
 
-1. The reusable app component, portable SVG and PNG render only strokes with transparent interiors and backgrounds. The GIF is a light-background presentation preview for chat.
-2. The falling stage visibly rotates the cards close to horizontal. Each card follows the preceding card, and the loop returns continuously to the same pose.
-3. The animation reads clearly at 32px, 48px and 64px. Light/dark and 390px preview/application views fit.
-4. Startup and the existing board-switch loading branch use the shared component. Delayed-loading browser verification exercises real startup with isolated API fixtures. The internal switching branch is inspected and rendered through a fixture; the current app exposes no user session-switch control.
-5. The portable SVG and app component use the same generated geometry and timing. The standalone HTML works offline.
-6. Relevant type checking and a web build into an explicit temporary output directory pass. Independent clean-context review checks final source, visual poses and functional integration.
+The user explicitly chose to keep bottom-right-to-top-left travel and accept tilted card faces. Proceed with a coherent rolled-camera view that contracts through edge-on and reopens, with a slower cadence around 600–750ms. Preserve the earlier unrolled view and the rejected density-only candidate as comparison references.
 
-## Delivery and existing work
+The selected candidate uses camera azimuth −65°, elevation 28° and roll 30°, applied to the whole projection. Width/height/pitch are 24/34/18, scale is 0.95, origin is [36,44], cadence is 650ms and fallAt is 4745ms. Fifteen slots make a 9750ms cycle. This gives left/up screen travel and a real projected-area zero during the fall. Compared with the preceding 24-pitch/300ms candidate, screen travel is approximately 40% as fast. `comparison/refined-v1.html` and `comparison/model-v1.mjs` preserve that preceding candidate; the three-column page now shows historical, preceding and current views at their own playback speeds.
 
-Technical implementation and focused validation are delegated. The main agent owns this specification, plan updates and final Git commit. Preserve the existing unrelated host-delivery changes in App.tsx, styles.css and the other dirty files.
+### Preceding refinement: icon density and height (2026-10-13)
 
-Use explicit isolated build output paths. The runtime wrapper's typecheck/build commands emit files to dist; choose direct TypeScript checks with `--noEmit` and a Vite `--outDir` for verification. After acceptance, install the accepted web assets and entry point through the reversible web-resource update, keeping the existing service running and user board data outside this task's writes.
+The user asks the bottom-right-to-top-left candidate to recover the earlier direction's breathing room, using the supplied original three-card icon as the reference for density and height. This supersedes the preceding direction-only stage's fixed pitch, scale and quantity. Keep the selected direction, opaque neutral grays, steady camera travel and contact-driven collapse. Refine face proportions, pitch and framing together so upright and turning cards have distinct tall silhouettes and the flattened tail occupies less of the composition. Target roughly three dominant readable cards, with entry and exit partials allowed during continuous travel.
 
-## Status
+Acceptance for this refinement: inspect several poses at real loading sizes and enlarged; verify complete upright entry before falling, forward-only collapse, offscreen recycling and a continuous loop seam; preserve reduced motion and light/dark rendering. Keep the historical direction and pre-refinement candidate as separate references, and provide a three-way live comparison. This stage delivers source and local preview assets; production resource installation follows selection of the visual result. Actual checks and final parameters are recorded below when complete.
 
-The shared `src/web/DominoLoader.tsx` renders three rounded outline paths from generated geometry. `src/web/domino-loader.generated.ts` and `domino-loader.generated.css` are built with the portable SVG from `assets/brand/domino/model.mjs` and `build.mjs`.
+### Refinement result
 
-Each card rotates around its world-space bottom hinge from −8° to 86°, staggered by 135ms, within a two-second loop. CSS animates typed numeric projection vectors; the React component renders a stable SVG. The portable `assets/brand/domino/domino.svg` embeds the same styles and geometry, and `index.html` is a minimal offline preview.
+The final candidate uses width 18, height 36, pitch 24 and corner radius 2.8. Camera origin is [36,54], scale 1.1, azimuth −145° and elevation 28°. The viewport stays 72×64, cadence stays 300ms, and the 15-slot cycle stays 4500ms. Collapse starts at slot age 2225ms. This presents roughly three dominant cards with partial entry and exit faces, and gives the tall central silhouettes more separation from the short exiting tail.
 
-The actual preview and six key poses show the sequential collapse, fully flat pose and reset. Both TypeScript configurations passed checks with `--noEmit`; the Vite production build uses an explicit temporary output directory. Nine product checks passed with zero browser errors, including delayed startup on the ordinary production bundle and the real useBoard/App switching branch invoked through an isolated fixture bridge. That bridge exists only in the fixture build; the ordinary production candidate is separate.
+The main preview, portable SVG, generated React geometry/CSS, transparent PNG and light-background GIF are regenerated. The GIF has 135 frames over 4500ms. The [three-way comparison](../assets/brand/domino/comparison/comparison.html) aligns corresponding fall phases using 0/600/425ms local-time offsets; historical and pre-refinement pages remain saved independently. It is self-contained for offline viewing, and is also available from the existing local preview at `http://127.0.0.1:4339/comparison/comparison.html`.
 
-The refreshed `domino.gif` is a light-background presentation preview: 160×128, 60 frames and exactly two seconds. `preview.png` is a transparent 64px outline. The portable SVG also animates when embedded as an external image.
+Execution checks passed on Node 24.21.0: 145 contact samples, 2670 monotonic-fall/steady-camera samples, 30 offscreen recycle transitions, exact full-cycle matrix continuity and maximum CSS projection error below 0.00048 world-view units. The full upright silhouette is visible about 122ms before falling. Browser checks cover three poses in both themes, 32/48/64px sizes, reduced motion, 390px comparison layout and console errors. Frontend `--noEmit` and Vite build to `/private/tmp/acanvas-domino-breathing-web` passed. Evidence: [execution results](evidence/domino-breathing/verification.json) and [independent review](evidence/domino-breathing/review/).
 
-Independent source, product, visual and export review passed with no open actionable findings. Twelve browser checks completed with zero errors. They cover small sizes, actual light/dark product themes, transparent asset corners, reduced-motion stillness and the loop seam. GIF timing totals exactly 2000ms and its first/last composited frames match. Implementation evidence is recorded in [validation.md](evidence/domino-loading/implementation-20261013/validation.md); independent results are in [review.md](evidence/domino-loading/review-20261013/review.md).
+This is a local visual refinement. The running product service and its installed web resources retain their prior version, and the selected static PNG icon remains the branding asset. Existing overlapping uncommitted workspace changes are preserved; this refinement remains in the working tree for visual selection.
 
-Live web-resource delivery is complete, using the ordinary accepted production build. Existing web assets were retained and the entry point was replaced atomically. Read-only HTTP checks match the accepted entry point and referenced JS/CSS; the existing service process (PID 56724) continues running. The separate fixture build and its hook bridge remain outside deployment. Delivery evidence is recorded in [live-update.json](evidence/domino-loading/implementation-20261013/live-update.json).
+### Preceding direction-only stage
+
+The user wants dominoes to keep falling while the camera continuously travels along the row. The preceding visual correction sets both collapse and camera advance from bottom-right toward top-left, aligns the row with the original icon diagonal, retains the selected gray reference version's visible quantity for that stage, brings the cards closer together, and changes them to borderless solid fills in different grayscale values. The selected PNG remains the static product icon.
+
+Use the installed Anatomy skill for rounded geometry and isometric projection. Card interiors are now opaque neutral grays; the reusable loading asset background remains transparent. The GIF is a light-background presentation preview.
+
+## Preceding stage: motion and rendering
+
+- The user explicitly selected collapse and camera advance toward the upper-left. The row axis and projected world-forward vector therefore point left/up. Upright cards enter upper-left; fallen cards leave lower-right as stationary world hinges drift opposite the tracking camera.
+- The current direction-only stage preserves the first gray reference's quantity, framing, spacing and motion. A later count adjustment is deferred. The selected reference uses 72×64 framing, origin 36/44, scale 1.15, pitch 14 and 15 offscreen-recycling slots.
+- Translate the camera steadily along the advancing collapse, keeping the active wave near the center. Continue through the cycle seam with ordinary frame spacing.
+- Reduce card pitch visibly from the preceding 22 world units. Keep the row close and connected while preserving readable silhouettes at loading sizes.
+- Use a small repeating palette of opaque neutral gray fills with stroke:none. Keep adjacent cards distinguishable and the palette sequence consistent through recycling.
+- Model the filled faces with correct contacts and depth/occlusion. For coplanar-width hinged neighbors, a touching pair can use theta_back = theta_front + asin((pitch/height)*cos(theta_front)); this supports a contact-driven advancing wave without intersecting faces.
+- Populate enough cards to cover entry, collapse and exit. Recycle each slot only when its entire outline is outside the viewport. The visible scene contains continuous falling and camera travel, with no visible stand-up, backward reset or still interval.
+- Share geometry, timing and grayscale fills across React, portable SVG and the offline preview. Preserve the existing product loading integration and keep per-frame React renders out of the animation path.
+- Respect reduced motion with a stable still scene and retain the stable loading status.
+
+## Preceding stage: acceptance
+
+1. The projected world-forward/camera/collapse direction has negative screenX and screenY (upper-left); stationary hinges drift lower-right. The row lies on the bottom-right/top-left diagonal, the selected gray reference's visible quantity and scale are preserved, and pitch remains 14 units.
+2. Card faces use opaque grayscale fills and no border strokes. The asset background is transparent; light/dark and 32/48/64px render clearly.
+3. Each visible card falls once. Recycling is fully outside view; depth order and filled-face overlaps remain correct across entry, collapse, exit and the cycle seam.
+4. Camera translation remains steady across the seam. The GIF samples [0,duration) without a duplicate held endpoint; validate normal adjacent-frame motion through wrap.
+5. The offline preview, external-image SVG, GIF and product component represent the same advancing filled chain. One delayed ordinary-production startup verifies the revised loading appearance; existing switch wiring is retained.
+6. Type checking with --noEmit and an explicit temporary Vite output directory pass. Independent clean-context review checks latest source, gray filled poses, layering, motion and exports.
+
+## Workspace and delivery
+
+Technical execution and focused validation are delegated. The main agent owns this specification, PLAN progress and final commit. Preserve unrelated host-delivery changes. Use explicit isolated build output paths.
+
+The current refinement is delivered through local previews and generated source assets. Production resource installation follows selection of the visual result. Fixture builds remain separate.
+
+## Preceding stage: status
+
+The user selected the earlier gray upper-right-to-lower-left version as the appearance reference, then limited this stage to changing direction while preserving quantity. Separate historical/current previews and synchronized comparison are complete. Further animation adjustments and production delivery remain paused while the user compares them. Earlier-stage checks remain historical evidence rather than acceptance of a newly selected appearance.
+
+
+## Historical comparison request
+
+The user requests a separate copy of the earlier upper-right-to-lower-left gray preview because the perceived material finish differs. Save both earlier and current scenes independently, leaving the current main preview untouched. Show equal sizes, backgrounds and animation phase in a comparison. Recover the original scene file when available; if rebuilding from retained parameters and screenshots, state that evidence boundary.
+
+The first gray preview used the provisional face-center painter key; the current candidate uses hinge-based depth ordering and a different camera side. Preserve the historical rendering for comparison rather than silently correcting it. Independent comparison confirms that camera azimuth and painter ordering differ, while projection scale, timing, pitch, slot count and palette match. The reconstruction boundary and results are recorded in [the comparison report](DOMINO_LOADING_COMPARISON.md).

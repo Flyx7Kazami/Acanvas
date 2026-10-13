@@ -1,0 +1,57 @@
+{
+  "capturedAt": "2026-10-12T19:15:48.195Z",
+  "service": {
+    "pid": 56724,
+    "instanceId": "6cc3b872-3c47-4ba3-b2c8-adc08f89a910"
+  },
+  "projectId": "c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd",
+  "sessions": 6,
+  "drafts": 6,
+  "tasks": 38,
+  "taskStatuses": {
+    "cancelled": 30,
+    "interrupted": 1,
+    "queued": 7
+  },
+  "runs": 1,
+  "receipts": 0,
+  "lateResults": 0,
+  "assets": 137,
+  "assetBytes": 97762241,
+  "objects": 40,
+  "annotations": 15,
+  "quiescence": {
+    "activeConsumers": 0,
+    "runningTasks": 0,
+    "runningRuns": 0,
+    "editingTasks": 0,
+    "editingDrafts": 0
+  },
+  "businessSha256": "95713e0bd2580f794d47bb358d66ee92eb22a4294925ff9afeb482f70c8b17e6",
+  "assetBytesSha256": "b7010ba25a2831e8d48820da00044dca8b3ba7b8d4aba67e25adc36cbbe65e5c",
+  "sessionsSha256": "cd9ec8319fc55b106e73e8a7a8f6724d8c4bdb481e91ce8489c76b034b0d6b92",
+  "network": {
+    "url": "http://127.0.0.1:4317",
+    "bind": "127.0.0.1",
+    "allowedHosts": [],
+    "previewOrigins": [],
+    "urls": [],
+    "loopbackPreviewOrigins": [
+      "http://localhost:60186"
+    ]
+  },
+  "managedBrowser": {
+    "running": false,
+    "pages": 0,
+    "contextSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "httpResources": {
+    "files": 11,
+    "sha256": "81fc7d02d5ccd7a5d7e68d9fe1e88c3b22a3eccbe0e216ec5d828771ab256727"
+  },
+  "dist": {
+    "files": 255,
+    "sha256": "ae4ed3cabefa567c8e32fe273465bd62f2c3f6b863c221cfafaab6f9068d841d"
+  },
+  "stableDuringCapture": true
+}

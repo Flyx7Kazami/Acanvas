@@ -4,6 +4,7 @@ import { inflateSync } from 'node:zlib';
 export const annotationTarget = (value: AnnotationInput | AnnotationTarget): AnnotationTarget => ({
   scope: value.scope, coordinateSpace: value.coordinateSpace,
   objectIds: [...new Set(value.objectIds)].sort(),
+  ...(value.boardGroupId ? { boardGroupId: value.boardGroupId } : {}),
   ...(value.objectId ? { objectId: value.objectId } : {}),
   ...(value.assetId ? { assetId: value.assetId } : {}),
   bounds: { x: value.bounds.x, y: value.bounds.y, width: value.bounds.width, height: value.bounds.height },

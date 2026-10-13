@@ -1,0 +1,34 @@
+Manage the local app-server daemon
+
+Usage: codex app-server daemon [OPTIONS] <COMMAND>
+
+Commands:
+  bootstrap               Install durable local app-server management for SSH-driven use
+  start                   Start the local app server daemon if it is not already running
+  restart                 Restart the local app server daemon
+  update                  Update the daemon package (may interrupt running work)
+  enable-remote-control   Enable remote control for future starts and a currently running managed
+                          daemon
+  disable-remote-control  Disable remote control for future starts and a currently running managed
+                          daemon
+  stop                    Stop the local app server daemon
+  version                 Print local CLI and running app-server versions as JSON
+  help                    Print this message or the help of the given subcommand(s)
+
+Options:
+  -c, --config <key=value>
+          Override a configuration value that would otherwise be loaded from `~/.codex/config.toml`.
+          Use a dotted path (`foo.bar.baz`) to override nested values. The `value` portion is parsed
+          as TOML. If it fails to parse as TOML, the raw string is used as a literal.
+          
+          Examples: - `-c model="o3"` - `-c 'sandbox_permissions=["disk-full-read-access"]'` - `-c
+          shell_environment_policy.inherit=all`
+
+      --enable <FEATURE>
+          Enable a feature (repeatable). Equivalent to `-c features.<name>=true`
+
+      --disable <FEATURE>
+          Disable a feature (repeatable). Equivalent to `-c features.<name>=false`
+
+  -h, --help
+          Print help (see a summary with '-h')

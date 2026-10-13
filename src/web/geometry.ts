@@ -251,7 +251,7 @@ export function mediaContentRect(object: Rect, natural?: { width: number; height
 
 export function zoomAt(view: View, factor: number, anchor: Point): View {
   const world = screenToWorld(anchor, view);
-  const zoom = Math.min(4, Math.max(0.15, view.zoom * factor));
+  const zoom = Math.min(4, Math.max(0.05, view.zoom * factor));
   return { x: anchor.x - world.x * zoom, y: anchor.y - world.y * zoom, zoom };
 }
 
@@ -261,6 +261,6 @@ export function fitView(objects: Rect[], size: { width: number; height: number }
   const top = Math.min(...objects.map(object => object.y));
   const right = Math.max(...objects.map(object => object.x + object.width));
   const bottom = Math.max(...objects.map(object => object.y + object.height));
-  const zoom = Math.min(1.5, Math.max(0.15, Math.min((size.width - 100) / (right - left), (size.height - 130) / (bottom - top))));
+  const zoom = Math.min(1.5, Math.max(0.05, Math.min((size.width - 100) / (right - left), (size.height - 130) / (bottom - top))));
   return { x: (size.width - (right - left) * zoom) / 2 - left * zoom, y: (size.height - (bottom - top) * zoom) / 2 - top * zoom, zoom };
 }

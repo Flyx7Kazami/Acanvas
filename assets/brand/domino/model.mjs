@@ -1,56 +1,70 @@
 import * as k from './vendor/anatomy/iso-kit.mjs';
 
-export const DOMINO_DURATION = 2000;
+export const DOMINO_CADENCE = 375;
+export const DOMINO_CARDS = Array.from({ length: 15 }, (_, index) => index);
+export const DOMINO_DURATION = DOMINO_CADENCE * DOMINO_CARDS.length;
 export const DOMINO_VIEWBOX = [72, 64];
-export const DOMINO_CARDS = [0, 1, 2];
 export const DOMINO_WIDTH = 14;
 export const DOMINO_HEIGHT = 30;
-export const DOMINO_SPACING = 14.2;
-export const DOMINO_REST_ANGLE = -8 * Math.PI / 180;
+export const DOMINO_SPACING = 14;
+export const DOMINO_SPEED = DOMINO_SPACING / DOMINO_CADENCE;
+export const DOMINO_REST_ANGLE = 0;
 export const DOMINO_FALL_ANGLE = 86 * Math.PI / 180;
-export const DOMINO_TIMING = { fallAt: 140, fallStagger: 135, fallDuration: 370, resetAt: 990, resetStagger: 90, resetDuration: 480 };
-const ease = (value) => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
-
-export function dominoAngle(index, milliseconds) {
-  const t = Math.max(0, Math.min(DOMINO_DURATION, milliseconds));
-  const fall = ease((t - DOMINO_TIMING.fallAt - index * DOMINO_TIMING.fallStagger) / DOMINO_TIMING.fallDuration);
-  const reset = ease((t - DOMINO_TIMING.resetAt - index * DOMINO_TIMING.resetStagger) / DOMINO_TIMING.resetDuration);
-  return DOMINO_REST_ANGLE + (DOMINO_FALL_ANGLE - DOMINO_REST_ANGLE) * fall * (1 - reset);
-}
-
-// u runs across the card, v runs from the bottom hinge to its top.
-// Rotation is around that bottom edge in world space before projection.
-export function dominoPoint(index, u, v, angle) {
-  return [index * DOMINO_SPACING + v * Math.sin(angle), -u, v * Math.cos(angle)];
-}
-const extremes = DOMINO_CARDS.flatMap(index => Array.from({ length: 95 }, (_, step) => {
-  const angle = DOMINO_REST_ANGLE + (DOMINO_FALL_ANGLE - DOMINO_REST_ANGLE) * step / 94;
-  return [-DOMINO_WIDTH / 2, DOMINO_WIDTH / 2].flatMap(u => [0, DOMINO_HEIGHT].map(v => dominoPoint(index, u, v, angle)));
-}).flat());
-export const DOMINO_CAMERA = k.fitProjection(extremes, ...DOMINO_VIEWBOX, { pad: 5.5, azimuth: 35, elevation: 28 });
+export const DOMINO_TIMING = { fallAt: 6 * DOMINO_CADENCE };
+export const DOMINO_CAMERA = { origin: [36, 44], scale: 1.15, azimuth: -35, elevation: 28 };
+const startX = DOMINO_CARDS.length * DOMINO_SPACING / 2;
 export const DOMINO_PATH = k.pathOf(k.roundedPlan({ x: -DOMINO_WIDTH / 2, y: 0, w: DOMINO_WIDTH, d: DOMINO_HEIGHT, r: 2.3 }, 16), true);
 
-export function dominoMatrix(index, milliseconds) {
-  const angle = dominoAngle(index, milliseconds);
-  const origin = k.iso(dominoPoint(index, 0, 0, angle), DOMINO_CAMERA);
-  const u = k.iso(dominoPoint(index, 1, 0, angle), DOMINO_CAMERA);
-  const v = k.iso(dominoPoint(index, 0, 1, angle), DOMINO_CAMERA);
+export function dominoAngleAtAge(age) {
+  if (age <= 0) return DOMINO_REST_ANGLE;
+  const turns = age / DOMINO_CADENCE;
+  const complete = Math.floor(turns);
+  const ratio = DOMINO_SPACING / DOMINO_HEIGHT;
+  let angle = (turns - complete) * Math.asin(ratio);
+  for (let step = 0; step < complete; step++) angle += Math.asin(ratio * Math.cos(angle));
+  return Math.min(DOMINO_FALL_ANGLE, angle);
+}
+
+// A slot owns one stationary world hinge until it is fully behind the camera.
+// Its next hinge is one row length ahead, outside the opposite viewport edge.
+export function dominoState(index, milliseconds) {
+  const phaseTime = milliseconds + index * DOMINO_CADENCE;
+  const generation = Math.floor(phaseTime / DOMINO_DURATION);
+  const phase = phaseTime - generation * DOMINO_DURATION;
+  const worldHingeX = startX - index * DOMINO_SPACING + generation * DOMINO_CARDS.length * DOMINO_SPACING;
+  const cameraX = milliseconds * DOMINO_SPEED;
+  return { generation, phase, worldHingeX, cameraX, relativeX: worldHingeX - cameraX, angle: dominoAngleAtAge(phase - DOMINO_TIMING.fallAt) };
+}
+
+// u runs across the face; v runs from its fixed bottom hinge to the top.
+export function dominoPoint(relativeX, u, v, angle) {
+  return [relativeX + v * Math.sin(angle), -u, v * Math.cos(angle)];
+}
+export const dominoProject = point => k.iso(point, DOMINO_CAMERA);
+function matrixAt(relativeX, angle) {
+  const origin = k.iso(dominoPoint(relativeX, 0, 0, angle), DOMINO_CAMERA);
+  const u = k.iso(dominoPoint(relativeX, 1, 0, angle), DOMINO_CAMERA);
+  const v = k.iso(dominoPoint(relativeX, 0, 1, angle), DOMINO_CAMERA);
   return [u[0] - origin[0], u[1] - origin[1], v[0] - origin[0], v[1] - origin[1], ...origin];
 }
-export const dominoTransform = (index, milliseconds) => `matrix(${dominoMatrix(index, milliseconds).map(value => Number(value.toFixed(5))).join(',')})`;
+export function dominoMatrix(index, milliseconds) {
+  const state = dominoState(index, milliseconds);
+  return matrixAt(state.relativeX, state.angle);
+}
+function cycleMatrix(phase) {
+  return matrixAt(startX - phase * DOMINO_SPEED, dominoAngleAtAge(phase - DOMINO_TIMING.fallAt));
+}
+const number = value => Number(value.toFixed(5));
+export const dominoTransform = (index, milliseconds) => `matrix(${dominoMatrix(index, milliseconds).map(number).join(',')})`;
 
 export function dominoCss() {
-  const steps = new Set(Array.from({ length: 81 }, (_, step) => step * DOMINO_DURATION / 80));
-  DOMINO_CARDS.forEach(index => {
-    for (const time of [DOMINO_TIMING.fallAt + index * DOMINO_TIMING.fallStagger, DOMINO_TIMING.fallAt + index * DOMINO_TIMING.fallStagger + DOMINO_TIMING.fallDuration, DOMINO_TIMING.resetAt + index * DOMINO_TIMING.resetStagger, DOMINO_TIMING.resetAt + index * DOMINO_TIMING.resetStagger + DOMINO_TIMING.resetDuration]) steps.add(time);
-  });
-  const times = [...steps].sort((a, b) => a - b);
-  const number = value => Number(value.toFixed(5));
-  return '@property --acanvas-domino-x{syntax:"<number>";inherits:false;initial-value:0}@property --acanvas-domino-y{syntax:"<number>";inherits:false;initial-value:0}\n.domino-loader{display:block;flex-shrink:0;overflow:visible;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}.domino-loader path{transform-origin:0 0;animation-duration:' + DOMINO_DURATION + 'ms;animation-timing-function:linear;animation-iteration-count:infinite}\n' + DOMINO_CARDS.map(index => {
-    const [a, b, c, d, e, f] = dominoMatrix(index, 0).map(number);
-    return `.domino-loader .domino-card-${index}{--acanvas-domino-x:${c};--acanvas-domino-y:${d};transform:matrix(${a},${b},var(--acanvas-domino-x),var(--acanvas-domino-y),${e},${f});animation-name:acanvas-domino-${index}}\n@keyframes acanvas-domino-${index}{${times.map(time => {
-      const matrix = dominoMatrix(index, time);
-      return `${number(time / DOMINO_DURATION * 100)}%{--acanvas-domino-x:${number(matrix[2])};--acanvas-domino-y:${number(matrix[3])}}`;
-    }).join('')}}`;
-  }).join('\n') + '\n@media(prefers-reduced-motion:reduce){.domino-loader path{animation:none}}';
+  const times = Array.from({ length: DOMINO_CARDS.length * 24 + 1 }, (_, step) => step * DOMINO_CADENCE / 24);
+  const properties = ['x', 'y', 'tx', 'ty'];
+  const registrations = properties.map(name => `@property --acanvas-domino-${name}{syntax:"<number>";inherits:false;initial-value:0}`).join('');
+  const coefficients = matrix => `--acanvas-domino-x:${number(matrix[2])};--acanvas-domino-y:${number(matrix[3])};--acanvas-domino-tx:${number(matrix[4])};--acanvas-domino-ty:${number(matrix[5])}`;
+  // Face centers set the painter order for the selected camera.
+  const depthKey = phase => Math.round(10000 + 100 * k.depthOf(dominoPoint(startX - phase * DOMINO_SPEED, 0, DOMINO_HEIGHT / 2, dominoAngleAtAge(phase - DOMINO_TIMING.fallAt)), DOMINO_CAMERA));
+  const [a, b] = cycleMatrix(0).map(number);
+  const palette = '.domino-loader{--domino-gray-0:#747474;--domino-gray-1:#a0a0a0;--domino-gray-2:#c5c5c5}@media(prefers-color-scheme:dark){.domino-loader{--domino-gray-0:#777;--domino-gray-1:#a3a3a3;--domino-gray-2:#d2d2d2}}:root[data-theme="light"] .domino-loader{--domino-gray-0:#747474;--domino-gray-1:#a0a0a0;--domino-gray-2:#c5c5c5}:root[data-theme="dark"] .domino-loader{--domino-gray-0:#777;--domino-gray-1:#a3a3a3;--domino-gray-2:#d2d2d2}';
+  return registrations + palette + `\n.domino-loader{display:block;flex-shrink:0;overflow:hidden;stroke:none}.domino-stage{position:relative;width:100%;height:100%;overflow:hidden;isolation:isolate}.domino-layer{position:absolute;left:0;top:0;width:1px;height:1px;transform-origin:0 0;transform:matrix(${a},${b},var(--acanvas-domino-x),var(--acanvas-domino-y),var(--acanvas-domino-tx),var(--acanvas-domino-ty));animation:acanvas-domino-travel ${DOMINO_DURATION}ms linear infinite}.domino-layer svg{display:block;overflow:visible}.domino-layer path{stroke:none;fill:var(--domino-tone)}\n` + DOMINO_CARDS.map(index => `.domino-loader .domino-card-${index}{${coefficients(dominoMatrix(index, 0))};--domino-tone:var(--domino-gray-${index % 3});z-index:${depthKey(index * DOMINO_CADENCE)};animation-delay:-${index * DOMINO_CADENCE}ms}`).join('\n') + `\n@keyframes acanvas-domino-travel{${times.map(time => `${number(time / DOMINO_DURATION * 100)}%{${coefficients(cycleMatrix(time))};z-index:${depthKey(time)}}`).join('')}}\n@media(prefers-reduced-motion:reduce){.domino-layer{animation:none}}`;
 }

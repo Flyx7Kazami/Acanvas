@@ -2,17 +2,17 @@
 
 Date: 2026-10-13 (Asia/Shanghai).
 
-Current loading direction: [outline domino loading](DOMINO_LOADING.md). The user requests transparent interiors and an actual sequential collapse. This document records the selected static PNG and the initial 8.6-second filled motion; the loading specification supersedes that motion direction. Generated preview and animation paths now follow the current loading specification as it is implemented.
+Current identity and loading selection: [Domino SVG and unified loading](DOMINO_UNIFIED.md). The selected green/pink/gray mark is redrawn as SVG, and loading uses the upper-right-to-lower-left grayscale sequence at 375ms per card. This document records the supplied PNG and initial 8.6-second motion as historical evidence.
 
 ## Scope
 
-The selected acanvas icon is the user-provided `Layered Pastel Cards.png`: three overlapping rounded cards in sage, pink and gray on its original light background. This selection supersedes the earlier exploratory icon directions. Preserve the supplied image as the product asset.
+The selected Acanvas icon is the user-provided `Layered Pastel Cards.png`: three overlapping rounded cards in sage, pink and gray on its original light background. This selection supersedes the earlier exploratory icon directions. Preserve the supplied image as the product asset.
 
 Use the installed [Anatomy skill](https://github.com/wheresryan22/anatomy) to create an interactive animation based on these three cards. The identity remains a simple card composition. The skill's projection, volume, motion and visual verification guidance apply to this mark; machinery and decorative components would change the requested subject.
 
 ## Product behavior
 
-- Show appropriately sized exports of the selected PNG in the browser icon and the existing acanvas identity locations, alongside the current wordmark. Preserve the untouched master with the source assets.
+- Show appropriately sized exports of the selected PNG in the browser icon and the existing Acanvas identity locations, alongside the current wordmark. Preserve the untouched master with the source assets.
 - Deliver a standalone, offline-capable HTML animation with editable source. Keep the sage → pink → gray order and the rounded card silhouette.
 - A calm staggered sequence separates or leans the three cards, cascades their motion, and returns them to the composed mark. Hold the composed pose long enough to recognize the icon.
 - Provide pointer and keyboard playback controls, replay and timeline inspection. Playback pauses while the document or figure is hidden. Reduced motion opens in a still pose and supports direct inspection without automatic motion.
@@ -58,4 +58,4 @@ Independent source, interaction, visual and export review passed with no open ac
 
 An initial review command used the project's default build and wrote `dist/web` before the intended delivery step. The running service retained its process and the review performed no whiteboard API writes. The project's typecheck also compiles server/test output into `dist`; its name does not imply a read-only check. Final product verification uses a Vite build with an explicit temporary output directory.
 
-The accepted web-resource update is complete. The previous review-built entry point was backed up under `/private/tmp/acanvas-domino-verification-20261013/live-backup/`; the accepted entry point was installed atomically and existing web assets were retained. Read-only HTTP checks returned 200 with bytes matching the accepted bundle and 64/128px icon exports. The original service process (PID 56724) remains running. Refresh acanvas to load the selected icon. Whiteboard data was outside this task's writes.
+The accepted web-resource update is complete. The previous review-built entry point was backed up under `/private/tmp/acanvas-domino-verification-20261013/live-backup/`; the accepted entry point was installed atomically and existing web assets were retained. Read-only HTTP checks returned 200 with bytes matching the accepted bundle and 64/128px icon exports. The original service process (PID 56724) remains running. Refresh Acanvas to load the selected icon. Whiteboard data was outside this task's writes.

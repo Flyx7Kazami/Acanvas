@@ -1,0 +1,20 @@
+{
+  "sourceCadenceMs": 375,
+  "sourceLoopMs": 5625,
+  "sourceFrames": 225,
+  "frameStepMs": 25,
+  "gifSize": [
+    160,
+    128
+  ],
+  "previewSize": [
+    64,
+    64
+  ],
+  "forwardProjection": [
+    -0.8343516574930732,
+    0.5594118246110042
+  ],
+  "sourceEndpointEqualsFirst": true,
+  "pageErrors": []
+}

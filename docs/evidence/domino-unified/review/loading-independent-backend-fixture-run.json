@@ -1,0 +1,37 @@
+{
+  "project": "/private/tmp/acanvas-domino-independent/project-qsmOfR",
+  "base": "http://127.0.0.1:63702",
+  "browser": "155.0.8059.40",
+  "checks": [
+    "delayed real startup and decorative SVG semantics",
+    "Markdown preview/source and Note loading in actual390 light/dark",
+    "text loaders end with source and note controls ready",
+    "Send busy keeps accessible name and ends in queue",
+    "Cancel busy ends with completed cancellation",
+    "actual annotation capture background state and retained Done busy complete",
+    "9 independently matched reference frames at1.25 time including exact loop",
+    "reduced motion remains static"
+  ],
+  "errors": [],
+  "limits": [
+    "Backend SceneHtmlSurface uses actual component lifecycle with controlled API fixture; default production path uses iframe preview.",
+    "Session switch branch retains original component source; product currently exposes no switch control."
+  ],
+  "completedAt": "2026-10-13T05:55:57.295Z",
+  "findings": [
+    {
+      "priority": "P2",
+      "file": "src/web/App.tsx",
+      "line": 1169,
+      "summary": "Conflict saving loader vanishes with panel while request is pending.",
+      "evidence": {
+        "message": "expect(locator).toBeVisible() failed\n\nLocator:  getByRole('button', { name: 'Saving…', exact: true }).locator('.domino-loader')\nExpected: visible\nReceived: <element(s) not found>\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"to.be.visible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'Saving…', exact: true }).locator('.domino-loader')\u001b[22m\n",
+        "stack": "Error: expect(locator).toBeVisible() failed\n\nLocator:  getByRole('button', { name: 'Saving…', exact: true }).locator('.domino-loader')\nExpected: visible\nReceived: <element(s) not found>\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"to.be.visible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'Saving…', exact: true }).locator('.domino-loader')\u001b[22m\n\n    at Proxy.<anonymous> (/Users/yingbowu/Documents/Projects/acanvas/node_modules/playwright/lib/matchers/expect.js:221:24)\n    at file:///private/tmp/acanvas-domino-independent/loading-review.mjs:33:711"
+      }
+    }
+  ],
+  "failure": {
+    "message": "expect(locator).toBeVisible() failed\n\nLocator:  locator('.html-surface-loading[role=status] .domino-loader')\nExpected: visible\nReceived: <element(s) not found>\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"to.be.visible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.html-surface-loading[role=status] .domino-loader')\u001b[22m\n",
+    "stack": "Error: expect(locator).toBeVisible() failed\n\nLocator:  locator('.html-surface-loading[role=status] .domino-loader')\nExpected: visible\nReceived: <element(s) not found>\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"to.be.visible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.html-surface-loading[role=status] .domino-loader')\u001b[22m\n\n    at Proxy.<anonymous> (/Users/yingbowu/Documents/Projects/acanvas/node_modules/playwright/lib/matchers/expect.js:221:24)\n    at file:///private/tmp/acanvas-domino-independent/loading-review-continuation.mjs:18:240\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:541:9)"
+  }
+}

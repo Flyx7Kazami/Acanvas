@@ -3,7 +3,7 @@ import type { Immutable, SceneInput, ScenePresentation, ScenePrimitive, SceneSiz
 
 type SceneContext = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
-function drawPrimitive(context: SceneContext, primitive: ScenePrimitive): void {
+export function drawPrimitive(context: SceneContext, primitive: ScenePrimitive): void {
   if (primitive.kind === 'rect') {
     context.save();
     if (primitive.shadow) { const transform = context.getTransform(), scale = Math.max(Math.abs(transform.a), Math.abs(transform.d)); context.shadowColor = primitive.shadow.color; context.shadowBlur = primitive.shadow.blur * scale; context.shadowOffsetY = primitive.shadow.y * scale; }
@@ -51,9 +51,12 @@ export function drawScene(context: SceneContext, input: SceneInput, bitmap: Scen
   context.save(); context.setTransform(1, 0, 0, 1, 0, 0);
   context.clearRect(0, 0, bitmap.width, bitmap.height); context.fillStyle = input.background; context.fillRect(0, 0, bitmap.width, bitmap.height);
   context.setTransform(scaleX * input.camera.zoom, 0, 0, scaleY * input.camera.zoom, scaleX * input.camera.x, scaleY * input.camera.y);
+  for (const primitive of input.underlays ?? []) drawPrimitive(context, primitive);
   const layers = [...input.layers].sort((left, right) => left.layer - right.layer);
   for (const layer of layers) {
     context.save();
+    if (layer.opacity !== undefined) context.globalAlpha = layer.opacity;
+    if (layer.blur) context.filter = `blur(${layer.blur * input.camera.zoom * scaleX}px)`;
     if (layer.clip) { const { x, y, width, height } = layer.clip; context.beginPath(); context.rect(x, y, width, height); context.clip(); }
     for (const primitive of layer.primitives) drawPrimitive(context, primitive);
     context.restore();

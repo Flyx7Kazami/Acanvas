@@ -1,0 +1,99 @@
+{
+  "status": "PASS",
+  "nodeVersion": "v24.21.0",
+  "candidate": "/tmp/acanvas-protocol-candidate.XkHa59",
+  "sourceHashes": {
+    "src/server/codex-runtime.ts": "d4fb27fd004d905e50fd2fc4f24821f8a2625f616549e1388ff8994d41906fe6",
+    "tests/codex-runtime.test.ts": "fdd9710b1d881f0db36dc26e98238b2b57f871a1dbddefda887c62b8fe85a06f"
+  },
+  "compiledClientHash": "f681473a2fdce80fd2e2858f791d6fed55c8caecb3af38c2f79738360a127e52",
+  "commands": [
+    {
+      "cwd": "/tmp/acanvas-protocol-candidate.XkHa59",
+      "argv": [
+        "./.runtime/node_modules/node/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.server.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "cwd": "/tmp/acanvas-protocol-candidate.XkHa59",
+      "argv": [
+        "./.runtime/node_modules/node/bin/node",
+        "--test",
+        "dist/tests/codex-runtime.test.js"
+      ],
+      "exitCode": 0,
+      "tests": 8,
+      "pass": 8,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 242.344
+    },
+    {
+      "cwd": "/Users/yingbowu/Documents/Projects/acanvas",
+      "argv": [
+        ".runtime/node_modules/node/bin/node",
+        "docs/evidence/codex-runtime-delivery/protocol/busy-race-probe.mjs",
+        "--client-module",
+        "/tmp/acanvas-protocol-candidate.XkHa59/dist/src/server/codex-runtime.js"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "sandboxAttempt": {
+    "protocolTests": {
+      "pass": 0,
+      "fail": 8,
+      "cause": "EPERM binding owned Unix listener; before product assertions"
+    },
+    "scratchAppServer": {
+      "exitCode": 1,
+      "cause": "Operation not permitted listening to owned Unix endpoint"
+    },
+    "rerun": "Normal tool execution permission allowed exact owned test listeners without security configuration changes"
+  },
+  "publicSchema": {
+    "binary": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+    "version": "codex-cli 0.162.0-alpha.17.2",
+    "generatedBy": [
+      "app-server",
+      "generate-json-schema",
+      "--out",
+      "/tmp/acanvas-public-schema.jIhwzV",
+      "--experimental"
+    ],
+    "reused": [
+      "docs/evidence/canvas-messaging-host/public-schema/TurnStartParams.json",
+      "docs/evidence/canvas-messaging-host/public-schema/ThreadLoadedListParams.json",
+      "docs/evidence/canvas-messaging-host/public-schema/ThreadLoadedListResponse.json"
+    ]
+  },
+  "liveEvidence": "busy-race-result.json",
+  "aliasRejectionEvidence": "product-alias-rejected-result.json",
+  "verified": [
+    "same-user real Unix socket and fixed /rpc route",
+    "reject file symlink and replacement fingerprint",
+    "paginated loaded exact original thread; metadata-only read",
+    "turn/start write invoked before startUserInput returns",
+    "only target state and approval metadata exposed; no server-request responses",
+    "not_sent vs explicit rejected vs submitted unknown failures",
+    "real busy turn/start adds both inputs to same completing turn without interruption",
+    "compiled product client real idle input/reply/completion on same already loaded scratch thread"
+  ],
+  "limits": [
+    "Only exact bundled 0.162.0-alpha.17.2 tested live; PATH 0.153.4 not claimed",
+    "Busy probe contains textual model work, not a long-running tool execution",
+    "No turn/steer RPC or clientUserMessageId deduplication claim",
+    "No external control endpoint for existing Desktop sessions proven",
+    "Test scratch owner/thread creation belongs only to original host harness; product client never starts/resumes threads or a Codex process"
+  ],
+  "preserved": [
+    "User project .acanvas and 4317 service",
+    "Existing host sessions/security/global config",
+    "Pre-existing uncommitted design and feasibility evidence"
+  ]
+}

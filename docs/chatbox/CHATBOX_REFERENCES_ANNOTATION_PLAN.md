@@ -12,11 +12,11 @@
 
 当前 [Draft 与 TaskSnapshot](../../src/shared/types.ts) 保存正文、统一顺序的对象/任务引用、显式附件、批注和独立捕获现场；[发送事务](../../src/server/service.ts) 用 draft ID 处理重复提交。Annotate 支持任意位置，Markdown 保存实际文本/视觉锚点，音频使用独立截图证据字段。[旧批注设计](../ANNOTATION_DESIGN.md)与既有任务快照继续按已保存内容读取。
 
-本计划影响 R02、R04、R05、R13 及 A02、A06、A07、A09。第一阶段的“一条消息”指 acanvas 的一条持久任务及其可读需求文本；当前 Send 尚未直接投递到 Codex 宿主对话。[宿主消息桥](CODEX_MESSAGE_BRIDGE_RESEARCH.md)继续单独验证，不能把本计划的本地发送描述为已完成宿主投递。
+本计划影响 R02、R04、R05、R13 及 A02、A06、A07、A09。第一阶段的“一条消息”指 Acanvas 的一条持久任务及其可读需求文本；当前 Send 尚未直接投递到 Codex 宿主对话。[宿主消息桥](CODEX_MESSAGE_BRIDGE_RESEARCH.md)继续单独验证，不能把本计划的本地发送描述为已完成宿主投递。
 
-交互参照 [Lovart 的画布元素 `@` 引用](https://www.lovart.ai/docs/how-to-prompt/chat-tools)、[局部 Mark 进入输入框](https://www.lovart.ai/docs/edit-your-design/advanced-ai-editing)及[本机 Codex 浏览器批注输入调查](CODEX_MESSAGE_BRIDGE_RESEARCH.md)。借鉴交互与输入编排，不假定这些产品的内部存储或消息接口适用于 acanvas。
+交互参照 [Lovart 的画布元素 `@` 引用](https://www.lovart.ai/docs/how-to-prompt/chat-tools)、[局部 Mark 进入输入框](https://www.lovart.ai/docs/edit-your-design/advanced-ai-editing)及[本机 Codex 浏览器批注输入调查](CODEX_MESSAGE_BRIDGE_RESEARCH.md)。借鉴交互与输入编排，不假定这些产品的内部存储或消息接口适用于 Acanvas。
 
-Codex 当前桌面端在保存浏览器评论时先保存最新目标锚点，随后立即截图，聊天发送时再组织评论与截图；它允许截图失败后保留文字。acanvas 本计划按用户要求把截图也纳入“完成批注”的条件，详见[调查时序](CODEX_MESSAGE_BRIDGE_RESEARCH.md#保存批注与截图的时序)。用户进一步明确截图在后台执行，采用受信宿主对同一页面截图、隐藏编辑浮层并保留标记的路径，具体源码依据、隔离原型与接口边界见[基础设计](CAPTURE_FOUNDATION_DESIGN.md)。当前 `videoFrameAt` 和 HTML 静态预览分别取得媒体帧或隔离内容画面，原页面捕获能力以[验证记录](CAPTURE_FOUNDATION_VALIDATION.md)为准；生产宿主通道继续按实际集成验收。
+Codex 当前桌面端在保存浏览器评论时先保存最新目标锚点，随后立即截图，聊天发送时再组织评论与截图；它允许截图失败后保留文字。Acanvas 本计划按用户要求把截图也纳入“完成批注”的条件，详见[调查时序](CODEX_MESSAGE_BRIDGE_RESEARCH.md#保存批注与截图的时序)。用户进一步明确截图在后台执行，采用受信宿主对同一页面截图、隐藏编辑浮层并保留标记的路径，具体源码依据、隔离原型与接口边界见[基础设计](CAPTURE_FOUNDATION_DESIGN.md)。当前 `videoFrameAt` 和 HTML 静态预览分别取得媒体帧或隔离内容画面，原页面捕获能力以[验证记录](CAPTURE_FOUNDATION_VALIDATION.md)为准；生产宿主通道继续按实际集成验收。
 
 ## 2. 对话框交互
 
@@ -81,4 +81,4 @@ Codex 当前桌面端在保存浏览器评论时先保存最新目标锚点，�
 | 草稿与历史 | 当前对话刷新恢复草稿与缩略图；另一对话不见未发送批注，也不能通过新 `@` 选择器搜索或新引用本对话的任务。发送后仅任务历史投影。待领取任务编辑保存原任务 ID；旧批注和任务仍可读取。旧未发送草稿及旧排队任务中已保存的跨会话任务引用，即使仅修改正文也能原样发送或 Save edit，移除后不能重新添加；删除对象后历史依据完整。 |
 | 输入与布局 | 键盘、触屏、输入法、复制粘贴、焦点和删除操作可用；明暗主题、320px 窄屏和减少动态效果下，预览/正式引用、顶部批注与原有缩略图均清楚可操作。 |
 
-本计划只定义 acanvas 内的消息和任务内容。Codex 宿主对话的自动投递继续以[消息桥调研](CODEX_MESSAGE_BRIDGE_RESEARCH.md)为依据，待真实集成后单独验收目标线程、一次投递与结果不明恢复。
+本计划只定义 Acanvas 内的消息和任务内容。Codex 宿主对话的自动投递继续以[消息桥调研](CODEX_MESSAGE_BRIDGE_RESEARCH.md)为依据，待真实集成后单独验收目标线程、一次投递与结果不明恢复。

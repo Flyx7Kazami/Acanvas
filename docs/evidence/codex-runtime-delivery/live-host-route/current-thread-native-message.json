@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "observedAtUTC": "2026-10-12 19:56:31 UTC",
+  "scope": "Current existing Codex conversation; native application task-message tool",
+  "humanAuthorization": {
+    "request": "Send one ACANVAS_DESKTOP_ROUTE_TEST message to the current conversation only; do not execute Canvas work.",
+    "response": "允许当前对话测试"
+  },
+  "target": {
+    "threadId": "01a1310e-f0a0-739d-840b-74713f7ba0e9",
+    "hostId": "durable",
+    "metadataSource": "Documented Codex app read_thread API, filtered to thread metadata."
+  },
+  "dispatch": {
+    "tool": "mcp__codex_app__send_message_to_thread",
+    "modelOverride": false,
+    "thinkingOverride": false,
+    "messageMarker": "ACANVAS_DESKTOP_ROUTE_TEST",
+    "toolCompleted": true,
+    "isError": false,
+    "returnedThreadId": "01a1310e-f0a0-739d-840b-74713f7ba0e9"
+  },
+  "receipt": {
+    "receivedInCurrentUserChannel": true,
+    "receivedEnvelope": "codex_delegation",
+    "receivedSourceThreadId": "01a1310e-f0a0-739d-840b-74713f7ba0e9",
+    "markerMatches": true,
+    "assistantAcknowledged": true,
+    "newOrResumedThreadCreated": false
+  },
+  "limits": {
+    "ordinaryCanvasSendConnected": false,
+    "independentNodeServiceAccessProved": false,
+    "persistentBridgeEnabled": false,
+    "queuedCanvasTasksClaimed": 0,
+    "securitySettingsChanged": false,
+    "privateHostStorageRead": false
+  },
+  "conclusion": "Native agent-context delivery into the exact existing conversation is confirmed. A missing local socket does not prove the application cannot receive messages. No supported persistent invocation path from the independent Canvas Node service has yet been established."
+}

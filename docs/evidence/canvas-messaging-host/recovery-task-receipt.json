@@ -1,0 +1,71 @@
+{
+  "id": "f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c",
+  "sessionId": "892f0bef-1666-4811-9115-180cf37010f3",
+  "draftId": "e247575c-8d3f-45a3-ba22-20dddd607e7f",
+  "sequence": 4,
+  "status": "completed",
+  "snapshot": {
+    "userRequest": {
+      "source": "user_instruction",
+      "text": "Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people."
+    },
+    "requestReferences": {
+      "attachmentIds": [],
+      "objectIds": [],
+      "taskIds": [],
+      "order": []
+    },
+    "annotations": [],
+    "referenceContent": {
+      "source": "reference_content",
+      "assets": [],
+      "objects": [],
+      "taskIds": []
+    },
+    "requirementText": "Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people."
+  },
+  "requirementText": "Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people.",
+  "createdAt": "2026-10-12T17:07:59.868Z",
+  "updatedAt": "2026-10-12T17:34:25.098Z",
+  "currentRunId": "3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f",
+  "reason": null,
+  "receipt": {
+    "summary": "Acknowledged the recovered owned scratch queue request through actual model-driven Canvas CLI.",
+    "assetIds": [],
+    "objectIds": [],
+    "validation": [
+      "Task requirement was read; one progress acknowledgment recorded."
+    ],
+    "createdAt": "2026-10-12T17:34:25.098Z"
+  },
+  "replies": [],
+  "runs": [
+    {
+      "id": "8b40b11d-d49a-4ccf-8012-840eb8e935dd",
+      "taskId": "f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c",
+      "consumerId": "9bbb6a66-9bac-4f31-a6c0-19720dc9b070",
+      "status": "interrupted",
+      "createdAt": "2026-10-12T17:27:31.950Z",
+      "updatedAt": "2026-10-12T17:33:40.180Z",
+      "progress": [],
+      "outputAssetIds": []
+    },
+    {
+      "id": "3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f",
+      "taskId": "f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c",
+      "consumerId": "4ab0db36-4b32-44f0-b8be-5de4fb351dbf",
+      "status": "completed",
+      "createdAt": "2026-10-12T17:33:40.180Z",
+      "updatedAt": "2026-10-12T17:34:25.098Z",
+      "progress": [
+        {
+          "message": "Actual model read the recovered scratch request and acknowledges it.",
+          "createdAt": "2026-10-12T17:34:16.533Z"
+        }
+      ],
+      "outputAssetIds": [],
+      "recoveryResolution": "Reviewed bounded model experiment timeout: prior run only claimed and read; no external jobs, outputs, progress or receipt. Preserve history and continue scratch textual acknowledgment."
+    }
+  ],
+  "lateResults": []
+}

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { alignedPositions, mediaContentRect, normalizedRegion, objectRegion, resizeBounds, screenToWorld, snapResize, snapTranslation, worldToScreen, zoomAt, type Alignment, type Rect, type ResizeCorner } from '../src/web/geometry.js';
+import { alignedPositions, fitView, mediaContentRect, normalizedRegion, objectRegion, resizeBounds, screenToWorld, snapResize, snapTranslation, worldToScreen, zoomAt, type Alignment, type Rect, type ResizeCorner } from '../src/web/geometry.js';
 
 const corners: ResizeCorner[] = ['nw', 'ne', 'sw', 'se'];
 const oppositeCorner = (bounds: Rect, corner: ResizeCorner) => ({ x: bounds.x + (corner.endsWith('w') ? bounds.width : 0), y: bounds.y + (corner.startsWith('n') ? bounds.height : 0) });
@@ -110,10 +110,20 @@ test('media annotation excludes letterboxing and follows move/resize under zoom'
 
 test('zoom preserves the cursor world point at supported scale limits', () => {
   const original = { x: -120, y: 65, zoom: .8 }, anchor = { x: 640, y: 300 };
-  for (const factor of [.01, 1.5, 100]) {
+  for (const [factor, expectedZoom] of [[.01, .05], [.125, .1], [1.5, 1.2], [100, 4]]) {
     const next = zoomAt(original, factor, anchor);
     assert.deepEqual(screenToWorld(anchor, next), screenToWorld(anchor, original));
-    assert.ok(next.zoom >= .15 && next.zoom <= 4);
+    assert.ok(Math.abs(next.zoom - expectedZoom) < 1e-9);
+  }
+});
+
+test('fit all reaches five percent for large layouts and keeps their center in the viewport', () => {
+  const size = { width: 1000, height: 700 };
+  for (const [width, expectedZoom] of [[9000, .1], [18000, .05], [36000, .05]]) {
+    const object = { x: -4000, y: -600, width, height: 1000 };
+    const view = fitView([object], size);
+    assert.equal(view.zoom, expectedZoom);
+    assert.deepEqual(worldToScreen({ x: object.x + object.width / 2, y: object.y + object.height / 2 }, view), { x: size.width / 2, y: size.height / 2 });
   }
 });
 

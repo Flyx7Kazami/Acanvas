@@ -1,8 +1,8 @@
-# acanvas
+# Acanvas
 
 A local, project-based creative whiteboard for collaborating with agents through a shared Agent Skill. Agents use the same CLI and local service; host conversation binding is an optional way to resolve a task scope.
 
-Import images, video, audio, and documents, select materials, and add annotations. Send references and instructions to a request queue in an explicit session. Agents process requests through the CLI, use their existing creative tools, and publish results back to the shared canvas.
+Import images, video, audio, and documents, select materials, and add annotations. Send references and instructions to a request queue in an explicit session. An explicitly attached Codex runtime can receive the new request in its original loaded thread. Agents process requests through the CLI, use their existing creative tools, and publish results back to the shared canvas.
 
 ## Status
 
@@ -10,10 +10,16 @@ The runnable P0 prototype includes a full-screen canvas, floating controls, an a
 
 Chatbox references appear inline with the text, with a separate preview for each selected material and object/task search. Point markers stay at the clicked position. Point and region annotations save the open page's displayed whiteboard pixels in the background. Task history reads the saved scene.
 
+Select multiple items to create a group frame. Store it in a solid-color folder with three item previews and an archive grid, then click the cover to edit its contents on a second board. Click the folder name to add one group reference to a request. Back restores the main board view. Switching modes moves neighboring items to use the available space, and Ungroup keeps the original items.
+
 - [Project plan](docs/PLAN.md): requirements, architecture, implementation stages, and acceptance criteria.
 - [Frontend design](docs/FRONTEND.md): visual references, grayscale themes, and interaction rules.
 - [Multimodal canvas design](docs/MULTIMODAL_CANVAS_DESIGN.md): content types, references, and preview boundaries.
 - [Validation record](docs/VALIDATION.md): verified behavior and remaining limitations.
+- [Item groups and folders](docs/ITEM_GROUPS_DESIGN.md): interaction, layout and persistence; [validation](docs/ITEM_GROUPS_VALIDATION.md).
+- [Group history integration](docs/GROUP_HISTORY_INTEGRATION.md): atomic group, membership, layout and content history.
+- [Board history](docs/BOARD_HISTORY_DESIGN.md): persistent Undo/Redo for object edits and queue running indicators.
+- [Object content history](docs/OBJECT_CONTENT_HISTORY_DESIGN.md): shared history for object properties, notes and Markdown edits.
 - [Chatbox capture foundation](docs/chatbox/CAPTURE_FOUNDATION_DESIGN.md): background capture direction, persistent evidence APIs, and [validation](docs/chatbox/CAPTURE_FOUNDATION_VALIDATION.md).
 - [Chatbox implementation](docs/chatbox/CHATBOX_IMPLEMENTATION_DESIGN.md): references, annotations, task messages, history and the project-managed browser; [validation](docs/chatbox/CHATBOX_IMPLEMENTATION_VALIDATION.md).
 - [Inline references and point markers](docs/chatbox/INLINE_REFERENCES_POINT_ANCHOR_DESIGN.md): caret placement, saved reference positions and anchored annotation numbers; [validation](docs/chatbox/INLINE_REFERENCES_POINT_ANCHOR_VALIDATION.md).
@@ -21,6 +27,7 @@ Chatbox references appear inline with the text, with a separate preview for each
 - [Loading and playback performance](docs/INTERACTIVE_MEDIA_PERFORMANCE_VALIDATION.md): measured loading, HTML input and active-media interactions, including the remaining native smooth-scroll capture limitation.
 - [Inline reference geometry](docs/chatbox/INLINE_REFERENCE_GEOMETRY_VALIDATION.md): matching preview and confirmed dimensions, text line height and native editing.
 - [Agent Skill](skill/acanvas/SKILL.md): task processing and recovery.
+- [Codex runtime delivery](docs/chatbox/CODEX_RUNTIME_DELIVERY_DESIGN.md): explicit connection, durable delivery states, [validation](docs/chatbox/CODEX_RUNTIME_DELIVERY_VALIDATION.md) and the [host feasibility evidence](docs/chatbox/CANVAS_SKILL_MESSAGING_FEASIBILITY.md).
 
 ## Install and run
 
@@ -116,6 +123,25 @@ npm run cli -- task read --project "$PWD" --session SESSION_ID --task TASK_ID --
 
 Each queue activation uses a new consumer ID, kept stable throughout that processing loop. Completed or transferred execution identities remain in task history. See CLI help and the Skill for claim, resume, and output publication parameters.
 
+## Connect an existing Codex runtime
+
+Automatic delivery requires a supported public Unix WebSocket endpoint belonging to the runtime that already owns the original loaded thread. Use the original thread ID and the whiteboard's session ID explicitly:
+
+```sh
+npm run cli -- project open --project "$PWD" --session SESSION_ID --host codex --thread ORIGINAL_THREAD_ID
+npm run cli -- host attach --project "$PWD" --session SESSION_ID --host codex --thread ORIGINAL_THREAD_ID --endpoint unix:///absolute/canonical/runtime.sock
+npm run cli -- host status --project "$PWD" --session SESSION_ID
+npm run cli -- host detach --project "$PWD" --session SESSION_ID
+```
+
+The endpoint must be an actual socket owned by the current user. Socket-file symlinks are rejected. The tested bundled Codex `0.162.0-alpha.17.2` creates a symlink at its requested listener path; supply the canonical socket path explicitly. `host attach` checks that the exact original thread is already loaded in that runtime. It never starts or resumes another Codex thread, changes host permissions, or approves tools. Approval prompts remain with the original host.
+
+After attachment, new Send requests are saved before delivery. Known busy threads wait until idle; the tested Codex version can append an input to the same active turn if activity changes between the idle check and delivery. Existing queued requests from before attachment keep their normal continuation workflow. A repeated Send of the same draft does not dispatch twice.
+
+**Agent connected** describes the connection. **Waiting for agent** describes saved work, including a host-accepted input that has not been claimed. Completion requires the task's saved receipt. If a response is lost after dispatch, the delivery stays unknown and is not automatically sent again; use **Continue in your agent** and read the queue with a fresh consumer. The durable queue remains available after disconnect or service restart.
+
+This checkout has verified the adapter against an expressly created test runtime. One authorized native task-tool message also reached the exact existing Codex conversation. That tool is available inside the agent context; a supported invocation endpoint and authentication flow for the independent Canvas service have not been established. Canvas Send into that existing conversation remains unconnected. Codex Desktop, ordinary CLI sessions without a supported endpoint, Claude Code and other agents continue through the saved queue and the resume prompt until an appropriate connection is explicitly configured. Host conversation binding alone does not enable automatic delivery. See the [native tool and service boundary](docs/chatbox/CODEX_RUNTIME_DELIVERY_VALIDATION.md#当前既有对话的宿主工具与独立服务边界).
+
 ## Content types and interactions
 
 Images, video, GIF, Markdown, audio, and HTML share import, selection, layout, annotation, and task references. Original files are retained. Other formats appear as downloadable file cards.
@@ -127,9 +153,39 @@ Images, video, GIF, Markdown, audio, and HTML share import, selection, layout, a
 | Audio | A compact, unified player contains embedded artwork, the track name, playback controls, and a complete amplitude waveform. Click or drag the waveform to seek across the whole track. Audio references can include specific times or intervals. |
 | HTML | Current-page controls send pointer and keyboard input to the persistent preview. Ordinary wheel and trackpad scrolling over the preview or its controls pans the canvas; Ctrl/Meta-wheel and trackpad pinch zoom it. Each view supports four active instances, with sixteen active instances per project. Previews waiting for project-wide or retained-surface capacity continue automatically after resources are released; the per-view limit produces a clear capacity error. Drag the filename to move the block, and use eight resize handles to adjust width and height independently. |
 
+Select two or more main-board items and choose Group to frame them. New groups receive the project-wide names Group 1, Group 2, and so on; custom names stay as entered. Drag the group title or its empty frame area to move its members together. Choose Rename to edit the name in place, or Store in folder to collect its contents. The folder stays at the frame's top-left corner and shows the first three items in creation order. Click its name to select the group and preview one group reference; focus the request to add it. The same name area supports dragging, keyboard selection and touch. Click the cover to edit its board; Back to board restores the main-board camera. The return controls have a transparent, borderless layout. Group titles and the name below a folder display only the name; the folder's item count sits at its lower right. Items added inside the folder join that group. Expand on board expands its current contents. Ungroup animates the folder into its final member layout and retains every item and material. The surrounding main board appears more frosted while folder members stay clear.
+
+Group references use a simple folder thumbnail in the group's color. Preview, confirmed references, search candidates and task history share that identity. Sending saves the group name, version, member layouts and original asset metadata; later group changes preserve the saved task. Editing a task shows its saved group name and color. Individual item references continue to work separately.
+
+Folding first brings right-hand items closer, then items below, with 24px spacing. Other groups move together. Expanding makes space in the same order. Group actions use compact icon buttons with tooltips and accessible action names. A pencil with a baseline renames the group; paired folder arrows collect or expand its contents; the Font Awesome Regular object icons group and ungroup them. Folder hover actions and the folder board keep the same action order on wide and narrow screens. Selection controls place Delete last: Group, Align, Delete for multiple items, or Color, Delete for one note. Folder colors persist across refreshes. The 216×224 folder cover has a lower back, small corners, archive lines extending toward the bottom, and a right-hand column with the group name and item count. Its first three item previews show their content without a surrounding frame. Hover gently opens the cover and previews while its position stays fixed. Creation chooses cobalt, sage, coral, lilac, ink, or sand at random; CLI creation can provide `color` explicitly. Its 216×256 layout includes the editable name below the cover. Groups belong to the project and are shared across task contexts; each context retains its current board view.
+
+The CLI reads groups and their files directly. Both board levels use project world coordinates. `group read` returns the group, its current `displayBounds`, and ordered `members` with each original object and asset, including file names, IDs, versions and item layout:
+
+```sh
+npm run cli -- group list --project "$PWD" --session SESSION_ID
+npm run cli -- group read --project "$PWD" --session SESSION_ID --group GROUP_ID
+npm run cli -- group put --project "$PWD" --session SESSION_ID --group GROUP_ID --object OBJECT_ID --version OBJECT_VERSION --x 100 --y 200
+```
+
+`group put` moves an existing item into the group while keeping its identity, original asset and source history. Omit `--x`/`--y` to keep its current world position. Read the group back after placement; use ordinary object updates to change member positions or dimensions. The shared service refreshes both the source and target groups in the same transaction. Read current object/group versions before changes:
+
+```json
+{"operations":[{"type":"group.create","group":{"name":"References","objectIds":["A","B"]},"expectedVersions":{"A":1,"B":1}}]}
+```
+
+```json
+{"operations":[{"type":"group.update","groupId":"GROUP_ID","expectedVersion":1,"changes":{"mode":"folder"}}]}
+```
+
+Use `group.update` with `mode: "frame"` to expand, or `group.ungroup` with `groupId` and `expectedVersion` to keep members on the main board. `create.object.groupId` creates an item in an existing group. An object `update` with `changes.groupId: "GROUP_ID"` moves it into that group; `changes.groupId: null` returns it to the main board. These operations also work through `task complete`. State and board-operation responses include `groups`; object identities and original asset IDs continue to support historical references.
+
 A mixed selection can share one group annotation, with a common number and comment while preserving each material's source. Image and video region annotations retain explicit region bounds.
 
 Canvas controls, including audio timelines, inherit canvas pan and zoom gestures. Components that need ordinary content scrolling declare a content wheel region; click, drag, and keyboard controls retain their own behavior. See [canvas input responsibilities](docs/CANVAS_INPUT.md) when adding a component.
+
+Use **Undo** and **Redo** on the left toolbar to step through object creation, deletion, movement, resizing, alignment, note color changes and text edits. A submitted group operation is one step, and continuous text input forms an editing step. History belongs to the current task scope and continues after refresh or service restart. A new object edit ends the Redo branch. Objects keep their IDs and output provenance when restored, together with the corresponding content version; competing edits to the same object produce a conflict.
+
+Canvas shortcuts are **Cmd/Ctrl+Z** for Undo, **Cmd/Ctrl+Shift+Z** for Redo, and **Ctrl+Y** for Redo. Notes and Markdown source editors use this same history and save pending text before Undo. Chat and annotation drafts retain their own text editing. View navigation, media playback, embedded HTML interactions and request execution keep their existing controls.
 
 HTML previews support self-contained files and explicitly imported local resource bundles in an isolated origin. A persistent project renderer produces the displayed pixels; current-page controls forward input to that instance. Closing the owning page or removing its preview releases the running instances. Brief connection interruptions retain state; a restarted instance starts its script state again. Retained pixels and completed evidence preserve their captured view. Remote resources and host-specific APIs require further integration. Markdown displays raw HTML as text and uses source placeholders for embedded images.
 
@@ -178,6 +234,15 @@ The isolated background capture prototype uses the project runtime and a managed
 The prototype preserves the initial capture experiments. Current capture uses the open whiteboard's SceneRenderer and project API; see the browser-independent capture implementation results. The optional visual HTML prototype installs its test engine with `npm run install:render-engine`.
 
 Tests use isolated temporary projects. Localhost services and Chrome may require execution permissions in restricted environments. Validation records distinguish environment restrictions from product failures.
+
+To verify the delivery change while the formal service is running, build and test a private candidate instead of writing its served `dist`:
+
+```sh
+env -u CODEX_THREAD_ID npm run verify:host-delivery
+env -u CODEX_THREAD_ID ACANVAS_HOST_DELIVERY_UI_TESTS=1 npm run verify:host-delivery -- --test host-delivery-cli.test.js
+```
+
+The helper copies declared repository inputs to a newly owned temporary directory, selects the existing project Node 24 runtime and dependencies, and records source/build hashes. It excludes `.acanvas/` and retains the candidate for inspection. The default command runs the production build and serial Node suite; the optional UI test uses installed Chrome with its sandbox enabled. Clearing `CODEX_THREAD_ID` only for the test process prevents unrelated automatic host binding in temporary projects.
 
 ## Data and change history
 

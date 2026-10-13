@@ -1,0 +1,131 @@
+{
+  "candidate": "/private/tmp/acanvas-domino-unified-run",
+  "project": "/private/tmp/acanvas-domino-adjustments-ZW2BN2",
+  "base": "http://127.0.0.1:62637",
+  "checks": [
+    "Held real waveform fetch paints an unobstructed two-pixel horizontal line in light and dark",
+    "Native playback works while waveform is pending; decoded waveform and keyboard seeking recover",
+    "Actual retained Done stays text, disabled and aria-busy; release closes the annotation and preserves capture",
+    "SVG paths and palette match the selected mark; all served files are truly transparent; source PNG unchanged",
+    "Zero browser exceptions"
+  ],
+  "errors": [],
+  "measurements": {
+    "audio-light": {
+      "width": 110,
+      "height": 32,
+      "cssWidth": 110.3125,
+      "cssHeight": 32,
+      "rows": [
+        {
+          "y": 15,
+          "rgba": [
+            128,
+            128,
+            128,
+            255
+          ]
+        },
+        {
+          "y": 16,
+          "rgba": [
+            128,
+            128,
+            128,
+            255
+          ]
+        }
+      ],
+      "display": "block",
+      "visibility": "visible",
+      "opacity": "1",
+      "parentOpacity": "1",
+      "topElement": "CANVAS",
+      "color": "#808080",
+      "statusClass": "sr-only",
+      "statusRole": "status",
+      "statusText": "Loading waveform…",
+      "dominoCount": 0
+    },
+    "audio-dark": {
+      "width": 110,
+      "height": 32,
+      "cssWidth": 110.3125,
+      "cssHeight": 32,
+      "rows": [
+        {
+          "y": 15,
+          "rgba": [
+            170,
+            170,
+            170,
+            255
+          ]
+        },
+        {
+          "y": 16,
+          "rgba": [
+            170,
+            170,
+            170,
+            255
+          ]
+        }
+      ],
+      "display": "block",
+      "visibility": "visible",
+      "opacity": "1",
+      "parentOpacity": "1",
+      "topElement": "CANVAS",
+      "color": "#aaa",
+      "statusClass": "sr-only",
+      "statusRole": "status",
+      "statusText": "Loading waveform…",
+      "dominoCount": 0
+    },
+    "done": {
+      "text": "Done",
+      "busy": "true",
+      "disabled": true,
+      "svgCount": 0
+    },
+    "iconSource": {
+      "pathCount": 3,
+      "fills": [
+        "#89B27A",
+        "#FA9EB3",
+        "#9F9E9E"
+      ],
+      "unchangedPathsFromSelected": true,
+      "threeFilesIdentical": true,
+      "sourcePngUnchangedFromHead": true
+    },
+    "iconAlpha": {
+      "cornerRGBA": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparent": 193213,
+      "opaque": 67991,
+      "opaqueFills": [
+        "137,178,122",
+        "250,158,179",
+        "165,173,136",
+        "222,163,165",
+        "194,168,151",
+        "159,158,158",
+        "227,158,174",
+        "182,158,163",
+        "205,158,169"
+      ]
+    }
+  },
+  "boundaries": [
+    "Only audio loading, annotation Done, static icon transparency and the refreshed screenshot overview are in scope.",
+    "The original live service and user board are untouched."
+  ],
+  "browser": "155.0.8059.40",
+  "completedAt": "2026-10-13T08:07:52.111Z"
+}

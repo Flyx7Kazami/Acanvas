@@ -1,0 +1,664 @@
+[
+  {
+    "time": 1791826420.515,
+    "kind": "request",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "clientInfo": {
+        "name": "acanvas_recovery_A",
+        "version": "0.1"
+      }
+    }
+  },
+  {
+    "time": 1791826420.516,
+    "kind": "response",
+    "method": "initialize",
+    "response": {
+      "id": 1,
+      "result": {
+        "userAgent": "codex_work_desktop/0.162.0-alpha.17.2 (Mac OS 15.4.0; arm64) dumb (acanvas_recovery_A; 0.1)",
+        "platformFamily": "unix",
+        "platformOs": "macos"
+      }
+    }
+  },
+  {
+    "time": 1791826420.517,
+    "kind": "request",
+    "id": 2,
+    "method": "thread/start",
+    "params": {
+      "cwd": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-recovery-gf2rizvk",
+      "ephemeral": true,
+      "serviceName": "acanvas-explicit-recovery"
+    }
+  },
+  {
+    "time": 1791826420.658,
+    "kind": "response",
+    "method": "thread/start",
+    "response": {
+      "id": 2,
+      "result": {
+        "thread": {
+          "id": "01a1312d-632a-7481-aebc-15c3a58d7be2",
+          "environments": [
+            {
+              "environmentId": "local",
+              "cwd": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-recovery-gf2rizvk",
+              "runtimeWorkspaceRoots": [
+                "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-recovery-gf2rizvk"
+              ]
+            }
+          ],
+          "extra": null,
+          "sessionId": "01a1312d-632a-7481-aebc-15c3a58d7be2",
+          "forkedFromId": null,
+          "parentThreadId": null,
+          "preview": "",
+          "ephemeral": true,
+          "section": null,
+          "sectionEnteredAt": null,
+          "projectId": null,
+          "historyMode": "paginated",
+          "modelProvider": "openai",
+          "model": "gpt-6.1-sol",
+          "reasoningEffort": "xhigh",
+          "createdAt": 1791826420,
+          "updatedAt": 1791826420,
+          "recencyAt": 1791826420,
+          "status": {
+            "type": "idle"
+          },
+          "path": null,
+          "cwd": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-recovery-gf2rizvk",
+          "cliVersion": "0.162.0-alpha.17.2",
+          "originator": "codex_work_desktop",
+          "source": "vscode",
+          "canAcceptDirectInput": true,
+          "threadSource": null,
+          "agentNickname": null,
+          "agentRole": null,
+          "gitInfo": null,
+          "name": null,
+          "daybreakEnabled": null,
+          "turns": []
+        },
+        "model": "gpt-6.1-sol",
+        "modelProvider": "openai",
+        "serviceTier": "default",
+        "disabledPluginIds": [],
+        "cwd": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-recovery-gf2rizvk",
+        "runtimeWorkspaceRoots": [
+          "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-recovery-gf2rizvk"
+        ],
+        "approvalPolicy": "on-request",
+        "approvalsReviewer": "user",
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        },
+        "activePermissionProfile": {
+          "id": ":read-only",
+          "extends": null
+        },
+        "reasoningEffort": "xhigh",
+        "multiAgentMode": "explicitRequestOnly"
+      }
+    }
+  },
+  {
+    "time": 1791826420.663,
+    "kind": "request",
+    "id": 3,
+    "method": "turn/start",
+    "params": {
+      "threadId": "01a1312d-632a-7481-aebc-15c3a58d7be2",
+      "clientUserMessageId": "acanvas-recovery-ready-1",
+      "input": [
+        {
+          "type": "text",
+          "text": "Isolated scratch host experiment. Reply exactly ACANVAS_RECOVERY_READY. Do not use tools or read files."
+        }
+      ]
+    }
+  },
+  {
+    "time": 1791826420.672,
+    "kind": "response",
+    "method": "turn/start",
+    "response": {
+      "id": 3,
+      "result": {
+        "turn": {
+          "id": "01a1312d-63ba-76e1-8b47-b9679f3040cf",
+          "rootTurnId": "01a1312d-63ba-76e1-8b47-b9679f3040cf",
+          "items": [],
+          "itemsView": "notLoaded",
+          "status": "inProgress",
+          "error": null,
+          "startedAt": null,
+          "completedAt": null,
+          "durationMs": null
+        }
+      }
+    }
+  },
+  {
+    "time": 1791826420.673,
+    "kind": "notification",
+    "method": "turn/started",
+    "turn": {
+      "id": "01a1312d-63ba-76e1-8b47-b9679f3040cf",
+      "status": "inProgress",
+      "error": null
+    }
+  },
+  {
+    "time": 1791826426.393,
+    "kind": "notification",
+    "method": "item/completed",
+    "item": {
+      "id": "01a1312d-7a17-7ab2-be8f-ec245b2ba36a",
+      "type": "userMessage",
+      "content": [
+        {
+          "type": "text",
+          "text": "Isolated scratch host experiment. Reply exactly ACANVAS_RECOVERY_READY. Do not use tools or read files.",
+          "text_elements": []
+        }
+      ]
+    }
+  },
+  {
+    "time": 1791826429.439,
+    "kind": "notification",
+    "method": "item/completed",
+    "item": {
+      "id": "msg_097a92d203b73162016acd19fcaf708199b419eb93c56e3077",
+      "type": "agentMessage",
+      "text": "ACANVAS_RECOVERY_READY"
+    }
+  },
+  {
+    "time": 1791826429.508,
+    "kind": "notification",
+    "method": "turn/completed",
+    "turn": {
+      "id": "01a1312d-63ba-76e1-8b47-b9679f3040cf",
+      "status": "completed",
+      "error": null
+    }
+  },
+  {
+    "time": 1791826429.721,
+    "kind": "notification",
+    "method": "turn/started",
+    "turn": {
+      "id": "01a1312d-8700-7052-b2a3-82f25411efeb",
+      "status": "inProgress",
+      "error": null
+    }
+  },
+  {
+    "time": 1791826429.733,
+    "kind": "notification",
+    "method": "item/completed",
+    "item": {
+      "id": "01a1312d-8724-74b2-b2a5-3c6f3ee6deea",
+      "type": "userMessage",
+      "content": [
+        {
+          "type": "text",
+          "text": "Continue this same live experimental thread by processing its explicitly bound acanvas scratch task through actual command tools. The prior experiment ended after claim/read without external jobs, outputs, progress or receipt. The public task resume has preserved that history and assigned run 3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f, consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf.\n+Project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E; session 892f0bef-1666-4811-9115-180cf37010f3; exact service http://127.0.0.1:54712; task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c. These scratch operations are explicitly user-authorized. Preserve inherited permissions. Request individual normal command approval for localhost CLI if necessary; do not change policies. Use workdir /Users/yingbowu/Documents/Projects/acanvas and command /Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli <command> --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712.\n+1. Actual task read --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c; inspect requirementText and saved run history.\n+2. Actual task progress --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --run 3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf --message \"Actual model read the recovered scratch request and acknowledges it.\".\n+3. Actual task complete --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --run 3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf --input /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-recovery-gf2rizvk/completion.json. That owned precreated JSON is a textual receipt with no assets or canvas operations.\n+4. Actual task next --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf to release idle. Actual task read --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c to confirm receipt.\n+Only these exact CLI commands; no shell chains, redirects, created files, settings, other projects, external jobs, app controls or person-directed messages. Use the existing run/consumer, not a new claim. Reply ACANVAS_QUEUE_MODEL_OK with the task ID and completed receipt after actual success. If a command fails, preserve exact error and request the normal individual approval for this exact command. This followup is from Client B on the same live owner and ready thread; older ephemeral threads are not restored.",
+          "text_elements": []
+        }
+      ]
+    }
+  },
+  {
+    "time": 1791826432.889,
+    "kind": "notification",
+    "method": "item/completed",
+    "item": {
+      "id": "msg_097a92d203b73162016acd19ff6ab081998da74053cb9cf431",
+      "type": "agentMessage",
+      "text": "I\u2019ll run the exact scratch-task commands in order, using the assigned run and consumer, then read back the completed receipt."
+    }
+  },
+  {
+    "time": 1791826436.317,
+    "kind": "notification",
+    "method": "item/completed",
+    "item": {
+      "id": "exec-a2425060-ff74-4213-bccb-5244f2e39d7e",
+      "type": "commandExecution",
+      "command": "/bin/zsh -lc '/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task read --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712'",
+      "cwd": "/Users/yingbowu/Documents/Projects/acanvas",
+      "status": "failed",
+      "exitCode": 1,
+      "aggregatedOutput": "fetch failed\n"
+    }
+  },
+  {
+    "time": 1791826444.75,
+    "kind": "approval_or_server_request_unanswered",
+    "method": "item/commandExecution/requestApproval",
+    "id": 0,
+    "params": {
+      "kind": "command",
+      "threadId": "01a1312d-632a-7481-aebc-15c3a58d7be2",
+      "turnId": "01a1312d-8700-7052-b2a3-82f25411efeb",
+      "itemId": "exec-c96cadf8-0885-496f-bbbb-8d2a3d3cfc36",
+      "startedAtMs": 1791826444749,
+      "environmentId": "local",
+      "reason": "The exact task-read command returned \u201cfetch failed\u201d. Allow this individual command to access the authorized localhost scratch service?",
+      "command": "/bin/zsh -lc '/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task read --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712'",
+      "cwd": "/Users/yingbowu/Documents/Projects/acanvas",
+      "commandActions": [
+        {
+          "type": "unknown",
+          "command": "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task read --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712"
+        }
+      ],
+      "proposedExecpolicyAmendment": [
+        "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+        "/Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs",
+        "cli",
+        "task",
+        "read",
+        "--task",
+        "f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c",
+        "--project",
+        "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E",
+        "--session",
+        "892f0bef-1666-4811-9115-180cf37010f3",
+        "--url",
+        "http://127.0.0.1:54712"
+      ],
+      "availableDecisions": [
+        "accept",
+        {
+          "acceptWithExecpolicyAmendment": {
+            "execpolicy_amendment": [
+              "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+              "/Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs",
+              "cli",
+              "task",
+              "read",
+              "--task",
+              "f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c",
+              "--project",
+              "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E",
+              "--session",
+              "892f0bef-1666-4811-9115-180cf37010f3",
+              "--url",
+              "http://127.0.0.1:54712"
+            ]
+          }
+        },
+        "cancel"
+      ]
+    }
+  },
+  {
+    "time": 1791826445.115,
+    "kind": "notification",
+    "method": "item/completed",
+    "item": {
+      "id": "exec-c96cadf8-0885-496f-bbbb-8d2a3d3cfc36",
+      "type": "commandExecution",
+      "command": "/bin/zsh -lc '/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task read --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712'",
+      "cwd": "/Users/yingbowu/Documents/Projects/acanvas",
+      "status": "completed",
+      "exitCode": 0,
+      "aggregatedOutput": "{\n  \"task\": {\n    \"id\": \"f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c\",\n    \"sessionId\": \"892f0bef-1666-4811-9115-180cf37010f3\",\n    \"draftId\": \"e247575c-8d3f-45a3-ba22-20dddd607e7f\",\n    \"sequence\": 4,\n    \"status\": \"running\",\n    \"snapshot\": {\n      \"userRequest\": {\n        \"source\": \"user_instruction\",\n        \"text\": \"Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people.\"\n      },\n      \"requestReferences\": {\n        \"attachmentIds\": [],\n        \"objectIds\": [],\n        \"taskIds\": [],\n        \"order\": []\n      },\n      \"annotations\": [],\n      \"referenceContent\": {\n        \"source\": \"reference_content\",\n        \"assets\": [],\n        \"objects\": [],\n        \"taskIds\": []\n      },\n      \"requirementText\": \"Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people.\"\n    },\n    \"requirementText\": \"Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people.\",\n    \"createdAt\": \"2026-10-12T17:07:59.868Z\",\n    \"updatedAt\": \"2026-10-12T17:33:40.180Z\",\n    \"currentRunId\": \"3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f\",\n    \"reason\": null,\n    \"receipt\": null,\n    \"replies\": [],\n    \"runs\": [\n      {\n        \"id\": \"8b40b11d-d49a-4ccf-8012-840eb8e935dd\",\n        \"taskId\": \"f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c\",\n        \"consumerId\": \"9bbb6a66-9bac-4f31-a6c0-19720dc9b070\",\n        \"status\": \"interrupted\",\n        \"createdAt\": \"2026-10-12T17:27:31.950Z\",\n        \"updatedAt\": \"2026-10-12T17:33:40.180Z\",\n        \"progress\": [],\n        \"outputAssetIds\": []\n      },\n      {\n        \"id\": \"3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f\",\n        \"taskId\": \"f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c\",\n        \"consumerId\": \"4ab0db36-4b32-44f0-b8be-5de4fb351dbf\",\n        \"status\": \"running\",\n        \"createdAt\": \"2026-10-12T17:33:40.180Z\",\n        \"updatedAt\": \"2026-10-12T17:33:40.180Z\",\n        \"progress\": [],\n        \"outputAssetIds\": [],\n        \"recoveryResolution\": \"Reviewed bounded model experiment timeout: prior run only claimed and read; no external jobs, outputs, progress or receipt. Preserve history and continue scratch textual acknowledgment.\"\n      }\n    ],\n    \"lateResults\": []\n  },\n  \"context\": {\n    \"referencedTasks\": [],\n    \"recentReceipts\": [\n      {\n        \"taskId\": \"e3640a6b-8f63-4669-bd39-ad0a73c74979\",\n        \"receipt\": {\n          \"summary\": \"Published the owned local text output.\",\n          \"assetIds\": [\n            \"c05787ca-dc8b-4f91-912d-bcfc8396897b\"\n          ],\n          \"objectIds\": [\n            \"ebd2412a-7e16-4e3e-9f18-55ca47ada4b6\"\n          ],\n          \"validation\": [\n            \"Actual bytes saved and imported; source task/run identity verified.\"\n          ],\n          \"createdAt\": \"2026-10-12T17:07:54.863Z\"\n        }\n      },\n      {\n        \"taskId\": \"924628dd-9c3b-4527-8870-7a7717355df0\",\n        \"receipt\": {\n          \"summary\": \"Message 2 acknowledged.\",\n          \"assetIds\": [],\n          \"objectIds\": [],\n          \"validation\": [\n            \"Text-only acknowledgment.\"\n          ],\n          \"createdAt\": \"2026-10-12T17:07:56.260Z\"\n        }\n      },\n      {\n        \"taskId\": \"87270f30-21d1-496e-9172-6f0975a71017\",\n        \"receipt\": {\n          \"summary\": \"Message 3 processed after explicit CLI continuation.\",\n          \"assetIds\": [],\n          \"objectIds\": [],\n          \"validation\": [\n            \"Fresh activation; saved queued task and history read.\"\n          ],\n          \"createdAt\": \"2026-10-12T17:07:59.189Z\"\n        }\n      }\n    ]\n  }\n}\n"
+    }
+  },
+  {
+    "time": 1791826456.303,
+    "kind": "approval_or_server_request_unanswered",
+    "method": "item/commandExecution/requestApproval",
+    "id": 1,
+    "params": {
+      "kind": "command",
+      "threadId": "01a1312d-632a-7481-aebc-15c3a58d7be2",
+      "turnId": "01a1312d-8700-7052-b2a3-82f25411efeb",
+      "itemId": "exec-5e33e728-2fc2-4c59-a1c0-0ed325c9973f",
+      "startedAtMs": 1791826456302,
+      "environmentId": "local",
+      "reason": "Allow this individual localhost command to record the exact authorized progress message on the existing scratch run?",
+      "command": "/bin/zsh -lc '/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task progress --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --run 3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf --message \"Actual model read the recovered scratch request and acknowledges it.\" --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712'",
+      "cwd": "/Users/yingbowu/Documents/Projects/acanvas",
+      "commandActions": [
+        {
+          "type": "unknown",
+          "command": "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task progress --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --run 3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf --message \"Actual model read the recovered scratch request and acknowledges it.\" --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712"
+        }
+      ],
+      "proposedExecpolicyAmendment": [
+        "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+        "/Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs",
+        "cli",
+        "task",
+        "progress",
+        "--task",
+        "f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c",
+        "--run",
+        "3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f",
+        "--consumer",
+        "4ab0db36-4b32-44f0-b8be-5de4fb351dbf",
+        "--message",
+        "Actual model read the recovered scratch request and acknowledges it.",
+        "--project",
+        "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E",
+        "--session",
+        "892f0bef-1666-4811-9115-180cf37010f3",
+        "--url",
+        "http://127.0.0.1:54712"
+      ],
+      "availableDecisions": [
+        "accept",
+        {
+          "acceptWithExecpolicyAmendment": {
+            "execpolicy_amendment": [
+              "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+              "/Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs",
+              "cli",
+              "task",
+              "progress",
+              "--task",
+              "f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c",
+              "--run",
+              "3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f",
+              "--consumer",
+              "4ab0db36-4b32-44f0-b8be-5de4fb351dbf",
+              "--message",
+              "Actual model read the recovered scratch request and acknowledges it.",
+              "--project",
+              "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E",
+              "--session",
+              "892f0bef-1666-4811-9115-180cf37010f3",
+              "--url",
+              "http://127.0.0.1:54712"
+            ]
+          }
+        },
+        "cancel"
+      ]
+    }
+  },
+  {
+    "time": 1791826456.565,
+    "kind": "notification",
+    "method": "item/completed",
+    "item": {
+      "id": "exec-5e33e728-2fc2-4c59-a1c0-0ed325c9973f",
+      "type": "commandExecution",
+      "command": "/bin/zsh -lc '/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task progress --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --run 3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf --message \"Actual model read the recovered scratch request and acknowledges it.\" --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712'",
+      "cwd": "/Users/yingbowu/Documents/Projects/acanvas",
+      "status": "completed",
+      "exitCode": 0,
+      "aggregatedOutput": "{\n  \"id\": \"f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c\",\n  \"sessionId\": \"892f0bef-1666-4811-9115-180cf37010f3\",\n  \"draftId\": \"e247575c-8d3f-45a3-ba22-20dddd607e7f\",\n  \"sequence\": 4,\n  \"status\": \"running\",\n  \"snapshot\": {\n    \"userRequest\": {\n      \"source\": \"user_instruction\",\n      \"text\": \"Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people.\"\n    },\n    \"requestReferences\": {\n      \"attachmentIds\": [],\n      \"objectIds\": [],\n      \"taskIds\": [],\n      \"order\": []\n    },\n    \"annotations\": [],\n    \"referenceContent\": {\n      \"source\": \"reference_content\",\n      \"assets\": [],\n      \"objects\": [],\n      \"taskIds\": []\n    },\n    \"requirementText\": \"Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people.\"\n  },\n  \"requirementText\": \"Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people.\",\n  \"createdAt\": \"2026-10-12T17:07:59.868Z\",\n  \"updatedAt\": \"2026-10-12T17:33:40.180Z\",\n  \"currentRunId\": \"3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f\",\n  \"reason\": null,\n  \"receipt\": null,\n  \"replies\": [],\n  \"runs\": [\n    {\n      \"id\": \"8b40b11d-d49a-4ccf-8012-840eb8e935dd\",\n      \"taskId\": \"f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c\",\n      \"consumerId\": \"9bbb6a66-9bac-4f31-a6c0-19720dc9b070\",\n      \"status\": \"interrupted\",\n      \"createdAt\": \"2026-10-12T17:27:31.950Z\",\n      \"updatedAt\": \"2026-10-12T17:33:40.180Z\",\n      \"progress\": [],\n      \"outputAssetIds\": []\n    },\n    {\n      \"id\": \"3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f\",\n      \"taskId\": \"f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c\",\n      \"consumerId\": \"4ab0db36-4b32-44f0-b8be-5de4fb351dbf\",\n      \"status\": \"running\",\n      \"createdAt\": \"2026-10-12T17:33:40.180Z\",\n      \"updatedAt\": \"2026-10-12T17:34:16.533Z\",\n      \"progress\": [\n        {\n          \"message\": \"Actual model read the recovered scratch request and acknowledges it.\",\n          \"createdAt\": \"2026-10-12T17:34:16.533Z\"\n        }\n      ],\n      \"outputAssetIds\": [],\n      \"recoveryResolution\": \"Reviewed bounded model experiment timeout: prior run only claimed and read; no external jobs, outputs, progress or receipt. Preserve history and continue scratch textual acknowledgment.\"\n    }\n  ],\n  \"lateResults\": []\n}\n"
+    }
+  },
+  {
+    "time": 1791826464.876,
+    "kind": "approval_or_server_request_unanswered",
+    "method": "item/commandExecution/requestApproval",
+    "id": 2,
+    "params": {
+      "kind": "command",
+      "threadId": "01a1312d-632a-7481-aebc-15c3a58d7be2",
+      "turnId": "01a1312d-8700-7052-b2a3-82f25411efeb",
+      "itemId": "exec-2648560e-909c-428f-9fcf-dc9e7cf15f5f",
+      "startedAtMs": 1791826464875,
+      "environmentId": "local",
+      "reason": "Allow this individual localhost command to complete the existing scratch run with the authorized precreated textual receipt?",
+      "command": "/bin/zsh -lc '/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task complete --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --run 3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf --input /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-recovery-gf2rizvk/completion.json --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712'",
+      "cwd": "/Users/yingbowu/Documents/Projects/acanvas",
+      "commandActions": [
+        {
+          "type": "unknown",
+          "command": "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task complete --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --run 3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf --input /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-recovery-gf2rizvk/completion.json --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712"
+        }
+      ],
+      "proposedExecpolicyAmendment": [
+        "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+        "/Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs",
+        "cli",
+        "task",
+        "complete",
+        "--task",
+        "f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c",
+        "--run",
+        "3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f",
+        "--consumer",
+        "4ab0db36-4b32-44f0-b8be-5de4fb351dbf",
+        "--input",
+        "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-recovery-gf2rizvk/completion.json",
+        "--project",
+        "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E",
+        "--session",
+        "892f0bef-1666-4811-9115-180cf37010f3",
+        "--url",
+        "http://127.0.0.1:54712"
+      ],
+      "availableDecisions": [
+        "accept",
+        {
+          "acceptWithExecpolicyAmendment": {
+            "execpolicy_amendment": [
+              "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+              "/Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs",
+              "cli",
+              "task",
+              "complete",
+              "--task",
+              "f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c",
+              "--run",
+              "3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f",
+              "--consumer",
+              "4ab0db36-4b32-44f0-b8be-5de4fb351dbf",
+              "--input",
+              "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-recovery-gf2rizvk/completion.json",
+              "--project",
+              "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E",
+              "--session",
+              "892f0bef-1666-4811-9115-180cf37010f3",
+              "--url",
+              "http://127.0.0.1:54712"
+            ]
+          }
+        },
+        "cancel"
+      ]
+    }
+  },
+  {
+    "time": 1791826465.13,
+    "kind": "notification",
+    "method": "item/completed",
+    "item": {
+      "id": "exec-2648560e-909c-428f-9fcf-dc9e7cf15f5f",
+      "type": "commandExecution",
+      "command": "/bin/zsh -lc '/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task complete --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --run 3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf --input /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-recovery-gf2rizvk/completion.json --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712'",
+      "cwd": "/Users/yingbowu/Documents/Projects/acanvas",
+      "status": "completed",
+      "exitCode": 0,
+      "aggregatedOutput": "{\n  \"id\": \"f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c\",\n  \"sessionId\": \"892f0bef-1666-4811-9115-180cf37010f3\",\n  \"draftId\": \"e247575c-8d3f-45a3-ba22-20dddd607e7f\",\n  \"sequence\": 4,\n  \"status\": \"completed\",\n  \"snapshot\": {\n    \"userRequest\": {\n      \"source\": \"user_instruction\",\n      \"text\": \"Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people.\"\n    },\n    \"requestReferences\": {\n      \"attachmentIds\": [],\n      \"objectIds\": [],\n      \"taskIds\": [],\n      \"order\": []\n    },\n    \"annotations\": [],\n    \"referenceContent\": {\n      \"source\": \"reference_content\",\n      \"assets\": [],\n      \"objects\": [],\n      \"taskIds\": []\n    },\n    \"requirementText\": \"Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people.\"\n  },\n  \"requirementText\": \"Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people.\",\n  \"createdAt\": \"2026-10-12T17:07:59.868Z\",\n  \"updatedAt\": \"2026-10-12T17:34:25.098Z\",\n  \"currentRunId\": \"3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f\",\n  \"reason\": null,\n  \"receipt\": {\n    \"summary\": \"Acknowledged the recovered owned scratch queue request through actual model-driven Canvas CLI.\",\n    \"assetIds\": [],\n    \"objectIds\": [],\n    \"validation\": [\n      \"Task requirement was read; one progress acknowledgment recorded.\"\n    ],\n    \"createdAt\": \"2026-10-12T17:34:25.098Z\"\n  },\n  \"replies\": [],\n  \"runs\": [\n    {\n      \"id\": \"8b40b11d-d49a-4ccf-8012-840eb8e935dd\",\n      \"taskId\": \"f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c\",\n      \"consumerId\": \"9bbb6a66-9bac-4f31-a6c0-19720dc9b070\",\n      \"status\": \"interrupted\",\n      \"createdAt\": \"2026-10-12T17:27:31.950Z\",\n      \"updatedAt\": \"2026-10-12T17:33:40.180Z\",\n      \"progress\": [],\n      \"outputAssetIds\": []\n    },\n    {\n      \"id\": \"3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f\",\n      \"taskId\": \"f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c\",\n      \"consumerId\": \"4ab0db36-4b32-44f0-b8be-5de4fb351dbf\",\n      \"status\": \"completed\",\n      \"createdAt\": \"2026-10-12T17:33:40.180Z\",\n      \"updatedAt\": \"2026-10-12T17:34:25.098Z\",\n      \"progress\": [\n        {\n          \"message\": \"Actual model read the recovered scratch request and acknowledges it.\",\n          \"createdAt\": \"2026-10-12T17:34:16.533Z\"\n        }\n      ],\n      \"outputAssetIds\": [],\n      \"recoveryResolution\": \"Reviewed bounded model experiment timeout: prior run only claimed and read; no external jobs, outputs, progress or receipt. Preserve history and continue scratch textual acknowledgment.\"\n    }\n  ],\n  \"lateResults\": []\n}\n"
+    }
+  },
+  {
+    "time": 1791826470.958,
+    "kind": "approval_or_server_request_unanswered",
+    "method": "item/commandExecution/requestApproval",
+    "id": 3,
+    "params": {
+      "kind": "command",
+      "threadId": "01a1312d-632a-7481-aebc-15c3a58d7be2",
+      "turnId": "01a1312d-8700-7052-b2a3-82f25411efeb",
+      "itemId": "exec-24435438-a03e-417e-a0b1-30607a916c65",
+      "startedAtMs": 1791826470957,
+      "environmentId": "local",
+      "reason": "Allow this individual localhost task-next command to release the existing scratch consumer to idle?",
+      "command": "/bin/zsh -lc '/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task next --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712'",
+      "cwd": "/Users/yingbowu/Documents/Projects/acanvas",
+      "commandActions": [
+        {
+          "type": "unknown",
+          "command": "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task next --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712"
+        }
+      ],
+      "proposedExecpolicyAmendment": [
+        "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+        "/Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs",
+        "cli",
+        "task",
+        "next",
+        "--consumer",
+        "4ab0db36-4b32-44f0-b8be-5de4fb351dbf",
+        "--project",
+        "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E",
+        "--session",
+        "892f0bef-1666-4811-9115-180cf37010f3",
+        "--url",
+        "http://127.0.0.1:54712"
+      ],
+      "availableDecisions": [
+        "accept",
+        {
+          "acceptWithExecpolicyAmendment": {
+            "execpolicy_amendment": [
+              "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+              "/Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs",
+              "cli",
+              "task",
+              "next",
+              "--consumer",
+              "4ab0db36-4b32-44f0-b8be-5de4fb351dbf",
+              "--project",
+              "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E",
+              "--session",
+              "892f0bef-1666-4811-9115-180cf37010f3",
+              "--url",
+              "http://127.0.0.1:54712"
+            ]
+          }
+        },
+        "cancel"
+      ]
+    }
+  },
+  {
+    "time": 1791826471.202,
+    "kind": "notification",
+    "method": "item/completed",
+    "item": {
+      "id": "exec-24435438-a03e-417e-a0b1-30607a916c65",
+      "type": "commandExecution",
+      "command": "/bin/zsh -lc '/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task next --consumer 4ab0db36-4b32-44f0-b8be-5de4fb351dbf --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712'",
+      "cwd": "/Users/yingbowu/Documents/Projects/acanvas",
+      "status": "completed",
+      "exitCode": 0,
+      "aggregatedOutput": "{\n  \"task\": null,\n  \"run\": null,\n  \"consumerId\": \"4ab0db36-4b32-44f0-b8be-5de4fb351dbf\",\n  \"projectId\": \"7adc06af-4d77-49b5-b3ee-2d431f2fb311\",\n  \"sessionId\": \"892f0bef-1666-4811-9115-180cf37010f3\"\n}\n"
+    }
+  },
+  {
+    "time": 1791826478.075,
+    "kind": "approval_or_server_request_unanswered",
+    "method": "item/commandExecution/requestApproval",
+    "id": 4,
+    "params": {
+      "kind": "command",
+      "threadId": "01a1312d-632a-7481-aebc-15c3a58d7be2",
+      "turnId": "01a1312d-8700-7052-b2a3-82f25411efeb",
+      "itemId": "exec-c93d5737-81b3-4a8b-a502-15c2451262fb",
+      "startedAtMs": 1791826478074,
+      "environmentId": "local",
+      "reason": "Allow this individual localhost task-read command to confirm the completed scratch receipt?",
+      "command": "/bin/zsh -lc '/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task read --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712'",
+      "cwd": "/Users/yingbowu/Documents/Projects/acanvas",
+      "commandActions": [
+        {
+          "type": "unknown",
+          "command": "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task read --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712"
+        }
+      ],
+      "proposedExecpolicyAmendment": [
+        "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+        "/Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs",
+        "cli",
+        "task",
+        "read",
+        "--task",
+        "f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c",
+        "--project",
+        "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E",
+        "--session",
+        "892f0bef-1666-4811-9115-180cf37010f3",
+        "--url",
+        "http://127.0.0.1:54712"
+      ],
+      "availableDecisions": [
+        "accept",
+        {
+          "acceptWithExecpolicyAmendment": {
+            "execpolicy_amendment": [
+              "/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node",
+              "/Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs",
+              "cli",
+              "task",
+              "read",
+              "--task",
+              "f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c",
+              "--project",
+              "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E",
+              "--session",
+              "892f0bef-1666-4811-9115-180cf37010f3",
+              "--url",
+              "http://127.0.0.1:54712"
+            ]
+          }
+        },
+        "cancel"
+      ]
+    }
+  },
+  {
+    "time": 1791826478.326,
+    "kind": "notification",
+    "method": "item/completed",
+    "item": {
+      "id": "exec-c93d5737-81b3-4a8b-a502-15c2451262fb",
+      "type": "commandExecution",
+      "command": "/bin/zsh -lc '/Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/scripts/runtime.mjs cli task read --task f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c --project /var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-messaging-queue-4JpW6E --session 892f0bef-1666-4811-9115-180cf37010f3 --url http://127.0.0.1:54712'",
+      "cwd": "/Users/yingbowu/Documents/Projects/acanvas",
+      "status": "completed",
+      "exitCode": 0,
+      "aggregatedOutput": "{\n  \"task\": {\n    \"id\": \"f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c\",\n    \"sessionId\": \"892f0bef-1666-4811-9115-180cf37010f3\",\n    \"draftId\": \"e247575c-8d3f-45a3-ba22-20dddd607e7f\",\n    \"sequence\": 4,\n    \"status\": \"completed\",\n    \"snapshot\": {\n      \"userRequest\": {\n        \"source\": \"user_instruction\",\n        \"text\": \"Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people.\"\n      },\n      \"requestReferences\": {\n        \"attachmentIds\": [],\n        \"objectIds\": [],\n        \"taskIds\": [],\n        \"order\": []\n      },\n      \"annotations\": [],\n      \"referenceContent\": {\n        \"source\": \"reference_content\",\n        \"assets\": [],\n        \"objects\": [],\n        \"taskIds\": []\n      },\n      \"requirementText\": \"Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people.\"\n    },\n    \"requirementText\": \"Host feasibility candidate: read this queued request, record one progress message, and complete it with a textual receipt. Do not create external jobs or contact other people.\",\n    \"createdAt\": \"2026-10-12T17:07:59.868Z\",\n    \"updatedAt\": \"2026-10-12T17:34:25.098Z\",\n    \"currentRunId\": \"3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f\",\n    \"reason\": null,\n    \"receipt\": {\n      \"summary\": \"Acknowledged the recovered owned scratch queue request through actual model-driven Canvas CLI.\",\n      \"assetIds\": [],\n      \"objectIds\": [],\n      \"validation\": [\n        \"Task requirement was read; one progress acknowledgment recorded.\"\n      ],\n      \"createdAt\": \"2026-10-12T17:34:25.098Z\"\n    },\n    \"replies\": [],\n    \"runs\": [\n      {\n        \"id\": \"8b40b11d-d49a-4ccf-8012-840eb8e935dd\",\n        \"taskId\": \"f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c\",\n        \"consumerId\": \"9bbb6a66-9bac-4f31-a6c0-19720dc9b070\",\n        \"status\": \"interrupted\",\n        \"createdAt\": \"2026-10-12T17:27:31.950Z\",\n        \"updatedAt\": \"2026-10-12T17:33:40.180Z\",\n        \"progress\": [],\n        \"outputAssetIds\": []\n      },\n      {\n        \"id\": \"3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f\",\n        \"taskId\": \"f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c\",\n        \"consumerId\": \"4ab0db36-4b32-44f0-b8be-5de4fb351dbf\",\n        \"status\": \"completed\",\n        \"createdAt\": \"2026-10-12T17:33:40.180Z\",\n        \"updatedAt\": \"2026-10-12T17:34:25.098Z\",\n        \"progress\": [\n          {\n            \"message\": \"Actual model read the recovered scratch request and acknowledges it.\",\n            \"createdAt\": \"2026-10-12T17:34:16.533Z\"\n          }\n        ],\n        \"outputAssetIds\": [],\n        \"recoveryResolution\": \"Reviewed bounded model experiment timeout: prior run only claimed and read; no external jobs, outputs, progress or receipt. Preserve history and continue scratch textual acknowledgment.\"\n      }\n    ],\n    \"lateResults\": []\n  },\n  \"context\": {\n    \"referencedTasks\": [],\n    \"recentReceipts\": [\n      {\n        \"taskId\": \"e3640a6b-8f63-4669-bd39-ad0a73c74979\",\n        \"receipt\": {\n          \"summary\": \"Published the owned local text output.\",\n          \"assetIds\": [\n            \"c05787ca-dc8b-4f91-912d-bcfc8396897b\"\n          ],\n          \"objectIds\": [\n            \"ebd2412a-7e16-4e3e-9f18-55ca47ada4b6\"\n          ],\n          \"validation\": [\n            \"Actual bytes saved and imported; source task/run identity verified.\"\n          ],\n          \"createdAt\": \"2026-10-12T17:07:54.863Z\"\n        }\n      },\n      {\n        \"taskId\": \"924628dd-9c3b-4527-8870-7a7717355df0\",\n        \"receipt\": {\n          \"summary\": \"Message 2 acknowledged.\",\n          \"assetIds\": [],\n          \"objectIds\": [],\n          \"validation\": [\n            \"Text-only acknowledgment.\"\n          ],\n          \"createdAt\": \"2026-10-12T17:07:56.260Z\"\n        }\n      },\n      {\n        \"taskId\": \"87270f30-21d1-496e-9172-6f0975a71017\",\n        \"receipt\": {\n          \"summary\": \"Message 3 processed after explicit CLI continuation.\",\n          \"assetIds\": [],\n          \"objectIds\": [],\n          \"validation\": [\n            \"Fresh activation; saved queued task and history read.\"\n          ],\n          \"createdAt\": \"2026-10-12T17:07:59.189Z\"\n        }\n      }\n    ]\n  }\n}\n"
+    }
+  },
+  {
+    "time": 1791826485.328,
+    "kind": "notification",
+    "method": "item/completed",
+    "item": {
+      "id": "msg_097a92d203b73162016acd1a31e6548199952d16fa72ce7c34",
+      "type": "agentMessage",
+      "text": "ACANVAS_QUEUE_MODEL_OK\n\nTask: `f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c`  \nStatus: completed; consumer idle. Receipt confirmed by read-back.\n\n```json\n{\n  \"summary\": \"Acknowledged the recovered owned scratch queue request through actual model-driven Canvas CLI.\",\n  \"assetIds\": [],\n  \"objectIds\": [],\n  \"validation\": [\n    \"Task requirement was read; one progress acknowledgment recorded.\"\n  ],\n  \"createdAt\": \"2026-10-12T17:34:25.098Z\"\n}\n```"
+    }
+  },
+  {
+    "time": 1791826485.597,
+    "kind": "notification",
+    "method": "turn/completed",
+    "turn": {
+      "id": "01a1312d-8700-7052-b2a3-82f25411efeb",
+      "status": "completed",
+      "error": null
+    }
+  }
+]

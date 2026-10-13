@@ -8,6 +8,7 @@ import { useAudioArtwork } from './audioArtwork';
 import { MarkdownBlock } from './MarkdownCanvasContent';
 import { NoteCanvasContent } from './NoteCanvasContent';
 import { AudioCanvasPlayer } from './AudioCanvasPlayer';
+import { DominoLoader } from './DominoLoader';
 import { HtmlCanvasContent } from './HtmlCanvasContent';
 import type { CanvasWheelInput } from './canvas-wheel';
 import type { BoardApi } from './api';
@@ -15,6 +16,7 @@ import { isContentInteraction } from '../shared/content-hit';
 import './content.css';
 import { SceneFileCard, SceneStaticImage } from './scene-renderer/static';
 import { SceneGifContent, SceneVideoContent } from './scene-renderer/media';
+import type { ContentSaveResult, RegisterContentEditor } from './content-editing';
 
 const bytes = (value: number) => value < 1024 * 1024 ? `${Math.max(1, Math.round(value / 1024))} KB` : `${(value / (1024 * 1024)).toFixed(1)} MB`;
 
@@ -112,7 +114,7 @@ export function AssetThumb({ asset, src, onError, onLoad, hoverPreview = false }
   }, [kind, src]);
   const image = kind === 'image' || kind === 'gif' ? src : kind === 'audio' ? cover.url : frame?.src === src ? frame.image : undefined;
   const Icon = kind === 'video' ? Play : kind === 'audio' ? Music2 : kind === 'markdown' ? FileText : kind === 'html' ? Code2 : kind === 'note' ? Type : File;
-  const thumb = <span className="asset-thumb" data-kind={kind}>{image ? <img src={image} alt="" loading="lazy" onLoad={onLoad} onError={() => { if (kind === 'audio') cover.onError(); onError?.(); }}/> : <Icon size={15} className="content-thumbnail-icon"/>}</span>;
+  const thumb = <span className="asset-thumb" data-kind={kind}>{!asset ? <span role="status" aria-label="Loading file"><DominoLoader size={24}/></span> : image ? <img src={image} alt="" loading="lazy" onLoad={onLoad} onError={() => { if (kind === 'audio') cover.onError(); onError?.(); }}/> : <Icon size={15} className="content-thumbnail-icon"/>}</span>;
   return hoverPreview && image ? <ThumbHoverPreview src={image} label={asset?.name || 'Preview'}>{thumb}</ThumbHoverPreview> : thumb;
 }
 
@@ -133,18 +135,27 @@ export interface ContentRendererProps {
   onFrameDrag?: (frame: HTMLIFrameElement, start: { x: number; y: number }, event: PointerEvent<HTMLElement>) => void;
   onActivate?: () => void;
   onSaveError?: (cause: unknown) => void;
+  objectId?: string;
+  objectVersion?: number;
+  sessionId?: string;
+  readOnly?: boolean;
+  saveContent?: (text: string, expectedVersion?: number) => Promise<ContentSaveResult | void>;
+  registerContentEditor?: RegisterContentEditor;
+  onContentDirtyChange?: (dirty: boolean) => void;
+  onContentCompositionChange?: (composing: boolean) => void;
   fill?: NoteFill;
 }
 
-export function ContentRenderer({ asset, src, api, surface = 'canvas', disabled, preserveScene, error, onError, onSize, onMediaElement, onReloadBoard, onBlankPointerDown, onFrameDrag, onFrameWheel, onActivate, onSaveError, fill }: ContentRendererProps) {
+export function ContentRenderer({ asset, src, api, surface = 'canvas', disabled, preserveScene, error, onError, onSize, onMediaElement, onReloadBoard, onBlankPointerDown, onFrameDrag, onFrameWheel, onActivate, onSaveError, objectId, objectVersion, sessionId, readOnly, saveContent, registerContentEditor, onContentDirtyChange, onContentCompositionChange, fill }: ContentRendererProps) {
   const kind = resolveContentKind(asset), title = asset?.name || 'File';
-  if (kind === 'note' && asset) return <NoteCanvasContent asset={asset} src={src} api={api} fill={fill} disabled={disabled} onBlankPointerDown={onBlankPointerDown} onActivate={onActivate} onSaveError={onSaveError}/>;
+  const contentDisabled = objectId ? (readOnly ? false : disabled) : true;
+  if (kind === 'note' && asset) return <NoteCanvasContent asset={asset} src={src} api={api} fill={fill} disabled={contentDisabled} readOnly={readOnly} objectId={objectId} objectVersion={objectVersion} sessionId={sessionId} saveContent={saveContent} registerContentEditor={registerContentEditor} onContentDirtyChange={onContentDirtyChange} onCompositionChange={onContentCompositionChange} onBlankPointerDown={onBlankPointerDown} onActivate={onActivate} onSaveError={onSaveError}/>;
   if (error || kind === 'file') return <SceneFileCard asset={asset} src={src} error={error}/>;
   if (kind === 'image') return <SceneStaticImage src={src} title={title} onSize={onSize} onError={() => onError?.()}/>;
   if (kind === 'gif') return <SceneGifContent src={src} title={title} onSize={onSize} onError={onError}/>;
   if (kind === 'video') return <SceneVideoContent src={src} title={title} controls={surface === 'detail'} tabIndex={surface === 'detail' ? 0 : -1} onMediaElement={onMediaElement} onSize={onSize} onError={onError}/>;
   if (kind === 'audio') return <AudioCanvasPlayer key={asset?.id || src} src={src} title={title} assetId={asset?.id} disabled={disabled} onElement={element => onMediaElement?.(element)} onError={onError}/>;
   return <div className="content-shell" data-content-kind={kind} data-canvas-control onPointerDown={event => { if (surface === 'canvas' && !isContentInteraction(event.currentTarget, event.clientX, event.clientY, event.target as Element)) onBlankPointerDown?.(event); event.stopPropagation(); }}>
-    {kind === 'markdown' ? <MarkdownBlock asset={asset} src={src} title={title} api={api} disabled={disabled} onSaveError={onSaveError}/> : asset && <HtmlCanvasContent key={asset.id} asset={asset} api={api} preserveScene={preserveScene} onReloadBoard={onReloadBoard} onBlankPointerDown={onBlankPointerDown} onFrameDrag={onFrameDrag} onFrameWheel={surface === 'canvas' ? onFrameWheel : undefined}/>}
+    {kind === 'markdown' ? <MarkdownBlock asset={asset} src={src} title={title} api={api} disabled={contentDisabled} readOnly={readOnly} objectId={objectId} objectVersion={objectVersion} sessionId={sessionId} saveContent={saveContent} registerContentEditor={registerContentEditor} onContentDirtyChange={onContentDirtyChange} onCompositionChange={onContentCompositionChange} onSaveError={onSaveError}/> : asset && <HtmlCanvasContent key={asset.id} asset={asset} api={api} preserveScene={preserveScene} onReloadBoard={onReloadBoard} onBlankPointerDown={onBlankPointerDown} onFrameDrag={onFrameDrag} onFrameWheel={surface === 'canvas' ? onFrameWheel : undefined}/>}
   </div>;
 }

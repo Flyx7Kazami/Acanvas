@@ -1,0 +1,21 @@
+{
+  "root": "/private/tmp/acanvas-integration-review-project-PsM7E7",
+  "candidate": "/private/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-delivery-build-uF2eFb",
+  "checks": [
+    "Host task metadata, frozen group/content snapshot and group history coexist"
+  ],
+  "errors": [],
+  "historyTiming": {
+    "duration": "0.22s, 0.18s, 0.22s",
+    "properties": "grid-template-rows, opacity, transform"
+  },
+  "capturedLocate": {
+    "before": "transform: translate(-110px, 18px) scale(1.5);",
+    "after": "transform: translate(-110px, 18px) scale(1.5);",
+    "selected": [],
+    "readerCount": 0,
+    "historyCount": 0
+  },
+  "status": "P2 reproduced",
+  "evidenceNote": "Preserved first completed reproduction measurements from the initial candidate; the runner was extended to assert successful behavior afterward."
+}

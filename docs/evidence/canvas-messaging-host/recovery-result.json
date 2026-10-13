@@ -1,0 +1,73 @@
+{
+  "status": "PASS",
+  "scope": "Third explicitly created ephemeral scratch thread, same live owner for ready turn and Client B Canvas queue followup. Earlier ephemeral threads were not restored.",
+  "ownerPid": 51760,
+  "threadId": "01a1312d-632a-7481-aebc-15c3a58d7be2",
+  "model": "gpt-6.1-sol",
+  "inheritedPolicy": {
+    "approvalPolicy": "on-request",
+    "approvalsReviewer": "user",
+    "sandbox": {
+      "type": "readOnly",
+      "networkAccess": false
+    }
+  },
+  "canvas": {
+    "projectId": "7adc06af-4d77-49b5-b3ee-2d431f2fb311",
+    "sessionId": "892f0bef-1666-4811-9115-180cf37010f3",
+    "taskId": "f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c",
+    "oldRunId": "8b40b11d-d49a-4ccf-8012-840eb8e935dd",
+    "runId": "3295fdd2-d9cc-477b-90f9-5dbbf9d20b0f",
+    "consumerId": "4ab0db36-4b32-44f0-b8be-5de4fb351dbf",
+    "serviceUrl": "http://127.0.0.1:54712",
+    "binding": {
+      "host": "codex",
+      "threadId": "01a1312d-632a-7481-aebc-15c3a58d7be2",
+      "sessionId": "892f0bef-1666-4811-9115-180cf37010f3"
+    }
+  },
+  "verified": [
+    "Public task read inspected old interrupted run with no progress, output, external jobs or completion receipt.",
+    "Public task resume preserved old history and created a fresh run/consumer with explicit resolution.",
+    "Actual ready model turn completed; Client B loaded and submitted followup to same owner/thread.",
+    "Actual model tools performed read, progress, complete, idle next and final receipt read; all five commands exited0.",
+    "Actual model final acknowledgment followed persisted completed receipt; followup turn completed."
+  ],
+  "approvalRequests": 5,
+  "approvalResponses": "Five individual accept decisions; exact argv/scope/run/consumer validated and completion bytes hash checked. No policy amendment/session-wide grant/config override.",
+  "completionInputSha256": "240e9347fa6ef6b67753c835eae4f787da54d4a67c0ecbbdb59144e02db49339",
+  "receipt": {
+    "summary": "Acknowledged the recovered owned scratch queue request through actual model-driven Canvas CLI.",
+    "assetIds": [],
+    "objectIds": [],
+    "validation": [
+      "Task requirement was read; one progress acknowledgment recorded."
+    ],
+    "createdAt": "2026-10-12T17:34:25.098Z"
+  },
+  "modelFinal": "ACANVAS_QUEUE_MODEL_OK\n\nTask: `f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c`  \nStatus: completed; consumer idle. Receipt confirmed by read-back.\n\n```json\n{\n  \"summary\": \"Acknowledged the recovered owned scratch queue request through actual model-driven Canvas CLI.\",\n  \"assetIds\": [],\n  \"objectIds\": [],\n  \"validation\": [\n    \"Task requirement was read; one progress acknowledgment recorded.\"\n  ],\n  \"createdAt\": \"2026-10-12T17:34:25.098Z\"\n}\n```",
+  "completedTurns": [
+    "01a1312d-63ba-76e1-8b47-b9679f3040cf",
+    "01a1312d-8700-7052-b2a3-82f25411efeb"
+  ],
+  "cleanup": {
+    "ownerStopped": true,
+    "ownerExitCode": 0,
+    "projectServiceStopped": true,
+    "scratchPreserved": true
+  },
+  "unverified": [
+    "Direct ingress to existing owning desktop conversation and Canvas UI Send wakeup are not demonstrated by this scratch test.",
+    "Busy steering/stale expectedTurnId during busy and duplicate retry semantics remain untested."
+  ],
+  "evidence": [
+    "recovery-evidence.json",
+    "recovery-client-A.json",
+    "recovery-client-B.json",
+    "recovery-model-commands.json",
+    "recovery-task-receipt.json",
+    "recovery-model-final.txt",
+    "recovery-completion-input.json",
+    "recovery-model-queue.py"
+  ]
+}

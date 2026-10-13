@@ -1,0 +1,32 @@
+{
+  "size": [
+    512,
+    512
+  ],
+  "cornerRGBA": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "transparentPixels": 193213,
+  "opaquePixels": 67991,
+  "greenRGBA": [
+    137,
+    178,
+    122,
+    255
+  ],
+  "pinkRGBA": [
+    250,
+    158,
+    179,
+    255
+  ],
+  "grayRGBA": [
+    159,
+    158,
+    158,
+    255
+  ]
+}

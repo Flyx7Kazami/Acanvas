@@ -1,0 +1,9 @@
+{
+  "pendingPutShowsDomino": true,
+  "statusLivesOutsideClearedConflictPanel": true,
+  "statusClearsAfterSuccessfulSave": true,
+  "localChoicePersists": true,
+  "statusClearsOnFailure": true,
+  "retryRestoresSavedState": true,
+  "errors": []
+}

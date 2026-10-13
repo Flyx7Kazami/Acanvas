@@ -1518,8 +1518,10 @@ test('queue accessible statuses and symmetric insets stay usable across viewport
     expect(await first.locator('.queue-row').evaluate(element => element.getBoundingClientRect().height)).toBe(36);
     await first.locator('.queue-task').click(); await expect(first.locator('.queue-task')).toHaveAttribute('aria-expanded', 'true'); await first.locator('.queue-task').click(); await expect(first.locator('.queue-task')).toHaveAttribute('aria-expanded', 'false');
   }
+  await first.evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
+  const queuedGeometry = await first.evaluate(element => { const row = element.querySelector('.queue-row')!.getBoundingClientRect(), mark = element.querySelector('.queue-task-mark')!.getBoundingClientRect(), title = element.querySelector('.queue-title')!.getBoundingClientRect(), preview = element.querySelector('.queue-preview')!.getBoundingClientRect(); return { markX: mark.x - row.x, markY: mark.y - row.y, titleX: title.x - row.x, previewX: preview.x - row.x }; });
   const state = await app.state(), session = state.session.id, claim = await app.call(`/api/sessions/${session}/claim`, 'POST', { consumerId: 'queue-status-fixture' }) as Claim;
-  await expect(first).toHaveAttribute('data-status', 'running'); await expect(first.locator('.queue-task')).toHaveAttribute('aria-label', /Running$/); await expect(first.locator('.queue-task-mark')).toHaveCount(0); await expect(first.locator('.queue-task svg.lucide-loader-circle')).toHaveCount(0); await expect(first.getByRole('button', { name: 'Edit request 1', exact: true })).toHaveCount(0);
+  await expect(first).toHaveAttribute('data-status', 'running'); await expect(first.locator('.queue-task')).toHaveAttribute('aria-label', /Running$/); await expect(first.locator('.queue-task-mark')).toHaveCount(1); const runningGeometry = await first.evaluate(element => { const row = element.querySelector('.queue-row')!.getBoundingClientRect(), mark = element.querySelector('.queue-task-mark')!.getBoundingClientRect(), title = element.querySelector('.queue-title')!.getBoundingClientRect(), preview = element.querySelector('.queue-preview')!.getBoundingClientRect(); return { markX: mark.x - row.x, markY: mark.y - row.y, titleX: title.x - row.x, previewX: preview.x - row.x }; }); const geometryMessage = JSON.stringify({ queuedGeometry, runningGeometry }); expect(Math.abs(runningGeometry.markX - queuedGeometry.markX), geometryMessage).toBeLessThan(1); expect(Math.abs(runningGeometry.markY - queuedGeometry.markY), geometryMessage).toBeLessThan(1); expect(Math.abs(runningGeometry.titleX - queuedGeometry.titleX), geometryMessage).toBeLessThan(1); expect(Math.abs(runningGeometry.previewX - queuedGeometry.previewX), geometryMessage).toBeLessThan(1); const runningIcon = first.locator('.queue-task-mark svg.lucide-loader-circle'); await expect(runningIcon).toHaveCount(1); await expect(runningIcon).toHaveClass(/spin/); expect(await runningIcon.evaluate(element => getComputedStyle(element).animationName)).toBe('spin'); expect(await runningIcon.evaluate(element => element.getAnimations().some(animation => animation.playState === 'running'))).toBeTruthy(); await expect(first.getByRole('button', { name: 'Edit request 1', exact: true })).toHaveCount(0);
   await composerAction(page, 'Request history'); await expect(page.locator('.history-list .status-running')).toHaveText('Running'); await page.getByRole('button', { name: 'Close request history', exact: true }).click();
   await app.call(`/api/sessions/${session}/tasks/${claim.task!.id}/complete`, 'POST', { runId: claim.run!.id, consumerId: claim.consumerId, summary: 'Cover direction prepared.', assetIds: [], validation: [], operations: [] });
   const textClaim = await app.call(`/api/sessions/${session}/claim`, 'POST', { consumerId: claim.consumerId }) as Claim;
@@ -1541,8 +1543,16 @@ test('compact queue opens on hover with nonlinear motion and supports keyboard a
   await toggle.focus(); await toggle.press('Enter'); await expect(toggle).toHaveAttribute('aria-expanded', 'true'); await expect(page.getByRole('button', { name: 'Cancel request 4', exact: true })).toBeInViewport();
   await toggle.press('Escape'); await expect(page.locator('#instruction')).toBeFocused(); await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await page.setViewportSize({ width: 390, height: 480 }); await page.screenshot({ path: info.outputPath('compact-queue-390.png') });
-  const touchContext = await browser.newContext({ viewport: { width: 390, height: 480 }, hasTouch: true, isMobile: true });
-  try { const touch = await touchContext.newPage(); await touch.goto(page.url()); await expect(touch.locator('.queue-extra').first()).toHaveAttribute('aria-hidden', 'true'); await touch.locator('.queue-expand').tap(); await expect(touch.locator('.queue-expand')).toHaveAttribute('aria-expanded', 'true'); await expect(touch.getByRole('button', { name: 'Cancel request 4', exact: true })).toBeInViewport(); expect(await touch.locator('.queue-row').first().evaluate(element => element.getBoundingClientRect().height)).toBe(40); await touch.locator('#whiteboard').tap({ position: { x: 250, y: 100 } }); await expect(touch.locator('.queue-expand')).toHaveAttribute('aria-expanded', 'false'); } finally { await touchContext.close(); }
+  for (const [width, colorScheme] of [[320, 'light'], [390, 'dark']] as const) {
+    const touchContext = await browser.newContext({ viewport: { width, height: 480 }, hasTouch: true, isMobile: true, colorScheme });
+    try {
+      const touch = await touchContext.newPage(); await touch.goto(page.url()); if (colorScheme === 'dark') { await touch.getByRole('button', { name: 'Theme', exact: true }).click(); await touch.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); } await expect(touch.locator('html')).toHaveAttribute('data-theme', colorScheme); await expect(touch.locator('.queue-extra').first()).toHaveAttribute('aria-hidden', 'true');
+      const touchToggle = touch.locator('.queue-expand');
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await touchToggle.tap(); await expect(touchToggle).toHaveAttribute('aria-expanded', 'true'); await expect(touch.getByRole('button', { name: 'Cancel request 4', exact: true })).toBeInViewport(); expect(await touch.locator('.queue-row').first().evaluate(element => element.getBoundingClientRect().height)).toBe(40); await touch.locator('#whiteboard').tap({ position: { x: 250, y: 100 } }); await expect(touchToggle).toHaveAttribute('aria-expanded', 'false'); await expect.poll(async () => touch.locator('.queue-extra').first().evaluate(element => element.getBoundingClientRect().height)).toBe(0);
+      }
+    } finally { await touchContext.close(); }
+  }
 });
 
 test('spring queue and composer keep compact references, editable FIFO slots and balanced controls', async ({ page, app }, info) => {
@@ -1762,7 +1772,7 @@ test('short feedback stays quiet and only overlaps during rapid actions', async 
   await copy(); await expect(transient).toHaveAttribute('data-count', '2'); await expect(page.locator('.notification-peeks>span')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'More request actions', exact: true })).toBeFocused(); await expect(stack.locator('button')).toHaveCount(0); expect(await stack.getAttribute('tabindex')).toBeNull();
   await page.clock.runFor(1800); await expect(transient).toHaveAttribute('data-count', '1'); await expect(page.locator('.notification-peeks')).toHaveCount(0);
-  await page.clock.runFor(1000); await expect(stack).toBeHidden();
+  await page.clock.runFor(1000); await expect(transient).toHaveAttribute('data-notification-state', 'leaving'); await expect(transient).toHaveAttribute('aria-hidden', 'true'); await expect(transient).toHaveAttribute('inert', ''); await expect(stack).toBeVisible(); await page.clock.runFor(200); await expect(stack).toBeHidden();
   for (let index = 0; index < 2; index++) { await copy(); await expect(transient).toHaveAttribute('data-count', '1'); await page.clock.runFor(2800); await expect(stack).toBeHidden(); }
   for (const width of [1440, 390, 320]) for (const theme of ['light', 'dark']) {
     await page.setViewportSize({ width, height: width === 1440 ? 1000 : 480 });
@@ -1785,7 +1795,7 @@ test('ordinary errors expire and repeated identical failures show again while ac
   for (let index = 0; index < 2; index++) {
     await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: `failure-${index}.txt`, mimeType: 'text/plain', buffer: Buffer.from('isolated failure') });
     await expect(page.getByRole('alert')).toContainText('The local service could not complete this action.'); await expect(page.locator('.notification-transients')).toHaveAttribute('data-count', '1');
-    await page.clock.runFor(2800); await expect(page.locator('.notification-stack')).toBeHidden();
+    await page.clock.runFor(2800); await expect(page.locator('.notification-transients')).toHaveAttribute('data-notification-state', 'leaving'); await expect(page.locator('.notification-transients')).toHaveAttribute('aria-hidden', 'true'); await page.clock.runFor(200); await expect(page.locator('.notification-stack')).toBeHidden();
     await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: index === 0 ? 'Dark' : 'Light', exact: true }).click(); await expect(page.locator('.notification-stack')).toBeHidden();
   }
   await page.unroute('**/api/assets?*');

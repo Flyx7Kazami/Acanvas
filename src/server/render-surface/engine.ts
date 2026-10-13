@@ -20,6 +20,6 @@ export async function renderEngineInfo(directory?: string) {
 
 export async function launchRenderEngine(directory?: string): Promise<Browser> {
   const engine = await renderEngineInfo(directory);
-  await access(engine.executablePath).catch(() => { throw new Error('render_engine_missing:Run npm run install:render-engine in the acanvas application directory.'); });
+  await access(engine.executablePath).catch(() => { throw new Error('render_engine_missing:Run npm run install:render-engine in the Acanvas application directory.'); });
   return chromium.launch({ executablePath: engine.executablePath, headless: true, chromiumSandbox: true, timeout: 15_000 });
 }

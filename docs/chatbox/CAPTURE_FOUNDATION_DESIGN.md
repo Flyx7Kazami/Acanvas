@@ -18,9 +18,9 @@
 
 保存批注的链路从 `browser-sidebar-comment-overlay-submit` 到主进程 `handleCommentOverlaySubmit`、`handleOverlaySubmit`：先保存评论与锚点并关闭编辑浮层，再调用 `captureSavedCommentScreenshot`。`prepare-comment-screenshot` 使 preload 重新解析目标并显示标记，下一次 `requestAnimationFrame` 返回区域和 marker。主进程随后对同一页面的 `webContents.capturePage()` 执行零参数截图，取得整页图像后用 `NativeImage` 裁切、缩放和编码，回填该评论。
 
-当前源码采用全视口长边 1280，局部加 32px 留白后长边 1024；至少 10 条评论时，紧凑图使用 16px 留白及 768 长边。裁切比例使用实际图像尺寸和视口尺寸。acanvas 原型借鉴同页面宿主截图与浮层时序，像素映射以捕获现场的新视口为依据。
+当前源码采用全视口长边 1280，局部加 32px 留白后长边 1024；至少 10 条评论时，紧凑图使用 16px 留白及 768 长边。裁切比例使用实际图像尺寸和视口尺寸。Acanvas 原型借鉴同页面宿主截图与浮层时序，像素映射以捕获现场的新视口为依据。
 
-Codex 保存路径先保留文字，截图失败或一秒 ready 超时后可留下无图评论；普通文字编辑沿用已有图像。该 saved 路径以页面及评论 ID 匹配等待结果，完整编辑版本归属和保存后视口变化仍需 acanvas 按本轮标准检查。Codex 的 direct 捕获分支具有捕获后的页面、标签页与对话归属检查。源记录证明实现方式，媒体及动态现场能力由本轮隔离实测验收。
+Codex 保存路径先保留文字，截图失败或一秒 ready 超时后可留下无图评论；普通文字编辑沿用已有图像。该 saved 路径以页面及评论 ID 匹配等待结果，完整编辑版本归属和保存后视口变化仍需 Acanvas 按本轮标准检查。Codex 的 direct 捕获分支具有捕获后的页面、标签页与对话归属检查。源记录证明实现方式，媒体及动态现场能力由本轮隔离实测验收。
 
 ## 3. 截图原型
 

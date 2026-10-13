@@ -1,0 +1,58 @@
+{
+  "project": "/private/tmp/acanvas-domino-independent/project-qsmOfR",
+  "base": "http://127.0.0.1:63702",
+  "browser": "155.0.8059.40",
+  "checks": [
+    "delayed real startup and decorative SVG semantics",
+    "Markdown preview/source and Note loading in actual390 light/dark",
+    "text loaders end with source and note controls ready",
+    "Send busy keeps accessible name and ends in queue",
+    "Cancel busy ends with completed cancellation",
+    "actual annotation capture background state and retained Done busy complete",
+    "9 independently matched reference frames at1.25 time including exact loop",
+    "reduced motion remains static",
+    "actual backend HTML source component loads and clears after frame",
+    "backend HTML failure replaces loading with retry",
+    "zero browser exceptions"
+  ],
+  "errors": [],
+  "limits": [
+    "Backend SceneHtmlSurface uses actual component lifecycle with controlled API fixture; default production path uses iframe preview.",
+    "Session switch branch retains original component source; product currently exposes no switch control."
+  ],
+  "completedAt": "2026-10-13T05:57:54.433Z",
+  "findings": [
+    {
+      "priority": "P2",
+      "file": "src/web/App.tsx",
+      "line": 1169,
+      "summary": "Conflict saving loader vanishes with panel while request is pending.",
+      "evidence": {
+        "message": "expect(locator).toBeVisible() failed\n\nLocator:  getByRole('button', { name: 'Saving\u2026', exact: true }).locator('.domino-loader')\nExpected: visible\nReceived: <element(s) not found>\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"to.be.visible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'Saving\u2026', exact: true }).locator('.domino-loader')\u001b[22m\n",
+        "stack": "Error: expect(locator).toBeVisible() failed\n\nLocator:  getByRole('button', { name: 'Saving\u2026', exact: true }).locator('.domino-loader')\nExpected: visible\nReceived: <element(s) not found>\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"to.be.visible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'Saving\u2026', exact: true }).locator('.domino-loader')\u001b[22m\n\n    at Proxy.<anonymous> (/Users/yingbowu/Documents/Projects/acanvas/node_modules/playwright/lib/matchers/expect.js:221:24)\n    at file:///private/tmp/acanvas-domino-independent/loading-review.mjs:33:711"
+      },
+      "status": "closed",
+      "resolution": "Lifecycle-owned draft-resolution-status stays outside the conditional conflict panel.",
+      "independentRecheck": "conflict-independent.json; held successful PUT plus injected failure and actual retry passed."
+    }
+  ],
+  "fixtureHarnessErrors": [
+    "The requested module '/@fs/Users/yingbowu/Documents/Projects/acanvas/node_modules/react-dom/client.js?v=2b058f9d' does not provide an export named 'createRoot'"
+  ],
+  "result": "PASS",
+  "visualInspection": [
+    "icon-independent-comparison.png and actual16/32/64/128 renders",
+    "text-loading-independent-dark-390.png",
+    "send-independent-dark-390.png",
+    "annotation-done-independent-dark-390.png",
+    "backend-html-loading-independent-light-390.png",
+    "conflict-fixed-independent-light-390.png",
+    "../exports/gif-contact.png"
+  ],
+  "finalCandidate": "main-CbQpdaPW.js",
+  "notes": [
+    "Motion matrices tolerate0.001 browser serialization difference;9 outer SVG screenshots were byte-identical at normalized source times0,150,300,900,1350,2100,3300,4499,4500ms.",
+    "First harness runs are preserved; Markdown selector, asynchronous capture expectation, numeric matrix serialization and temporary React dependency setup were corrected without product edits.",
+    "All review services used dedicated temporary projects;4317 and real project data untouched."
+  ]
+}

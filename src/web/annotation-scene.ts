@@ -5,8 +5,8 @@ import { resolveContentKind } from '../shared/content-types.js';
 import { readMarkdownContentAnchor } from './scene-renderer/media/markdown-anchor.js';
 
 export const annotationTarget = (annotation: AnnotationInput): AnnotationTarget => {
-  const { scope, objectId, objectIds, assetId, bounds, coordinateSpace, timeStart, timeEnd, snapshotAssetId, geometry, contentAnchor } = annotation;
-  return { scope, ...(objectId ? { objectId } : {}), objectIds, ...(assetId ? { assetId } : {}), bounds, coordinateSpace, ...(timeStart !== undefined ? { timeStart } : {}), ...(timeEnd !== undefined ? { timeEnd } : {}), ...(snapshotAssetId ? { snapshotAssetId } : {}), ...(geometry ? { geometry } : {}), ...(contentAnchor ? { contentAnchor } : {}) };
+  const { scope, boardGroupId, objectId, objectIds, assetId, bounds, coordinateSpace, timeStart, timeEnd, snapshotAssetId, geometry, contentAnchor } = annotation;
+  return { scope, ...(boardGroupId ? { boardGroupId } : {}), ...(objectId ? { objectId } : {}), objectIds, ...(assetId ? { assetId } : {}), bounds, coordinateSpace, ...(timeStart !== undefined ? { timeStart } : {}), ...(timeEnd !== undefined ? { timeEnd } : {}), ...(snapshotAssetId ? { snapshotAssetId } : {}), ...(geometry ? { geometry } : {}), ...(contentAnchor ? { contentAnchor } : {}) };
 };
 
 export const contains = (outer: Rect, inner: Rect) => inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.width <= outer.x + outer.width && inner.y + inner.height <= outer.y + outer.height;

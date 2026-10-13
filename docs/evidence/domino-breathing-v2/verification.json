@@ -1,0 +1,73 @@
+{
+  "node": "v24.21.0",
+  "parameters": {
+    "height": 34,
+    "width": 24,
+    "spacing": 18,
+    "cadence": 650,
+    "fallAt": 4745,
+    "camera": {
+      "origin": [
+        36,
+        44
+      ],
+      "scale": 0.95,
+      "azimuth": -65,
+      "elevation": 28,
+      "roll": 30
+    }
+  },
+  "forward": [
+    -1.0623794943056382,
+    -0.33806235876210167
+  ],
+  "firstFullyUprightMs": 4378.699999998398,
+  "uprightDwellMs": 366.3000000016018,
+  "uprightStartBounds": {
+    "left": 30.384670216924707,
+    "right": 52.00332781813662,
+    "top": 4.429207159794956,
+    "bottom": 49.895517591857384
+  },
+  "contactSamples": 200,
+  "monotonicAndSteadyTravelSamples": 5820,
+  "offscreenRecycles": 30,
+  "maxProjectionError": 0.0005048968358494221,
+  "cycleMatrixError": 0.0000999999999891088,
+  "periodicWithinCssPrecision": true,
+  "grayOpaqueStrokeFree": true,
+  "reducedMotionStill": true,
+  "previousAndCurrentPreserved": true,
+  "refinedEqualsMain": true,
+  "mobileNoOverflow": true,
+  "exportedFrames": 195,
+  "exportFrameRate": 20,
+  "errors": [],
+  "gif": {
+    "width": 160,
+    "height": 128,
+    "frames": 195,
+    "durationMs": 9750,
+    "frameDelaysMs": [
+      50
+    ]
+  },
+  "edgeOn": {
+    "angleDegrees": 38.47870789781859,
+    "phaseMs": 5532.486611734795
+  },
+  "depthOrdering": "Viewer-facing branch above turned-away branch; high-x near before edge-on, low-x near after edge-on.",
+  "independentOcclusionReview": "../domino-projected-breathing/review/results.json",
+  "frontendTypecheck": {
+    "result": "passed",
+    "command": ".runtime/node_modules/node/bin/node node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
+    "scope": "Current tilted geometry; completed before final generated z-index correction."
+  },
+  "isolatedViteBuild": {
+    "result": "passed",
+    "outDir": "/private/tmp/acanvas-domino-breathing-v2-web",
+    "scope": "Current tilted geometry; completed before final generated z-index correction. Final CSS ordering verified in isolated Chrome; build was not repeated."
+  },
+  "screenSpeedSvgUnitsPerSecond": 30.873338370728764,
+  "screenSpeedRatioToV1": 0.4016382269254069
+}

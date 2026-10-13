@@ -1,0 +1,36 @@
+[
+  {
+    "time": 1791825493.254,
+    "kind": "continuation_socket_check",
+    "socket": "/tmp/acanvas-host-probe-xslv4o3z/owner.sock",
+    "ownerPid": 35291,
+    "connected": false,
+    "errorType": "ConnectionRefusedError",
+    "errno": 61,
+    "message": "[Errno 61] Connection refused"
+  },
+  {
+    "kind": "continuation_owner_identity_check",
+    "pid": 35291,
+    "command": "ps -p 35291 -o pid=,ppid=,command=",
+    "exitCode": 1,
+    "output": ""
+  },
+  {
+    "kind": "scratch_queue_candidate_read",
+    "project": "<OWNED_SCRATCH_QUEUE_PROJECT>",
+    "sessionId": "892f0bef-1666-4811-9115-180cf37010f3",
+    "taskId": "f9e3f5a5-6d09-47bc-99d8-2d562eb5f66c",
+    "status": "queued",
+    "currentRunId": null,
+    "receipt": null,
+    "runs": []
+  },
+  {
+    "kind": "scratch_queue_stop",
+    "projectId": "7adc06af-4d77-49b5-b3ee-2d431f2fb311",
+    "method": "project stop via project-verifying CLI",
+    "status": "stopped",
+    "tempMaterials": "preserved"
+  }
+]

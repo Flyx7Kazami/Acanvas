@@ -1,0 +1,91 @@
+✖ visible Canvas evidence excludes native controls while capture cancellation stays usable (1920.407875ms)
+ℹ Evidence: /private/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-chatbox-evidence-nxX4H7
+✖ annotation focus follows the active editor when a pending reader is closed or replaced (6358.708542ms)
+ℹ Evidence: /private/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-chatbox-evidence-4eJyL5
+✔ CLI bundles save immutable resources under .acanvas, survive source removal/restart and retain task dependencies (154.217584ms)
+✔ bundle imports reject unsupported files, traversal, symlinks and bounds before upload (30.284959ms)
+✔ CLI rejects an ancestor swapped to an outside symlink after path validation (29.342833ms)
+✔ CLI rejects a source directory swapped during scanning then restored before validation (19.305792ms)
+▶ native profile scanning accepts recovered paths and preserves ownership and filesystem errors
+  ✔ readdir-disappear (4.924ms)
+  ✔ realpath-disappear (2.413417ms)
+  ✔ lstat-EACCES (2.210917ms)
+  ✔ realpath-EACCES (1.981208ms)
+  ✔ lstat-EIO (1.522875ms)
+  ✔ replace-symlink (1.967167ms)
+  ✔ live-controller (1.957833ms)
+  ✔ live-browser (1.682708ms)
+  ✔ unknown-record (2.018375ms)
+  ✔ foreign-executable (2.040542ms)
+  ✔ inactive-owned (1.740791ms)
+✔ native profile scanning accepts recovered paths and preserves ownership and filesystem errors (26.466417ms)
+✖ reselecting one object creates individual atoms with neutral preview styling and one removable occurrence (2482.488625ms)
+ℹ Evidence: /private/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-reference-evidence-aSpXpW
+ℹ tests 19
+ℹ suites 0
+ℹ pass 16
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12729.598
+
+✖ failing tests:
+
+test at dist/tests/chatbox-ui.test.js:837:1
+✖ visible Canvas evidence excludes native controls while capture cancellation stays usable (1920.407875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  228 !== 0
+  
+      at TestContext.<anonymous> (file:///private/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-delivery-build-QoDTmf/dist/tests/chatbox-ui.test.js:883:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 228,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/tests/chatbox-ui.test.js:1365:1
+✖ annotation focus follows the active editor when a pending reader is closed or replaced (6358.708542ms)
+  Error: expect(locator).toHaveValue(expected) failed
+  
+  Locator: getByRole('textbox', { name: 'Annotation text', exact: true })
+  Expected string: "First ownerY"
+  Received string: "First Yowner"
+  Timeout: 5000ms
+  
+  Call log:
+  [2m  - Expect "to.have.value" with timeout 5000ms[22m
+  [2m  - waiting for getByRole('textbox', { name: 'Annotation text', exact: true })[22m
+  [2m    9 × locator resolved to <textarea rows="4" class="annotation-fulltext" data-canvas-wheel="content" aria-label="Annotation text" placeholder="Add a comment…">First Yowner</textarea>[22m
+  [2m      - unexpected value "First Yowner"[22m
+  
+      at Proxy.<anonymous> (/Users/yingbowu/Documents/Projects/acanvas/node_modules/playwright/lib/matchers/expect.js:221:24)
+      at TestContext.<anonymous> (file:///private/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-delivery-build-QoDTmf/dist/tests/chatbox-ui.test.js:1390:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    matcherResult: { name: 'toHaveValue', expected: 'First ownerY', message: `expect(locator).toHaveValue(expected) failed\n\nLocator: getByRole('textbox', { name: 'Annotation text', exact: true })\nExpected string: "First ownerY"\nReceived string: "First Yowner"\nTimeout: 5000ms\n\nCall log:\n\x1B[2m  - Expect "to.have.value" with timeout 5000ms\x1B[22m\n\x1B[2m  - waiting for getByRole('textbox', { name: 'Annotation text', exact: true })\x1B[22m\n\x1B[2m    9 × locator resolved to <textarea rows="4" class="annotation-fulltext" data-canvas-wheel="content" aria-label="Annotation text" placeholder="Add a comment…">First Yowner</textarea>\x1B[22m\n\x1B[2m      - unexpected value "First Yowner"\x1B[22m\n`, pass: false, actual: 'First Yowner', log: [ '  - Expect "to.have.value" with timeout 5000ms', "  - waiting for getByRole('textbox', { name: 'Annotation text', exact: true })", '    9 × locator resolved to <textarea rows="4" class="annotation-fulltext" data-canvas-wheel="content" aria-label="Annotation text" placeholder="Add a comment…">First Yowner</textarea>', '      - unexpected value "First Yowner"' ], timeout: 5000 }
+  }
+
+test at dist/tests/reference-occurrences-ui.test.js:73:1
+✖ reselecting one object creates individual atoms with neutral preview styling and one removable occurrence (2482.488625ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'rgb(59, 59, 59)'
+  - 'color(srgb 0.145154 0.14992 0.1544 / 0.871176)'
+  
+      at TestContext.<anonymous> (file:///private/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-delivery-build-QoDTmf/dist/tests/reference-occurrences-ui.test.js:91:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'rgb(59, 59, 59)',
+    expected: 'color(srgb 0.145154 0.14992 0.1544 / 0.871176)',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

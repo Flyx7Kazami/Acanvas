@@ -1,0 +1,261 @@
+{
+  "binary": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+  "version": "codex-cli 0.162.0-alpha.17.2",
+  "scratch": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-busy-race-B71FYW",
+  "socketPath": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-busy-race-B71FYW/owner.sock",
+  "configOverrides": false,
+  "productThreadCreation": false,
+  "events": [
+    {
+      "at": "2026-10-12T18:31:44.901Z",
+      "kind": "initialize",
+      "client": "original_host",
+      "userAgent": "codex_work_desktop/0.162.0-alpha.17.2 (Mac OS 15.4.0; arm64) dumb (acanvas_busy_probe_original_host; 0.1.0)"
+    },
+    {
+      "at": "2026-10-12T18:31:45.042Z",
+      "kind": "scratch_thread_created",
+      "threadId": "01a13162-8e0a-7b30-a5ad-e2ecff264c38",
+      "inherited": {
+        "model": "gpt-6.1-sol",
+        "approvalPolicy": "on-request",
+        "approvalsReviewer": "user",
+        "sandbox": {
+          "type": "readOnly",
+          "networkAccess": false
+        }
+      }
+    },
+    {
+      "at": "2026-10-12T18:31:45.044Z",
+      "kind": "initialize",
+      "client": "second_client",
+      "userAgent": "codex_work_desktop/0.162.0-alpha.17.2 (Mac OS 15.4.0; arm64) dumb (acanvas_busy_probe_second_client; 0.1.0)"
+    },
+    {
+      "at": "2026-10-12T18:31:45.055Z",
+      "kind": "first_turn_start",
+      "result": {
+        "turn": {
+          "id": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+          "rootTurnId": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+          "items": [],
+          "itemsView": "notLoaded",
+          "status": "inProgress",
+          "error": null,
+          "startedAt": null,
+          "completedAt": null,
+          "durationMs": null
+        }
+      }
+    },
+    {
+      "at": "2026-10-12T18:31:45.055Z",
+      "kind": "notification",
+      "client": "original_host",
+      "method": "thread/status/changed",
+      "threadId": "01a13162-8e0a-7b30-a5ad-e2ecff264c38",
+      "status": {
+        "type": "active",
+        "activeFlags": []
+      }
+    },
+    {
+      "at": "2026-10-12T18:31:45.055Z",
+      "kind": "notification",
+      "client": "original_host",
+      "method": "turn/started",
+      "threadId": "01a13162-8e0a-7b30-a5ad-e2ecff264c38",
+      "turn": {
+        "id": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+        "status": "inProgress"
+      }
+    },
+    {
+      "at": "2026-10-12T18:31:45.055Z",
+      "kind": "notification",
+      "client": "second_client",
+      "method": "thread/status/changed",
+      "threadId": "01a13162-8e0a-7b30-a5ad-e2ecff264c38",
+      "status": {
+        "type": "active",
+        "activeFlags": []
+      }
+    },
+    {
+      "at": "2026-10-12T18:31:45.162Z",
+      "kind": "target_metadata_before_race",
+      "threadId": "01a13162-8e0a-7b30-a5ad-e2ecff264c38",
+      "status": {
+        "type": "active",
+        "activeFlags": []
+      }
+    },
+    {
+      "at": "2026-10-12T18:31:45.164Z",
+      "kind": "busy_turn_start_response",
+      "result": {
+        "turn": {
+          "id": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+          "rootTurnId": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+          "items": [],
+          "itemsView": "notLoaded",
+          "status": "inProgress",
+          "error": null,
+          "startedAt": null,
+          "completedAt": null,
+          "durationMs": null
+        }
+      }
+    },
+    {
+      "at": "2026-10-12T18:31:49.095Z",
+      "kind": "owned_target_user_message",
+      "threadId": "01a13162-8e0a-7b30-a5ad-e2ecff264c38",
+      "turnId": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+      "itemId": "01a13162-9e67-7e31-b8ab-610c00c312da",
+      "marker": "first"
+    },
+    {
+      "at": "2026-10-12T18:31:52.197Z",
+      "kind": "owned_target_model_reply",
+      "threadId": "01a13162-8e0a-7b30-a5ad-e2ecff264c38",
+      "turnId": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+      "text": "ACANVAS_BUSY_FIRST_OK"
+    },
+    {
+      "at": "2026-10-12T18:31:52.308Z",
+      "kind": "owned_target_user_message",
+      "threadId": "01a13162-8e0a-7b30-a5ad-e2ecff264c38",
+      "turnId": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+      "itemId": "01a13162-aab9-7fd3-929b-c9c3e4552d4e",
+      "marker": "second"
+    },
+    {
+      "at": "2026-10-12T18:31:54.610Z",
+      "kind": "owned_target_model_reply",
+      "threadId": "01a13162-8e0a-7b30-a5ad-e2ecff264c38",
+      "turnId": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+      "text": "ACANVAS_BUSY_SECOND_OK."
+    },
+    {
+      "at": "2026-10-12T18:31:54.657Z",
+      "kind": "notification",
+      "client": "second_client",
+      "method": "thread/status/changed",
+      "threadId": "01a13162-8e0a-7b30-a5ad-e2ecff264c38",
+      "status": {
+        "type": "idle"
+      }
+    },
+    {
+      "at": "2026-10-12T18:31:54.657Z",
+      "kind": "notification",
+      "client": "original_host",
+      "method": "thread/status/changed",
+      "threadId": "01a13162-8e0a-7b30-a5ad-e2ecff264c38",
+      "status": {
+        "type": "idle"
+      }
+    },
+    {
+      "at": "2026-10-12T18:31:54.657Z",
+      "kind": "notification",
+      "client": "original_host",
+      "method": "turn/completed",
+      "threadId": "01a13162-8e0a-7b30-a5ad-e2ecff264c38",
+      "turn": {
+        "id": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+        "status": "completed"
+      }
+    },
+    {
+      "at": "2026-10-12T18:31:54.657Z",
+      "kind": "result",
+      "result": "active-turn-input-accepted-same-turn",
+      "completion": {
+        "turnId": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+        "status": "completed"
+      }
+    },
+    {
+      "at": "2026-10-12T18:31:54.660Z",
+      "kind": "owned_socket_metadata",
+      "socket": false,
+      "symlink": true,
+      "canonicalSocket": true,
+      "canonicalSymlink": false,
+      "canonicalPath": "/private/tmp/codex-daemon-501/1d289277fc4ec445d0a1c6c1056237fd1d03b5597827b81ae2a81f1c5a3820f9"
+    },
+    {
+      "at": "2026-10-12T18:31:54.661Z",
+      "kind": "failure",
+      "name": "RuntimeDeliveryError",
+      "message": "The runtime endpoint must be a socket file without a file symlink.",
+      "stack": "RuntimeDeliveryError: The runtime endpoint must be a socket file without a file symlink.\n    at fingerprint (file:///private/tmp/acanvas-protocol-candidate.XkHa59/dist/src/server/codex-runtime.js:39:15)\n    at validateRuntimeEndpoint (file:///private/tmp/acanvas-protocol-candidate.XkHa59/dist/src/server/codex-runtime.js:47:57)\n    at async CodexRuntimeClient.open (file:///private/tmp/acanvas-protocol-candidate.XkHa59/dist/src/server/codex-runtime.js:101:30)\n    at async file:///Users/yingbowu/Documents/Projects/acanvas/docs/evidence/codex-runtime-delivery/protocol/busy-race-probe.mjs:78:22"
+    }
+  ],
+  "ownerPid": 3408,
+  "threadId": "01a13162-8e0a-7b30-a5ad-e2ecff264c38",
+  "inherited": {
+    "model": "gpt-6.1-sol",
+    "approvalPolicy": "on-request",
+    "approvalsReviewer": "user",
+    "sandbox": {
+      "type": "readOnly",
+      "networkAccess": false
+    }
+  },
+  "firstResponse": {
+    "id": 3,
+    "result": {
+      "turn": {
+        "id": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+        "rootTurnId": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+        "items": [],
+        "itemsView": "notLoaded",
+        "status": "inProgress",
+        "error": null,
+        "startedAt": null,
+        "completedAt": null,
+        "durationMs": null
+      }
+    }
+  },
+  "beforeStatus": {
+    "type": "active",
+    "activeFlags": []
+  },
+  "racedResponse": {
+    "id": 4,
+    "result": {
+      "turn": {
+        "id": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+        "rootTurnId": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+        "items": [],
+        "itemsView": "notLoaded",
+        "status": "inProgress",
+        "error": null,
+        "startedAt": null,
+        "completedAt": null,
+        "durationMs": null
+      }
+    }
+  },
+  "completion": {
+    "turnId": "01a13162-8e97-7e81-b7ae-85dd650fb8a1",
+    "status": "completed"
+  },
+  "result": "active-turn-input-accepted-same-turn",
+  "failure": {
+    "name": "RuntimeDeliveryError",
+    "message": "The runtime endpoint must be a socket file without a file symlink.",
+    "stack": "RuntimeDeliveryError: The runtime endpoint must be a socket file without a file symlink.\n    at fingerprint (file:///private/tmp/acanvas-protocol-candidate.XkHa59/dist/src/server/codex-runtime.js:39:15)\n    at validateRuntimeEndpoint (file:///private/tmp/acanvas-protocol-candidate.XkHa59/dist/src/server/codex-runtime.js:47:57)\n    at async CodexRuntimeClient.open (file:///private/tmp/acanvas-protocol-candidate.XkHa59/dist/src/server/codex-runtime.js:101:30)\n    at async file:///Users/yingbowu/Documents/Projects/acanvas/docs/evidence/codex-runtime-delivery/protocol/busy-race-probe.mjs:78:22"
+  },
+  "cleanup": {
+    "scratchPreserved": true,
+    "ownerStopped": true,
+    "ownerExitCode": 0,
+    "ownerSignal": null
+  }
+}
