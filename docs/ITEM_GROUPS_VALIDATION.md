@@ -2,7 +2,20 @@
 
 日期：2026-10-13（Asia/Shanghai）。分支：`codex/item-groups-folders`。范围：R14 / A15，设计见 [ITEM_GROUPS_DESIGN.md](ITEM_GROUPS_DESIGN.md)。测试数据均在独立临时项目；本轮保持用户实际白板与运行服务原状。
 
-## Group 操作文字
+## Group 纯图标修订
+
+实施及独立验收完成。全部分组动作使用纯图标按钮，文件夹与相反方向箭头表达收纳/展开，成对的框内/分离卡片表达分组/解组，带基线铅笔表达改名，左箭头返回。图标描线使用正文色，按钮保留 tooltip 和无障碍名称。
+
+- `npm run typecheck`、`git diff --check`：通过。
+- `.runtime/node_modules/node/bin/node node_modules/vite/bin/vite.js build --configLoader runner --outDir /private/tmp/acanvas-group-icons-web`：通过，最终资源 `main-CdC5cWn6.js` / `main-CI22JRDf.css`。
+- `ACANVAS_TEST_WEB_ROOT=/private/tmp/acanvas-group-icons-web .runtime/node_modules/node/bin/node --test dist/tests/item-groups-ui.test.js`：4/4 通过，27.23 秒，失败与跳过均为零。复用既有业务回归。
+- 独立实际检查：1440/390/320px、明暗主题、320px coarse-pointer 触屏，框选创建、改名、收纳、hover 连续移入操作条、键盘进入/返回、刷新、触屏改名/展开/解组均通过。全部动作按钮 textContent 为空，title/aria 完整；实测按钮 32×32、图形 16px、导航高度 40px 单行，输入保持原位。窄屏导航数量沿用既有显示规则。原尺寸图形已目视核对，两组配对语义清楚。
+
+原 58785 运行页使用固定最终资源，主智能体已刷新原 in-app tab，实际核对二级导航纯图标及用户原层级、成员和 50% 视口保持。运行核对零 pageerror。本轮截图使用隔离素材或控件区域，用户新导入 PNG 内容保留在原项目；全板证据保持此前版本。代码与独立真实交互/视觉验收 PASS，无未关闭发现。
+
+截图：[新建分组](evidence/item-groups/group-icon.png)、[收纳图标](evidence/item-groups/frame-icons-closeup.png)、[展开图标](evidence/item-groups/action-icons-closeup.png)、[320px 导航](evidence/item-groups/action-icons-320.png)。
+
+## Group 操作文字（e63c335 历史记录）
 
 实施及独立验收完成。Group、Rename、Store in folder、Expand on board、Ungroup 与 Back to board 采用始终可见的 12px 正文色文字和辅助色图标，控件高度 32px。悬停操作条和二级导航共用动作，窄屏自然分行。
 
