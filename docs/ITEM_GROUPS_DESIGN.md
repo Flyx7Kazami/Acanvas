@@ -1,6 +1,6 @@
 # Item 分组与文件夹画板
 
-日期：2026-10-13（Asia/Shanghai）。需求对应 R01、R03、R04、R08、R10 / A01、A06、A11、A12；新增 R14 / A15。
+日期：2026-10-13（Asia/Shanghai）。需求对应 R01、R03、R04、R08、R10 / A01、A06、A11、A12；新增 R15 / A16。
 
 ## Group 展示与引用修订（2026-10-13）
 
@@ -62,7 +62,7 @@ CLI 的 `group list` 返回项目组；`group read --group ID` 返回 group、�
 
 历史组与新增显式 item 可保留不同时间的来源。每个 occurrence 使用自己的解析来源；顶层去重对象/素材集合以显式 item 为优先。新增 item 读取当前对象与素材元数据，历史组及既有冻结 occurrence 保留其保存时的数据，引用来源集合与明确选择一致。
 
-BoardState 和 board operations 响应增加 groups，BaseSceneSnapshot 携带组视觉数据供截图合成。原对象 API 保持现有语义；历史快照继续引用真实成员。SessionView 扩展 activeGroupId? 和 parentView?（x/y/zoom）；进入二级时保存一级 camera，返回时还原。服务器校验 group 归属，组被解散或删除时客户端回到一级。画板选择、命中、吸附、Fit、批注和截图使用当前可操作层；隐藏成员保持读取可用，避免被误报为已删除。AnnotationInput 增加 boardGroupId? 保存二级区域批注归属，缺省表示一级；对象批注跟随成员所在层。引用定位可以打开成员所属的文件夹。
+BoardState 和 board operations、Undo/Redo 响应携带 groups，组、成员与邻居布局统一按[持久历史](GROUP_HISTORY_INTEGRATION.md)回放；BaseSceneSnapshot 携带组视觉数据供截图合成。原对象 API 保持现有语义；历史快照继续引用真实成员。SessionView 扩展 activeGroupId? 和 parentView?（x/y/zoom）；进入二级时保存一级 camera，返回时还原。服务器校验 group 归属，组被解散或删除时客户端回到一级。画板选择、命中、吸附、Fit、批注和截图使用当前可操作层；隐藏成员保持读取可用，避免被误报为已删除。AnnotationInput 增加 boardGroupId? 保存二级区域批注归属，缺省表示一级；对象批注跟随成员所在层。引用定位可以打开成员所属的文件夹。
 
 ## 布局切换
 
@@ -72,7 +72,7 @@ BoardState 和 board operations 响应增加 groups，BaseSceneSnapshot 携带�
 
 展开保留成员内部相对布局，并锚定当前文件夹位置；扩大的框按右侧、下方顺序把相交邻居推到 24px 外，必要时传递到同方向邻居。相邻组整体移动。原外框小于文件夹的维度在收起时采用相同推开规则；正差维度仍按收拢规则执行。folder 直接 Ungroup 先完成展开时的成员归一和邻居避让，再清除组归属。切换使用当时位置计算，保留用户在收起期间做的编辑。采用主键、唯一归属、事务和普通 version 处理并发；冲突返回 409 并读取当前布局。
 
-## 验收 A15
+## 验收 A16
 
 1. 真实框选两项出现 Group；分组外框、成员独立编辑、整体拖动、原位重命名、解组全部可用。group 非 item 空白处单击选中整组并可拖动；item 点击继续选中该 item。
 2. 文件夹锚点精确等于外框左上角；右侧先左移，下方再上移，固定间距与障碍生效；覆盖负坐标、异形布局和相邻组。

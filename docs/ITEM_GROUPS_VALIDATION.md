@@ -1,6 +1,6 @@
 # Item 分组与文件夹验收
 
-日期：2026-10-13（Asia/Shanghai）。分支：`codex/item-groups-folders`。范围：R14 / A15，设计见 [ITEM_GROUPS_DESIGN.md](ITEM_GROUPS_DESIGN.md)。测试使用独立临时项目；交互演示按下方记录更新运行代码，用户内容保持。
+日期：2026-10-13（Asia/Shanghai）。分支：`codex/item-groups-folders`。范围：R15 / A16，设计见 [ITEM_GROUPS_DESIGN.md](ITEM_GROUPS_DESIGN.md)。测试使用独立临时项目；交互演示按下方记录更新运行代码，用户内容保持。
 
 ## Group 引用、展示与解组动效
 

@@ -574,3 +574,93 @@ test('group folder reference colors and frozen names remain consistent across co
   await page.screenshot({ path: join(f.evidence, 'group-folder-color-edit.png'), clip: (await page.locator('.creation-dock').boundingBox())! });
   assert(f.state().objects.every(object => paletteEntries.some(entry => object.groupId === entry.id)));
 });
+
+test('folder content and group actions share persistent history with the vertical toolbar', { timeout: 120_000 }, async t => {
+  const f = await fixture(t), { page } = f;
+  const a = await f.add(await f.upload('Inside note', 'text/x-acanvas-note', Buffer.from('Original content')), 220, 210, 240, 128);
+  const b = await f.add(await f.picture('Companion', '#315AD9'), 500, 210);
+  await f.add(await f.picture('Outside history', '#EA6848'), 820, 210);
+  await page.mouse.move(190, 180); await page.mouse.down(); await page.mouse.move(710, 370, { steps: 6 }); await page.mouse.up();
+  await page.getByRole('button', { name: 'Group', exact: true }).click();
+  await expect(page.locator('.group-frame')).toHaveCount(1);
+  const groupId = f.state().groups[0].id;
+  await page.getByRole('button', { name: 'Store in folder', exact: true }).click();
+  await expect(page.locator('.group-folder')).toHaveCount(1);
+  const undo = page.getByRole('button', { name: 'Undo', exact: true }), redo = page.getByRole('button', { name: 'Redo', exact: true });
+  await undo.click(); await expect(page.locator('.group-frame')).toHaveCount(1);
+  await redo.click(); await expect(page.locator('.group-folder')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Open folder Group 1', exact: true }).click();
+  await expect(page.locator('.group-navigation')).toBeVisible();
+  await expect(page.locator('.canvas-world')).not.toHaveAttribute('data-transition-kind', /.+/);
+  const editor = page.locator(`[data-object-id="${a.id}"] .note-editor`);
+  await editor.fill('Nested saved content');
+  await expect.poll(async () => { const object = f.state().objects.find(object => object.id === a.id)!; return object.assetId !== a.assetId; }).toBeTruthy();
+  await undo.click(); await expect(editor).toHaveValue('Original content');
+  await redo.click(); await expect(editor).toHaveValue('Nested saved content');
+  assert.equal(f.state().objects.find(object => object.id === a.id)!.groupId, groupId);
+  assert.equal(f.state().objects.find(object => object.id === b.id)!.groupId, groupId);
+  const outside = page.locator('.board-object.group-exterior');
+  await expect(outside).toHaveCount(1); assert.equal(await outside.getAttribute('inert'), '');
+  assert.equal(await outside.evaluate(element => getComputedStyle(element).filter), 'blur(12px)');
+  await page.reload(); await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  if (!await page.locator('.group-navigation').count()) await page.getByRole('button', { name: 'Open folder Group 1', exact: true }).click();
+  await expect(page.locator(`[data-object-id="${a.id}"] .note-editor`)).toHaveValue('Original content');
+  await page.setViewportSize({ width: 390, height: 844 });
+  const toolbar = await page.getByRole('toolbar', { name: 'Board tools', exact: true }).boundingBox();
+  assert(toolbar && toolbar.height > toolbar.width && toolbar.x < 80);
+  await expect(page.getByRole('button', { name: 'Redo', exact: true })).toBeVisible();
+});
+
+test('keyboard undo follows a delayed folder layout transaction and restores compacted neighbors', { timeout: 60_000 }, async t => {
+  const f = await fixture(t), { page } = f;
+  const a = await f.add(await f.picture('Delayed one', '#315AD9'), 220, 210);
+  const b = await f.add(await f.picture('Delayed two', '#779D85'), 430, 210);
+  const neighbor = await f.add(await f.picture('Neighbor', '#EA6848'), 760, 210);
+  await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'group.create', group: { objectIds: [a.id, b.id] }, expectedVersions: { [a.id]: a.version, [b.id]: b.version } }] });
+  await expect(page.locator('.group-frame')).toHaveCount(1);
+  const original = f.state().objects.find(object => object.id === neighbor.id)!;
+  await page.getByRole('button', { name: 'Select group Group 1', exact: true }).click();
+  let release!: () => void, started!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  const requested = new Promise<void>(resolve => { started = resolve; });
+  await page.route('**/api/board/operations', async route => {
+    if (route.request().postDataJSON().operations.some((operation: { type: string }) => operation.type === 'group.update')) { started(); await held; }
+    await route.continue();
+  });
+  await page.getByRole('button', { name: 'Store in folder', exact: true }).click();
+  await requested;
+  await page.keyboard.press('Control+z');
+  release();
+  await expect.poll(() => f.state().history.canRedo).toBe(true);
+  await expect(page.locator('.group-frame')).toHaveCount(1);
+  const restored = f.state().objects.find(object => object.id === neighbor.id)!;
+  assert.equal(restored.x, original.x); assert.equal(restored.y, original.y);
+  assert(restored.version > original.version);
+  await page.locator(`[data-object-id="${neighbor.id}"]`).focus(); await page.keyboard.press('ArrowRight');
+  await expect.poll(() => f.state().objects.find(object => object.id === neighbor.id)!.x).toBe(original.x + 10);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('merged queue keeps the running spinner and two-second completed exit with concise task cards', { timeout: 60_000 }, async t => {
+  const f = await fixture(t), { page } = f;
+  await page.locator('#instruction').fill('Prepare a collection');
+  await page.getByRole('button', { name: 'Send request', exact: true }).click();
+  const row = page.locator('.queue-item'); await expect(row).toHaveCount(1);
+  const claim = await f.call(`/api/sessions/${f.session.id}/claim`, { consumerId: 'merge-queue-check' });
+  await expect(row).toHaveAttribute('data-status', 'running');
+  await expect(row.locator('.lucide-loader-circle.spin')).toHaveCount(1);
+  await row.locator('.queue-task').click();
+  await expect(row.locator('.task-card')).toBeVisible();
+  await expect(page.getByText('Request text', { exact: true })).toHaveCount(0);
+  await f.call(`/api/sessions/${f.session.id}/tasks/${claim.task.id}/complete`, { runId: claim.run.id, consumerId: claim.consumerId, summary: 'Collection prepared', assetIds: [], validation: [], operations: [] });
+  await expect(row).toHaveClass(/queue-item-exiting/);
+  const exitStarted = Date.now();
+  await expect(row.locator('.lucide-check')).toHaveCount(1);
+  await expect(row.locator('.queue-title')).toHaveClass(/queue-title-completing/);
+  await expect(row).toHaveCount(0, { timeout: 4000 });
+  assert(Date.now() - exitStarted >= 1400, 'The completed row holds through its check and strike phases.');
+  assert.equal(f.state().tasks[0].status, 'completed');
+  await page.reload(); await expect(page.locator('#whiteboard')).toBeVisible();
+  await expect(page.locator('.queue-item')).toHaveCount(0);
+});

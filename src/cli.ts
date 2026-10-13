@@ -46,6 +46,7 @@ group read --session ID --group ID
   Returns group metadata and ordered member objects with original file metadata. Coordinates are project world coordinates.
 group put --session ID --group ID --object ID --version NUMBER [--x NUMBER --y NUMBER]
   Moves an existing item into the group while retaining identity, file and dimensions. Omitted coordinates keep its current position.
+board history --session ID | board undo --session ID | board redo --session ID
 board operations --session ID --input operations.json
   Supports create/update/delete and group.create/group.update/group.ungroup.
 task next --session ID [--consumer ID]
@@ -66,6 +67,7 @@ Colors: cobalt, sage, coral, lilac, ink, sand. Creation chooses a random color w
 Use mode "frame" to expand; group.ungroup retains every member and material.
 Object creation accepts groupId for the folder board. Object update changes.groupId moves an existing item; null returns it to the main board.
 State and operation responses include groups. Both canvas levels use project world coordinates.
+Content operation: {"operations":[{"type":"content","objectId":"ID","expectedVersion":1,"text":"Updated text"}]}
 Empty task next returns task:null and releases the queue consumer.
 The first next/resume can generate a new consumer ID; reuse the returned ID inside that loop.
 Idle and transferred consumer IDs are retired. Start a new activation with a new ID.
@@ -175,7 +177,11 @@ export async function cli(args: string[]): Promise<unknown> {
     }
     if (action === 'put') return request('/api/board/operations', 'POST', { sessionId, operations: [{ type: 'update', objectId: required('object'), expectedVersion: Number(required('version')), changes: { groupId: required('group'), ...(options.has('x') ? { x: Number(required('x')) } : {}), ...(options.has('y') ? { y: Number(required('y')) } : {}) } }] });
   }
-  if (group === 'board' && action === 'operations') { const value = await input(); return request('/api/board/operations', 'POST', { sessionId: required('session'), operations: value.operations }); }
+  if (group === 'board') {
+    if (action === 'history') return request(`/api/board/history?sessionId=${encodeURIComponent(required('session'))}`);
+    if (action === 'undo' || action === 'redo') return request(`/api/board/${action}`, 'POST', { sessionId: required('session') });
+    if (action === 'operations') { const value = await input(); return request('/api/board/operations', 'POST', { sessionId: required('session'), operations: value.operations }); }
+  }
   if (group === 'asset') {
     if (action === 'import') {
       if (options.has('bundle-root')) {

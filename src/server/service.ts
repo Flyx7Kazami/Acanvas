@@ -1,9 +1,9 @@
 import Database from 'better-sqlite3';
 import { randomUUID } from 'node:crypto';
-import { mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync } from 'node:fs';
-import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
+import { mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
-import type { Annotation, AnnotationCapture, AnnotationCaptureInput, AnnotationInput, AnnotationTarget, Asset, BaseSceneSnapshot, BoardGroup, BoardObject, BoardOperation, BoardState, CaptureResult, CaptureRetryResult, CaptureView, CaptureViewOperation, Claim, CompleteInput, ContentAnchor, Draft, DraftReferences, HostBinding, HtmlBundle, HtmlSurfaceReference, Project, ResolvedRequestReference, Run, RunIdentity, ScenePresentation, ScenePresentationOperation, SceneSource, ServiceIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
+import type { Annotation, AnnotationCapture, AnnotationCaptureInput, AnnotationInput, AnnotationTarget, Asset, BaseSceneSnapshot, BoardGroup, BoardHistory, BoardVersionChanges, BoardObject, BoardOperation, BoardState, CaptureResult, CaptureRetryResult, CaptureView, CaptureViewOperation, Claim, CompleteInput, ContentAnchor, Draft, DraftReferences, HostBinding, HtmlBundle, HtmlSurfaceReference, Project, ResolvedRequestReference, Run, RunIdentity, ScenePresentation, ScenePresentationOperation, SceneSource, ServiceIdentity, Session, SessionView, Task, TaskSnapshot } from '../shared/types.js';
 import { bundleLimits, bundleMime, validBundlePath } from '../shared/html-bundle.js';
 import { contentCapabilities, editableTextBytes, editableTextMime, isNoteFill, resolveContentKind } from '../shared/content-types.js';
 import { annotationTarget, sameAnnotationTarget, rasterDimensions } from './annotation-capture.js';
@@ -12,6 +12,9 @@ import { generateRequirementText, referenceOrder } from '../shared/task-message.
 
 type Row = Record<string, any>;
 interface SceneSourceContext { source: SceneSource; snapshot: BaseSceneSnapshot; presentation: ScenePresentation; target?: AnnotationTarget; auxiliaryAssets?: Asset[] }
+interface BoardHistorySnapshot { objects: Record<string, BoardObject | null>; groups: Record<string, BoardGroup | null> }
+interface AppliedBoardOperations { objectIds: string[]; before: BoardHistorySnapshot; after: BoardHistorySnapshot; createdAssetIds: string[] }
+interface BoardHistoryStep { before: BoardHistorySnapshot; after: BoardHistorySnapshot }
 const sceneLifetimeMs = 10 * 60 * 1000;
 export class ApiFailure extends Error {
   constructor(public status: number, public code: string, message: string, public details?: unknown) { super(message); }
@@ -93,6 +96,12 @@ export class CanvasService {
       CREATE TABLE IF NOT EXISTS html_bundles(asset_id TEXT PRIMARY KEY REFERENCES assets(id), manifest_json TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS groups(id TEXT PRIMARY KEY, name TEXT NOT NULL, mode TEXT NOT NULL CHECK(mode IN ('frame','folder')), color TEXT NOT NULL, x REAL NOT NULL, y REAL NOT NULL, width REAL NOT NULL, height REAL NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS objects(id TEXT PRIMARY KEY, asset_id TEXT NOT NULL REFERENCES assets(id), x REAL NOT NULL, y REAL NOT NULL, width REAL NOT NULL, height REAL NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, source_task_id TEXT, source_run_id TEXT, fill TEXT, group_id TEXT REFERENCES groups(id));
+      CREATE TABLE IF NOT EXISTS group_versions(id TEXT PRIMARY KEY, version INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS group_history_heads(session_id TEXT NOT NULL REFERENCES sessions(id), group_id TEXT NOT NULL, version INTEGER NOT NULL, present INTEGER NOT NULL, lineage_version INTEGER NOT NULL, PRIMARY KEY(session_id,group_id));
+      CREATE TABLE IF NOT EXISTS object_versions(id TEXT PRIMARY KEY, version INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS board_history(session_id TEXT NOT NULL REFERENCES sessions(id), position INTEGER NOT NULL, before_json TEXT NOT NULL, after_json TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY(session_id, position));
+      CREATE TABLE IF NOT EXISTS board_history_state(session_id TEXT PRIMARY KEY REFERENCES sessions(id), cursor INTEGER NOT NULL DEFAULT 0);
+      CREATE TABLE IF NOT EXISTS board_history_heads(session_id TEXT NOT NULL REFERENCES sessions(id), object_id TEXT NOT NULL, version INTEGER NOT NULL, present INTEGER NOT NULL, lineage_version INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(session_id, object_id));
       CREATE TABLE IF NOT EXISTS annotations(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), task_id TEXT NOT NULL, data_json TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), draft_id TEXT NOT NULL UNIQUE, sequence INTEGER NOT NULL, status TEXT NOT NULL, snapshot_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, current_run_id TEXT, reason TEXT, receipt_json TEXT, replies_json TEXT NOT NULL DEFAULT '[]', UNIQUE(session_id, sequence));
       CREATE TABLE IF NOT EXISTS task_edits(draft_id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id), task_id TEXT NOT NULL REFERENCES tasks(id), previous_draft_json TEXT NOT NULL, state TEXT NOT NULL);
@@ -113,6 +122,10 @@ export class CanvasService {
     if (!(this.db.pragma('table_info(objects)') as Row[]).some((column) => column.name === 'fill')) this.db.exec('ALTER TABLE objects ADD COLUMN fill TEXT');
     if (!(this.db.pragma('table_info(objects)') as Row[]).some((column) => column.name === 'group_id')) this.db.exec('ALTER TABLE objects ADD COLUMN group_id TEXT REFERENCES groups(id)');
     this.db.exec('CREATE INDEX IF NOT EXISTS objects_group_id ON objects(group_id)');
+    if (!(this.db.pragma('table_info(board_history_heads)') as Row[]).some((column) => column.name === 'lineage_version')) this.db.exec('ALTER TABLE board_history_heads ADD COLUMN lineage_version INTEGER NOT NULL DEFAULT 0');
+    this.db.exec('UPDATE board_history_heads SET lineage_version=version WHERE lineage_version=0');
+    this.db.exec('INSERT OR IGNORE INTO object_versions(id,version) SELECT id,version FROM objects');
+    this.db.exec('INSERT OR IGNORE INTO group_versions(id,version) SELECT id,version FROM groups');
     let projectId = this.db.prepare("SELECT value FROM metadata WHERE key='project_id'").get() as Row | undefined;
     if (!projectId) { this.db.prepare("INSERT INTO metadata(key,value) VALUES('project_id',?)").run(randomUUID()); projectId = this.db.prepare("SELECT value FROM metadata WHERE key='project_id'").get() as Row; }
     this.project = { id: projectId.value, name: basename(this.root), root: this.root };
@@ -125,6 +138,11 @@ export class CanvasService {
         if (active) fail(409, 'service_active', 'This project already has an active local service. Connect to its existing port.');
       }
       this.db.prepare("INSERT INTO metadata(key,value) VALUES('active_service',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(json({ pid: process.pid, instanceId: this.instanceId }));
+      for (const row of this.db.prepare('SELECT session_id,position,before_json,after_json FROM board_history').all() as Row[]) {
+        const before = parse<any>(row.before_json), after = parse<any>(row.after_json);
+        if (before.objects && before.groups && after.objects && after.groups && typeof before.objects.id !== 'string' && typeof after.objects.id !== 'string') continue;
+        this.db.prepare('UPDATE board_history SET before_json=?,after_json=? WHERE session_id=? AND position=?').run(json({ objects: before, groups: {} }), json({ objects: after, groups: {} }), row.session_id, row.position);
+      }
       if ((this.db.pragma('table_info(groups)') as Row[]).some(column => column.name === 'texture')) {
         this.db.exec('ALTER TABLE groups RENAME COLUMN texture TO color');
         this.db.exec("UPDATE groups SET color=CASE color WHEN 'orbit' THEN 'cobalt' WHEN 'grid' THEN 'sage' WHEN 'rays' THEN 'coral' WHEN 'steps' THEN 'lilac' WHEN 'weave' THEN 'ink' WHEN 'confetti' THEN 'sand' ELSE color END");
@@ -153,6 +171,7 @@ export class CanvasService {
   private insertSession(name: string): Session {
     const id = randomUUID(), time = now();
     this.db.prepare('INSERT INTO sessions VALUES(?,?,?,?,NULL)').run(id, name, time, json({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }));
+    this.db.prepare('INSERT INTO board_history_state(session_id,cursor) VALUES(?,0)').run(id);
     this.newDraft(id);
     return this.session(id);
   }
@@ -422,24 +441,35 @@ export class CanvasService {
     if (stale) fail(409, 'stale_run', 'The output has been retained for review. Resume with the current execution attempt.', { assetId: asset.id });
     return this.asset(asset.id);
   }
-  replaceAssetContent(id: string, temporary: string): Asset {
-    const asset = this.sharedAsset(id);
-    if (asset.htmlBundle || !editableTextMime(asset.mime)) fail(400, 'content_readonly', 'Only notes and Markdown can be edited.');
-    const info = statSync(temporary);
-    if (!info.isFile() || info.size > editableTextBytes) fail(413, 'content_too_large', 'Notes and Markdown stay within 2 MB.');
-    const destination = this.assetPath(id);
-    const backup = `${destination}.${randomUUID()}.previous`;
-    renameSync(destination, backup);
+  private createContentAsset(current: Asset, textValue: string, createdPaths: string[], source?: { taskId: string; runId: string }): Asset | undefined {
+    if (current.htmlBundle || !editableTextMime(current.mime)) fail(400, 'content_readonly', 'Only notes and Markdown can be edited through a board content operation.');
+    const bytes = Buffer.from(textValue, 'utf8');
+    if (bytes.byteLength > editableTextBytes) fail(413, 'content_too_large', 'Notes and Markdown stay within 2 MiB.');
+    const currentPath = this.assetPath(current.id);
+    if (statSync(currentPath).size === bytes.byteLength && readFileSync(currentPath).equals(bytes)) return undefined;
+    const id = randomUUID();
+    const relativePath = source ? `outputs/${source.taskId}/${source.runId}/${id}.content` : `assets/${id}.content`;
+    const destination = resolve(this.dataDir, relativePath);
+    const temporary = resolve(this.dataDir, 'tmp', `${id}.content`);
+    if (!within(this.dataDir, destination) || !within(this.dataDir, temporary)) fail(403, 'path_boundary', 'Content storage must remain inside the project.');
+    mkdirSync(dirname(destination), { recursive: true, mode: 0o700 });
+    if (!within(this.dataDir, realpathSync(dirname(destination))) || !within(this.dataDir, realpathSync(dirname(temporary)))) fail(403, 'path_boundary', 'Content storage must remain inside the project.');
     let published = false;
     try {
+      writeFileSync(temporary, bytes, { flag: 'wx', mode: 0o600 });
       renameSync(temporary, destination);
       published = true;
-      this.transaction(() => { this.db.prepare('UPDATE assets SET size=? WHERE id=?').run(info.size, id); });
-      rmSync(backup, { force: true });
-      return this.asset(id);
+      createdPaths.push(destination);
+      const created: Asset = { id, name: current.name, mime: current.mime, size: bytes.byteLength, kind: current.kind, createdAt: now(), ...(source ? { sourceTaskId: source.taskId, sourceRunId: source.runId } : {}) };
+      this.db.prepare('INSERT INTO assets VALUES(?,?,?,?,?,?,?,?,?)').run(created.id, created.name, created.mime, created.size, created.kind, relativePath, created.createdAt, created.sourceTaskId ?? null, created.sourceRunId ?? null);
+      return created;
     } catch (error) {
-      if (published) rmSync(destination, { force: true });
-      try { renameSync(backup, destination); } catch { /* The original file is already back in place. */ }
+      if (published) {
+        try { rmSync(destination, { force: true }); } catch { /* Preserve the original failure. */ }
+        const index = createdPaths.lastIndexOf(destination);
+        if (index >= 0) createdPaths.splice(index, 1);
+      }
+      try { rmSync(temporary, { force: true }); } catch { /* Preserve the original failure. */ }
       throw error;
     }
   }
@@ -447,7 +477,7 @@ export class CanvasService {
   object(id: string): BoardObject { nonempty(id, 'Object ID', 200); const row = this.db.prepare('SELECT * FROM objects WHERE id=?').get(id) as Row; return row ? this.objectFrom(row) : fail(404, 'object_missing', 'The referenced object is unavailable.'); }
   objects(): BoardObject[] { return (this.db.prepare('SELECT * FROM objects ORDER BY created_at,id').all() as Row[]).map((row) => this.objectFrom(row)); }
   private groupFrom(row: Row): BoardGroup {
-    return { id: row.id, name: row.name, mode: row.mode, color: row.color, x: row.x, y: row.y, width: row.width, height: row.height, version: row.version, createdAt: row.created_at, updatedAt: row.updated_at, objectIds: (this.db.prepare('SELECT id FROM objects WHERE group_id=? ORDER BY created_at,rowid').all(row.id) as Row[]).map(object => object.id) };
+    return { id: row.id, name: row.name, mode: row.mode, color: row.color, x: row.x, y: row.y, width: row.width, height: row.height, version: row.version, createdAt: row.created_at, updatedAt: row.updated_at, objectIds: (this.db.prepare('SELECT id FROM objects WHERE group_id=? ORDER BY created_at,id').all(row.id) as Row[]).map(object => object.id) };
   }
   group(id: string): BoardGroup {
     nonempty(id, 'Group ID', 200);
@@ -469,10 +499,11 @@ export class CanvasService {
     this.db.prepare("INSERT INTO metadata(key,value) VALUES('group_name_sequence',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(String(next));
     return `Group ${next}`;
   }
-  private groupMembers(id: string): BoardObject[] { return (this.db.prepare('SELECT * FROM objects WHERE group_id=? ORDER BY created_at,rowid').all(id) as Row[]).map(row => this.objectFrom(row)); }
-  private refreshGroup(id: string, time: string) {
+  private groupMembers(id: string): BoardObject[] { return (this.db.prepare('SELECT * FROM objects WHERE group_id=? ORDER BY created_at,id').all(id) as Row[]).map(row => this.objectFrom(row)); }
+  private refreshGroup(id: string, time: string, membersChanged = false) {
     const group = this.group(id), bounds = groupFrameBounds(this.groupMembers(id), group);
-    this.db.prepare('UPDATE groups SET x=?,y=?,width=?,height=?,version=version+1,updated_at=? WHERE id=?').run(group.mode === 'folder' ? group.x : bounds.x, group.mode === 'folder' ? group.y : bounds.y, bounds.width, bounds.height, time, id);
+    const x = group.mode === 'folder' ? group.x : bounds.x, y = group.mode === 'folder' ? group.y : bounds.y;
+    if (membersChanged || group.x !== x || group.y !== y || group.width !== bounds.width || group.height !== bounds.height) this.db.prepare('UPDATE groups SET x=?,y=?,width=?,height=?,version=version+1,updated_at=? WHERE id=?').run(x, y, bounds.width, bounds.height, time, id);
   }
   private translateGroup(id: string, dx: number, dy: number, time: string) {
     if (dx === 0 && dy === 0) return;
@@ -916,7 +947,7 @@ export class CanvasService {
     const lastEdit = this.db.prepare("SELECT draft_id FROM task_edits WHERE task_id=? AND state='submitted' ORDER BY rowid DESC LIMIT 1").get(id) as Row | undefined;
     const snapshot = parse<TaskSnapshot>(row.snapshot_json), requirementText = generateRequirementText(snapshot);
     snapshot.requirementText = requirementText;
-    return { ...(lastEdit ? { lastEditDraftId: lastEdit.draft_id } : {}), id: row.id, sessionId, draftId: row.draft_id, sequence: row.sequence, status: row.status, snapshot, requirementText, createdAt: row.created_at, updatedAt: row.updated_at, currentRunId: row.current_run_id, reason: row.reason, receipt: row.receipt_json ? parse(row.receipt_json) : null, replies: parse(row.replies_json), runs: (this.db.prepare('SELECT * FROM runs WHERE task_id=? ORDER BY created_at,rowid').all(id) as Row[]).map((run) => this.runFrom(run)), lateResults: (this.db.prepare('SELECT * FROM late_results WHERE task_id=? ORDER BY rowid').all(id) as Row[]).map((late) => ({ runId: late.run_id, consumerId: late.consumer_id, receivedAt: late.received_at, payload: parse(late.payload_json) })) };
+    return { ...(lastEdit ? { lastEditDraftId: lastEdit.draft_id } : {}), id: row.id, sessionId, draftId: row.draft_id, sequence: row.sequence, status: row.status, snapshot, requirementText, createdAt: row.created_at, updatedAt: row.updated_at, currentRunId: row.current_run_id, reason: row.reason, receipt: row.receipt_json ? parse(row.receipt_json) : null, replies: parse(row.replies_json), runs: (this.db.prepare('SELECT * FROM runs WHERE task_id=? ORDER BY created_at,id').all(id) as Row[]).map((run) => this.runFrom(run)), lateResults: (this.db.prepare('SELECT * FROM late_results WHERE task_id=? ORDER BY rowid').all(id) as Row[]).map((late) => ({ runId: late.run_id, consumerId: late.consumer_id, receivedAt: late.received_at, payload: parse(late.payload_json) })) };
   }
   tasks(sessionId: string): Task[] { this.sessionRow(sessionId); return (this.db.prepare('SELECT id FROM tasks WHERE session_id=? ORDER BY sequence').all(sessionId) as Row[]).map((row) => this.task(sessionId, row.id)); }
   context(sessionId: string, taskId: string) {
@@ -932,7 +963,18 @@ export class CanvasService {
     const recentReceipts = this.tasks(sessionId).filter((prior) => prior.sequence < task.sequence && prior.receipt).slice(-3).map((prior) => ({ taskId: prior.id, receipt: prior.receipt }));
     return { task, context: { referencedTasks, recentReceipts } };
   }
-  state(sessionId: string): BoardState { return { project: this.project, sessions: this.sessions(), session: this.session(sessionId), draft: this.draft(sessionId), assets: this.assets().filter(asset => !asset.evidence || asset.evidence.sessionId === sessionId), objects: this.objects(), groups: this.groups(), annotations: this.annotations(), tasks: this.tasks(sessionId) }; }
+  private ensureHistoryState(sessionId: string): Row {
+    this.db.prepare('INSERT INTO board_history_state(session_id,cursor) VALUES(?,0) ON CONFLICT(session_id) DO NOTHING').run(sessionId);
+    return this.db.prepare('SELECT cursor FROM board_history_state WHERE session_id=?').get(sessionId) as Row;
+  }
+  boardHistory(sessionId: string): BoardHistory {
+    this.sessionRow(sessionId);
+    const cursor = Number(this.ensureHistoryState(sessionId).cursor);
+    const last = this.db.prepare('SELECT MAX(position) AS position FROM board_history WHERE session_id=?').get(sessionId) as Row;
+    const end = Number(last?.position ?? 0);
+    return { canUndo: cursor > 0, canRedo: cursor < end };
+  }
+  state(sessionId: string): BoardState { return { project: this.project, sessions: this.sessions(), session: this.session(sessionId), draft: this.draft(sessionId), assets: this.assets().filter(asset => !asset.evidence || asset.evidence.sessionId === sessionId), objects: this.objects(), groups: this.groups(), annotations: this.annotations(), tasks: this.tasks(sessionId), history: this.boardHistory(sessionId) }; }
   private newRun(taskId: string, consumerId: string, recovery?: string): Run {
     const id = randomUUID(), time = now();
     this.db.prepare("INSERT INTO runs(id,task_id,consumer_id,status,created_at,updated_at,recovery_resolution) VALUES(?,?,?,'running',?,?,?)").run(id, taskId, consumerId, time, time, recovery ?? null);
@@ -1053,28 +1095,174 @@ export class CanvasService {
       return this.task(sessionId, taskId);
     });
   }
-  private applyOperations(operations: BoardOperation[], source?: { taskId: string; runId: string }): string[] {
+  private objectVersion(id: string): number {
+    const row = this.db.prepare('SELECT version FROM object_versions WHERE id=?').get(id) as Row | undefined;
+    return Number(row?.version ?? 0);
+  }
+  private rememberObjectVersion(id: string, version: number) {
+    this.db.prepare('INSERT INTO object_versions(id,version) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET version=MAX(object_versions.version,excluded.version)').run(id, version);
+  }
+  private nextObjectVersion(id: string, minimum: number): number {
+    const version = Math.max(this.objectVersion(id), minimum) + 1;
+    this.rememberObjectVersion(id, version);
+    return version;
+  }
+  private historyHead(sessionId: string, objectId: string, version: number, present: boolean, lineageVersion = version) {
+    this.db.prepare('INSERT INTO board_history_heads(session_id,object_id,version,present,lineage_version) VALUES(?,?,?,?,?) ON CONFLICT(session_id,object_id) DO UPDATE SET version=excluded.version,present=excluded.present,lineage_version=excluded.lineage_version').run(sessionId, objectId, version, present ? 1 : 0, lineageVersion);
+  }
+  private historySnapshot(): BoardHistorySnapshot {
+    return { objects: Object.fromEntries(this.objects().map(object => [object.id, object])), groups: Object.fromEntries(this.groups().map(group => [group.id, group])) };
+  }
+  private sameHistoryEntity(current: BoardObject | BoardGroup, expected: BoardObject | BoardGroup): boolean {
+    const { version: _cv, updatedAt: _ct, ...a } = current;
+    const { version: _ev, updatedAt: _et, ...b } = expected;
+    return isDeepStrictEqual(a, b);
+  }
+  private groupVersion(id: string): number { return Number((this.db.prepare('SELECT version FROM group_versions WHERE id=?').get(id) as Row | undefined)?.version ?? 0); }
+  private rememberGroupVersion(id: string, version: number) {
+    this.db.prepare('INSERT INTO group_versions(id,version) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET version=MAX(group_versions.version,excluded.version)').run(id, version);
+  }
+  private nextGroupVersion(id: string, minimum: number): number {
+    const version = Math.max(this.groupVersion(id), minimum) + 1;
+    this.rememberGroupVersion(id, version); return version;
+  }
+  private groupHistoryHead(sessionId: string, id: string, version: number, present: boolean, lineageVersion = version) {
+    this.db.prepare('INSERT INTO group_history_heads(session_id,group_id,version,present,lineage_version) VALUES(?,?,?,?,?) ON CONFLICT(session_id,group_id) DO UPDATE SET version=excluded.version,present=excluded.present,lineage_version=excluded.lineage_version').run(sessionId, id, version, present ? 1 : 0, lineageVersion);
+  }
+  private versionChanges(before: BoardHistorySnapshot, after = this.historySnapshot()): BoardVersionChanges {
+    const changes: BoardVersionChanges = { objects: [], groups: [] };
+    for (const kind of ['objects', 'groups'] as const) for (const id of new Set([...Object.keys(before[kind]), ...Object.keys(after[kind])])) {
+      const previous = before[kind][id]?.version, version = after[kind][id]?.version;
+      if (previous !== version) changes[kind].push({ id, ...(previous === undefined ? {} : { beforeVersion: previous }), ...(version === undefined ? {} : { version }) });
+    }
+    return changes;
+  }
+  private appliedHistory(initial: BoardHistorySnapshot, createdAssetIds: string[]): AppliedBoardOperations {
+    const current = this.historySnapshot(), before: BoardHistorySnapshot = { objects: {}, groups: {} }, after: BoardHistorySnapshot = { objects: {}, groups: {} };
+    for (const kind of ['objects', 'groups'] as const) {
+      for (const id of new Set([...Object.keys(initial[kind]), ...Object.keys(current[kind])])) {
+        const a = initial[kind][id] ?? null, b = current[kind][id] ?? null;
+        if (isDeepStrictEqual(a, b)) continue;
+        // Both maps have the same entity kind at this point.
+        (before[kind] as Record<string, BoardObject | BoardGroup | null>)[id] = a;
+        (after[kind] as Record<string, BoardObject | BoardGroup | null>)[id] = b;
+        if (kind === 'objects') this.rememberObjectVersion(id, b?.version ?? a!.version);
+        else this.rememberGroupVersion(id, b?.version ?? a!.version);
+      }
+    }
+    return { objectIds: Object.keys(after.objects), before, after, createdAssetIds };
+  }
+  private historyStep(sessionId: string, position: number): BoardHistoryStep {
+    const saved = this.db.prepare('SELECT before_json,after_json FROM board_history WHERE session_id=? AND position=?').get(sessionId, position) as Row | undefined;
+    if (!saved) fail(409, 'history_conflict', 'The board history changed. Refresh before undoing or redoing.');
+    return { before: parse<BoardHistorySnapshot>(saved!.before_json), after: parse<BoardHistorySnapshot>(saved!.after_json) };
+  }
+  private verifyHistoryTransition(sessionId: string, step: BoardHistoryStep, direction: 'undo' | 'redo') {
+    const expected = direction === 'undo' ? step.after : step.before, current = this.historySnapshot();
+    const conflicts: { objectIds: string[]; groupIds: string[] } = { objectIds: [], groupIds: [] };
+    for (const kind of ['objects', 'groups'] as const) for (const [id, target] of Object.entries(expected[kind])) {
+      const group = kind === 'groups', head = this.db.prepare(group ? 'SELECT * FROM group_history_heads WHERE session_id=? AND group_id=?' : 'SELECT * FROM board_history_heads WHERE session_id=? AND object_id=?').get(sessionId, id) as Row | undefined;
+      const value = current[kind][id], version = value?.version ?? (group ? this.groupVersion(id) : this.objectVersion(id));
+      const lineage = target?.version ?? step.before[kind][id]?.version ?? step.after[kind][id]?.version ?? 0;
+      if (!head || Number(head.version) !== version || Boolean(head.present) !== !!value || Number(head.lineage_version) !== lineage || !!value !== !!target || value && target && !this.sameHistoryEntity(value, target)) conflicts[group ? 'groupIds' : 'objectIds'].push(id);
+    }
+    if (conflicts.objectIds.length || conflicts.groupIds.length) fail(409, 'history_conflict', 'The board changed outside this history. Refresh before undoing or redoing.', conflicts);
+  }
+  private restoreHistorySnapshot(sessionId: string, snapshot: BoardHistorySnapshot) {
+    const time = now();
+    // Restore group rows first so every restored membership has its parent.
+    for (const [id, target] of Object.entries(snapshot.groups)) if (target) {
+      const version = this.nextGroupVersion(id, Math.max(this.groupVersion(id), target.version));
+      this.db.prepare('INSERT INTO groups(id,name,mode,color,x,y,width,height,version,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,mode=excluded.mode,color=excluded.color,x=excluded.x,y=excluded.y,width=excluded.width,height=excluded.height,version=excluded.version,created_at=excluded.created_at,updated_at=excluded.updated_at').run(id, target.name, target.mode, target.color, target.x, target.y, target.width, target.height, version, target.createdAt, time);
+      this.groupHistoryHead(sessionId, id, version, true, target.version);
+      if (target.mode === 'frame') this.returnGroupViews(id);
+    }
+    for (const [id, target] of Object.entries(snapshot.objects)) {
+      if (!target) {
+        const current = this.object(id), head = this.db.prepare('SELECT lineage_version FROM board_history_heads WHERE session_id=? AND object_id=?').get(sessionId, id) as Row;
+        this.rememberObjectVersion(id, current.version);
+        this.db.prepare('DELETE FROM objects WHERE id=?').run(id);
+        this.historyHead(sessionId, id, current.version, false, Number(head.lineage_version));
+      } else {
+        this.assetPath(target.assetId);
+        const version = this.nextObjectVersion(id, Math.max(this.objectVersion(id), target.version));
+        this.db.prepare('INSERT INTO objects(id,asset_id,x,y,width,height,version,created_at,updated_at,source_task_id,source_run_id,fill,group_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET asset_id=excluded.asset_id,x=excluded.x,y=excluded.y,width=excluded.width,height=excluded.height,version=excluded.version,created_at=excluded.created_at,updated_at=excluded.updated_at,source_task_id=excluded.source_task_id,source_run_id=excluded.source_run_id,fill=excluded.fill,group_id=excluded.group_id').run(id, target.assetId, target.x, target.y, target.width, target.height, version, target.createdAt, time, target.sourceTaskId ?? null, target.sourceRunId ?? null, target.fill ?? null, target.groupId ?? null);
+        this.historyHead(sessionId, id, version, true, target.version);
+      }
+    }
+    for (const [id, target] of Object.entries(snapshot.groups)) if (!target) {
+      const current = this.group(id), head = this.db.prepare('SELECT lineage_version FROM group_history_heads WHERE session_id=? AND group_id=?').get(sessionId, id) as Row;
+      this.rememberGroupVersion(id, current.version);
+      this.db.prepare('DELETE FROM groups WHERE id=?').run(id);
+      this.groupHistoryHead(sessionId, id, current.version, false, Number(head.lineage_version));
+      this.returnGroupViews(id);
+    }
+  }
+  private recordHistory(sessionId: string, applied: AppliedBoardOperations) {
+    if (!applied.objectIds.length && !Object.keys(applied.after.groups).length) return;
+    const cursor = Number(this.ensureHistoryState(sessionId).cursor), position = cursor + 1;
+    this.db.prepare('DELETE FROM board_history WHERE session_id=? AND position>?').run(sessionId, cursor);
+    this.db.prepare('INSERT INTO board_history(session_id,position,before_json,after_json,created_at) VALUES(?,?,?,?,?)').run(sessionId, position, json(applied.before), json(applied.after), now());
+    this.db.prepare('UPDATE board_history_state SET cursor=? WHERE session_id=?').run(position, sessionId);
+    for (const kind of ['objects', 'groups'] as const) for (const [id, entity] of Object.entries(applied.after[kind])) {
+      const version = entity?.version ?? applied.before[kind][id]!.version;
+      if (kind === 'groups') this.groupHistoryHead(sessionId, id, entity?.version ?? this.groupVersion(id), !!entity, version);
+      else this.historyHead(sessionId, id, entity?.version ?? this.objectVersion(id), !!entity, version);
+    }
+  }
+  private withBoardFileCleanup<T>(operation: (createdPaths: string[]) => T): T {
+    const createdPaths: string[] = [];
+    try { return operation(createdPaths); }
+    catch (error) {
+      for (const path of [...createdPaths].reverse()) {
+        try { rmSync(path, { force: true }); } catch { /* Preserve the mutation failure. */ }
+      }
+      throw error;
+    }
+  }
+  private applyOperations(operations: BoardOperation[], source?: { taskId: string; runId: string }, createdPaths: string[] = []): AppliedBoardOperations {
     if (!Array.isArray(operations) || operations.length > 1000) fail(400, 'invalid_operations', 'Board operations must be a list.');
-    const objectIds: string[] = [], touched = new Set<string>(), dirtyGroups = new Set<string>(), time = now();
-    const refresh = () => { for (const groupId of dirtyGroups) this.refreshGroup(groupId, time); dirtyGroups.clear(); };
+    const objectIds: string[] = [], seen = new Set<string>(), dirtyGroups = new Map<string, boolean>(), time = now();
+    const refresh = () => { for (const [groupId, membersChanged] of dirtyGroups) this.refreshGroup(groupId, time, membersChanged); dirtyGroups.clear(); };
+    const createdAssetIds: string[] = [], initial = this.historySnapshot();
     for (const operation of operations) {
       if (operation?.type === 'create') {
         const object = operation.object;
-        const asset = this.sharedAsset(object?.assetId); this.assetPath(asset.id);
+        if (!object || typeof object !== 'object') fail(400, 'invalid_object', 'Objects require an asset and bounds.');
+        const asset = this.sharedAsset(object.assetId); this.assetPath(asset.id);
         const id = object.id ? nonempty(object.id, 'Object ID', 200) : randomUUID();
         const groupId = object.groupId === undefined ? null : this.group(nonempty(object.groupId, 'Group ID', 200)).id;
         for (const key of ['x', 'y', 'width', 'height'] as const) finite(object[key], `Object ${key}`);
         if (object.width <= 0 || object.height <= 0) fail(400, 'invalid_object', 'Objects require positive dimensions.');
-        if (touched.has(id) || this.db.prepare('SELECT id FROM objects WHERE id=?').get(id)) fail(409, 'object_conflict', 'The object ID already exists.');
-        this.db.prepare('INSERT INTO objects(id, asset_id, x, y, width, height, version, created_at, updated_at, source_task_id, source_run_id, group_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(id, asset.id, object.x, object.y, object.width, object.height, 1, time, time, source?.taskId ?? null, source?.runId ?? null, groupId);
-        if (groupId) dirtyGroups.add(groupId);
-        touched.add(id); objectIds.push(id);
-      } else if (operation?.type === 'update' || operation?.type === 'delete') {
+        if (seen.has(id) || this.db.prepare('SELECT id FROM objects WHERE id=?').get(id)) fail(409, 'object_conflict', 'The object ID already exists.');
+        this.db.prepare('INSERT INTO objects(id, asset_id, x, y, width, height, version, created_at, updated_at, source_task_id, source_run_id, group_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(id, asset.id, object.x, object.y, object.width, object.height, this.nextObjectVersion(id, 0), time, time, source?.taskId ?? null, source?.runId ?? null, groupId);
+        if (groupId) dirtyGroups.set(groupId, true);
+        seen.add(id); objectIds.push(id);
+      } else if (operation?.type === 'content') {
         const id = nonempty(operation.objectId, 'Object ID', 200);
-        if (touched.has(id)) fail(400, 'duplicate_operation', 'Submit one operation for each object.');
+        if (seen.has(id)) fail(400, 'duplicate_operation', 'Submit one operation for each object.');
+        seen.add(id);
         const object = this.object(id);
         if (!Number.isSafeInteger(operation.expectedVersion) || object.version !== operation.expectedVersion) fail(409, 'object_conflict', 'The object changed. Read its current version before updating.', { objectId: id, currentVersion: object.version });
-        if (operation.type === 'delete') this.db.prepare('DELETE FROM objects WHERE id=? AND version=?').run(id, operation.expectedVersion);
+        if (typeof operation.text !== 'string') fail(400, 'invalid_input', 'Content text must be text.');
+        if (Buffer.byteLength(operation.text, 'utf8') > editableTextBytes) fail(413, 'content_too_large', 'Notes and Markdown stay within 2 MiB.');
+        const current = this.sharedAsset(object.assetId);
+        const asset = this.createContentAsset(current, operation.text, createdPaths, source);
+        if (asset) {
+          const version = this.nextObjectVersion(id, object.version);
+          this.db.prepare('UPDATE objects SET asset_id=?,version=?,updated_at=? WHERE id=? AND version=?').run(asset.id, version, time, id, operation.expectedVersion);
+          objectIds.push(id); createdAssetIds.push(asset.id);
+        }
+      } else if (operation?.type === 'update' || operation?.type === 'delete') {
+        const id = nonempty(operation.objectId, 'Object ID', 200);
+        if (seen.has(id)) fail(400, 'duplicate_operation', 'Submit one operation for each object.');
+        seen.add(id);
+        const object = this.object(id);
+        if (!Number.isSafeInteger(operation.expectedVersion) || object.version !== operation.expectedVersion) fail(409, 'object_conflict', 'The object changed. Read its current version before updating.', { objectId: id, currentVersion: object.version });
+        if (operation.type === 'delete') {
+          this.rememberObjectVersion(id, object.version);
+          this.db.prepare('DELETE FROM objects WHERE id=? AND version=?').run(id, operation.expectedVersion);
+        }
         else {
           if (!operation.changes || Object.keys(operation.changes).some((key) => !['x', 'y', 'width', 'height', 'fill', 'groupId'].includes(key))) fail(400, 'invalid_object', 'Object changes support position, dimensions, note color and group membership.');
           let fill = object.fill ?? null;
@@ -1088,11 +1276,14 @@ export class CanvasService {
           const changed = { ...object, ...operation.changes };
           for (const key of ['x', 'y', 'width', 'height'] as const) finite(changed[key], `Object ${key}`);
           if (changed.width <= 0 || changed.height <= 0) fail(400, 'invalid_object', 'Objects require positive dimensions.');
+          if (object.x === changed.x && object.y === changed.y && object.width === changed.width && object.height === changed.height && (object.fill ?? null) === fill && (object.groupId ?? null) === groupId) continue;
           this.db.prepare('UPDATE objects SET x=?,y=?,width=?,height=?,fill=?,group_id=?,version=version+1,updated_at=? WHERE id=? AND version=?').run(changed.x, changed.y, changed.width, changed.height, fill, groupId, time, id, operation.expectedVersion);
-          if (groupId) dirtyGroups.add(groupId);
+          const membersChanged = groupId !== (object.groupId ?? null) || object.x !== changed.x || object.y !== changed.y || object.width !== changed.width || object.height !== changed.height;
+          if (groupId) dirtyGroups.set(groupId, dirtyGroups.get(groupId) === true || membersChanged);
+          if (object.groupId) dirtyGroups.set(object.groupId, dirtyGroups.get(object.groupId) === true || membersChanged);
         }
-        if (object.groupId) dirtyGroups.add(object.groupId);
-        touched.add(id); objectIds.push(id);
+        if (operation.type === 'delete' && object.groupId) dirtyGroups.set(object.groupId, true);
+        seen.add(id); objectIds.push(id);
       } else if (operation?.type === 'group.create') {
         refresh();
         const input = operation.group;
@@ -1112,7 +1303,7 @@ export class CanvasService {
         });
         const bounds = groupFrameBounds(objects);
         const name = requestedName ?? this.nextGroupName();
-        this.db.prepare("INSERT INTO groups VALUES(?,?,'frame',?,?,?,?,?,1,?,?)").run(id, name, color, bounds.x, bounds.y, bounds.width, bounds.height, time, time);
+        this.db.prepare("INSERT INTO groups VALUES(?,?,'frame',?,?,?,?,?,?,?,?)").run(id, name, color, bounds.x, bounds.y, bounds.width, bounds.height, this.nextGroupVersion(id, 0), time, time);
         for (const object of objects) {
           this.db.prepare('UPDATE objects SET group_id=?,version=version+1,updated_at=? WHERE id=?').run(id, time, object.id);
           objectIds.push(object.id);
@@ -1125,6 +1316,7 @@ export class CanvasService {
           this.setGroupMode(id, 'frame', time);
           const members = this.groupMembers(id);
           this.db.prepare('UPDATE objects SET group_id=NULL,version=version+1,updated_at=? WHERE group_id=?').run(time, id);
+          this.rememberGroupVersion(id, this.group(id).version);
           this.db.prepare('DELETE FROM groups WHERE id=?').run(id);
           this.returnGroupViews(id);
           objectIds.push(...members.map(object => object.id));
@@ -1135,6 +1327,7 @@ export class CanvasService {
           const name = changes.name === undefined ? group.name : nonempty(changes.name, 'Group name', 200);
           const x = changes.x === undefined ? group.x : finite(changes.x, 'Group x');
           const y = changes.y === undefined ? group.y : finite(changes.y, 'Group y');
+          if (name === group.name && x === group.x && y === group.y && (changes.mode ?? group.mode) === group.mode) continue;
           this.translateGroup(id, x - group.x, y - group.y, time);
           if (changes.mode !== undefined) this.setGroupMode(id, changes.mode, time);
           this.db.prepare('UPDATE groups SET name=?,version=version+1,updated_at=? WHERE id=?').run(name, time, id);
@@ -1143,14 +1336,44 @@ export class CanvasService {
       } else fail(400, 'invalid_operation', 'Choose create, update, delete or a group operation.');
     }
     refresh();
-    return [...new Set(objectIds)];
+    return this.appliedHistory(initial, createdAssetIds);
   }
-  boardOperations(sessionId: string, operations: BoardOperation[]): { objects: BoardObject[]; groups: BoardGroup[] } { return this.transaction(() => { this.sessionRow(sessionId); this.applyOperations(operations); return { objects: this.objects(), groups: this.groups() }; }); }
+  boardOperations(sessionId: string, operations: BoardOperation[]): { objects: BoardObject[]; groups: BoardGroup[]; history: BoardHistory; versionChanges: BoardVersionChanges } {
+    return this.withBoardFileCleanup(createdPaths => this.transaction(() => { this.sessionRow(sessionId); const before = this.historySnapshot(); const applied = this.applyOperations(operations, undefined, createdPaths); this.recordHistory(sessionId, applied); return { objects: this.objects(), groups: this.groups(), history: this.boardHistory(sessionId), versionChanges: this.versionChanges(before) }; }));
+  }
+  boardUndo(sessionId: string): { objects: BoardObject[]; groups: BoardGroup[]; history: BoardHistory; versionChanges: BoardVersionChanges } {
+    return this.transaction(() => {
+      this.sessionRow(sessionId);
+      const before = this.historySnapshot();
+      const state = this.ensureHistoryState(sessionId), cursor = Number(state.cursor);
+      if (cursor > 0) {
+        const step = this.historyStep(sessionId, cursor);
+        this.verifyHistoryTransition(sessionId, step, 'undo');
+        this.restoreHistorySnapshot(sessionId, step.before);
+        this.db.prepare('UPDATE board_history_state SET cursor=? WHERE session_id=?').run(cursor - 1, sessionId);
+      }
+      return { objects: this.objects(), groups: this.groups(), history: this.boardHistory(sessionId), versionChanges: this.versionChanges(before) };
+    });
+  }
+  boardRedo(sessionId: string): { objects: BoardObject[]; groups: BoardGroup[]; history: BoardHistory; versionChanges: BoardVersionChanges } {
+    return this.transaction(() => {
+      this.sessionRow(sessionId);
+      const before = this.historySnapshot();
+      const state = this.ensureHistoryState(sessionId), cursor = Number(state.cursor), last = this.db.prepare('SELECT MAX(position) AS position FROM board_history WHERE session_id=?').get(sessionId) as Row, end = Number(last?.position ?? 0);
+      if (cursor < end) {
+        const step = this.historyStep(sessionId, cursor + 1);
+        this.verifyHistoryTransition(sessionId, step, 'redo');
+        this.restoreHistorySnapshot(sessionId, step.after);
+        this.db.prepare('UPDATE board_history_state SET cursor=? WHERE session_id=?').run(cursor + 1, sessionId);
+      }
+      return { objects: this.objects(), groups: this.groups(), history: this.boardHistory(sessionId), versionChanges: this.versionChanges(before) };
+    });
+  }
   complete(sessionId: string, taskId: string, input: CompleteInput): Task {
     const prior = this.taskRow(sessionId, taskId);
     if (prior.status === 'completed' && prior.current_run_id === input.runId && this.runRow(input.runId).consumer_id === input.consumerId) return this.task(sessionId, taskId);
     this.requireCurrent(sessionId, taskId, input, { action: 'complete', input });
-    return this.transaction(() => {
+    return this.withBoardFileCleanup(createdPaths => this.transaction(() => {
       const summary = nonempty(input.summary, 'Completion summary');
       const assetIds = this.expandAssetIds(ids(input.assetIds, 'Result assets'));
       for (const assetId of assetIds) { const asset = this.asset(assetId); if (asset.sourceTaskId !== taskId) fail(409, 'output_ownership', 'Result assets must belong to this task.'); this.assetPath(assetId); }
@@ -1162,11 +1385,18 @@ export class CanvasService {
       }
       if (!Array.isArray(input.validation) || input.validation.length > 100) fail(400, 'invalid_validation', 'Supply the applicable validation records.');
       const validation = input.validation.map((value) => nonempty(value, 'Validation record'));
-      const objectIds = this.applyOperations(input.operations, { taskId, runId: input.runId });
-      const receipt = { summary, assetIds, objectIds, validation, createdAt: now() };
+      const applied = this.applyOperations(input.operations, { taskId, runId: input.runId }, createdPaths);
+      this.recordHistory(sessionId, applied);
+      const objectIds = applied.objectIds;
+      const publishedAssetIds = [...new Set([...assetIds, ...applied.createdAssetIds])];
+      if (applied.createdAssetIds.length) {
+        const run = this.runRow(input.runId), outputs = parse<string[]>(run.output_asset_ids_json);
+        this.db.prepare('UPDATE runs SET output_asset_ids_json=? WHERE id=?').run(json([...new Set([...outputs, ...applied.createdAssetIds])]), input.runId);
+      }
+      const receipt = { summary, assetIds: publishedAssetIds, objectIds, validation, createdAt: now() };
       this.db.prepare("UPDATE tasks SET status='completed',receipt_json=?,reason=NULL,updated_at=? WHERE id=?").run(json(receipt), now(), taskId);
       this.db.prepare("UPDATE runs SET status='completed',updated_at=? WHERE id=?").run(now(), input.runId);
       return this.task(sessionId, taskId);
-    });
+    }));
   }
 }
