@@ -3,7 +3,7 @@ import type { Task, TaskStatus } from '../shared/types';
 
 const queueStatuses: readonly TaskStatus[] = ['queued', 'editing', 'running', 'blocked', 'interrupted'];
 const queueStatusSet = new Set<TaskStatus>(queueStatuses);
-const doneExitDuration = 1400;
+const doneExitDuration = 2000;
 
 type ExitingTask = { task: Task; fromStatus: TaskStatus };
 export type QueueTask = { task: Task; exiting: boolean; fromStatus?: TaskStatus };
