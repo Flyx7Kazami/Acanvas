@@ -1,0 +1,71 @@
+{
+  "artifactRecovery": "Reconstruction from recorded source facts, to be independently compared with retained screenshots; original generated HTML was not retained by this reviewer.",
+  "camera": {
+    "azimuth": -35,
+    "elevation": 28,
+    "origin": [
+      36,
+      44
+    ],
+    "scale": 1.15
+  },
+  "viewBox": [
+    72,
+    64
+  ],
+  "cards": 15,
+  "width": 14,
+  "height": 30,
+  "cornerRadius": 2.3,
+  "roundedPlanSteps": 16,
+  "pitch": 14,
+  "cadenceMs": 300,
+  "durationMs": 4500,
+  "fallAtMs": 1800,
+  "restDegrees": 0,
+  "maxFallDegrees": 86,
+  "paletteLight": [
+    "#747474",
+    "#a0a0a0",
+    "#c5c5c5"
+  ],
+  "paletteDark": [
+    "#777777",
+    "#a3a3a3",
+    "#d2d2d2"
+  ],
+  "paletteIndex": "slot index modulo3",
+  "motion": "contact recurrence retained in source read",
+  "oldPaintKey": "round(10000+100*depthOf(dominoPoint(relativeX,0,height/2,angle),camera))",
+  "renderer": "foreignObject HTML stacking layers,1x1 nested SVG,opaque fills,stroke none,isolation:isolate",
+  "keyframeStepMs": 12.5,
+  "grayStripCapture": {
+    "viewport": [
+      160,
+      128
+    ],
+    "deviceScaleFactor": 2,
+    "colorScheme": "light",
+    "background": "#fcfcfa",
+    "timeMs": [
+      0,
+      75,
+      150,
+      225,
+      300,
+      375,
+      450,
+      525
+    ],
+    "layout": "4columns x2rows,each tile320x256"
+  },
+  "externalCapture": {
+    "size": [
+      160,
+      160
+    ],
+    "background": "#f0e8e0",
+    "phase": "uncontrolled;second screenshot after125ms and browser work"
+  },
+  "historicalOrdering": "Provisional center-depth ordering is intentionally preserved in the earlier-version reconstruction."
+}

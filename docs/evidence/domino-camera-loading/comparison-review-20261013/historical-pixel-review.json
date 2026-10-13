@@ -1,0 +1,81 @@
+{
+  "historicalRecovery": "Reconstruction from recorded source and retained screenshots; original full HTML snapshot was absent.",
+  "timesMs": [
+    0,
+    75,
+    150,
+    225,
+    300,
+    375,
+    450,
+    525
+  ],
+  "tileDifferences": [
+    {
+      "t": 0,
+      "pixels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "t": 75,
+      "pixels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "t": 150,
+      "pixels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "t": 225,
+      "pixels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "t": 300,
+      "pixels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "t": 375,
+      "pixels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "t": 450,
+      "pixels": 1,
+      "maxChannelDifference": 20
+    },
+    {
+      "t": 525,
+      "pixels": 0,
+      "maxChannelDifference": 0
+    }
+  ],
+  "differentPixels": 1,
+  "totalPixels": 655360,
+  "maxChannelDifference": 20,
+  "differenceBBox": [
+    776,
+    381,
+    777,
+    382
+  ],
+  "differingPixel": {
+    "location": [
+      776,
+      381
+    ],
+    "historical": [
+      197,
+      197,
+      197
+    ],
+    "reconstructed": [
+      177,
+      177,
+      177
+    ]
+  },
+  "status": "passed;faithful reconstruction,one edge pixel differs in independent rasterization"
+}

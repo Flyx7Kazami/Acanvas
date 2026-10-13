@@ -1,0 +1,31 @@
+{
+  "historicalRecovery": "Reconstructed from retained source parameters and renderer; original full HTML snapshot was absent.",
+  "previousHtmlBytes": 70942,
+  "retainedFirstGrayBuildBytes": 70942,
+  "referenceStrip": "/private/tmp/acanvas-domino-camera-20261013/gray-strip.png",
+  "stripSize": [
+    1280,
+    512
+  ],
+  "timesMs": [
+    0,
+    75,
+    150,
+    225,
+    300,
+    375,
+    450,
+    525
+  ],
+  "differentPixels": 0,
+  "maximumChannelDifference": 0,
+  "currentCopyByteIdentical": true,
+  "referenceArtifact": "reference-strip.png",
+  "independentReview": {
+    "report": "../../../../docs/evidence/domino-camera-loading/comparison-review-20261013/historical-pixel-review.json",
+    "differentPixels": 1,
+    "maximumChannelDifference": 20,
+    "timeMs": 450,
+    "observation": "One edge pixel differed in independent rasterization; implementation-side zero-difference result above is retained."
+  }
+}
