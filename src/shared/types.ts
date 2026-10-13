@@ -57,8 +57,10 @@ export interface Task { lastEditDraftId?: string; id: string; sessionId: string;
 export type BoardOperation =
   | { type: 'create'; object: { id?: string; assetId: string; x: number; y: number; width: number; height: number } }
   | { type: 'update'; objectId: string; expectedVersion: number; changes: Partial<Bounds> & { fill?: NoteFill | null } }
+  | { type: 'content'; objectId: string; expectedVersion: number; text: string }
   | { type: 'delete'; objectId: string; expectedVersion: number };
-export interface BoardState { project: Project; sessions: Session[]; session: Session; draft: Draft; assets: Asset[]; objects: BoardObject[]; annotations: Annotation[]; tasks: Task[] }
+export interface BoardHistory { canUndo: boolean; canRedo: boolean }
+export interface BoardState { project: Project; sessions: Session[]; session: Session; draft: Draft; assets: Asset[]; objects: BoardObject[]; annotations: Annotation[]; tasks: Task[]; history: BoardHistory }
 export interface Bootstrap { project: Project; token: string; service: ServiceIdentity; capabilities: { maxUploadBytes: number; backup: boolean; recovery: boolean; mediaPreview: 'browser'; generation: 'host_tools' } }
 export interface Claim { task: Task | null; run: Run | null; consumerId: string; projectId: string; sessionId: string }
 export interface RunIdentity { consumerId: string; runId: string }
