@@ -294,8 +294,8 @@ details[open] summary svg { rotate: 180deg; }
 .queue-row>.icon-button:hover:not(:disabled),.queue-row>.icon-button:focus-visible { background: var(--queue-hover); color: var(--ink); }
 .queue-entering { animation: queue-send 220ms var(--ease); }
 @keyframes queue-send { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-.queue-item-exiting { color: var(--muted); animation: queue-done-row-out 220ms var(--ease) 360ms both; }
-.queue-item-exiting.queue-item-collapsing { overflow: hidden; animation: queue-done-row-out 220ms var(--ease) 360ms both, queue-done-row-collapse 180ms var(--ease) 580ms forwards; }
+.queue-item-exiting { color: var(--muted); animation: queue-done-row-out 220ms var(--ease) 1000ms both; }
+.queue-item-exiting.queue-item-collapsing { overflow: hidden; animation: queue-done-row-out 220ms var(--ease) 1000ms both, queue-done-row-collapse 180ms var(--ease) 1220ms forwards; }
 .queue-item-exiting .queue-title-completing { text-decoration-line: line-through; text-decoration-thickness: 1px; text-decoration-color: transparent; animation: queue-done-strike 180ms var(--ease) 100ms forwards; }
 .queue-task-mark-done { position: relative; width: 14px; height: 14px; }
 .queue-task-mark-done>svg { position: absolute; inset: 0; }
@@ -306,7 +306,7 @@ details[open] summary svg { rotate: 180deg; }
 @keyframes queue-done-strike { from { text-decoration-color: transparent; } to { text-decoration-color: currentColor; } }
 @keyframes queue-done-row-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes queue-done-row-collapse { from { height: var(--queue-exit-height); } to { height: 0; } }
-.queue-stack-exiting .queue-list { animation: queue-done-surface-out 180ms var(--ease) 580ms forwards; }
+.queue-stack-exiting .queue-list { animation: queue-done-surface-out 180ms var(--ease) 1220ms forwards; }
 @keyframes queue-done-surface-out { from { opacity: 1; } to { opacity: 0; } }
 .inline-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 11px; font-weight: 500; }
 .inline-heading>.icon-button { flex-basis: 28px; width: 28px; height: 28px; }
