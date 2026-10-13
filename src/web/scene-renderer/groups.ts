@@ -54,35 +54,33 @@ function paintText(context: CanvasRenderingContext2D, element: HTMLElement, pare
       let text = row.querySelector<HTMLInputElement>('input')?.value || row.textContent || ''; text = text.replace(/\u200b/g, '');
       if (!rows.length && style.textOverflow === 'ellipsis' && overflow) { while (text && context.measureText(text + '…').width > contentWidth) text = Array.from(text).slice(0, -1).join(''); text += '…'; }
       const metrics = context.measureText(text), ascent = metrics.fontBoundingBoxAscent, descent = metrics.fontBoundingBoxDescent, lineHeight = Number.parseFloat(style.lineHeight) || element.clientHeight, position = offset(row), base = offset(element);
-      context.fillText(text, position.x - base.x, position.y - base.y + Math.floor((lineHeight - ascent - descent) / 2) + ascent);
+      const align = style.textAlign === 'right' || style.textAlign === 'end' ? contentWidth - metrics.width : style.textAlign === 'center' ? (contentWidth - metrics.width) / 2 : 0;
+      context.fillText(text, position.x - base.x + align, position.y - base.y + Math.floor((lineHeight - ascent - descent) / 2) + ascent);
     }
   });
 }
 
 /** Copies folder art and content previews without introducing synthetic object identities. */
 export function freezeGroupDecorations(board: HTMLElement): ScenePrimitive[] {
-  const primitives: ScenePrimitive[] = [], style = getComputedStyle(document.documentElement), ink = style.getPropertyValue('--ink').trim(), edge = style.getPropertyValue('--edge').trim(), muted = style.getPropertyValue('--muted').trim();
-  const family = getComputedStyle(board).fontFamily, boardBox = board.getBoundingClientRect(), matrix = new DOMMatrix(getComputedStyle(board.querySelector('.canvas-world')!).transform);
+  const primitives: ScenePrimitive[] = [], style = getComputedStyle(document.documentElement), edge = style.getPropertyValue('--edge').trim();
+  const boardBox = board.getBoundingClientRect(), matrix = new DOMMatrix(getComputedStyle(board.querySelector('.canvas-world')!).transform);
   for (const element of board.querySelectorAll<HTMLElement>('.board-group')) {
     const bounds = element.getBoundingClientRect(), elementStyle = getComputedStyle(element);
     const x = (bounds.x - boardBox.x - matrix.e) / matrix.a, y = (bounds.y - boardBox.y - matrix.f) / matrix.d, width = bounds.width / matrix.a, height = bounds.height / matrix.d;
     const opacity = Number(elementStyle.opacity), blur = Number(/blur\(([^p]+)px\)/.exec(elementStyle.filter)?.[1] || 0), artScale = width / Number.parseFloat(elementStyle.width);
     const exterior = opacity < 1 || blur > 0;
     if (element.classList.contains('group-frame')) {
-      const title = element.dataset.groupName || 'Group', count = element.dataset.groupCount || '0';
-      if (exterior) {
-        const padding = 18, area = { width: width + padding * 2, height: height + padding * 2 }, scale = Math.min(2, Math.sqrt(8_000_000 / (area.width * area.height)));
-        const pixels = document.createElement('canvas'); pixels.width = Math.max(1, Math.ceil(area.width * scale)); pixels.height = Math.max(1, Math.ceil(area.height * scale));
-        const context = pixels.getContext('2d')!; context.scale(scale, scale); context.translate(padding, padding); context.globalAlpha = opacity; context.filter = `blur(${blur * scale}px)`;
-        context.strokeStyle = edge; context.lineWidth = 1; context.beginPath(); context.roundRect(0, 0, width, height, 8); context.stroke();
-        context.fillStyle = ink; context.font = `500 12px ${family}`; context.fillText(title, 15, 24, Math.max(1, width - 50));
-        context.fillStyle = muted; context.font = `10px ${family}`; context.fillText(count, 20 + (element.querySelector<HTMLElement>('.group-frame-title>span')?.offsetWidth || 35), 24);
-        primitives.push({ kind: 'texture', bounds: { x: x - padding, y: y - padding, ...area }, texture: new SceneContentFrame(document, { pixels, bitmap: { width: pixels.width, height: pixels.height } }) });
-      } else primitives.push({ kind: 'rect', bounds: { x, y, width, height }, radius: 8, fill: 'transparent', stroke: edge, lineWidth: 1 }, { kind: 'text', x: x + 15, y: y + 24, text: title, fill: ink, font: `500 12px ${family}`, maxWidth: Math.max(1, width - 50), ellipsis: true }, { kind: 'text', x: x + 20 + (element.querySelector<HTMLElement>('.group-frame-title>span')?.offsetWidth || 35), y: y + 24, text: count, fill: muted, font: `10px ${family}` });
+      const padding = Math.max(6, Math.ceil(blur * 3)), area = { width: width + padding * 2, height: height + padding * 2 }, scale = Math.min(2, Math.sqrt(8_000_000 / (area.width * area.height)));
+      const pixels = document.createElement('canvas'); pixels.width = Math.max(1, Math.ceil(area.width * scale)); pixels.height = Math.max(1, Math.ceil(area.height * scale));
+      const context = pixels.getContext('2d')!; context.scale(scale, scale); context.translate(padding, padding); context.globalAlpha = opacity; context.filter = `blur(${blur * scale}px)`;
+      context.strokeStyle = edge; context.lineWidth = 1; context.beginPath(); context.roundRect(0, 0, width, height, 8); context.stroke();
+      const title = element.querySelector<HTMLElement>('.group-frame-title>span'); if (title) paintText(context, title, element);
+      primitives.push({ kind: 'texture', bounds: { x: x - padding, y: y - padding, ...area }, texture: new SceneContentFrame(document, { pixels, bitmap: { width: pixels.width, height: pixels.height } }) });
       continue;
     }
-    const image = document.createElement('canvas'); image.width = 456; image.height = 546;
-    const context = image.getContext('2d')!; context.scale(2, 2); context.translate(6, 6);
+    const padding = Math.max(6, Math.ceil(blur * 3)), imageWidth = 216 + padding * 2, imageHeight = 261 + padding * 2;
+    const image = document.createElement('canvas'); image.width = imageWidth * 2; image.height = imageHeight * 2;
+    const context = image.getContext('2d')!; context.scale(2, 2); context.translate(padding, padding);
     const art = element.querySelector<HTMLElement>('.folder-art');
     if (art) {
       const back = art.querySelector<SVGSVGElement>('.folder-back'); if (back) paintSvg(context, back);
@@ -115,8 +113,8 @@ export function freezeGroupDecorations(board: HTMLElement): ScenePrimitive[] {
     if (exterior) {
       const blurred = document.createElement('canvas'); blurred.width = image.width; blurred.height = image.height;
       const output = blurred.getContext('2d')!; output.filter = `blur(${blur * 2}px)`; output.globalAlpha = opacity; output.drawImage(image, 0, 0);
-      primitives.push({ kind: 'texture', bounds: { x: x - 6 * artScale, y: y - 6 * artScale, width: 228 * artScale, height: 273 * artScale }, texture: new SceneContentFrame(document, { pixels: blurred, bitmap: { width: blurred.width, height: blurred.height } }) });
-    } else primitives.push({ kind: 'texture', bounds: { x: x - 6 * artScale, y: y - 6 * artScale, width: 228 * artScale, height: 273 * artScale }, texture: new SceneContentFrame(document, { pixels: image, bitmap: { width: image.width, height: image.height } }) });
+      primitives.push({ kind: 'texture', bounds: { x: x - padding * artScale, y: y - padding * artScale, width: imageWidth * artScale, height: imageHeight * artScale }, texture: new SceneContentFrame(document, { pixels: blurred, bitmap: { width: blurred.width, height: blurred.height } }) });
+    } else primitives.push({ kind: 'texture', bounds: { x: x - padding * artScale, y: y - padding * artScale, width: imageWidth * artScale, height: imageHeight * artScale }, texture: new SceneContentFrame(document, { pixels: image, bitmap: { width: image.width, height: image.height } }) });
   }
   return primitives;
 }

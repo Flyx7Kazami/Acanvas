@@ -130,6 +130,7 @@ export function freezeBoardScene(input: BoardSceneFreeze): FrozenBoardScene {
   const cssViewport = { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   const pixelRatio = Math.min(devicePixelRatio, Math.sqrt(16_000_000 / (rect.width * rect.height)));
   const bitmap = { width: Math.max(1, Math.floor(rect.width * pixelRatio)), height: Math.max(1, Math.floor(rect.height * pixelRatio)) };
+  const exteriorStyle = getComputedStyle(board), exteriorBlur = Number.parseFloat(exteriorStyle.getPropertyValue('--group-exterior-blur')), exteriorOpacity = Number(exteriorStyle.getPropertyValue('--group-exterior-opacity'));
   const palette = scenePalette(), measure = document.createElement('canvas').getContext('2d')!, family = getComputedStyle(board).fontFamily || fontFamily;
   // DOM text baselines land on device pixels, and line boxes floor their half-leading.
   const deviceRatio = bitmap.height / cssViewport.height, baseline = (y: number) => (Math.round((y * camera.zoom + camera.y) * deviceRatio) / deviceRatio - camera.y) / camera.zoom;
@@ -156,7 +157,7 @@ export function freezeBoardScene(input: BoardSceneFreeze): FrozenBoardScene {
     const bounds = { x: object.x, y: object.y, width: paintObject.width, height: paintObject.height }, content = input.contentBounds(object), paintContent = input.contentBounds(paintObject);
     const layer: SceneLayer = { objectId: object.id, assetId: object.assetId, objectVersion: object.version, worldBounds, contentWorldBounds: content, layer: index, primitives: [] };
     if (input.objectStyles?.[object.id]) { layer.blur = input.objectStyles[object.id].blur; layer.opacity = input.objectStyles[object.id].opacity; }
-    else if (input.exteriorObjectIds?.includes(object.id)) { layer.blur = 6; layer.opacity = .3; }
+    else if (input.exteriorObjectIds?.includes(object.id)) { layer.blur = exteriorBlur; layer.opacity = exteriorOpacity; }
     layers.push(layer);
     if (!targets.has(object.id) && !overlaps(renderedBounds, crop)) continue;
     const asset = input.assets.find(value => value.id === object.assetId), kind = resolveContentKind(asset), selected = input.camera.selectedObjectIds.includes(object.id), radius = kind === 'audio' ? 22 : 0;

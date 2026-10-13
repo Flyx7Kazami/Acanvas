@@ -1,7 +1,7 @@
 import { randomId } from './random-id.js';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react';
 import { AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignStartHorizontal, AlignStartVertical, ArrowDownToLine, ArrowLeft, ArrowUp, FolderInput, FolderOutput, Check, ChevronDown, Circle, Copy, Ellipsis, Hand, History, LoaderCircle, Maximize, Minus, Monitor, Moon, MousePointer2, Palette, Pause, Pencil, PencilLine, Play, Plus, Sun, Trash2, Type, Upload, X } from 'lucide-react';
-import type { AnnotationInput, Asset, BaseSceneSnapshot, BoardGroup, BoardObject, BoardOperation, CaptureView, Draft, SessionView, Task, TaskStatus } from '../shared/types';
+import type { AnnotationInput, Asset, BaseSceneSnapshot, BoardGroup, BoardObject, BoardOperation, CaptureView, Draft, RequestReference, SessionView, Task, TaskStatus } from '../shared/types';
 import { alignedPositions, fitView, screenBounds, intersects, mediaContentRect, normalizedRegion, objectRegion, rectangle, screenToWorld, resizeBounds, resizeViewportBounds, snapViewportResize, snapResize, snapTranslation, unionBounds, zoomAt, type Alignment, type Point, type Rect, type SnapGuide, type ResizeCorner, type ResizeHandle } from './geometry';
 import { GroupName } from './GroupName';
 import { GroupFolder } from './GroupFolder';
@@ -21,7 +21,7 @@ import { annotationPinCenters } from './annotation-note-layout';
 import { NotificationStack, useNotices, type Notification } from './NotificationStack';
 import { AnnotationTimeRange } from './AnnotationTimeRange';
 import { videoFrameAt } from './videoFrameAt';
-import { ReferenceSearch, referenceCandidates, type ReferenceCandidate } from './ChatboxReferences';
+import { GroupReferenceIcon, ReferenceSearch, referenceCandidates, type ReferenceCandidate } from './ChatboxReferences';
 import { ChatboxEditor, type ChatboxEditorHandle, type EditorCaret } from './ChatboxEditor';
 import { referenceLabel, referenceParts, snapshotReferences } from '../shared/task-message';
 import { annotationTarget, requestedMarkdownAnchor, presentedMarkTarget } from './annotation-scene';
@@ -41,7 +41,8 @@ function requestParts(task: Task) {
   return referenceParts(snapshot.userRequest.text, snapshotReferences(snapshot).map(reference => {
     const object = 'object' in reference ? reference.object : snapshot.referenceContent.objects.find(object => object.id === reference.id);
     const asset = 'asset' in reference ? reference.asset : snapshot.referenceContent.assets.find(asset => asset.id === object?.assetId);
-    return { ...reference, label: referenceLabel(snapshot, reference), asset };
+    const group = reference.kind === 'group' ? ('group' in reference ? reference.group : snapshot.referenceContent.groups?.find(group => group.id === reference.id)) : undefined;
+    return { ...reference, label: referenceLabel(snapshot, reference), asset, groupColor: group?.color };
   }));
 }
 function requestTitle(task: Task) { return requestParts(task).map(part => part.kind === 'text' ? part.text : ` ${part.reference.label} `).join(''); }
@@ -228,7 +229,7 @@ function TaskCard({ task, assets, objects, content, api, onReloadBoard, locateAs
   const assetAction = (asset: Asset, thumbnail: boolean) => resolveContentKind(asset) === 'file' ? <a href={content(asset.id)} download={asset.name} title={asset.name} aria-label={`Download ${asset.name}`} key={asset.id}>{thumbnail ? <AssetThumb hoverPreview asset={asset} src={content(asset.id)}/> : <><ArrowDownToLine size={12}/>{asset.name}</>}</a> : <button type="button" title={asset.name} aria-label={`View ${asset.name}`} key={asset.id} onClick={() => { if (objects.some(object => object.assetId === asset.id)) locateAsset(asset.id); else setPreviewId(current => current === asset.id ? '' : asset.id); }}>{thumbnail ? <AssetThumb hoverPreview asset={asset} src={content(asset.id)}/> : asset.name}</button>;
   return <article className="task-card" data-task-id={task.id} data-status={task.status}>
     {!compact && <div className="task-heading"><span className="task-sequence">Request {String(task.sequence).padStart(2, '0')}</span><span className={`status-badge status-${task.status}`}>{task.status === 'completed' && <Check size={11}/>} {statusLabels[task.status]}</span></div>}
-    {(!compact || !summary) && <p className="task-instruction">{requestTitle(task) ? requestParts(task).map((part, index) => part.kind === 'text' ? part.text : <span className="task-inline-reference" key={`${part.reference.kind}:${part.reference.id}:${index}`} data-reference-kind={part.reference.kind} data-reference-id={part.reference.id}>{part.reference.kind === 'object' ? <AssetThumb hoverPreview asset={part.reference.asset} src={part.reference.asset ? content(part.reference.asset.id) : ''}/> : <History size={14}/>}<span>{part.reference.label}</span></span>) : 'Create from the attachments and annotations.'}</p>}
+    {(!compact || !summary) && <p className="task-instruction">{requestTitle(task) ? requestParts(task).map((part, index) => part.kind === 'text' ? part.text : <span className="task-inline-reference" key={`${part.reference.kind}:${part.reference.id}:${index}`} data-reference-kind={part.reference.kind} data-reference-id={part.reference.id}>{part.reference.kind === 'object' ? <AssetThumb hoverPreview asset={part.reference.asset} src={part.reference.asset ? content(part.reference.asset.id) : ''}/> : part.reference.kind === 'group' ? <GroupReferenceIcon color={part.reference.groupColor}/> : <History size={14}/>}<span>{part.reference.label}</span></span>) : 'Create from the attachments and annotations.'}</p>}
     <div className="task-detail-content"><div className={`task-reference-groups${compact ? ' queue-previews' : ''}`} aria-label={compact ? `${references.count} references` : undefined}>
       {references.groups.map(({ annotation, items, primary }, index) => {
         const summaryIndex = references.attachments.length + index, shown = summary && summaryIndex < previewLimit;
@@ -265,7 +266,7 @@ export default function App() {
   const [noteFillPending, setNoteFillPending] = useState<{ objectId: string; fill: NoteFill | null } | null>(null);
   const [mode, setMode] = useState<'select' | 'pan' | 'mark' | 'note'>('select');
   const pendingNote = useRef('');
-  const [referencePreview, setReferencePreview] = useState<string[]>([]);
+  const [referencePreview, setReferencePreview] = useState<RequestReference[]>([]);
   const tabFocus = useRef(false);
   const [mention, setMention] = useState<{ start: number; end: number; query: string } | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
@@ -313,7 +314,7 @@ export default function App() {
   const [preview, setPreview] = useState<Record<string, Rect>>({});
   const [groupInteraction, setGroupInteraction] = useState({ selectedId: '', hoveredId: '', focusedId: '' });
   const { selectedId: selectedGroupId, hoveredId: hoveredGroupId, focusedId: focusedGroupId } = groupInteraction;
-  const [groupTransition, setGroupTransition] = useState<{ id: string; kind: 'collapse' | 'expand' | 'enter' | 'leave' } | null>(null);
+  const [groupTransition, setGroupTransition] = useState<{ id: string; kind: 'collapse' | 'expand' | 'enter' | 'leave'; ghost?: BoardGroup } | null>(null);
   const transitionTimer = useRef(0);
   const [renamingGroupId, setRenamingGroupId] = useState('');
   const [groupPosition, setGroupPosition] = useState<{ id: string; x: number; y: number; scale?: number } | null>(null);
@@ -402,10 +403,10 @@ export default function App() {
     return ownerGroupId === activeGroup?.id;
   });
   const unavailableComments = (draft?.annotations || []).filter(annotation => !annotation.capture && !annotation.sceneSource && captureJob.current?.owner.annotationId !== annotation.id && annotation.objectIds.some(id => !allObjects.some(object => object.id === id)) && !editingSourceTask?.snapshot.annotations.some(value => value.id === annotation.id));
-  const hasRequest = !!(draft?.text.trim() || draft?.attachments.length || draft?.annotations.length || draft?.references.objectIds.length || draft?.references.taskIds.length || referencePreview.length);
+  const hasRequest = !!(draft?.text.trim() || draft?.attachments.length || draft?.annotations.length || draft?.references.objectIds.length || draft?.references.taskIds.length || draft?.references.groupIds?.length || referencePreview.length);
   const incompleteAnnotations = draft?.annotations.filter(annotation => annotation.captureState?.status === 'incomplete') || [];
-  const candidates = state ? referenceCandidates(allObjects, assets, state.tasks, state.session.id, mention?.query || '') : [];
-  const composerCompact = !composerFocused && !hasRequest && !pending && !draft?.editingTaskId && !draft?.references.objectIds.length && !draft?.references.taskIds.length && !board.draftConflict && !uploads.length && !board.sending;
+  const candidates = state ? referenceCandidates(allObjects, groups, assets, state.tasks, state.session.id, mention?.query || '') : [];
+  const composerCompact = !composerFocused && !hasRequest && !pending && !draft?.editingTaskId && !draft?.references.objectIds.length && !draft?.references.taskIds.length && !draft?.references.groupIds?.length && !board.draftConflict && !uploads.length && !board.sending;
   function annotationSources(annotation: AnnotationInput): BoardObject[] {
     const source = inspectableTask && !viewingEditedTask ? inspectableTask : editingSourceTask;
     return annotation.objectIds.flatMap(id => {
@@ -558,9 +559,9 @@ export default function App() {
   function focusGroupTarget(id: string) { setGroupInteraction(current => ({ ...current, hoveredId: '', focusedId: id })); }
   function releaseGroupTarget(id: string, source: 'hoveredId' | 'focusedId') { setGroupInteraction(current => current[source] === id ? { ...current, [source]: '' } : current); }
   function selectGroup(group: BoardGroup) {
-    clearInspection(); exitAnnotation(); selectGroupTarget(group.id); setReferencePreview(group.objectIds); viewUpdate({ selectedObjectIds: [] });
+    clearInspection(); exitAnnotation(); selectGroupTarget(group.id); setReferencePreview([{ kind: 'group', id: group.id }]); viewUpdate({ selectedObjectIds: [] });
   }
-  const selectObjects = (ids: string[], user = true) => { selectGroupTarget(''); if ([...ids].sort().join(',') !== [...selectedIds].sort().join(',')) { clearInspection(); exitAnnotation(); } const ordered = unique(ids); if (user) setReferencePreview(ordered); viewUpdate({ selectedObjectIds: ordered }); };
+  const selectObjects = (ids: string[], user = true) => { selectGroupTarget(''); if ([...ids].sort().join(',') !== [...selectedIds].sort().join(',')) { clearInspection(); exitAnnotation(); } const ordered = unique(ids); if (user) setReferencePreview(ordered.map(id => ({ kind: 'object', id }))); viewUpdate({ selectedObjectIds: ordered }); };
   useLayoutEffect(() => {
     const assetId = pendingNote.current;
     if (!assetId || !canvas.current) return;
@@ -1016,7 +1017,7 @@ export default function App() {
     if (disabled || committing.current || uploads.length || board.draftConflict || composing.current || commentComposing.current) return;
     confirmReferencePreview();
     const latest = board.getDraftFor(scope.current.sessionId, scope.current.draftId);
-    if (!latest || !(latest.text.trim() || latest.attachments.length || latest.annotations.length || latest.references.objectIds.length || latest.references.taskIds.length)) return;
+    if (!latest || !(latest.text.trim() || latest.attachments.length || latest.annotations.length || latest.references.objectIds.length || latest.references.taskIds.length || latest.references.groupIds?.length)) return;
     if (latest.annotations.some(annotation => annotation.captureState?.status === 'incomplete')) { board.showError(new Error('Complete each annotation capture before sending.')); return; }
     if (latest.annotations.some(annotation => !!captureErrors[annotation.id])) { board.showError(new Error('Capture each unavailable annotation again before sending.')); return; }
     const owner = { ...scope.current };
@@ -1041,12 +1042,18 @@ export default function App() {
   }
 
   function animateView(next: Partial<SessionView>) { if (!disabled && state) fitMotion.animate({ ...view, ...next }); }
-  function beginGroupTransition(id: string, kind: 'collapse' | 'expand' | 'enter' | 'leave') {
+  function beginGroupTransition(id: string, kind: 'collapse' | 'expand' | 'enter' | 'leave', ghost?: BoardGroup) {
     window.clearTimeout(transitionTimer.current);
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { setGroupTransition(null); return; }
-    setGroupTransition({ id, kind }); transitionTimer.current = window.setTimeout(() => setGroupTransition(null), 620);
+    setGroupTransition({ id, kind, ghost });
+    if (!ghost) transitionTimer.current = window.setTimeout(() => setGroupTransition(null), 620);
   }
   useEffect(() => () => window.clearTimeout(transitionTimer.current), []);
+  useEffect(() => {
+    if (!groupTransition?.ghost || groups.some(group => group.id === groupTransition.id)) return;
+    transitionTimer.current = window.setTimeout(() => setGroupTransition(null), 620);
+    return () => window.clearTimeout(transitionTimer.current);
+  }, [groupTransition, state?.groups]);
   const snapObjects = objects.map(object => ({ ...object, id: `object:${object.id}` }));
   const snapTargets = activeGroup ? snapObjects : [...snapObjects, ...groups.filter(group => group.mode === 'folder' && group.id !== selectedGroupId).map(group => ({ ...groupDisplayBounds(group), id: `group:${group.id}` }))];
   function enterGroup(group: BoardGroup) {
@@ -1069,7 +1076,7 @@ export default function App() {
     if (!state || selected.length < 2 || activeGroup || selected.some(object => object.groupId)) return;
     const id = randomId();
     await writeLayout([{ type: 'group.create', group: { id, objectIds: selected.map(object => object.id) }, expectedVersions: Object.fromEntries(selected.map(object => [object.id, object.version])) }], state.session.id);
-    selectGroupTarget(id); viewUpdate({ selectedObjectIds: [] });
+    selectGroupTarget(id); setReferencePreview([{ kind: 'group', id }]); viewUpdate({ selectedObjectIds: [] });
   }
   function updateGroup(group: BoardGroup, changes: { name?: string; mode?: 'folder' | 'frame' }) {
     if (!state) return;
@@ -1077,16 +1084,24 @@ export default function App() {
     if (changes.mode) beginGroupTransition(group.id, changes.mode === 'folder' ? 'collapse' : 'expand');
     void writeLayout([{ type: 'group.update', groupId: group.id, expectedVersion: group.version, changes }], state.session.id);
   }
+  async function ungroup(group: BoardGroup) {
+    if (!state || disabled || layoutBusy.current) return;
+    if (activeGroup) leaveGroup();
+    selectGroupTarget(''); setReferencePreview([]);
+    if (group.mode === 'folder') beginGroupTransition(group.id, 'expand', group);
+    const completed = await writeLayout([{ type: 'group.ungroup', groupId: group.id, expectedVersion: group.version }], state.session.id);
+    if (!completed) setGroupTransition(null);
+  }
   function groupActions(group: BoardGroup) {
     return <div className="group-action-list"><GroupActionButton label="Rename" disabled={disabled} onClick={() => { if (!activeGroup) selectGroup(group); setRenamingGroupId(group.id); }}><PencilLine size={16}/></GroupActionButton>
-      <GroupActionButton label={group.mode === 'frame' ? 'Store in folder' : 'Expand on board'} disabled={disabled} onClick={() => updateGroup(group, { mode: group.mode === 'frame' ? 'folder' : 'frame' })}>{group.mode === 'frame' ? <FolderInput size={16}/> : <FolderOutput size={16}/>}</GroupActionButton><GroupActionButton label="Ungroup" disabled={disabled} onClick={() => { if (!state) return; if (activeGroup) leaveGroup(); selectGroupTarget(''); void writeLayout([{ type: 'group.ungroup', groupId: group.id, expectedVersion: group.version }], state.session.id); }}><FontAwesomeObjectIcon ungroup/></GroupActionButton></div>;
+      <GroupActionButton label={group.mode === 'frame' ? 'Store in folder' : 'Expand on board'} disabled={disabled} onClick={() => updateGroup(group, { mode: group.mode === 'frame' ? 'folder' : 'frame' })}>{group.mode === 'frame' ? <FolderInput size={16}/> : <FolderOutput size={16}/>}</GroupActionButton><GroupActionButton label="Ungroup" disabled={disabled} onClick={() => void ungroup(group)}><FontAwesomeObjectIcon ungroup/></GroupActionButton></div>;
   }
   function groupName(group: BoardGroup, className = '') {
     return <GroupName group={group} className={className} editing={renamingGroupId === group.id} onCancel={() => setRenamingGroupId('')} onCommit={name => { setRenamingGroupId(''); if (name !== group.name) updateGroup(group, { name }); }}/>;
   }
   function renderGroup(group: BoardGroup, exterior = false) {
     const bounds = groupDisplayBounds(group);
-    const transitionGhost = !!activeGroup && group.id === activeGroup.id && groupTransition?.kind === 'enter';
+    const transitionGhost = !!activeGroup && group.id === activeGroup.id && groupTransition?.kind === 'enter' || groupTransition?.ghost === group && !groups.some(value => value.id === group.id);
     const groupKeyDown = (event: React.KeyboardEvent<HTMLElement>, selectOnly = false) => {
       if (event.target !== event.currentTarget || disabled) return;
       if (event.key === 'Enter' || event.key === ' ') {
@@ -1096,15 +1111,15 @@ export default function App() {
       if (delta && state) { event.preventDefault(); void writeLayout([{ type: 'group.update', groupId: group.id, expectedVersion: group.version, changes: { x: group.x + delta[0], y: group.y + delta[1] } }], state.session.id); }
     };
     return <section key={group.id} className={`board-group group-${group.mode}${exterior ? ' group-exterior' : ''}${transitionGhost ? ' group-transition-ghost' : ''}`} data-transition-group={groupTransition?.id === group.id || undefined} data-moving={gesture.current?.group?.id === group.id || undefined} data-group-id={group.id} data-group-color={group.color} data-group-name={group.name} data-group-count={group.objectIds.length} data-folder-open={!exterior && group.mode === 'folder' && (hoveredGroupId === group.id || focusedGroupId === group.id) || undefined} inert={exterior} aria-hidden={exterior || undefined} aria-label={`${group.name}, ${group.objectIds.length} items`} style={{ left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height, ...(groupPosition?.id === group.id && groupPosition.scale ? { transform: `scale(${groupPosition.scale})`, transformOrigin: '0 0' } : {}) }} onPointerEnter={() => { if (!exterior && group.mode === 'folder') hoverGroupTarget(group.id); }} onPointerLeave={event => { if (!(event.relatedTarget as Element | null)?.closest?.(`[data-group-actions-id="${group.id}"]`)) releaseGroupTarget(group.id, 'hoveredId'); }} onFocusCapture={() => { if (!exterior) focusGroupTarget(group.id); }} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node) && !(event.relatedTarget as Element | null)?.closest?.(`[data-group-actions-id="${group.id}"]`)) releaseGroupTarget(group.id, 'focusedId'); }}>
-      {group.mode === 'frame' ? <div className="group-frame-title" data-renaming={renamingGroupId === group.id || undefined} data-canvas-control={renamingGroupId === group.id || undefined}><button className="group-frame-select" type="button" disabled={disabled} onDoubleClick={() => setRenamingGroupId(group.id)} aria-label={`Select group ${group.name}`} onKeyDown={groupKeyDown}/>{groupName(group)}<small>{group.objectIds.length}</small></div> : <><div className="group-folder-hit" tabIndex={exterior ? -1 : 0} role="button" aria-disabled={disabled || undefined} aria-label={`Open folder ${group.name}`} onKeyDown={groupKeyDown}><GroupFolder group={group} objects={allObjects} assets={assets} api={board.api}/></div><div className="folder-caption" role={renamingGroupId === group.id ? undefined : 'button'} tabIndex={renamingGroupId === group.id ? undefined : exterior ? -1 : 0} aria-disabled={disabled || undefined} aria-label={renamingGroupId === group.id ? undefined : `Select group ${group.name}`} onKeyDown={event => groupKeyDown(event, true)}>{groupName(group, 'folder-name')}<small>{group.objectIds.length} {group.objectIds.length === 1 ? 'item' : 'items'}</small></div></>}
+      {group.mode === 'frame' ? <div className="group-frame-title" data-renaming={renamingGroupId === group.id || undefined} data-canvas-control={renamingGroupId === group.id || undefined}><button className="group-frame-select" type="button" disabled={disabled} onDoubleClick={() => setRenamingGroupId(group.id)} aria-label={`Select group ${group.name}`} onKeyDown={groupKeyDown}/>{groupName(group)}</div> : <><div className="group-folder-hit" tabIndex={exterior ? -1 : 0} role="button" aria-disabled={disabled || undefined} aria-label={`Open folder ${group.name}`} onKeyDown={groupKeyDown}><GroupFolder group={group} objects={allObjects} assets={assets} api={board.api}/></div><div className="folder-caption" role={renamingGroupId === group.id ? undefined : 'button'} tabIndex={renamingGroupId === group.id ? undefined : exterior ? -1 : 0} aria-disabled={disabled || undefined} aria-label={renamingGroupId === group.id ? undefined : `Select group ${group.name}`} onKeyDown={event => groupKeyDown(event, true)}>{groupName(group, 'folder-name')}</div></>}
     </section>;
   }
 
   async function writeLayout(operations: BoardOperation[], sessionId: string) {
     if (!operations.length || layoutBusy.current) return;
     layoutBusy.current = true; setLayoutSaving(true);
-    try { await board.operations(operations, sessionId); }
-    catch { /* The current service layout and its error remain available. */ }
+    try { await board.operations(operations, sessionId); return true; }
+    catch { return false; }
     finally { layoutBusy.current = false; dragAppearance.current = {}; setLayoutSaving(false); setPreview({}); }
   }
 
@@ -1346,7 +1361,7 @@ export default function App() {
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); event.stopPropagation(); openComposerMenu(event.key === 'ArrowUp' ? 1 : 0); }
         else if (event.key === 'Escape' && composerMenuOpen) { event.preventDefault(); event.stopPropagation(); closeComposerMenu(); }
       }}><Ellipsis size={16}/></button>
-      <ChatboxEditor draft={draft} preview={referencePreview} objects={allObjects} assets={assets} tasks={state.tasks} content={id => board.api.content(id, state.session.id)} inputRef={instruction} controller={editor} composing={composing} disabled={board.projectChanged || board.switching || board.sending} placeholder={composerCompact ? 'Create…' : 'What would you like to create?'} expanded={!!mention} activeDescendant={mention && candidates[mentionIndex] ? `reference-option-${mentionIndex}` : undefined} onChange={value => board.changeDraft(current => ({ ...current, ...value }))} onCaret={updateMention} onConsumePreview={() => setReferencePreview([])} onPreviewRemove={id => setReferencePreview(current => current.filter(value => value !== id))} onUserPointer={confirmReferencePreview} onFocus={() => { setComposerFocused(true); if (tabFocus.current) confirmReferencePreview(); tabFocus.current = false; }} onComposition={active => { if (active) setMention(null); }} onKeyDown={event => {
+      <ChatboxEditor draft={draft} preview={referencePreview} groups={groups} objects={allObjects} assets={assets} tasks={state.tasks} content={id => board.api.content(id, state.session.id)} inputRef={instruction} controller={editor} composing={composing} disabled={board.projectChanged || board.switching || board.sending} placeholder={composerCompact ? 'Create…' : 'What would you like to create?'} expanded={!!mention} activeDescendant={mention && candidates[mentionIndex] ? `reference-option-${mentionIndex}` : undefined} onChange={value => board.changeDraft(current => ({ ...current, ...value }))} onCaret={updateMention} onConsumePreview={() => setReferencePreview([])} onPreviewRemove={entry => setReferencePreview(current => current.filter(value => value.kind !== entry.kind || value.id !== entry.id))} onUserPointer={confirmReferencePreview} onFocus={() => { setComposerFocused(true); if (tabFocus.current) confirmReferencePreview(); tabFocus.current = false; }} onComposition={active => { if (active) setMention(null); }} onKeyDown={event => {
         if (composing.current || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
         if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); setMention(null); setReferencePreview([]); return; }
         if (mention && ['ArrowDown', 'ArrowUp'].includes(event.key)) { event.preventDefault(); setMentionIndex(current => candidates.length ? (current + (event.key === 'ArrowDown' ? 1 : -1) + candidates.length) % candidates.length : 0); return; }
@@ -1383,8 +1398,8 @@ export default function App() {
 
   return <div className="app-shell" data-capturing={!!captureBusyId || undefined} data-sampling={!!samplingIdentity || undefined}><a className="skip-link" href="#whiteboard">Skip to canvas</a>
     <main className="canvas-main"><div id="whiteboard" className={`whiteboard mode-${spacePan ? 'pan' : mode} ${dragOver ? 'drag-over' : ''} ${board.switching ? 'is-loading' : ''}`} ref={canvas} data-view-id={projectScene?.view?.viewId} data-view-generation={projectScene?.view?.viewGeneration} tabIndex={0} role="region" aria-label="Project board. Enter selects files, arrow keys move them, and Space pans the canvas." onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerLeave={() => updateMarkHover(null)} onPointerCancel={() => { gesture.current = null; dragAppearance.current = {}; setGroupPosition(null); updateMarkHover(null); setPreview({}); setSelectionRect(null); setSnapGuides([]); setMarkPreview(null); }} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === ' ') { event.preventDefault(); setSpacePan(true); } if (event.key === 'Enter' && mode === 'mark') { event.preventDefault(); if (selected.length === 1 && !annotationEdit) enterAnnotation(); else { const point = screenToWorld({ x: canvas.current!.clientWidth / 2, y: canvas.current!.clientHeight / 2 }, view); applyMark({ ...point, width: 0, height: 0 }, 'point', annotationEdit); } } if (event.key === 'Escape') { setReferencePreview([]); if (captureBusyId) void cancelCapture(); else if (annotationRead) closeAnnotation(); else if (annotating) { exitAnnotation(); setMode('select'); } else { clearInspection(); selectObjects([]); setMode('select'); } } if (event.key === '+' || event.key === '=') { event.preventDefault(); zoom(1.2); } if (event.key === '-') { event.preventDefault(); zoom(1 / 1.2); } }} onKeyUp={event => { if (event.key === ' ') setSpacePan(false); }} onBlur={() => setSpacePan(false)} onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); setDragOver(true); } }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragOver(false); }} onDrop={event => { event.preventDefault(); setDragOver(false); void importFiles(filesFromTransfer(event.dataTransfer), localPoint(event)); }}>
-      {activeGroup && <div className="group-navigation" data-canvas-control><div className="group-navigation-header"><GroupActionButton label="Back to board" onClick={leaveGroup}><ArrowLeft size={16}/></GroupActionButton>{groupName(activeGroup, 'group-navigation-name')}<small>{activeGroup.objectIds.length} items</small></div>{groupActions(activeGroup)}</div>}
-      <div className={`canvas-world${groupTransition ? ' layout-transitioning' : ''}`} data-transition-kind={groupTransition?.kind} style={{ transform: `translate(${view.x}px,${view.y}px) scale(${view.zoom})` }}>{!activeGroup && groups.map(group => renderGroup(group))}{activeGroup && groups.filter(group => group.id !== activeGroup.id).map(group => renderGroup(group, true))}{activeGroup && groupTransition?.kind === 'enter' && renderGroup(activeGroup, true)}{displayObjects.map((object, index) => { const asset = assetFor(object.assetId); const exterior = exteriorObjects.some(item => item.id === object.id); const departing = departingObjects.some(item => item.id === object.id); const arriving = !!groupTransition && groupTransition.id === object.groupId && (groupTransition.kind === 'enter' || groupTransition.kind === 'expand'); const isSelected = !exterior && !departing && selectedIds.includes(object.id); return <article key={object.id} className={`board-object object-${object.type} ${isSelected ? 'selected' : ''} ${exterior ? 'group-exterior' : ''} ${departing ? 'group-member-departing' : ''} ${arriving ? 'group-member-arriving' : ''}`} inert={exterior || departing} data-moving={gesture.current?.objects.some(item => item.id === object.id) || undefined} aria-hidden={exterior || undefined} data-object-id={object.id} data-content-kind={resolveContentKind(asset)} data-object-version={object.version} data-selected={isSelected || undefined} style={{ left: object.x, top: object.y, width: object.width, height: object.height, ...(dragAppearance.current[object.id] ? { transform: `scale(${dragAppearance.current[object.id].scale})`, transformOrigin: '0 0', opacity: dragAppearance.current[object.id].opacity } : {}), ...(departing && departingGroup ? { transform: `translate(${departingGroup.x + 20 - object.x}px,${departingGroup.y + 16 - object.y}px) scale(.22)` } : {}) }} tabIndex={exterior || departing ? -1 : 0} role="group" aria-label={`${asset?.name || 'File'}${isSelected ? ', selected' : ''}`} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectObjects(event.shiftKey ? unique([...selectedIds, object.id]) : [object.id]); } const delta = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key]; if (delta) { event.preventDefault(); event.stopPropagation(); void board.operations([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: object.x + delta[0], y: object.y + delta[1] } }]).catch(() => undefined); } }}>
+      {activeGroup && <div className="group-navigation" data-canvas-control><div className="group-navigation-header"><GroupActionButton label="Back to board" onClick={leaveGroup}><ArrowLeft size={16}/></GroupActionButton>{groupName(activeGroup, 'group-navigation-name')}</div>{groupActions(activeGroup)}</div>}
+      <div className={`canvas-world${groupTransition ? ' layout-transitioning' : ''}`} data-transition-kind={groupTransition?.kind} style={{ transform: `translate(${view.x}px,${view.y}px) scale(${view.zoom})` }}>{!activeGroup && groups.map(group => renderGroup(group))}{!activeGroup && groupTransition?.ghost && !groups.some(group => group.id === groupTransition.ghost!.id) && renderGroup(groupTransition.ghost, true)}{activeGroup && groups.filter(group => group.id !== activeGroup.id).map(group => renderGroup(group, true))}{activeGroup && groupTransition?.kind === 'enter' && renderGroup(activeGroup, true)}{displayObjects.map((object, index) => { const asset = assetFor(object.assetId); const exterior = exteriorObjects.some(item => item.id === object.id); const departing = departingObjects.some(item => item.id === object.id); const arriving = !!groupTransition && (groupTransition.id === object.groupId || !!groupTransition.ghost?.objectIds.includes(object.id)) && (groupTransition.kind === 'enter' || groupTransition.kind === 'expand'); const isSelected = !exterior && !departing && selectedIds.includes(object.id); return <article key={object.id} className={`board-object object-${object.type} ${isSelected ? 'selected' : ''} ${exterior ? 'group-exterior' : ''} ${departing ? 'group-member-departing' : ''} ${arriving ? 'group-member-arriving' : ''}`} inert={exterior || departing} data-moving={gesture.current?.objects.some(item => item.id === object.id) || undefined} aria-hidden={exterior || undefined} data-object-id={object.id} data-content-kind={resolveContentKind(asset)} data-object-version={object.version} data-selected={isSelected || undefined} style={{ left: object.x, top: object.y, width: object.width, height: object.height, ...(dragAppearance.current[object.id] ? { transform: `scale(${dragAppearance.current[object.id].scale})`, transformOrigin: '0 0', opacity: dragAppearance.current[object.id].opacity } : {}), ...(departing && departingGroup ? { transform: `translate(${departingGroup.x + 20 - object.x}px,${departingGroup.y + 16 - object.y}px) scale(.22)` } : {}) }} tabIndex={exterior || departing ? -1 : 0} role="group" aria-label={`${asset?.name || 'File'}${isSelected ? ', selected' : ''}`} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectObjects(event.shiftKey ? unique([...selectedIds, object.id]) : [object.id]); } const delta = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key]; if (delta) { event.preventDefault(); event.stopPropagation(); void board.operations([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: object.x + delta[0], y: object.y + delta[1] } }]).catch(() => undefined); } }}>
         <div className="object-media"><SceneContentContext.Provider value={{ registry: sceneRegistry, objectId: object.id, width: object.width, height: object.height, captureView: projectScene?.view }}><ContentRenderer asset={asset} src={board.api.content(object.assetId)} api={board.api} onReloadBoard={reloadBoard} onBlankPointerDown={event => { event.stopPropagation(); pointerDown(event, true); }} onFrameWheel={canvasWheel} onFrameDrag={(frame, start, event) => frameDrag(object.id, frame, start, event)} disabled={disabled || annotating || exterior} preserveScene={annotating || !!annotationRead} error={mediaErrors[object.id]} onSize={size => setMediaSizes(current => ({ ...current, [object.id]: size }))} onError={() => setMediaErrors(current => ({ ...current, [object.id]: true }))} onActivate={() => selectObjects([object.id])} onSaveError={board.showError} fill={shownNoteFill(object)} onMediaElement={element => { const refs = resolveContentKind(asset) === 'audio' ? audioRefs.current : videoRefs.current; if (element) (refs as Map<string, HTMLMediaElement>).set(object.id, element); else refs.delete(object.id); }}/></SceneContentContext.Provider></div>
         <div className="object-caption"><span className="object-index">{String(index + 1).padStart(2, '0')}</span><span title={asset?.name}>{asset?.name || 'File'}</span>{object.sourceTaskId && <span className="generated-label">Output</span>}</div>{isSelected && ((capabilityFor(object).freeResize ? ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] : ['nw', 'ne', 'sw', 'se']) as ResizeHandle[]).map(corner => <button key={corner} type="button" className="resize-handle" data-resize-id={object.id} data-resize-corner={corner} aria-label={`Resize ${asset?.name || 'File'} ${ { nw: 'top left', n: 'top', ne: 'top right', e: 'right', se: 'bottom right', s: 'bottom', sw: 'bottom left', w: 'left' }[corner]}`} onKeyDown={event => { if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key) || layoutBusy.current || disabled) return; event.preventDefault(); event.stopPropagation(); const delta = { x: event.key === 'ArrowRight' ? 10 : event.key === 'ArrowLeft' ? -10 : 0, y: event.key === 'ArrowDown' ? 10 : event.key === 'ArrowUp' ? -10 : 0 }; const capability = capabilityFor(object), bounds = capability.freeResize ? resizeViewportBounds(object, corner, delta, capability.minimum) : resizeBounds(object, corner as ResizeCorner, delta); void writeLayout([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: bounds }], state.session.id); }}/>) }</article>; })}
       {visibleOutlines.map(({ annotation, bounds }) => <div className={`annotation-outline ${!annotation.inspectionTaskId ? 'draft-outline' : ''}`} key={`${annotation.inspectionTaskId || 'draft'}-${annotation.id}`} data-annotation-id={annotation.id} data-annotation-source={annotation.inspectionTaskId ? 'task' : 'draft'} data-source-removed={annotation.objectIds.some(id => !allObjects.some(object => object.id === id)) || undefined} style={{ left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height }}/>)}

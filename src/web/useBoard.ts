@@ -7,7 +7,7 @@ import { BoardApi, RequestError } from './api';
 type SavingDraft = { value: Draft; editRevision: number; expectedRevision: number };
 type LocalDraft = { value: Draft; serverAnnotations: AnnotationInput[]; editRevision: number; savedEditRevision: number; confirmedRevision: number; epoch: number; failed?: boolean; conflict?: Draft; inflight?: SavingDraft; lastAttempt?: SavingDraft };
 export type SaveState = 'saved' | 'saving' | 'unsaved' | 'failed';
-const comparableReferences = (references: Draft['references']) => ({ objectIds: references.objectIds, taskIds: references.taskIds, order: referenceOrder(references).map(reference => ({ kind: reference.kind, id: reference.id, ...(reference.textOffset === undefined ? {} : { textOffset: reference.textOffset }) })) });
+const comparableReferences = (references: Draft['references']) => ({ objectIds: references.objectIds, groupIds: references.groupIds || [], taskIds: references.taskIds, order: referenceOrder(references).map(reference => ({ kind: reference.kind, id: reference.id, ...(reference.textOffset === undefined ? {} : { textOffset: reference.textOffset }) })) });
 const draftContent = (value: Draft) => JSON.stringify({ text: value.text, attachments: value.attachments, annotations: value.annotations, references: comparableReferences(value.references) });
 const freshDraft = (value: Draft, epoch = 0): LocalDraft => ({ value, serverAnnotations: value.annotations, editRevision: 0, savedEditRevision: 0, confirmedRevision: value.revision, epoch });
 const sameTarget = (a: AnnotationInput, b: AnnotationInput) => JSON.stringify(annotationTarget(a)) === JSON.stringify(annotationTarget(b));

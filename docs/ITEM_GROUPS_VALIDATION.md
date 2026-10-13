@@ -2,6 +2,33 @@
 
 日期：2026-10-13（Asia/Shanghai）。分支：`codex/item-groups-folders`。范围：R14 / A15，设计见 [ITEM_GROUPS_DESIGN.md](ITEM_GROUPS_DESIGN.md)。测试使用独立临时项目；交互演示按下方记录更新运行代码，用户内容保持。
 
+## Group 引用、展示与解组动效
+
+实施及独立验收完成。无边框、无阴影的透明二级导航；frame/nav 名称旁和 folder 外部 caption 移除数量；封套名称为 14px/18px 两行、数量 x202 右下对齐；动作图标默认辅助色、悬停正文色。外围磨砂采用共享 CSS 参数 blur12px / opacity .22，组内清晰且外围 inert。
+
+选中 frame/folder 在预览、正式正文、候选和历史中以单个真实 group 引用呈现，保持单长度原子编辑语义与既有行高。发送保存组名、颜色、模式、版本、成员 world 布局、对象和素材元数据，历史编辑使用冻结源。对应组色的 16px 简洁文件夹缩略图在预览保留 .45 透明度，正式状态采用原规则；Ink 填色保留，并增加细的 glyph 轮廓提升明暗主题辨识。
+
+直接 folder Ungroup 使用一次业务事务，成功后以非交互 ghost 和原成员 ID 呈现 420ms 非线性展开；二级返回父视口，减少动态效果采用终态，409 保持组和成员。Ghost 的 inert、aria-hidden、pointer-events:none 和命中隔离实际通过；展开中拖动由当时显示位置接管。
+
+- `npm run build:server`、`npm run typecheck`、Vite runner 隔离构建、`git diff --check`：通过。
+- `env -u CODEX_THREAD_ID .runtime/node_modules/node/bin/node --test dist/tests/{item-groups,reference-occurrences,task-message,group-cli,server}.test.js`：最终 71/71 通过。新增真实 HTTP、已构建 CLI、重启、重复 Unicode/UTF-16 位置、空 frame/folder、同 ID 命名空间、历史改名/解组/编辑及来源优先回归通过。
+- 追加缩略图前，`ACANVAS_TEST_WEB_ROOT=/private/tmp/acanvas-group-chrome-visual-web .runtime/node_modules/node/bin/node --test dist/tests/item-groups-ui.test.js`：独立整合 7/7 通过，36.2 秒，失败/跳过/取消均为零。包括原有完整链路和 Done、native caption、hover/缩放、原子 group 引用发送及历史编辑、直接 folder 解组和二级 reduced-motion。
+- 追加缩略图的最新编译用例：`ACANVAS_TEST_WEB_ROOT=/private/tmp/acanvas-group-color-thumbnail-web .runtime/node_modules/node/bin/node --test --test-name-pattern='group folder reference colors' dist/tests/item-groups-ui.test.js`：1/1 通过，6.26 秒；其余用例按本次定向筛选未执行，整合结果沿用上项。两色的真实 preview/formal/candidate/history/edit、live 改名后的冻结名称/颜色、六色 Light/Dark 的 fill/16px 尺寸以及 Ink 细轮廓 computed stroke 通过。预览 .45 与正式状态行高一致。独立只读审查和目视编辑/候选及 Ink 暗色截图 PASS；history 截图曾裁到空 composer，历史显示以真实 DOM 断言核对，文档截图采用有效的历史编辑 crop。
+- 独立补充 5/5：真实延迟 409、320/390px 无边框导航/去数量/磨砂及交互隔离、一次 Ungroup API、24 帧中间变换及 ghost 命中隔离；CDP 原生中文 IME、刷新、其他 session 空草稿、引用原子删除保留中文；展开中实际 pointer 拖动 +50/+25 连续接管并保存。
+- 视觉执行者四个隔离场景通过：明暗 1280/390/320、长中文与 101 items、所有动作图标默认/hover 颜色、frame/folder/nav 去数量和 Done 同步。独立另行目视封套与导航，并做二级原生画面/真实 Done 对照。
+
+独立 Done 同区域对应：成员 worldBounds 与原生画面（含 40px 留白）误差小于 0.2px；外围 blur12px/.22。外围 330×350 区域平均通道差 0.295/255、最大 5；清晰成员 161×63 区域平均 0.472、最大 6；caption 平均 0.323、最大 32，94.88% 像素完全一致。未见模糊边缘裁切、漏成员或范围变化，文字保留 Canvas/浏览器栅格差异。证据：`/private/tmp/acanvas-folder-detail-review-UCrINF/`，交互补充：`/private/tmp/acanvas-folder-detail-review-almuwI/`、`/private/tmp/acanvas-folder-detail-review-6xKDvE/`。
+
+两项独立来源一致性发现已根因修复并复验：历史 group 保存 a.x=0，后续新增显式 a.x=999 时，resolved group 保留 0、显式引用和顶层对象集合均采用 999；历史 group note size=1、当前真实内容 size=18 时，新显式引用及顶层素材元数据采用 18，历史 group 保留 1。现有冻结 occurrence 继续保持其原来源，原文件身份、HTTP bytes、草稿 CAS 与重启通过。顶层对象/素材集合直接按显式来源优先构建，当前无未闭合后端发现。
+
+早期扩大三文件回归为 64/65，裸 URL 断言受到宿主 CODEX_THREAD_ID 自动绑定 session 参数影响；最终显式无宿主环境的五文件 71/71 通过，产品宿主规则保持。监听用例曾被 sandbox EPERM 阻断，同命令升级后进入真实业务并通过。Chrome 曾在启动阶段 allocator/CVDisplayLink 超时，未进入产品断言；几处测试 fixture、caret 和历史详情展开预期修正后，最终实际链路通过，原记录保留。产品不添加测试重试分支。
+
+原服务已按正常 CLI stop/start 更新当前 API，PID42934、PPID1，保持原项目、58785 和 session。本轮具备真正 before/after 快照：4 sessions 全部公开业务字段、14 项素材元数据及原文件字节逐项一致，草稿、队列、名称、布局和视图保持。真实私有记录：`/private/tmp/acanvas-group-runtime-update-result.json`；媒体仅存受保护临时核对目录。用户素材不进入 Git，未执行 seed、board operations、view save、SQLite 访问或拍摄用户全板。
+
+追加缩略图仅更新静态资源：保留旧 assets、新入口 index 原子替换，API PID/instance 保持，所有入口资源 HTTP200 且与候选逐字节相同，index 只包含产品标准 preview-origin metadata 注入。再次比较 4 sessions 公开状态、素材元数据和 14 原文件字节均一致，记录为 `/private/tmp/acanvas-group-static-update-result.json`。主智能体已刷新原 in-app tab，实际加载 `main-CZvt7XYs.js`，确认 frame/caption 去数量、封套 14px 名称/右对齐数量及 12px/.22 参数；保存视图与空白草稿保持，原页面未进行业务写入或全板截图。
+
+最终追加前端为 `/private/tmp/acanvas-group-color-thumbnail-web`，`main-CZvt7XYs.js` / `main-B6-WCwoF.css`。截图：[无边框导航](evidence/item-groups/group-navigation-unboxed.png)、[大名称与右下数量](evidence/item-groups/folder-typography-dark.png)、[彩色组引用的历史编辑](evidence/item-groups/group-reference-history.png)。全部图为隔离素材。
+
 ## Folder 封套、引用与 CLI 分组操作
 
 实施及独立验收完成。左列细线从 x14 延伸至 x108，上密下疏至 y212；左右线条采用 1px 与 y+0.5px 对齐，DPR1/2 密线可区分。右列真实名称和 item 数网格对齐，背板降低 16px，封套四角 4px、预览角 2px且图片铺满，hover 微展开 220ms，216×224 封套/216×256 布局与命中区域保持。

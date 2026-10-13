@@ -494,3 +494,19 @@ test('CLI and authenticated HTTP expose the same group operations', async t => {
   const stale = await fetch(`${running.url}/api/board/operations`, { method: 'POST', headers, body: JSON.stringify({ sessionId: session.id, operations: [{ type: 'group.update', groupId: 'group', expectedVersion: 0, changes: { mode: 'folder' } }] }) });
   assert.equal(stale.status, 409);
 });
+
+test('empty frame and folder references retain group metadata as request content', async t => {
+  const f = await fixture(t); f.create('empty-member-a', 0, 0); f.create('empty-member-b', 140, 0); f.group(['empty-member-a', 'empty-member-b']);
+  for (const id of ['empty-member-a', 'empty-member-b']) f.operations([{ type: 'delete', objectId: id, expectedVersion: f.service.object(id).version }]);
+  for (const mode of ['frame', 'folder'] as const) {
+    if (f.service.group('group').mode !== mode) f.update({ mode });
+    let draft = f.service.draft(f.session.id);
+    draft = f.service.saveDraft(f.session.id, { ...draft, references: { objectIds: [], taskIds: [], groupIds: ['group'] } });
+    const task = f.service.sendDraft(f.session.id, draft.id, draft.revision).task;
+    assert.deepEqual(task.snapshot.requestReferences!.groupIds, ['group']);
+    assert.equal(task.snapshot.referenceContent.groups![0].mode, mode);
+    assert.deepEqual(task.snapshot.referenceContent.groups![0].objectIds, []);
+    assert.deepEqual(task.snapshot.referenceContent.objects, []); assert.deepEqual(task.snapshot.referenceContent.assets, []);
+    assert.match(task.requirementText, /Group 1/);
+  }
+});

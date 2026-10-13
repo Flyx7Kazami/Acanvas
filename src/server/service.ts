@@ -32,16 +32,16 @@ const validContentAnchor = (anchor: ContentAnchor, code: string) => {
   if (anchor.end !== undefined && anchor.end < (anchor.start ?? 0)) fail(400, code, 'Text offsets follow their start.');
 };
 const draftReferences = (input: DraftReferences, requestText: string): DraftReferences => {
-  const objectIds = ids(input?.objectIds, 'Object references'), taskIds = ids(input?.taskIds, 'Task references');
-  if (objectIds.length !== input.objectIds.length || taskIds.length !== input.taskIds.length) fail(400, 'invalid_references', 'Each reference source appears once in its source list.');
+  const objectIds = ids(input?.objectIds, 'Object references'), taskIds = ids(input?.taskIds, 'Task references'), groupIds = ids(input?.groupIds ?? [], 'Group references');
+  if (objectIds.length !== input.objectIds.length || taskIds.length !== input.taskIds.length || groupIds.length !== (input.groupIds ?? []).length) fail(400, 'invalid_references', 'Each reference source appears once in its source list.');
   if (input.order !== undefined && (!Array.isArray(input.order) || input.order.length > 2000)) fail(400, 'invalid_references', 'Reference order must be a list.');
-  const order = referenceOrder({ objectIds, taskIds, ...(input.order === undefined ? {} : { order: input.order }) });
+  const order = referenceOrder({ objectIds, taskIds, groupIds, ...(input.order === undefined ? {} : { order: input.order }) });
   const seen = new Set<string>();
   let previousOffset = 0;
   for (const reference of order) {
-    if (!reference || !['object', 'task'].includes(reference.kind) || typeof reference.id !== 'string' || !reference.id || reference.id.length >= 200) fail(400, 'invalid_references', 'References require a kind and stable ID.');
+    if (!reference || !['object', 'task', 'group'].includes(reference.kind) || typeof reference.id !== 'string' || !reference.id || reference.id.length >= 200) fail(400, 'invalid_references', 'References require a kind and stable ID.');
     const key = `${reference.kind}:${reference.id}`;
-    if (!(reference.kind === 'object' ? objectIds : taskIds).includes(reference.id)) fail(400, 'invalid_references', 'Each reference occurrence points to a listed source.');
+    if (!(reference.kind === 'object' ? objectIds : reference.kind === 'group' ? groupIds : taskIds).includes(reference.id)) fail(400, 'invalid_references', 'Each reference occurrence points to a listed source.');
     const offset = reference.textOffset ?? requestText.length;
     if (reference.textOffset !== undefined && (!Number.isSafeInteger(reference.textOffset) || reference.textOffset < 0 || reference.textOffset > requestText.length)) fail(400, 'invalid_references', 'Reference positions use integer UTF-16 offsets within the request text.');
     if (offset > 0 && offset < requestText.length && requestText.charCodeAt(offset - 1) >= 0xD800 && requestText.charCodeAt(offset - 1) <= 0xDBFF && requestText.charCodeAt(offset) >= 0xDC00 && requestText.charCodeAt(offset) <= 0xDFFF) fail(400, 'invalid_references', 'Reference positions use complete Unicode code points.');
@@ -49,8 +49,8 @@ const draftReferences = (input: DraftReferences, requestText: string): DraftRefe
     previousOffset = offset;
     seen.add(key);
   }
-  if (seen.size !== objectIds.length + taskIds.length) fail(400, 'invalid_references', 'Reference order contains every grouped identity.');
-  return { objectIds, taskIds, order: order.map(({ kind, id, textOffset }) => ({ kind, id, ...(textOffset === undefined ? {} : { textOffset }) })) };
+  if (seen.size !== objectIds.length + taskIds.length + groupIds.length) fail(400, 'invalid_references', 'Reference order contains every grouped identity.');
+  return { objectIds, taskIds, ...(groupIds.length ? { groupIds } : {}), order: order.map(({ kind, id, textOffset }) => ({ kind, id, ...(textOffset === undefined ? {} : { textOffset }) })) };
 };
 export const within = (root: string, path: string) => { const rel = relative(root, path); return rel === '' || (!isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`)); };
 
@@ -617,6 +617,7 @@ export class CanvasService {
       if (new Set(annotations.map((annotation) => annotation.id)).size !== annotations.length) fail(400, 'invalid_annotation', 'Each annotation needs a distinct ID.');
       const references = draftReferences(input.references, requestText);
       references.objectIds.forEach((id) => { if (!draft.references.objectIds.includes(id)) this.object(id); });
+      (references.groupIds ?? []).forEach(id => { if (!(draft.references.groupIds ?? []).includes(id)) this.group(id); });
       references.taskIds.forEach((id) => { const row = this.db.prepare('SELECT session_id FROM tasks WHERE id=?').get(id) as Row | undefined; if (!row) fail(404, 'task_missing', 'The referenced task is unavailable.'); if (row!.session_id !== sessionId && !draft.references.taskIds.includes(id)) fail(403, 'task_reference_scope', 'Add tasks from the current session. Saved historical references remain available.'); });
       const updated = this.db.prepare('UPDATE drafts SET text=?,attachments_json=?,annotations_json=?,references_json=?,updated_at=?,revision=revision+1 WHERE id=? AND revision=?').run(requestText, json(attachments), json(annotations), json(references), now(), draft.id, input.revision);
       if (updated.changes !== 1) fail(409, 'draft_revision_conflict', 'The saved draft changed. Review both versions before saving.');
@@ -792,7 +793,7 @@ export class CanvasService {
       this.db.prepare('INSERT INTO task_edits VALUES(?,?,?,?,?)').run(id, sessionId, taskId, json(previous), 'active');
       this.db.prepare("UPDATE tasks SET status='editing',updated_at=? WHERE id=? AND status='queued'").run(now(), taskId);
       this.db.prepare('DELETE FROM drafts WHERE id=?').run(previous.id);
-      const references = draftReferences({ objectIds, taskIds: snapshot.requestReferences?.taskIds ?? snapshot.referenceContent.taskIds, ...(snapshot.requestReferences?.order ? { order: snapshot.requestReferences.order } : {}) }, snapshot.userRequest.text);
+      const references = draftReferences({ objectIds, groupIds: snapshot.requestReferences?.groupIds ?? [], taskIds: snapshot.requestReferences?.taskIds ?? snapshot.referenceContent.taskIds, ...(snapshot.requestReferences?.order ? { order: snapshot.requestReferences.order } : {}) }, snapshot.userRequest.text);
       this.db.prepare('INSERT INTO drafts(id,session_id,revision,text,attachments_json,annotations_json,references_json,updated_at,editing_task_id) VALUES(?,?,1,?,?,?,?,?,?)').run(id, sessionId, snapshot.userRequest.text, json(attachments), json(snapshot.annotations), json(references), now(), taskId);
       for (const annotation of snapshot.annotations) if (annotation.captureState) {
         this.db.prepare('INSERT INTO annotation_identities VALUES(?,?,?,?)').run(sessionId, id, annotation.id, json(annotation));
@@ -830,6 +831,11 @@ export class CanvasService {
         const { textOffset, ...content } = structuredClone(saved);
         return { ...content, ...position };
       }
+      if (reference.kind === 'group') {
+        const group = this.group(reference.id), objects = this.groupMembers(reference.id);
+        const assets = this.expandAssetIds([...new Set(objects.map(object => object.assetId))]).map(id => this.sharedAsset(id));
+        return { kind: 'group', id: reference.id, ...position, label: group.name, source: 'reference_content', group: structuredClone(group), objects: structuredClone(objects), assets: structuredClone(assets) };
+      }
       if (reference.kind === 'object') {
         const sourceIds = source?.requestReferences?.objectIds ?? source?.referenceContent.objects.map(value => value.id) ?? [];
         let object = sourceIds.includes(reference.id) ? source?.referenceContent.objects.find(value => value.id === reference.id) : undefined;
@@ -838,7 +844,7 @@ export class CanvasService {
           if (!row) fail(409, 'object_reference_unavailable', 'Remove or replace the unavailable object reference before sending.', { objectId: reference.id, action: 'remove_or_replace' });
           object = this.objectFrom(row!);
         }
-        const asset = source?.referenceContent.assets.find(value => value.id === object!.assetId) ?? this.sharedAsset(object.assetId);
+        const asset = (sourceIds.includes(reference.id) ? source?.referenceContent.assets.find(value => value.id === object!.assetId) : undefined) ?? this.sharedAsset(object.assetId);
         const sourceRow = object.sourceTaskId ? this.db.prepare('SELECT session_id FROM tasks WHERE id=?').get(object.sourceTaskId) as Row | undefined : undefined;
         return { kind: 'object', id: reference.id, ...position, label: asset.name, source: 'reference_content', object: structuredClone(object), asset: structuredClone(asset), ...(sourceRow ? { sourceSessionId: sourceRow.session_id } : {}), ...(object.sourceTaskId ? { sourceTaskId: object.sourceTaskId } : {}), ...(object.sourceRunId ? { sourceRunId: object.sourceRunId } : {}) };
       }
@@ -858,7 +864,7 @@ export class CanvasService {
       const draft = this.draft(sessionId);
       if (draft.id !== draftId) fail(409, 'draft_conflict', 'Send the current saved draft.');
       if (!Number.isSafeInteger(expectedRevision) || draft.revision !== expectedRevision) fail(409, 'draft_revision_conflict', 'The draft changed before sending. Review the saved version.', { currentRevision: draft.revision });
-      if (!draft.text.trim() && !draft.attachments.length && !draft.annotations.length && !draft.references.objectIds.length && !draft.references.taskIds.length) fail(400, 'empty_request', 'Add a request or attachment.');
+      if (!draft.text.trim() && !draft.attachments.length && !draft.annotations.length && !draft.references.objectIds.length && !draft.references.taskIds.length && !(draft.references.groupIds ?? []).length) fail(400, 'empty_request', 'Add a request or attachment.');
       const source = draft.editingTaskId ? this.task(sessionId, draft.editingTaskId) : undefined;
       if (source && source.status !== 'editing') fail(409, 'task_edit_conflict', 'The request changed state. Read the current request.');
       const edit = source ? this.db.prepare("SELECT * FROM task_edits WHERE draft_id=? AND state='active'").get(draftId) as Row : undefined;
@@ -877,9 +883,12 @@ export class CanvasService {
       const order = this.resolveRequestReferences(draft, source?.snapshot);
       const legacyAnnotations = draft.annotations.filter(annotation => !annotation.captureState);
       const objectIds = [...new Set([...draft.references.objectIds, ...legacyAnnotations.flatMap((annotation) => [...annotation.objectIds, ...(annotation.objectId ? [annotation.objectId] : [])])])];
-      const objects = objectIds.map((id) => order.find((value): value is Extract<ResolvedRequestReference, { kind: 'object' }> => value.kind === 'object' && value.id === id)?.object ?? source?.snapshot.referenceContent.objects.find(object => object.id === id) ?? this.object(id));
+      const groupReferences = order.filter((value): value is Extract<ResolvedRequestReference, { kind: 'group' }> => value.kind === 'group');
+      const groupObjects = groupReferences.flatMap(reference => reference.objects);
+      const objects = [...new Map([...groupObjects, ...objectIds.map((id) => order.find((value): value is Extract<ResolvedRequestReference, { kind: 'object' }> => value.kind === 'object' && value.id === id)?.object ?? source?.snapshot.referenceContent.objects.find(object => object.id === id) ?? this.object(id))].map(object => [object.id, object])).values()];
       const assetIds = this.expandAssetIds([...new Set([...draft.attachments, ...objects.map((object) => object.assetId), ...legacyAnnotations.flatMap((annotation) => [annotation.assetId, annotation.snapshotAssetId].filter((id): id is string => !!id)), ...draft.annotations.flatMap(annotation => annotation.capture ? [annotation.capture.screenshotAssetId, ...annotation.capture.scene.assets.map(asset => asset.id)] : [])])]);
-      const snapshot: TaskSnapshot = { userRequest: { source: 'user_instruction', text: draft.text }, requestReferences: { attachmentIds: [...draft.attachments], objectIds: [...draft.references.objectIds], taskIds: [...draft.references.taskIds], order }, annotations: structuredClone(draft.annotations), referenceContent: { source: 'reference_content', assets: assetIds.map((id) => { this.assetPath(id); return source?.snapshot.referenceContent.assets.find(asset => asset.id === id) || this.asset(id); }), objects, taskIds: [...draft.references.taskIds] } };
+      const referenceAssets = new Map([...groupReferences.flatMap(reference => reference.assets), ...order.flatMap(reference => reference.kind === 'object' ? [reference.asset] : [])].map(asset => [asset.id, asset]));
+      const snapshot: TaskSnapshot = { userRequest: { source: 'user_instruction', text: draft.text }, requestReferences: { attachmentIds: [...draft.attachments], objectIds: [...draft.references.objectIds], taskIds: [...draft.references.taskIds], ...((draft.references.groupIds ?? []).length ? { groupIds: [...draft.references.groupIds!] } : {}), order }, annotations: structuredClone(draft.annotations), referenceContent: { source: 'reference_content', assets: assetIds.map((id) => { this.assetPath(id); return referenceAssets.get(id) ?? source?.snapshot.referenceContent.assets.find(asset => asset.id === id) ?? this.asset(id); }), objects, ...(groupReferences.length ? { groups: [...new Map(groupReferences.map(reference => [reference.id, reference.group])).values()] } : {}), taskIds: [...draft.references.taskIds] } };
       snapshot.requirementText = generateRequirementText(snapshot);
       const id = source?.id || randomUUID(), time = now();
       if (source) {

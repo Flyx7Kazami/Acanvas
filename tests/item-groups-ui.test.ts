@@ -275,17 +275,17 @@ test('group controls follow explicit frame and item selection after folder hover
   // The caption selects a folder's members for the request; its artwork keeps single-click entry.
   const caption = page.getByRole('button', { name: 'Select group Beta', exact: true });
   const previewIds = () => page.locator('[data-editor-preview="true"]').evaluateAll(elements => elements.map(element => element.getAttribute('data-editor-reference')));
-  await caption.click(); await assertActions('beta'); await expect.poll(previewIds).toEqual([c.id, d.id]);
+  await caption.click(); await assertActions('beta'); await expect.poll(previewIds).toEqual(['beta']);
   assert.equal(f.state().session.view.activeGroupId, undefined);
   const requestClick = page.getByRole('combobox', { name: 'Request', exact: true });
   const requestClickBox = (await requestClick.boundingBox())!; await requestClick.click({ position: { x: requestClickBox.width - 20, y: requestClickBox.height / 2 } });
-  await expect.poll(() => f.state().draft.references.objectIds).toEqual([c.id, d.id]); await expect.poll(previewIds).toEqual([]);
+  await expect.poll(() => f.state().draft.references.groupIds).toEqual(['beta']); await expect.poll(previewIds).toEqual([]);
   const originalFolder = f.state().groups.find(group => group.id === 'beta')!;
   assert.equal(originalFolder.mode, 'folder'); assert.deepEqual(originalFolder.objectIds, [c.id, d.id]);
   assert(f.state().objects.filter(object => originalFolder.objectIds.includes(object.id)).every(object => object.groupId === 'beta'));
   // Tab reaches the caption, where Enter and Space select the same folder without entering it.
   await page.getByRole('button', { name: 'Open folder Beta', exact: true }).focus(); await page.keyboard.press('Tab'); await expect(caption).toBeFocused();
-  await page.keyboard.press('Enter'); await expect.poll(previewIds).toEqual([c.id, d.id]);
+  await page.keyboard.press('Enter'); await expect.poll(previewIds).toEqual(['beta']);
   await page.keyboard.press('Space'); await assertActions('beta'); assert.equal(f.state().session.view.activeGroupId, undefined);
   // Inline editing keeps its native input semantics while the caption selection role is suspended.
   await page.getByRole('button', { name: 'Rename', exact: true }).click();
@@ -299,9 +299,9 @@ test('group controls follow explicit frame and item selection after folder hover
   await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true });
   const touch = async (x: number, y: number) => { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); };
   const captionBox = (await caption.boundingBox())!; await touch(captionBox.x + captionBox.width / 2, captionBox.y + captionBox.height / 2);
-  await assertActions('beta'); await expect.poll(previewIds).toEqual([c.id, d.id]); assert.equal(f.state().session.view.activeGroupId, undefined);
+  await assertActions('beta'); await expect.poll(previewIds).toEqual(['beta']); assert.equal(f.state().session.view.activeGroupId, undefined);
   const requestBox = (await page.getByRole('combobox', { name: 'Request', exact: true }).boundingBox())!; await touch(requestBox.x + requestBox.width - 20, requestBox.y + requestBox.height / 2);
-  await expect.poll(previewIds).toEqual([]); await expect.poll(() => f.state().draft.references.objectIds).toEqual([c.id, d.id]);
+  await expect.poll(previewIds).toEqual([]); await expect.poll(() => f.state().draft.references.groupIds).toEqual(['beta']);
   await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false }); await cdp.detach();
   // Dragging the caption moves the stored folder and keeps its members and request preview intact.
   const beforeCaptionDrag = f.state().groups.find(group => group.id === 'beta')!, dragBox = (await caption.boundingBox())!;
@@ -310,7 +310,7 @@ test('group controls follow explicit frame and item selection after folder hover
   await expect.poll(() => f.state().groups.find(group => group.id === 'beta')!.x).toBe(beforeCaptionDrag.x + 26);
   const afterCaptionDrag = f.state().groups.find(group => group.id === 'beta')!;
   assert.equal(afterCaptionDrag.y, beforeCaptionDrag.y + 18); assert.equal(afterCaptionDrag.mode, 'folder'); assert.deepEqual(afterCaptionDrag.objectIds, [c.id, d.id]);
-  assert.equal(f.state().session.view.activeGroupId, undefined); await expect.poll(previewIds).toEqual([c.id, d.id]);
+  assert.equal(f.state().session.view.activeGroupId, undefined); await expect.poll(previewIds).toEqual(['beta']);
   await page.mouse.click(1100, 700);
   const folder = page.getByRole('button', { name: 'Open folder Beta', exact: true }); await folder.hover(); await assertActions('beta');
   // A newly focused frame owns its controls even while the mouse stays on another folder.
@@ -447,4 +447,130 @@ test('mid-collapse Done copies scaled articles and pointer gestures take over gr
   assert(Math.abs(dragged.x - grabbed.x - 30) < 1, 'The grabbed neighbor follows the pointer directly.');
   await page.mouse.up(); await page.keyboard.up('Alt');
   await expect.poll(() => f.state().objects.find(object => object.id === neighbor.id)!.x).toBeCloseTo(grabbed.x + 30, 1);
+});
+
+
+test('group references stay atomic through preview, mentions, history and direct folder ungroup', { timeout: 90_000 }, async t => {
+  const f = await fixture(t), { page } = f;
+  const image = await f.picture('Group member', '#315AD9'), a = await f.add(image, 260, 220), b = await f.add(image, 480, 220);
+  await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'group.create', group: { id: 'atomic', name: 'Atomic collection', objectIds: [a.id, b.id] }, expectedVersions: { [a.id]: a.version, [b.id]: b.version } }] });
+  await page.getByRole('button', { name: 'Select group Atomic collection', exact: true }).click();
+  const preview = page.locator('[data-editor-preview="true"]');
+  await expect(preview).toHaveCount(1); await expect(preview).toHaveAttribute('data-editor-kind', 'group'); await expect(preview).toHaveText('Atomic collection');
+  await expect(page.locator('.group-frame-title small')).toHaveCount(0);
+  const request = page.getByRole('combobox', { name: 'Request', exact: true });
+  await preview.locator('.reference-content').click();
+  await expect.poll(() => f.state().draft.references.groupIds).toEqual(['atomic']);
+  assert.deepEqual(f.state().draft.references.objectIds, []);
+  await request.focus(); await request.evaluate(element => { const range = document.createRange(); range.selectNodeContents(element); range.collapse(false); const selection = window.getSelection()!; selection.removeAllRanges(); selection.addRange(range); }); await page.keyboard.insertText(' 😀 @Atomic');
+  await page.getByRole('option', { name: 'Atomic collection Canvas group', exact: true }).click();
+  await expect(page.locator('[data-editor-kind="group"]')).toHaveCount(2);
+  await expect.poll(() => f.state().draft.references.order?.filter(entry => entry.kind === 'group').length).toBe(2);
+  assert.deepEqual(f.state().draft.references.order?.map(entry => entry.textOffset), [0, 4]);
+  await page.keyboard.press('Backspace');
+  await expect(page.locator('[data-editor-kind="group"]')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Send request', exact: true }).click();
+  await expect.poll(() => f.state().tasks.length).toBe(1);
+  const task = f.state().tasks[0]; assert.deepEqual(task.snapshot.requestReferences?.groupIds, ['atomic']);
+  assert.equal(task.snapshot.referenceContent.groups?.[0].name, 'Atomic collection');
+  await page.getByRole('button', { name: /View request 1:/ }).click();
+  await expect(page.locator('.task-inline-reference[data-reference-kind="group"]')).toHaveText('Atomic collection');
+  // The folder unfolds from a presentation ghost after the single ungroup transaction.
+  await page.getByRole('button', { name: 'Select group Atomic collection', exact: true }).click();
+  await page.getByRole('button', { name: 'Store in folder', exact: true }).click();
+  await page.waitForTimeout(650);
+  await expect(page.locator('.folder-caption small')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Select group Atomic collection', exact: true }).click();
+  await page.getByRole('button', { name: 'Ungroup', exact: true }).click();
+  await expect.poll(() => f.state().groups.length).toBe(0);
+  await expect(page.locator('.group-transition-ghost')).toHaveCount(1);
+  await expect(page.locator('.group-member-arriving')).toHaveCount(2);
+  await expect(page.locator('.board-group')).toHaveCount(0);
+  assert(f.state().objects.every(object => !object.groupId));
+  await page.getByRole('button', { name: /View request 1:/ }).click();
+  await expect(page.locator('.task-inline-reference[data-reference-kind="group"]')).toHaveText('Atomic collection');
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click();
+  await expect(page.locator('[data-editor-kind="group"]')).toHaveText('Atomic collection');
+  await expect(page.locator('[data-reference-kind="group"][data-reference-unavailable]')).toHaveCount(0);
+});
+
+test('secondary folder ungroup returns to the parent with reduced motion at its final layout', { timeout: 60_000 }, async t => {
+  const f = await fixture(t), { page } = f;
+  const image = await f.picture('Secondary member', '#779D85'), a = await f.add(image, 260, 220), b = await f.add(image, 480, 220);
+  await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'group.create', group: { id: 'secondary', name: 'Secondary collection', objectIds: [a.id, b.id] }, expectedVersions: { [a.id]: a.version, [b.id]: b.version } }] });
+  const group = f.state().groups[0];
+  await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'group.update', groupId: group.id, expectedVersion: group.version, changes: { mode: 'folder' } }] });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.getByRole('button', { name: 'Open folder Secondary collection', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Back to board', exact: true })).toBeVisible();
+  await expect(page.locator('.group-navigation small')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Ungroup', exact: true }).click();
+  await expect.poll(() => f.state().groups.length).toBe(0);
+  await expect.poll(() => f.state().session.view.activeGroupId).toBeUndefined();
+  await expect(page.locator('.board-group')).toHaveCount(0);
+  await expect(page.locator('.group-navigation')).toHaveCount(0);
+  await expect(page.locator('.group-member-arriving')).toHaveCount(0);
+  await expect(page.locator('.board-object')).toHaveCount(2);
+  assert(f.state().objects.every(object => !object.groupId));
+});
+
+test('group folder reference colors and frozen names remain consistent across composer and history', { timeout: 90_000 }, async t => {
+  const f = await fixture(t), { page } = f;
+  const image = await f.picture('Reference study', '#315AD9');
+  const entries = [{ id: 'blue', name: 'Blue collection', color: 'cobalt', fill: '#315AD9' }, { id: 'green', name: 'Green collection', color: 'sage', fill: '#779D85' }] as const;
+  for (const [index, entry] of entries.entries()) {
+    const a = await f.add(image, 220 + index * 460, 210), b = await f.add(image, 420 + index * 460, 210);
+    await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'group.create', group: { id: entry.id, name: entry.name, color: entry.color, objectIds: [a.id, b.id] }, expectedVersions: { [a.id]: a.version, [b.id]: b.version } }] });
+    await page.getByRole('button', { name: `Select group ${entry.name}`, exact: true }).click();
+    const preview = page.locator(`[data-editor-preview="true"][data-editor-reference="${entry.id}"]`);
+    await expect(preview.locator('.group-reference-icon')).toHaveAttribute('fill', entry.fill);
+    await expect(preview.locator('.group-reference-icon')).toHaveCSS('opacity', '0.45');
+    const beforeHeight = (await preview.boundingBox())!.height;
+    await preview.locator('.reference-content').click();
+    const formal = page.locator(`[data-editor-preview="false"][data-editor-reference="${entry.id}"]`);
+    await expect(formal.locator('.group-reference-icon')).toHaveAttribute('fill', entry.fill);
+    assert.equal((await formal.boundingBox())!.height, beforeHeight);
+  }
+  const paletteEntries = [...entries, { id: 'coral', name: 'Coral collection', color: 'coral', fill: '#EA6848' }, { id: 'lilac', name: 'Lilac collection', color: 'lilac', fill: '#ADA0DE' }, { id: 'ink', name: 'Ink collection', color: 'ink', fill: '#202124' }, { id: 'sand', name: 'Sand collection', color: 'sand', fill: '#E7D9B7' }] as const;
+  for (const entry of paletteEntries.slice(2)) {
+    const a = await f.add(image, 220, 510), b = await f.add(image, 420, 510);
+    await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'group.create', group: { id: entry.id, name: entry.name, color: entry.color, objectIds: [a.id, b.id] }, expectedVersions: { [a.id]: a.version, [b.id]: b.version } }] });
+  }
+  const request = page.getByRole('combobox', { name: 'Request', exact: true });
+  await request.focus(); await request.evaluate(element => { const range = document.createRange(); range.selectNodeContents(element); range.collapse(false); const selection = window.getSelection()!; selection.removeAllRanges(); selection.addRange(range); });
+  await page.keyboard.insertText(' @collection');
+  for (const entry of entries) await expect(page.getByRole('option', { name: `${entry.name} Canvas group`, exact: true }).locator('.group-reference-icon')).toHaveAttribute('fill', entry.fill);
+  for (const theme of ['Light', 'Dark']) {
+    await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: theme, exact: true }).click();
+    await request.focus();
+    for (const entry of paletteEntries) {
+      const icon = page.getByRole('option', { name: `${entry.name} Canvas group`, exact: true }).locator('.group-reference-icon');
+      await expect(icon).toHaveAttribute('fill', entry.fill); await expect(icon).toHaveCSS('width', '16px'); await expect(icon).toHaveCSS('height', '16px');
+      if (entry.color === 'ink') await expect(icon).not.toHaveCSS('stroke', 'none');
+    }
+    await page.locator('.reference-search').screenshot({ path: join(f.evidence, `group-folder-color-candidates-${theme.toLowerCase()}.png`) });
+  }
+
+  await page.keyboard.press('Escape'); await page.keyboard.press('ControlOrMeta+A'); await page.keyboard.press('Backspace');
+  // Restore explicit group selections after clearing the mention text.
+  for (const entry of entries) { await page.getByRole('button', { name: `Select group ${entry.name}`, exact: true }).click(); await page.locator('[data-editor-preview="true"] .reference-content').click(); }
+  await page.getByRole('button', { name: 'Send request', exact: true }).click();
+  await expect.poll(() => f.state().tasks.length).toBe(1);
+  for (const entry of entries) {
+    const group = f.state().groups.find(group => group.id === entry.id)!;
+    await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'group.update', groupId: group.id, expectedVersion: group.version, changes: { name: `${entry.name} updated` } }] });
+  }
+  await page.getByRole('button', { name: /View request 1:/ }).click();
+  for (const entry of entries) {
+    const reference = page.locator(`.task-inline-reference[data-reference-id="${entry.id}"]`);
+    await expect(reference).toHaveText(entry.name); await expect(reference.locator('.group-reference-icon')).toHaveAttribute('fill', entry.fill);
+  }
+  await page.screenshot({ path: join(f.evidence, 'group-folder-color-history.png'), clip: (await page.locator('.creation-dock').boundingBox())! });
+  await page.getByRole('button', { name: 'Edit request 1', exact: true }).click();
+  for (const entry of entries) {
+    const reference = page.locator(`[data-editor-reference="${entry.id}"]`);
+    await expect(reference).toHaveText(entry.name); await expect(reference.locator('.group-reference-icon')).toHaveAttribute('fill', entry.fill);
+  }
+  await page.screenshot({ path: join(f.evidence, 'group-folder-color-edit.png'), clip: (await page.locator('.creation-dock').boundingBox())! });
+  assert(f.state().objects.every(object => paletteEntries.some(entry => object.groupId === entry.id)));
 });
