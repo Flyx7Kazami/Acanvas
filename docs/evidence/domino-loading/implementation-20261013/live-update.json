@@ -1,0 +1,61 @@
+{
+  "updatedAt": "2026-10-13T03:19:17.839Z",
+  "build": "/private/tmp/acanvas-domino-loading-20261013/web",
+  "backup": "/private/tmp/acanvas-domino-loading-live-backup-20cOuu",
+  "copied": [
+    "assets/main-BQ7fToWu.js",
+    "assets/main-CB__fYGc.css"
+  ],
+  "unchanged": [
+    "assets/audioReview-BvYxC2Ek.js",
+    "assets/audioReview-Da5NcPoK.css",
+    "assets/google-sans-latin-CLLqw55C.woff2",
+    "assets/google-sans-latin-ext-D9SFGpAd.woff2",
+    "assets/theme-BsJH9bFb.css",
+    "assets/theme-Dg0yZupP.js"
+  ],
+  "served": [
+    {
+      "path": "/brand/acanvas-favicon.png",
+      "status": 200,
+      "bytes": 4259,
+      "contentType": "image/png"
+    },
+    {
+      "path": "/assets/main-BQ7fToWu.js",
+      "status": 200,
+      "bytes": 363327,
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "/assets/theme-Dg0yZupP.js",
+      "status": 200,
+      "bytes": 215190,
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "/assets/theme-BsJH9bFb.css",
+      "status": 200,
+      "bytes": 4751,
+      "contentType": "text/css"
+    },
+    {
+      "path": "/assets/main-CB__fYGc.css",
+      "status": 200,
+      "bytes": 76759,
+      "contentType": "text/css"
+    },
+    {
+      "path": "/brand/acanvas-icon.png",
+      "status": 200,
+      "bytes": 14796,
+      "contentType": "image/png"
+    }
+  ],
+  "servedIndexMatchesAfterPreviewMetadata": true,
+  "normalBuildBridgeAbsent": true,
+  "staticPngAssetsUnchanged": true,
+  "processBefore": "56724 /Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/dist/src/server/main.js --project /Users/yingbowu/Documents/Projects/acanvas --port 4317 --bind 127.0.0.1 --preview-port 60186",
+  "processAfter": "56724 /Users/yingbowu/Documents/Projects/acanvas/.runtime/node_modules/node/bin/node /Users/yingbowu/Documents/Projects/acanvas/dist/src/server/main.js --project /Users/yingbowu/Documents/Projects/acanvas --port 4317 --bind 127.0.0.1 --preview-port 60186",
+  "operation": "Accepted normal web resources only. Existing assets retained. Atomic index replacement. No rebuild, service restart, API mutation or user board-data writes."
+}

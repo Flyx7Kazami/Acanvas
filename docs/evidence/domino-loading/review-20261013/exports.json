@@ -1,0 +1,27 @@
+{
+  "gif": {
+    "width": 160,
+    "height": 128,
+    "frames": 60,
+    "duration": 2000,
+    "firstLastCompositedEqual": true,
+    "fullyOpaqueFirstFrame": true,
+    "loopExtension": [
+      {
+        "id": "NETSCAPE2.0",
+        "blocks": [
+          1,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "png": {
+    "width": 64,
+    "height": 64,
+    "transparent": 3654,
+    "painted": 442,
+    "total": 4096
+  }
+}

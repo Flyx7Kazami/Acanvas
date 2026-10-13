@@ -1,61 +1,56 @@
 import * as k from './vendor/anatomy/iso-kit.mjs';
 
-export const DOMINO_DURATION = 8600;
-export const DOMINO_VIEWBOX = [760, 540];
-export const DOMINO_CAMERA = { origin: [380, 270], scale: 1.18, azimuth: 45, elevation: 65 };
-export const DOMINO_CARDS = [
-  { name: 'Sage', color: '#8db779', corner: [204, 101], across: [142, -43], down: [17, 242], z: 0, shift: [-27, -9], lean: 0.11 },
-  { name: 'Blush', color: '#ff9db6', corner: [268, 156], across: [136, -38], down: [63, 244], z: 24, shift: [0, -5], lean: 0.14 },
-  { name: 'Stone', color: '#a5a5a3', corner: [333, 214], across: [132, -36], down: [89, 254], z: 48, shift: [28, 11], lean: 0.17 },
-];
+export const DOMINO_DURATION = 2000;
+export const DOMINO_VIEWBOX = [72, 64];
+export const DOMINO_CARDS = [0, 1, 2];
+export const DOMINO_WIDTH = 14;
+export const DOMINO_HEIGHT = 30;
+export const DOMINO_SPACING = 14.2;
+export const DOMINO_REST_ANGLE = -8 * Math.PI / 180;
+export const DOMINO_FALL_ANGLE = 86 * Math.PI / 180;
+export const DOMINO_TIMING = { fallAt: 140, fallStagger: 135, fallDuration: 370, resetAt: 990, resetStagger: 90, resetDuration: 480 };
+const ease = (value) => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
 
-const dominoClamp = (v) => Math.max(0, Math.min(1, v));
-const dominoEase = (v) => { const t = dominoClamp(v); return t * t * t * (t * (t * 6 - 15) + 10); };
-
-// All geometry lives on parallel planes in Anatomy's camera. The calibrated
-// outlines retain the selected image's progressively leaning card silhouettes.
-function dominoWorld([sx, sy], z) {
-  const { origin } = DOMINO_CAMERA;
-  const { sinA, cosA, sinE, cosE, k: scale } = k.cameraOf(DOMINO_CAMERA);
-  const a = (sx - origin[0]) / scale;
-  const b = ((sy - origin[1]) / scale + z * cosE) / sinE;
-  return [sinA * a + cosA * b, -cosA * a + sinA * b];
-}
-
-const dominoOutline = k.roundedPlan({ x: 0, y: 0, w: 140, d: 250, r: 21 }, 18);
-const dominoRest = DOMINO_CARDS.map((card) => {
-  const onFace = ([x, y]) => dominoWorld([
-    380 + (card.corner[0] + card.across[0] * x / 140 + card.down[0] * y / 250 - 380) * DOMINO_CAMERA.scale,
-    270 + (card.corner[1] + card.across[1] * x / 140 + card.down[1] * y / 250 - 270) * DOMINO_CAMERA.scale,
-  ], card.z + 3.2);
-  return { ring: dominoOutline.map(onFace), pivot: onFace([70, 250]) };
-});
-
-export function dominoAt(milliseconds) {
+export function dominoAngle(index, milliseconds) {
   const t = Math.max(0, Math.min(DOMINO_DURATION, milliseconds));
-  const shares = DOMINO_CARDS.map((_, i) => {
-    const opened = dominoEase((t - 1200 - i * 260) / 1700);
-    const closed = dominoEase((t - 4400 - i * 220) / 1700);
-    return opened * (1 - closed);
+  const fall = ease((t - DOMINO_TIMING.fallAt - index * DOMINO_TIMING.fallStagger) / DOMINO_TIMING.fallDuration);
+  const reset = ease((t - DOMINO_TIMING.resetAt - index * DOMINO_TIMING.resetStagger) / DOMINO_TIMING.resetDuration);
+  return DOMINO_REST_ANGLE + (DOMINO_FALL_ANGLE - DOMINO_REST_ANGLE) * fall * (1 - reset);
+}
+
+// u runs across the card, v runs from the bottom hinge to its top.
+// Rotation is around that bottom edge in world space before projection.
+export function dominoPoint(index, u, v, angle) {
+  return [index * DOMINO_SPACING + v * Math.sin(angle), -u, v * Math.cos(angle)];
+}
+const extremes = DOMINO_CARDS.flatMap(index => Array.from({ length: 95 }, (_, step) => {
+  const angle = DOMINO_REST_ANGLE + (DOMINO_FALL_ANGLE - DOMINO_REST_ANGLE) * step / 94;
+  return [-DOMINO_WIDTH / 2, DOMINO_WIDTH / 2].flatMap(u => [0, DOMINO_HEIGHT].map(v => dominoPoint(index, u, v, angle)));
+}).flat());
+export const DOMINO_CAMERA = k.fitProjection(extremes, ...DOMINO_VIEWBOX, { pad: 5.5, azimuth: 35, elevation: 28 });
+export const DOMINO_PATH = k.pathOf(k.roundedPlan({ x: -DOMINO_WIDTH / 2, y: 0, w: DOMINO_WIDTH, d: DOMINO_HEIGHT, r: 2.3 }, 16), true);
+
+export function dominoMatrix(index, milliseconds) {
+  const angle = dominoAngle(index, milliseconds);
+  const origin = k.iso(dominoPoint(index, 0, 0, angle), DOMINO_CAMERA);
+  const u = k.iso(dominoPoint(index, 1, 0, angle), DOMINO_CAMERA);
+  const v = k.iso(dominoPoint(index, 0, 1, angle), DOMINO_CAMERA);
+  return [u[0] - origin[0], u[1] - origin[1], v[0] - origin[0], v[1] - origin[1], ...origin];
+}
+export const dominoTransform = (index, milliseconds) => `matrix(${dominoMatrix(index, milliseconds).map(value => Number(value.toFixed(5))).join(',')})`;
+
+export function dominoCss() {
+  const steps = new Set(Array.from({ length: 81 }, (_, step) => step * DOMINO_DURATION / 80));
+  DOMINO_CARDS.forEach(index => {
+    for (const time of [DOMINO_TIMING.fallAt + index * DOMINO_TIMING.fallStagger, DOMINO_TIMING.fallAt + index * DOMINO_TIMING.fallStagger + DOMINO_TIMING.fallDuration, DOMINO_TIMING.resetAt + index * DOMINO_TIMING.resetStagger, DOMINO_TIMING.resetAt + index * DOMINO_TIMING.resetStagger + DOMINO_TIMING.resetDuration]) steps.add(time);
   });
-  const phase = t < 1200 || t >= 6540 ? 'Together' : t < 3420 ? 'Unfolding' : t < 4400 ? 'A little momentum' : 'Coming together';
-  return { time: t, phase, shares };
-}
-
-export function dominoGeometry(index, share) {
-  const card = DOMINO_CARDS[index];
-  const { ring, pivot } = dominoRest[index];
-  const angle = card.lean * share;
-  const c = Math.cos(angle), s = Math.sin(angle);
-  const shiftTo = dominoWorld([380 + card.shift[0] * share, 270 + card.shift[1] * share], 0);
-  const shiftFrom = dominoWorld([380, 270], 0);
-  const rotated = ring.map(([x, y]) => [
-    pivot[0] + (x - pivot[0]) * c - (y - pivot[1]) * s + shiftTo[0] - shiftFrom[0],
-    pivot[1] + (x - pivot[0]) * s + (y - pivot[1]) * c + shiftTo[1] - shiftFrom[1],
-  ]);
-  return k.extrude(rotated, card.z, 3.2, DOMINO_CAMERA);
-}
-
-export function dominoCardSvg(index, share = 0) {
-  return `<g data-card="${index}" style="--card-color:${DOMINO_CARDS[index].color}">${k.solidSvg(dominoGeometry(index, share), { crease: 'none' })}</g>`;
+  const times = [...steps].sort((a, b) => a - b);
+  const number = value => Number(value.toFixed(5));
+  return '@property --acanvas-domino-x{syntax:"<number>";inherits:false;initial-value:0}@property --acanvas-domino-y{syntax:"<number>";inherits:false;initial-value:0}\n.domino-loader{display:block;flex-shrink:0;overflow:visible;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}.domino-loader path{transform-origin:0 0;animation-duration:' + DOMINO_DURATION + 'ms;animation-timing-function:linear;animation-iteration-count:infinite}\n' + DOMINO_CARDS.map(index => {
+    const [a, b, c, d, e, f] = dominoMatrix(index, 0).map(number);
+    return `.domino-loader .domino-card-${index}{--acanvas-domino-x:${c};--acanvas-domino-y:${d};transform:matrix(${a},${b},var(--acanvas-domino-x),var(--acanvas-domino-y),${e},${f});animation-name:acanvas-domino-${index}}\n@keyframes acanvas-domino-${index}{${times.map(time => {
+      const matrix = dominoMatrix(index, time);
+      return `${number(time / DOMINO_DURATION * 100)}%{--acanvas-domino-x:${number(matrix[2])};--acanvas-domino-y:${number(matrix[3])}}`;
+    }).join('')}}`;
+  }).join('\n') + '\n@media(prefers-reduced-motion:reduce){.domino-loader path{animation:none}}';
 }

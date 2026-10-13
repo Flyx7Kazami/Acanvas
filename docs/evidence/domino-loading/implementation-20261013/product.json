@@ -1,0 +1,16 @@
+{
+  "fixture": "Actual production bundle delayed startup; actual App/useBoard switch exercised through a temporary build-only bridge; isolated temporary project only.",
+  "root": "/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-loading-fixture-eiGW5N",
+  "checks": [
+    "Real delayed state loading animates startup component",
+    "Startup exposes one stable product status with decorative SVG",
+    "Startup uses48px currentColor outline CSS loop",
+    "Startup loader unmounts when actual state resolves",
+    "Real async switch hook renders32px shared loader in internal canvas-busy branch",
+    "390px loading views fit without sideways scroll",
+    "Switch loader unmounts when isolated target state resolves",
+    "Reduced motion keeps actual startup loader upright and still",
+    "Product fixture has no uncaught browser errors"
+  ],
+  "errors": []
+}

@@ -1,6 +1,8 @@
-# Domino icon and motion
+# Domino icon and initial motion
 
 Date: 2026-10-13 (Asia/Shanghai).
+
+Current loading direction: [outline domino loading](DOMINO_LOADING.md). The user requests transparent interiors and an actual sequential collapse. This document records the selected static PNG and the initial 8.6-second filled motion; the loading specification supersedes that motion direction. Generated preview and animation paths now follow the current loading specification as it is implemented.
 
 ## Scope
 
