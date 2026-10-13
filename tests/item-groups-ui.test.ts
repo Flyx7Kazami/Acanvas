@@ -245,6 +245,98 @@ test('layer projection excludes hidden snap targets and keeps asynchronous impor
   assert.equal(f.state().groups.find(group => group.id === free.id)!.x, 0);
 });
 
+test('group controls follow explicit frame and item selection after folder hover or focus', { timeout: 90_000 }, async t => {
+  const f = await fixture(t), { page } = f;
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const image = await f.picture('Selection study', '#315AD9');
+  const a = await f.add(image, 230, 230, 100, 80), b = await f.add(image, 350, 350, 100, 80);
+  const c = await f.add(image, 720, 230, 100, 80), d = await f.add(image, 840, 350, 100, 80);
+  await f.call('/api/board/operations', { sessionId: f.session.id, operations: [
+    { type: 'group.create', group: { id: 'alpha', name: 'Frame alpha', objectIds: [a.id, b.id] }, expectedVersions: { [a.id]: a.version, [b.id]: b.version } },
+    { type: 'group.create', group: { id: 'beta', name: 'Beta', objectIds: [c.id, d.id] }, expectedVersions: { [c.id]: c.version, [d.id]: d.version } },
+  ] });
+  const alpha = page.locator('[data-group-id="alpha"]'), beta = page.locator('[data-group-id="beta"]');
+  const actions = page.locator('.selection-actions');
+  const assertActions = async (id: string) => { await expect(actions).toHaveAttribute('data-group-actions-id', id); await expect(actions).toBeVisible(); await expect(page.getByRole('button', { name: 'Rename', exact: true })).toBeEnabled(); };
+  const clickBlank = async () => { const box = (await alpha.boundingBox())!; await page.mouse.click(box.x + box.width - 12, box.y + box.height - 12); };
+  await expect(alpha).toBeVisible(); await clickBlank(); await assertActions('alpha');
+  // Selecting a member leaves the frame title available for an actual center click.
+  await page.locator(`[data-object-id="${a.id}"]`).click({ position: { x: 30, y: 30 } });
+  await expect(page.locator(`[data-object-id="${a.id}"].selected`)).toHaveCount(1);
+  const title = page.getByRole('button', { name: 'Select group Frame alpha', exact: true });
+  const titleBox = (await title.boundingBox())!;
+  await page.mouse.click(titleBox.x + titleBox.width / 2, titleBox.y + titleBox.height / 2);
+  await expect(page.locator(`[data-object-id="${a.id}"]`)).toHaveCount(1); await assertActions('alpha');
+  assert.deepEqual(f.state().groups.find(group => group.id === 'alpha')!.objectIds, [a.id, b.id]);
+  await expect(page.locator('.board-object.selected')).toHaveCount(0);
+  assert.equal(await alpha.getAttribute('class'), 'board-group group-frame');
+  await page.getByRole('button', { name: 'Select group Beta', exact: true }).focus(); await page.keyboard.press('Enter'); await assertActions('beta');
+  await page.getByRole('button', { name: 'Store in folder', exact: true }).click(); await expect(beta).toHaveClass('board-group group-folder');
+  // The caption selects a folder's members for the request; its artwork keeps single-click entry.
+  const caption = page.getByRole('button', { name: 'Select group Beta', exact: true });
+  const previewIds = () => page.locator('[data-editor-preview="true"]').evaluateAll(elements => elements.map(element => element.getAttribute('data-editor-reference')));
+  await caption.click(); await assertActions('beta'); await expect.poll(previewIds).toEqual([c.id, d.id]);
+  assert.equal(f.state().session.view.activeGroupId, undefined);
+  const requestClick = page.getByRole('combobox', { name: 'Request', exact: true });
+  const requestClickBox = (await requestClick.boundingBox())!; await requestClick.click({ position: { x: requestClickBox.width - 20, y: requestClickBox.height / 2 } });
+  await expect.poll(() => f.state().draft.references.objectIds).toEqual([c.id, d.id]); await expect.poll(previewIds).toEqual([]);
+  const originalFolder = f.state().groups.find(group => group.id === 'beta')!;
+  assert.equal(originalFolder.mode, 'folder'); assert.deepEqual(originalFolder.objectIds, [c.id, d.id]);
+  assert(f.state().objects.filter(object => originalFolder.objectIds.includes(object.id)).every(object => object.groupId === 'beta'));
+  // Tab reaches the caption, where Enter and Space select the same folder without entering it.
+  await page.getByRole('button', { name: 'Open folder Beta', exact: true }).focus(); await page.keyboard.press('Tab'); await expect(caption).toBeFocused();
+  await page.keyboard.press('Enter'); await expect.poll(previewIds).toEqual([c.id, d.id]);
+  await page.keyboard.press('Space'); await assertActions('beta'); assert.equal(f.state().session.view.activeGroupId, undefined);
+  // Inline editing keeps its native input semantics while the caption selection role is suspended.
+  await page.getByRole('button', { name: 'Rename', exact: true }).click();
+  const folderName = page.getByRole('textbox', { name: 'Group name', exact: true });
+  await expect(caption).toHaveCount(0); await folderName.fill('Beta'); await folderName.press('End'); await page.keyboard.type(' archive'); await folderName.press('Enter');
+  await expect.poll(() => f.state().groups.find(group => group.id === 'beta')!.name).toBe('Beta archive');
+  await page.getByRole('button', { name: 'Rename', exact: true }).click(); await folderName.fill('Beta'); await folderName.press('Enter');
+  await expect.poll(() => f.state().groups.find(group => group.id === 'beta')!.name).toBe('Beta');
+  // A real touch PointerEvent path uses the same caption-selection behavior and request confirmation.
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true });
+  const touch = async (x: number, y: number) => { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); };
+  const captionBox = (await caption.boundingBox())!; await touch(captionBox.x + captionBox.width / 2, captionBox.y + captionBox.height / 2);
+  await assertActions('beta'); await expect.poll(previewIds).toEqual([c.id, d.id]); assert.equal(f.state().session.view.activeGroupId, undefined);
+  const requestBox = (await page.getByRole('combobox', { name: 'Request', exact: true }).boundingBox())!; await touch(requestBox.x + requestBox.width - 20, requestBox.y + requestBox.height / 2);
+  await expect.poll(previewIds).toEqual([]); await expect.poll(() => f.state().draft.references.objectIds).toEqual([c.id, d.id]);
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false }); await cdp.detach();
+  // Dragging the caption moves the stored folder and keeps its members and request preview intact.
+  const beforeCaptionDrag = f.state().groups.find(group => group.id === 'beta')!, dragBox = (await caption.boundingBox())!;
+  await page.keyboard.down('Alt'); await page.mouse.move(dragBox.x + 30, dragBox.y + dragBox.height / 2); await page.mouse.down();
+  await page.mouse.move(dragBox.x + 56, dragBox.y + dragBox.height / 2 + 18, { steps: 4 }); await page.mouse.up(); await page.keyboard.up('Alt');
+  await expect.poll(() => f.state().groups.find(group => group.id === 'beta')!.x).toBe(beforeCaptionDrag.x + 26);
+  const afterCaptionDrag = f.state().groups.find(group => group.id === 'beta')!;
+  assert.equal(afterCaptionDrag.y, beforeCaptionDrag.y + 18); assert.equal(afterCaptionDrag.mode, 'folder'); assert.deepEqual(afterCaptionDrag.objectIds, [c.id, d.id]);
+  assert.equal(f.state().session.view.activeGroupId, undefined); await expect.poll(previewIds).toEqual([c.id, d.id]);
+  await page.mouse.click(1100, 700);
+  const folder = page.getByRole('button', { name: 'Open folder Beta', exact: true }); await folder.hover(); await assertActions('beta');
+  // A newly focused frame owns its controls even while the mouse stays on another folder.
+  await page.getByRole('button', { name: 'Select group Frame alpha', exact: true }).focus(); await assertActions('alpha');
+  await page.keyboard.press('Enter'); await assertActions('alpha');
+  // Later hover still exposes that folder, then explicit member selection gets item actions.
+  await page.mouse.move(1100, 700); await folder.hover(); await assertActions('beta');
+  await page.locator(`[data-object-id="${a.id}"]`).focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('.board-object.selected')).toHaveCount(1); await expect(actions).not.toHaveAttribute('data-group-actions-id', /.+/);
+  await expect(page.getByRole('button', { name: 'Remove selected files from canvas', exact: true })).toBeVisible();
+  await clickBlank(); await assertActions('alpha'); await expect(page.locator('.board-object.selected')).toHaveCount(0);
+  // Folder hover can temporarily present its controls and returns to the selected frame on leave.
+  await folder.hover(); await assertActions('beta'); await page.mouse.move(1100, 700); await assertActions('alpha');
+  await page.getByRole('button', { name: 'Rename', exact: true }).click();
+  const name = page.getByRole('textbox', { name: 'Group name', exact: true }); await name.fill('Alpha archive'); await name.press('Enter');
+  await expect.poll(() => f.state().groups.find(group => group.id === 'alpha')!.name).toBe('Alpha archive');
+  await page.mouse.move(1100, 700); await assertActions('alpha');
+  // Entering and returning keeps later explicit selection available without collective item highlighting.
+  await folder.click(); await expect(page.getByRole('button', { name: 'Back to board', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Back to board', exact: true }).click(); await clickBlank(); await assertActions('alpha');
+  await expect(page.locator('.board-object.selected')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Pan canvas', exact: true }).click(); await clickBlank();
+  await page.getByRole('button', { name: 'Select files', exact: true }).click(); await page.getByRole('button', { name: 'Select group Alpha archive', exact: true }).click(); await assertActions('alpha');
+  await page.screenshot({ path: join(f.evidence, 'group-target-selection.png') });
+});
+
 test('group names, hover actions, independent selection and camera transitions follow native controls', { timeout: 100_000 }, async t => {
   const f = await fixture(t), { page } = f;
   const image = await f.picture('Archive', '#315AD9'), a = await f.add(image, 220, 210), b = await f.add(image, 430, 390);

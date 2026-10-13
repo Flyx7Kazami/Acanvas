@@ -59,7 +59,7 @@ export interface LateResult { runId: string; consumerId: string; receivedAt: str
 export interface Task { lastEditDraftId?: string; id: string; sessionId: string; draftId: string; sequence: number; status: TaskStatus; snapshot: TaskSnapshot; requirementText: string; createdAt: string; updatedAt: string; currentRunId: string | null; reason: string | null; receipt: Receipt | null; replies: TaskReply[]; runs: Run[]; lateResults: LateResult[] }
 export type BoardOperation =
   | { type: 'create'; object: { id?: string; assetId: string; x: number; y: number; width: number; height: number; groupId?: string } }
-  | { type: 'update'; objectId: string; expectedVersion: number; changes: Partial<Bounds> & { fill?: NoteFill | null } }
+  | { type: 'update'; objectId: string; expectedVersion: number; changes: Partial<Bounds> & { fill?: NoteFill | null; groupId?: string | null } }
   | { type: 'delete'; objectId: string; expectedVersion: number }
   | { type: 'group.create'; group: { id?: string; name?: string; objectIds: string[]; color?: GroupColor }; expectedVersions: Record<string, number> }
   | { type: 'group.update'; groupId: string; expectedVersion: number; changes: { name?: string; mode?: GroupMode; x?: number; y?: number } }

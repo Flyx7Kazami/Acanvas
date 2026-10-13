@@ -96,7 +96,7 @@ async function fileDimensions(file: File): Promise<{ width: number; height: numb
 type UploadEntry = { id: string; name: string; controller: AbortController };
 type CommentEdit = { value: AnnotationInput; sessionId: string; draftId: string; index: number; selectionKey?: string; snapshot?: Promise<Blob | undefined>; snapshotGeneration: number; fresh?: boolean; preparing?: Promise<void>; preparingGeneration?: number; frameNote?: string; finished?: boolean };
 type AnnotationReader = { annotationId: string; sessionId: string; draftId?: string; taskId?: string };
-type Gesture = { kind: 'move' | 'resize' | 'pan' | 'select' | 'mark' | 'note' | 'group'; pointerId: number; start: Point; point: Point; moved: boolean; preview?: Record<string, Rect>; view: SessionView; objects: BoardObject[]; sessionId: string; resizeCorner?: ResizeHandle; commentKey?: string; markBounds?: Rect; region?: Rect; group?: BoardGroup };
+type Gesture = { kind: 'move' | 'resize' | 'pan' | 'select' | 'mark' | 'note' | 'group'; pointerId: number; start: Point; point: Point; moved: boolean; preview?: Record<string, Rect>; view: SessionView; objects: BoardObject[]; sessionId: string; resizeCorner?: ResizeHandle; commentKey?: string; markBounds?: Rect; region?: Rect; group?: BoardGroup; opensGroup?: boolean };
 
 
 function taskReferences(task: Task) {
@@ -311,11 +311,10 @@ export default function App() {
   const annotationInput = useRef<HTMLTextAreaElement>(null);
   const [uploads, setUploads] = useState<UploadEntry[]>([]);
   const [preview, setPreview] = useState<Record<string, Rect>>({});
-  const [hoveredGroupId, setHoveredGroupId] = useState('');
-  const [focusedGroupId, setFocusedGroupId] = useState('');
+  const [groupInteraction, setGroupInteraction] = useState({ selectedId: '', hoveredId: '', focusedId: '' });
+  const { selectedId: selectedGroupId, hoveredId: hoveredGroupId, focusedId: focusedGroupId } = groupInteraction;
   const [groupTransition, setGroupTransition] = useState<{ id: string; kind: 'collapse' | 'expand' | 'enter' | 'leave' } | null>(null);
   const transitionTimer = useRef(0);
-  const [selectedGroupId, setSelectedGroupId] = useState('');
   const [renamingGroupId, setRenamingGroupId] = useState('');
   const [groupPosition, setGroupPosition] = useState<{ id: string; x: number; y: number; scale?: number } | null>(null);
   const [selectionRect, setSelectionRect] = useState<Rect | null>(null);
@@ -450,8 +449,8 @@ export default function App() {
   useEffect(() => { pointerHandlers.current.cancel(); }, [state?.session.id, mode, spacePan]);
   useEffect(() => { const active = gesture.current; if (!active || active.objects.map(object => object.id).sort().join(',') !== [...selectedIds].sort().join(',')) { setSnapGuides([]); if (active?.kind === 'move') { gesture.current = null; setPreview({}); } } }, [selectedIds.join(',')]);
   useEffect(() => { setAnnotatingKey(''); setMarkPreview(null); if (gesture.current?.kind === 'mark') gesture.current = null; }, [commentKey]);
-  useEffect(() => { setInspectedTaskId(''); setAnnotationReader(null); setSelectedGroupId(''); }, [state?.session.id]);
-  useEffect(() => { setSelectedGroupId(''); }, [view.activeGroupId]);
+  useEffect(() => { setInspectedTaskId(''); setAnnotationReader(null); selectGroupTarget(''); }, [state?.session.id]);
+  useEffect(() => { selectGroupTarget(''); }, [view.activeGroupId]);
   useEffect(() => { if (view.activeGroupId && state && !state.groups.some(group => group.id === view.activeGroupId && group.mode === 'folder')) { board.updateView({ ...view, ...(view.parentView || {}), selectedObjectIds: [], activeGroupId: undefined, parentView: undefined }); } }, [state?.groups, view.activeGroupId]);
   useEffect(() => { setReferencePreview([]); setMention(null); setCapturedHistory(null); setCaptureErrors({}); }, [state?.session.id, draft?.id]);
   useEffect(() => {
@@ -554,7 +553,14 @@ export default function App() {
   }, []);
 
   const viewUpdate = (next: Partial<SessionView>) => { if (!disabled && state) { fitMotion.interrupt(); board.updateView({ ...view, ...next }, state.session.id, 'activeGroupId' in next ? 'immediate' : true); } };
-  const selectObjects = (ids: string[], user = true) => { setSelectedGroupId(''); if ([...ids].sort().join(',') !== [...selectedIds].sort().join(',')) { clearInspection(); exitAnnotation(); } const ordered = unique(ids); if (user) setReferencePreview(ordered); viewUpdate({ selectedObjectIds: ordered }); };
+  function selectGroupTarget(id: string) { setGroupInteraction({ selectedId: id, hoveredId: '', focusedId: '' }); }
+  function hoverGroupTarget(id: string) { setGroupInteraction(current => ({ ...current, hoveredId: id })); }
+  function focusGroupTarget(id: string) { setGroupInteraction(current => ({ ...current, hoveredId: '', focusedId: id })); }
+  function releaseGroupTarget(id: string, source: 'hoveredId' | 'focusedId') { setGroupInteraction(current => current[source] === id ? { ...current, [source]: '' } : current); }
+  function selectGroup(group: BoardGroup) {
+    clearInspection(); exitAnnotation(); selectGroupTarget(group.id); setReferencePreview(group.objectIds); viewUpdate({ selectedObjectIds: [] });
+  }
+  const selectObjects = (ids: string[], user = true) => { selectGroupTarget(''); if ([...ids].sort().join(',') !== [...selectedIds].sort().join(',')) { clearInspection(); exitAnnotation(); } const ordered = unique(ids); if (user) setReferencePreview(ordered); viewUpdate({ selectedObjectIds: ordered }); };
   useLayoutEffect(() => {
     const assetId = pendingNote.current;
     if (!assetId || !canvas.current) return;
@@ -1045,7 +1051,7 @@ export default function App() {
   const snapTargets = activeGroup ? snapObjects : [...snapObjects, ...groups.filter(group => group.mode === 'folder' && group.id !== selectedGroupId).map(group => ({ ...groupDisplayBounds(group), id: `group:${group.id}` }))];
   function enterGroup(group: BoardGroup) {
     if (disabled) return;
-    clearInspection(); exitAnnotation(); setSelectedGroupId(''); setHoveredGroupId(''); setFocusedGroupId(''); setReferencePreview([]); setPreview({}); setMode('select');
+    clearInspection(); exitAnnotation(); selectGroupTarget(''); setReferencePreview([]); setPreview({}); setMode('select');
     const size = { width: canvas.current!.clientWidth, height: canvas.current!.clientHeight };
     const members = allObjects.filter(object => object.groupId === group.id);
     const next = members.length ? fitView(members, size) : { x: size.width / 2 - group.x, y: size.height / 2 - group.y, zoom: 1 };
@@ -1054,7 +1060,7 @@ export default function App() {
     canvas.current?.focus({ preventScroll: true });
   }
   function leaveGroup() {
-    clearInspection(); exitAnnotation(); setSelectedGroupId(''); setHoveredGroupId(''); setFocusedGroupId(''); setReferencePreview([]); setPreview({}); setMode('select');
+    clearInspection(); exitAnnotation(); selectGroupTarget(''); setReferencePreview([]); setPreview({}); setMode('select');
     if (activeGroup) beginGroupTransition(activeGroup.id, 'leave');
     animateView({ ...(view.parentView || {}), activeGroupId: undefined, parentView: undefined, selectedObjectIds: [] });
     canvas.current?.focus({ preventScroll: true });
@@ -1063,7 +1069,7 @@ export default function App() {
     if (!state || selected.length < 2 || activeGroup || selected.some(object => object.groupId)) return;
     const id = randomId();
     await writeLayout([{ type: 'group.create', group: { id, objectIds: selected.map(object => object.id) }, expectedVersions: Object.fromEntries(selected.map(object => [object.id, object.version])) }], state.session.id);
-    setSelectedGroupId(id); viewUpdate({ selectedObjectIds: [] });
+    selectGroupTarget(id); viewUpdate({ selectedObjectIds: [] });
   }
   function updateGroup(group: BoardGroup, changes: { name?: string; mode?: 'folder' | 'frame' }) {
     if (!state) return;
@@ -1072,8 +1078,8 @@ export default function App() {
     void writeLayout([{ type: 'group.update', groupId: group.id, expectedVersion: group.version, changes }], state.session.id);
   }
   function groupActions(group: BoardGroup) {
-    return <div className="group-action-list"><GroupActionButton label="Rename" disabled={disabled} onClick={() => setRenamingGroupId(group.id)}><PencilLine size={16}/></GroupActionButton>
-      <GroupActionButton label={group.mode === 'frame' ? 'Store in folder' : 'Expand on board'} disabled={disabled} onClick={() => updateGroup(group, { mode: group.mode === 'frame' ? 'folder' : 'frame' })}>{group.mode === 'frame' ? <FolderInput size={16}/> : <FolderOutput size={16}/>}</GroupActionButton><GroupActionButton label="Ungroup" disabled={disabled} onClick={() => { if (!state) return; if (activeGroup) leaveGroup(); setSelectedGroupId(''); void writeLayout([{ type: 'group.ungroup', groupId: group.id, expectedVersion: group.version }], state.session.id); }}><FontAwesomeObjectIcon ungroup/></GroupActionButton></div>;
+    return <div className="group-action-list"><GroupActionButton label="Rename" disabled={disabled} onClick={() => { if (!activeGroup) selectGroup(group); setRenamingGroupId(group.id); }}><PencilLine size={16}/></GroupActionButton>
+      <GroupActionButton label={group.mode === 'frame' ? 'Store in folder' : 'Expand on board'} disabled={disabled} onClick={() => updateGroup(group, { mode: group.mode === 'frame' ? 'folder' : 'frame' })}>{group.mode === 'frame' ? <FolderInput size={16}/> : <FolderOutput size={16}/>}</GroupActionButton><GroupActionButton label="Ungroup" disabled={disabled} onClick={() => { if (!state) return; if (activeGroup) leaveGroup(); selectGroupTarget(''); void writeLayout([{ type: 'group.ungroup', groupId: group.id, expectedVersion: group.version }], state.session.id); }}><FontAwesomeObjectIcon ungroup/></GroupActionButton></div>;
   }
   function groupName(group: BoardGroup, className = '') {
     return <GroupName group={group} className={className} editing={renamingGroupId === group.id} onCancel={() => setRenamingGroupId('')} onCommit={name => { setRenamingGroupId(''); if (name !== group.name) updateGroup(group, { name }); }}/>;
@@ -1081,16 +1087,16 @@ export default function App() {
   function renderGroup(group: BoardGroup, exterior = false) {
     const bounds = groupDisplayBounds(group);
     const transitionGhost = !!activeGroup && group.id === activeGroup.id && groupTransition?.kind === 'enter';
-    const groupKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    const groupKeyDown = (event: React.KeyboardEvent<HTMLElement>, selectOnly = false) => {
       if (event.target !== event.currentTarget || disabled) return;
       if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault(); if (group.mode === 'folder') enterGroup(group); else { setSelectedGroupId(group.id); setReferencePreview(group.objectIds); viewUpdate({ selectedObjectIds: [] }); }
+        event.preventDefault(); if (group.mode === 'folder' && !selectOnly) enterGroup(group); else selectGroup(group);
       }
       const delta = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key];
       if (delta && state) { event.preventDefault(); void writeLayout([{ type: 'group.update', groupId: group.id, expectedVersion: group.version, changes: { x: group.x + delta[0], y: group.y + delta[1] } }], state.session.id); }
     };
-    return <section key={group.id} className={`board-group group-${group.mode}${exterior ? ' group-exterior' : ''}${transitionGhost ? ' group-transition-ghost' : ''}`} data-transition-group={groupTransition?.id === group.id || undefined} data-moving={gesture.current?.group?.id === group.id || undefined} data-group-id={group.id} data-group-color={group.color} data-group-name={group.name} data-group-count={group.objectIds.length} inert={exterior} aria-hidden={exterior || undefined} aria-label={`${group.name}, ${group.objectIds.length} items`} style={{ left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height, ...(groupPosition?.id === group.id && groupPosition.scale ? { transform: `scale(${groupPosition.scale})`, transformOrigin: '0 0' } : {}) }} onPointerEnter={() => { if (!exterior && group.mode === 'folder') setHoveredGroupId(group.id); }} onPointerLeave={event => { if (!(event.relatedTarget as Element | null)?.closest?.(`[data-group-actions-id="${group.id}"]`)) setHoveredGroupId(current => current === group.id ? '' : current); }} onFocusCapture={() => { if (!exterior) setFocusedGroupId(group.id); }} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node) && !(event.relatedTarget as Element | null)?.closest?.(`[data-group-actions-id="${group.id}"]`)) setFocusedGroupId(''); }}>
-      {group.mode === 'frame' ? <div className="group-frame-title" data-renaming={renamingGroupId === group.id || undefined} data-canvas-control={renamingGroupId === group.id || undefined}><button className="group-frame-select" type="button" disabled={disabled} onDoubleClick={() => setRenamingGroupId(group.id)} aria-label={`Select group ${group.name}`} onKeyDown={groupKeyDown}/>{groupName(group)}<small>{group.objectIds.length}</small></div> : <><div className="group-folder-hit" tabIndex={exterior ? -1 : 0} role="button" aria-disabled={disabled || undefined} aria-label={`Open folder ${group.name}`} onKeyDown={groupKeyDown}><GroupFolder group={group} objects={allObjects} assets={assets} api={board.api}/></div><div className="folder-caption">{groupName(group, 'folder-name')}<small>{group.objectIds.length} {group.objectIds.length === 1 ? 'item' : 'items'}</small></div></>}
+    return <section key={group.id} className={`board-group group-${group.mode}${exterior ? ' group-exterior' : ''}${transitionGhost ? ' group-transition-ghost' : ''}`} data-transition-group={groupTransition?.id === group.id || undefined} data-moving={gesture.current?.group?.id === group.id || undefined} data-group-id={group.id} data-group-color={group.color} data-group-name={group.name} data-group-count={group.objectIds.length} data-folder-open={!exterior && group.mode === 'folder' && (hoveredGroupId === group.id || focusedGroupId === group.id) || undefined} inert={exterior} aria-hidden={exterior || undefined} aria-label={`${group.name}, ${group.objectIds.length} items`} style={{ left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height, ...(groupPosition?.id === group.id && groupPosition.scale ? { transform: `scale(${groupPosition.scale})`, transformOrigin: '0 0' } : {}) }} onPointerEnter={() => { if (!exterior && group.mode === 'folder') hoverGroupTarget(group.id); }} onPointerLeave={event => { if (!(event.relatedTarget as Element | null)?.closest?.(`[data-group-actions-id="${group.id}"]`)) releaseGroupTarget(group.id, 'hoveredId'); }} onFocusCapture={() => { if (!exterior) focusGroupTarget(group.id); }} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node) && !(event.relatedTarget as Element | null)?.closest?.(`[data-group-actions-id="${group.id}"]`)) releaseGroupTarget(group.id, 'focusedId'); }}>
+      {group.mode === 'frame' ? <div className="group-frame-title" data-renaming={renamingGroupId === group.id || undefined} data-canvas-control={renamingGroupId === group.id || undefined}><button className="group-frame-select" type="button" disabled={disabled} onDoubleClick={() => setRenamingGroupId(group.id)} aria-label={`Select group ${group.name}`} onKeyDown={groupKeyDown}/>{groupName(group)}<small>{group.objectIds.length}</small></div> : <><div className="group-folder-hit" tabIndex={exterior ? -1 : 0} role="button" aria-disabled={disabled || undefined} aria-label={`Open folder ${group.name}`} onKeyDown={groupKeyDown}><GroupFolder group={group} objects={allObjects} assets={assets} api={board.api}/></div><div className="folder-caption" role={renamingGroupId === group.id ? undefined : 'button'} tabIndex={renamingGroupId === group.id ? undefined : exterior ? -1 : 0} aria-disabled={disabled || undefined} aria-label={renamingGroupId === group.id ? undefined : `Select group ${group.name}`} onKeyDown={event => groupKeyDown(event, true)}>{groupName(group, 'folder-name')}<small>{group.objectIds.length} {group.objectIds.length === 1 ? 'item' : 'items'}</small></div></>}
     </section>;
   }
 
@@ -1160,9 +1166,8 @@ export default function App() {
     const storedGroup = !activeGroup && groups.find(group => group.id === groupId);
     const pickedGroup = storedGroup && groupPose ? { ...storedGroup, x: groupPose.x, y: groupPose.y } : storedGroup;
     if (pickedGroup && !object && !resizeId && effectiveMode === 'select') {
-      clearInspection(); exitAnnotation(); setSelectedGroupId(pickedGroup.id); setReferencePreview(pickedGroup.objectIds);
-      viewUpdate({ selectedObjectIds: [] });
-      gesture.current = { kind: 'group', group: pickedGroup, pointerId: event.pointerId, start: point, point, moved: false, view: displayedView, objects: allObjects.filter(object => object.groupId === pickedGroup.id).map(object => poses.has(object.id) ? { ...object, x: poses.get(object.id)!.x, y: poses.get(object.id)!.y } : object), sessionId: state.session.id };
+      selectGroup(pickedGroup);
+      gesture.current = { kind: 'group', group: pickedGroup, opensGroup: !!(event.target as Element).closest('.group-folder-hit'), pointerId: event.pointerId, start: point, point, moved: false, view: displayedView, objects: allObjects.filter(object => object.groupId === pickedGroup.id).map(object => poses.has(object.id) ? { ...object, x: poses.get(object.id)!.x, y: poses.get(object.id)!.y } : object), sessionId: state.session.id };
       setGroupPosition({ id: pickedGroup.id, x: pickedGroup.x, y: pickedGroup.y, scale: groupPose?.scale });
       setPreview(Object.fromEntries(gesture.current.objects.map(object => [object.id, { x: object.x, y: object.y, width: object.width, height: object.height }])));
       canvas.current!.setPointerCapture(event.pointerId); event.preventDefault(); return;
@@ -1239,7 +1244,7 @@ export default function App() {
     if (active.kind === 'group' && active.group) {
       const shifted = groupPosition;
       if (active.moved && shifted) void writeLayout([{ type: 'group.update', groupId: active.group.id, expectedVersion: active.group.version, changes: { x: shifted.x, y: shifted.y } }], active.sessionId).finally(() => { dragAppearance.current = {}; setGroupPosition(null); });
-      else { if (active.group.mode === 'folder') enterGroup(active.group); dragAppearance.current = {}; setGroupPosition(null); setPreview({}); }
+      else { if (active.opensGroup) enterGroup(active.group); dragAppearance.current = {}; setGroupPosition(null); setPreview({}); }
       return;
     }
     if (active.kind === 'move') {
@@ -1404,7 +1409,7 @@ export default function App() {
       {markHover && mode === 'mark' && !spacePan && <div className="canvas-mark-guide" data-mark-target={markHover.objectId} aria-hidden="true" style={{ ...screenBounds(markHover.bounds, view), left: screenBounds(markHover.bounds, view).x, top: screenBounds(markHover.bounds, view).y, borderRadius: markHover.radius * view.zoom }}/>}
       {mode === 'mark' && !spacePan && <div className="canvas-mark-surface" aria-hidden="true"/>}
       {dragOver && <div className="drop-indicator"><Upload size={28}/><span>Drop files onto the canvas</span></div>}
-      {!annotationRead && !annotating && (!!selected.length || !!selectedGroup) && <div ref={selectionActions} className={`selection-actions context-control selection-tool-control${selectedGroup ? ' group-hover-actions' : ''}`} data-canvas-control data-group-actions-id={selectedGroup?.id} onPointerEnter={() => { if (selectedGroup) setHoveredGroupId(selectedGroup.id); }} onPointerLeave={event => { if (!(event.relatedTarget as Element | null)?.closest?.(`[data-group-id="${selectedGroup?.id}"]`)) setHoveredGroupId(''); }} onFocusCapture={() => { if (selectedGroup) setFocusedGroupId(selectedGroup.id); }} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setFocusedGroupId(''); }} onKeyDown={event => { event.stopPropagation(); if (event.key !== 'Escape') return; const flyout = (event.target as Element).closest('.selection-flyout'); const trigger = flyout?.querySelector<HTMLButtonElement>(':scope > .icon-button'); if (trigger && event.target !== trigger) { event.preventDefault(); trigger.focus(); } }}>
+      {!annotationRead && !annotating && (!!selected.length || !!selectedGroup) && <div ref={selectionActions} className={`selection-actions context-control selection-tool-control${selectedGroup ? ' group-hover-actions' : ''}`} data-canvas-control data-group-actions-id={selectedGroup?.id} onPointerEnter={() => { if (selectedGroup) hoverGroupTarget(selectedGroup.id); }} onPointerLeave={event => { if (!(event.relatedTarget as Element | null)?.closest?.(`[data-group-id="${selectedGroup?.id}"]`)) releaseGroupTarget(selectedGroup?.id || '', 'hoveredId'); }} onFocusCapture={() => { if (selectedGroup) focusGroupTarget(selectedGroup.id); }} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) releaseGroupTarget(selectedGroup?.id || '', 'focusedId'); }} onKeyDown={event => { event.stopPropagation(); if (event.key !== 'Escape') return; const flyout = (event.target as Element).closest('.selection-flyout'); const trigger = flyout?.querySelector<HTMLButtonElement>(':scope > .icon-button'); if (trigger && event.target !== trigger) { event.preventDefault(); trigger.focus(); } }}>
         <div className="selection-primary-tools" role="toolbar" aria-label="Selected file actions">{selectedGroup ? groupActions(selectedGroup) : <>{!activeGroup && selected.length > 1 && selected.every(object => !object.groupId) && <GroupActionButton label="Group" disabled={disabled} onClick={() => void createGroup()}><FontAwesomeObjectIcon/></GroupActionButton>}{selectedNote && <SelectionFlyout label="Note color" disabled={disabled} menuLabel="Note color" panelClassName="note-color-menu" role="radiogroup" onMenuLeave={() => setNoteColorHover(undefined)} trigger={<Palette size={16}/>}>{noteColorChoices.map(color => <button key={color.label} type="button" role="radio" className={color.id ? undefined : 'note-color-default'} aria-checked={selectedNote.fill === color.id || (!selectedNote.fill && !color.id)} aria-label={color.label} disabled={disabled} onPointerEnter={() => setNoteColorHover(color.id)} onClick={() => { setNoteFillPending({ objectId: selectedNote.id, fill: color.id }); void board.operations([{ type: 'update', objectId: selectedNote.id, expectedVersion: selectedNote.version, changes: { fill: color.id } }]).catch(() => undefined); }}><span className="note-color-swatch" style={color.id ? { background: noteFillColor[color.id] } : undefined}/></button>)}</SelectionFlyout>}{selected.length > 1 && <SelectionFlyout label="Align" disabled={disabled} menuLabel="Align selected files" panelClassName="alignment-actions" role="toolbar" trigger={<AlignStartVertical size={16}/>}><IconButton label="Align left" disabled={disabled} onClick={() => alignSelection('left')}><AlignStartVertical size={15}/></IconButton><IconButton label="Align horizontal centers" disabled={disabled} onClick={() => alignSelection('horizontal-center')}><AlignCenterVertical size={15}/></IconButton><IconButton label="Align right" disabled={disabled} onClick={() => alignSelection('right')}><AlignEndVertical size={15}/></IconButton><IconButton label="Align top" disabled={disabled} onClick={() => alignSelection('top')}><AlignStartHorizontal size={15}/></IconButton><IconButton label="Align vertical centers" disabled={disabled} onClick={() => alignSelection('vertical-center')}><AlignCenterHorizontal size={15}/></IconButton><IconButton label="Align bottom" disabled={disabled} onClick={() => alignSelection('bottom')}><AlignEndHorizontal size={15}/></IconButton></SelectionFlyout>}<IconButton label="Remove selected files from canvas" disabled={disabled} onClick={() => void removeSelection()}><Trash2 size={16}/></IconButton></>}</div>
       </div>}
       {selectedVideo && <VideoPlaybackControls key={selectedVideo.id} objectId={selectedVideo.id} videos={videoRefs.current} disabled={disabled || annotating} onError={board.showError} controlRef={playbackControls}/> }

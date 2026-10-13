@@ -1,5 +1,9 @@
 # acanvas 验证记录
 
+## Folder 封套、引用与 CLI 分组操作（2026-10-13）
+
+左侧档案线条左移延伸、右列名称与 item 数网格对齐，降低背板/缩小圆角/去预览相框并增加 hover 微展开。统一 group 交互目标与标题避障；folder caption 可选中、拖动并引用到对话框，封套仍单击进入。CLI group list/read/put 读取原文件和 world 布局、保留身份移入组，旧/新组事务刷新。类型检查/构建、47/47 服务/CLI/几何、32/32 既有回归及 5/5 整合浏览器通过；独立 47/47、21/21 UI、caption1/1+清选触屏1/1 和静态/hover/长名/空组 Done 语义/像素通过，全部发现闭合。原演示离线后同 root/port/session 恢复独立后台运行，素材与公开 state 重复读回一致，已刷新实际页面。离线前没有本次新快照，完整命令、首次 ECONNRESET、取证与恢复边界见[专项验证](ITEM_GROUPS_VALIDATION.md)。
+
 ## Font Awesome、删除顺序与 Group N（2026-10-13）
 
 Group/Ungroup 使用 Font Awesome Free Regular 原版纯图标；Delete 位于选区操作末尾；新组按项目级 Group N 编号，跨会话、重启与解组延续，失败事务回滚。类型检查、构建、服务/几何 42/42 和浏览器 4/4 通过；独立 HTTP/CLI、编号与名称保留、实际删除、SVG 原比例、hover、键盘及 320/390px/触屏模拟验收 PASS。工具条按有效 group 优先级解析，键盘解组后重建及外部删除旧候选的路径已复验。原演示页已更新并实际刷新，保留用户内容、55% 视口与选区，点击原已选素材恢复两项引用预览。完整命令、证据与范围见[专项验证](ITEM_GROUPS_VALIDATION.md)。

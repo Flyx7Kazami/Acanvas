@@ -477,20 +477,30 @@ details[open] summary svg { rotate: 180deg; }
 .group-frame-title { position:absolute; top:6px; left:12px; display:flex; gap:8px; align-items:center; height:27px; max-width:calc(100% - 24px); padding:0 3px; pointer-events:auto; background:none; color:var(--ink); font-family:inherit; font-size:12px; font-weight:500; cursor:grab; }
 .group-frame-title>span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .group-frame-title small { color:var(--muted); font-size:10px; }
-.group-folder-hit { position:relative; width:216px; height:224px; pointer-events:auto; cursor:pointer; outline-offset:6px; border-radius:12px; }
+.group-folder-hit { position:relative; width:216px; height:224px; pointer-events:auto; cursor:pointer; outline-offset:6px; border-radius:4px; }
 .group-folder-hit:focus-visible { outline:2px solid var(--ink); }
-.folder-back,.folder-front { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
+.folder-art,.folder-back,.folder-front,.folder-previews,.folder-cover-svg { position:absolute; inset:0; display:block; width:216px; height:224px; overflow:visible; pointer-events:none; }
 .folder-back { z-index:0; }
-.folder-front { z-index:2; }
-.folder-previews { position:absolute; inset:0; z-index:1; pointer-events:none; }
-.folder-preview-card { position:absolute; top:8px; left:10px; width:72px; height:106px; padding:6px; overflow:hidden; background:#F3EBDD; color:#202124; border-radius:6px; transform:rotate(-4deg); font-size:10px; }
-.folder-preview-card:nth-child(2) { top:1px; left:72px; transform:rotate(0); }
-.folder-preview-card:nth-child(3) { top:8px; left:134px; transform:rotate(4deg); }
-.folder-preview-card>.asset-thumb { width:100%; height:100%; border-radius:3px; background:#F3EBDD; }
-.folder-preview-card .asset-thumb img { width:100%; height:100%; object-fit:cover; }
-.folder-preview-card small { display:block; font-size:7px; letter-spacing:1px; margin:3px 0 9px; }
-.folder-preview-card>span:not(.asset-thumb) { display:block; white-space:pre-wrap; overflow-wrap:anywhere; max-height:72px; }
-.folder-preview-card:not(.folder-preview-image):not(.folder-preview-video)>.asset-thumb { height:30px; }
+.folder-previews { z-index:1; }
+.folder-front { z-index:2; transform-origin:50% 100%; transition:transform 220ms cubic-bezier(.2,.8,.2,1); }
+.folder-preview-card { position:absolute; top:12px; left:10px; display:block; width:72px; height:106px; padding:0; overflow:hidden; background:#F3EBDD; color:#202124; border-radius:2px; transform:rotate(-2deg); font-size:10px; transition:transform 220ms cubic-bezier(.2,.8,.2,1); }
+.folder-preview-card:nth-child(2) { top:8px; left:72px; transform:rotate(0); }
+.folder-preview-card:nth-child(3) { top:12px; left:134px; transform:rotate(2deg); }
+.folder-preview-card>.asset-thumb { display:flex; width:100%; height:100%; border:0; border-radius:2px; background:transparent; }
+.folder-preview-card .asset-thumb img { width:100%; height:100%; object-fit:cover; border:0; border-radius:2px; }
+.folder-preview-note,.folder-preview-markdown,.folder-preview-file,.folder-preview-audio { padding:8px; }
+.folder-preview-kind { display:block; margin:0 0 8px; font-size:7px; line-height:9px; letter-spacing:1px; }
+.folder-preview-copy { display:block; width:100%; max-height:65px; overflow:hidden; font-size:10px; line-height:13px; }
+.folder-preview-card:not(.folder-preview-image):not(.folder-preview-video)>.asset-thumb { height:28px; }
+.folder-text-line { display:block; overflow:hidden; white-space:pre; }
+.folder-face-name,.folder-face-count { position:absolute; left:138px; display:block; width:64px; overflow:hidden; font-size:11px; font-weight:500; line-height:14px; }
+.folder-face-name { top:118px; max-height:28px; }
+.folder-face-count { top:163px; height:14px; }
+.group-folder[data-folder-open='true'] .folder-front { transform:scaleY(.975); }
+.group-folder[data-folder-open='true'] .folder-preview-card:nth-child(1) { transform:translate(-2px,-8px) rotate(-4deg); }
+.group-folder[data-folder-open='true'] .folder-preview-card:nth-child(2) { transform:translateY(-6px) rotate(0); }
+.group-folder[data-folder-open='true'] .folder-preview-card:nth-child(3) { transform:translate(2px,-8px) rotate(4deg); }
+@media(prefers-reduced-motion:reduce) { .folder-front,.folder-preview-card { transition:none!important; } .group-folder[data-folder-open='true'] .folder-front { transform:none; } .group-folder[data-folder-open='true'] .folder-preview-card:nth-child(1) { transform:rotate(-2deg); } .group-folder[data-folder-open='true'] .folder-preview-card:nth-child(2) { transform:rotate(0); } .group-folder[data-folder-open='true'] .folder-preview-card:nth-child(3) { transform:rotate(2deg); } }
 .folder-caption { position:absolute; top:237px; left:0; width:216px; display:flex; align-items:baseline; justify-content:space-between; gap:8px; color:var(--ink); font-size:12px; pointer-events:none; }
 .folder-caption>span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; }
 .folder-caption small { flex:none; color:var(--muted); font-size:10px; }
@@ -508,7 +518,7 @@ details[open] summary svg { rotate: 180deg; }
 .group-navigation-header>small { flex:none; color:var(--muted); font-size:10px; margin-right:6px; }
 @media(max-width:540px) { .group-navigation { top:62px; left:14px; max-width:calc(100% - 28px); } .group-navigation-name { max-width:100px; } .group-navigation-header>small { display:none; } }
 .group-folder { pointer-events:auto; }
-.group-folder .folder-caption { pointer-events:auto; }
+.group-folder .folder-caption { pointer-events:auto; cursor:grab; }
 .group-name-slot { display:inline-block; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; vertical-align:baseline; }
 .group-name-input,.group-name-input:focus,.group-name-input:focus-visible { display:block; width:100%; height:100%; min-width:0; margin:0; padding:0; border:0; border-radius:0; outline:0; box-shadow:none; background:none; font:inherit; color:inherit; letter-spacing:inherit; line-height:inherit; transition:none; }
 .group-hover-actions::before,.group-hover-actions::after { content:''; position:absolute; left:-12px; right:-12px; height:24px; pointer-events:auto; }

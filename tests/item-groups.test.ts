@@ -152,6 +152,75 @@ test('folder member edits preserve its anchor and expansion aligns current geome
   assert.equal(f.service.object('b').x - f.service.object('a').x, separation);
 });
 
+test('existing items retain identity while moving between frames, folders and the main board', async t => {
+  const f = await fixture(t);
+  f.create('a', 0, 0); f.create('b', 200, 0); f.group(['a', 'b'], 'frame');
+  f.create('c', 600, 400); f.create('d', 800, 400); f.group(['c', 'd'], 'folder'); f.update({ mode: 'folder' }, 'folder');
+  f.create('loose', -200, -300, 160, 90);
+  const original = f.service.object('loose'), frame = f.service.group('frame'), folder = f.service.group('folder');
+  f.operations([{ type: 'update', objectId: original.id, expectedVersion: original.version, changes: { groupId: 'frame' } }]);
+  const inFrame = f.service.object(original.id);
+  assert.deepEqual({ ...inFrame, version: original.version, updatedAt: original.updatedAt, groupId: undefined }, { ...original, groupId: undefined });
+  assert.equal(f.service.group('frame').version, frame.version + 1);
+  assert.equal(f.service.group('frame').x, original.x - GROUP_PADDING);
+  f.operations([{ type: 'update', objectId: original.id, expectedVersion: inFrame.version, changes: { groupId: 'folder' } }]);
+  const inFolder = f.service.object(original.id), changedFolder = f.service.group('folder');
+  assert.equal(inFolder.groupId, 'folder'); assert.equal(inFolder.x, original.x); assert.equal(inFolder.y, original.y);
+  assert.equal(f.service.group('frame').version, frame.version + 2); assert.deepEqual(f.service.group('frame').objectIds, ['a', 'b']);
+  assert.equal(changedFolder.version, folder.version + 1); assert.equal(changedFolder.x, folder.x); assert.equal(changedFolder.y, folder.y);
+  assert.deepEqual(changedFolder.objectIds, ['c', 'd', 'loose']);
+  f.operations([{ type: 'update', objectId: original.id, expectedVersion: inFolder.version, changes: { groupId: null, x: 123, y: 456 } }]);
+  const onBoard = f.service.object(original.id);
+  assert.equal(onBoard.groupId, undefined); assert.equal(onBoard.x, 123); assert.equal(onBoard.y, 456);
+  assert.equal(onBoard.assetId, original.assetId); assert.equal(onBoard.createdAt, original.createdAt);
+  assert.equal(f.service.group('folder').version, folder.version + 2); assert.equal(f.service.group('folder').x, folder.x); assert.equal(f.service.group('folder').y, folder.y);
+});
+
+test('membership changes preserve empty folder anchors and recompute both group geometries', async t => {
+  const f = await fixture(t);
+  f.create('a', 0, 0); f.create('b', 200, 0); f.group(['a', 'b'], 'source'); f.update({ mode: 'folder' }, 'source');
+  f.create('c', 600, 400); f.create('d', 800, 400); f.group(['c', 'd'], 'target');
+  const source = f.service.group('source'), target = f.service.group('target');
+  f.operations(['a', 'b'].map(id => ({ type: 'update', objectId: id, expectedVersion: f.service.object(id).version, changes: { groupId: 'target' } })));
+  assert.deepEqual(f.service.group('source'), { ...source, version: source.version + 1, updatedAt: f.service.group('source').updatedAt, objectIds: [] });
+  const changed = f.service.group('target');
+  assert.equal(changed.version, target.version + 1); assert.deepEqual(new Set(changed.objectIds), new Set(['a', 'b', 'c', 'd']));
+  const expected = groupFrameBounds(f.service.objects().filter(object => object.groupId === 'target'));
+  assert.deepEqual({ x: changed.x, y: changed.y, width: changed.width, height: changed.height }, expected);
+  f.restart(); assert.equal(f.service.group('source').x, source.x); assert.equal(f.service.group('source').y, source.y); assert.deepEqual(f.service.group('source').objectIds, []);
+});
+
+test('membership changes enforce object versions and roll back all group updates on failure', async t => {
+  const f = await fixture(t); f.create('a', 0, 0); f.create('b', 200, 0); f.group(['a', 'b']); f.create('loose', 600, 0);
+  const groups = f.service.groups(), objects = f.service.objects(), loose = f.service.object('loose');
+  assert.throws(() => f.operations([{ type: 'update', objectId: 'loose', expectedVersion: loose.version, changes: { groupId: 'missing' } }]), apiError(404, 'group_missing'));
+  assert.throws(() => f.operations([{ type: 'update', objectId: 'loose', expectedVersion: 0, changes: { groupId: 'group' } }]), apiError(409, 'object_conflict'));
+  assert.throws(() => f.operations([
+    { type: 'update', objectId: 'loose', expectedVersion: loose.version, changes: { groupId: 'group', x: -500 } },
+    { type: 'delete', objectId: 'a', expectedVersion: 0 },
+  ]), apiError(409, 'object_conflict'));
+  assert.deepEqual(f.service.objects(), objects); assert.deepEqual(f.service.groups(), groups);
+});
+
+test('task completion applies the same membership update and retains source identity and receipt rules', async t => {
+  const f = await fixture(t); f.create('a', 0, 0); f.create('b', 200, 0); f.group(['a', 'b']); f.update({ mode: 'folder' });
+  let draft = f.service.draft(f.session.id); draft = f.service.saveDraft(f.session.id, { ...draft, text: 'Publish a source' });
+  const first = f.service.sendDraft(f.session.id, draft.id, draft.revision).task, claim = f.service.claim(f.session.id, 'publisher');
+  const bytes = Buffer.from('Generated reference'); await writeFile(join(f.service.dataDir, 'assets/generated.txt'), bytes);
+  const asset = f.service.registerAsset({ id: 'generated', name: 'Generated.txt', mime: 'text/plain', size: bytes.length, kind: 'file', createdAt: new Date().toISOString() }, 'assets/generated.txt', { sessionId: f.session.id, taskId: first.id, runId: claim.run!.id, consumerId: 'publisher' });
+  f.service.complete(f.session.id, first.id, { consumerId: 'publisher', runId: claim.run!.id, summary: 'Published', assetIds: [asset.id], validation: [], operations: [{ type: 'create', object: { id: 'generated-object', assetId: asset.id, x: 600, y: 300, width: 200, height: 120 } }] });
+  const original = f.service.object('generated-object');
+  draft = f.service.draft(f.session.id); draft = f.service.saveDraft(f.session.id, { ...draft, text: 'Place the existing source inside the folder', references: { objectIds: [original.id], taskIds: [] } });
+  const second = f.service.sendDraft(f.session.id, draft.id, draft.revision).task, next = f.service.claim(f.session.id, 'publisher');
+  const input = { consumerId: 'publisher', runId: next.run!.id, summary: 'Placed inside folder', assetIds: [], validation: [], operations: [{ type: 'update' as const, objectId: original.id, expectedVersion: original.version, changes: { groupId: 'group', x: 80, y: 120 } }] };
+  assert.throws(() => f.service.complete(f.session.id, second.id, { ...input, assetIds: [asset.id] }), apiError(409, 'output_ownership'));
+  assert.deepEqual(f.service.object(original.id), original);
+  const completed = f.service.complete(f.session.id, second.id, input), moved = f.service.object(original.id);
+  assert.equal(moved.groupId, 'group'); assert.equal(moved.assetId, original.assetId); assert.equal(moved.sourceTaskId, original.sourceTaskId); assert.equal(moved.sourceRunId, original.sourceRunId);
+  assert.deepEqual(completed.receipt!.objectIds, [original.id]); assert.deepEqual(completed.receipt!.assetIds, []);
+  assert.equal(completed.snapshot.referenceContent.objects[0].groupId, undefined); assert.equal(completed.snapshot.referenceContent.objects[0].x, original.x);
+});
+
 test('default group names advance across sessions, restarts and ungrouping', async t => {
   const f = await fixture(t), other = f.service.createSession('Other');
   f.create('a', 0, 0); f.create('b', 200, 0); f.group(['a', 'b'], 'first');

@@ -1067,7 +1067,7 @@ export class CanvasService {
         if (!Number.isSafeInteger(operation.expectedVersion) || object.version !== operation.expectedVersion) fail(409, 'object_conflict', 'The object changed. Read its current version before updating.', { objectId: id, currentVersion: object.version });
         if (operation.type === 'delete') this.db.prepare('DELETE FROM objects WHERE id=? AND version=?').run(id, operation.expectedVersion);
         else {
-          if (!operation.changes || Object.keys(operation.changes).some((key) => !['x', 'y', 'width', 'height', 'fill'].includes(key))) fail(400, 'invalid_object', 'Object changes support position, dimensions and note color.');
+          if (!operation.changes || Object.keys(operation.changes).some((key) => !['x', 'y', 'width', 'height', 'fill', 'groupId'].includes(key))) fail(400, 'invalid_object', 'Object changes support position, dimensions, note color and group membership.');
           let fill = object.fill ?? null;
           if ('fill' in operation.changes) {
             if (resolveContentKind(this.asset(object.assetId)) !== 'note') fail(400, 'invalid_object', 'Only notes have a background color.');
@@ -1075,10 +1075,12 @@ export class CanvasService {
             if (requested !== null && !isNoteFill(requested)) fail(400, 'invalid_object', 'Choose a note color.');
             fill = requested;
           }
+          const groupId = 'groupId' in operation.changes ? operation.changes.groupId === null ? null : this.group(nonempty(operation.changes.groupId, 'Group ID', 200)).id : object.groupId ?? null;
           const changed = { ...object, ...operation.changes };
           for (const key of ['x', 'y', 'width', 'height'] as const) finite(changed[key], `Object ${key}`);
           if (changed.width <= 0 || changed.height <= 0) fail(400, 'invalid_object', 'Objects require positive dimensions.');
-          this.db.prepare('UPDATE objects SET x=?,y=?,width=?,height=?,fill=?,version=version+1,updated_at=? WHERE id=? AND version=?').run(changed.x, changed.y, changed.width, changed.height, fill, time, id, operation.expectedVersion);
+          this.db.prepare('UPDATE objects SET x=?,y=?,width=?,height=?,fill=?,group_id=?,version=version+1,updated_at=? WHERE id=? AND version=?').run(changed.x, changed.y, changed.width, changed.height, fill, groupId, time, id, operation.expectedVersion);
+          if (groupId) dirtyGroups.add(groupId);
         }
         if (object.groupId) dirtyGroups.add(object.groupId);
         touched.add(id); objectIds.push(id);

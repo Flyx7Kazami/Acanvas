@@ -2,6 +2,29 @@
 
 日期：2026-10-13（Asia/Shanghai）。分支：`codex/item-groups-folders`。范围：R14 / A15，设计见 [ITEM_GROUPS_DESIGN.md](ITEM_GROUPS_DESIGN.md)。测试使用独立临时项目；交互演示按下方记录更新运行代码，用户内容保持。
 
+## Folder 封套、引用与 CLI 分组操作
+
+实施及独立验收完成。左列细线从 x14 延伸至 x108，上密下疏至 y212；左右线条采用 1px 与 y+0.5px 对齐，DPR1/2 密线可区分。右列真实名称和 item 数网格对齐，背板降低 16px，封套四角 4px、预览角 2px且图片铺满，hover 微展开 220ms，216×224 封套/216×256 布局与命中区域保持。
+
+Group 选择、hover、focus 统一表达，显式 group/item 选择接管当前目标。有效 frame 标题纳入原工具条定位障碍，成员 Delete 让出标题中心。Folder 封套单击进入；下方名称或数量 caption 点击/拖动选择整组，形成原成员引用预览，聚焦对话框成为正式引用。Tab、Enter/Space 和 CDP 原生触屏路径通过；改名时 caption 暂停按钮语义并保持原位输入。
+
+CLI 增加 `group list/read/put`。读取包含原 object/asset 文件元数据、版本、成员 world 坐标/尺寸和当前 displayBounds。既有 item 通过共享 update 的 groupId 转组，保留对象、素材和来源身份；坐标可显式修改或保持，groupId:null 返回一级。旧/新组同事务刷新，CAS、缺失目标、空组锚点、整批失败回滚以及 task complete 来源/回执规则通过。
+
+- `npm run build:server`、`npm run typecheck`、`git diff --check`：通过。
+- `.runtime/node_modules/node/bin/node --test dist/tests/item-groups.test.js dist/tests/group-cli.test.js dist/tests/frontend-geometry.test.js`：47/47 通过（分组 30、已构建 CLI 真实子进程 1、几何 16），独立复验同样通过。补充 displayBounds 断言后 CLI 1/1 再通过。
+- 既有 server/text-content 回归：32/32 通过，便签颜色与内容接口保持。
+- `.runtime/node_modules/node/bin/node node_modules/vite/bin/vite.js build --configLoader runner --outDir /private/tmp/acanvas-folder-final-web`：通过，固定资源 `main-B-FO5p4r.js` / `main-BY3XPmnX.css`。
+- `ACANVAS_TEST_WEB_ROOT=/private/tmp/acanvas-folder-final-web .runtime/node_modules/node/bin/node --test dist/tests/item-groups-ui.test.js`：最终 5/5 通过，78.28 秒，失败、跳过与取消均为零。包括原有完整业务链路、操作目标竞争、真实标题中心点击、folder caption 的鼠标/键盘/触屏与拖动 +26/+18、成员引用正式加入 composer、编辑语义与封套进入/返回。
+- Caption 捕获定向：短名/长中文名各自 rest/hover 及零 pageerror 共 5/5 通过，使用实际小数 CSS 尺寸和 DOM 溢出判断，完整名称与真实省略一致。
+
+独立最终验收：47/47 服务/CLI/几何、21/21 界面、caption 专项 1/1，以及清空选择后 CDP touch caption → 成员预览 → composer 专项 1/1 PASS。六色、长中文、0/1/103 items、hover 中间帧/桥接/布局稳定、减少动态效果、320px 深色和 390px、标题/空白/组间切换/大框部分离屏、成员独立、原位改名及进入/返回均实际执行。捕获混合图片和真实 note，四项 Done 分别为静止、hover 中间帧、长名和空组：216×256 局部平均最大通道差为 0.802、1.300、0.909、0.376/255，差异超过 20 的像素占 1.387%、1.501%、1.356%、0.660%。名称语义、封套和预览一致，文字栅格存在轻微差异。
+
+审查发现均闭合：原 hover 目标压过显式 group/item 选择；成员 Delete 覆盖 frame 标题中心；完整 `Touch archive` 因整数 clientWidth 被截图误省略。前两项通过实际用户入口复验，捕获短名完整保留、长名真实省略。独立整体脚本首轮在任何检查前遇到 loopback ECONNRESET（零项执行），同一候选重跑完成 21/21；原记录保留，产品无重试分支。独立证据位于 `/private/tmp/acanvas-folder-final-independent-retry/`、`/private/tmp/acanvas-folder-final-caption-independent/`、`/private/tmp/acanvas-folder-final-touch-clear/`，定向捕获报告位于 `/private/tmp/acanvas-folder-capture-sol-uWSFMD/report.json`。
+
+原 58785 服务被发现已离线，使用同项目、端口与 session 启动匹配当前 dist API 和最终资源，进程 detached 且 PPID=1，正常 runtime 管理保持可用。只读核对 4 sessions、13 items、2 groups、14 assets（含 6 PNG，共 5,415,361 字节），原素材按元数据尺寸可读且重复读取字节一致，所有 session 的重复公开 state 相同；保留现有名称、内容、草稿和保存视图。离线前没有本次新的业务/字节快照，验证边界为恢复后读回及重复一致性，沿用产品正常恢复。未执行 seed、board operations、视图保存或 SQLite 改写，用户全板和个人 PNG 保留在运行项目。主智能体刷新原 in-app tab，确认实际加载最终 JS、folder caption 的 Select group 按钮/Tab 入口和原内容；原用户会继续编辑，保存的当前视图为准。运行只读记录位于 `/private/tmp/acanvas-folder-runtime-eJ7fFU/`。
+
+截图：[静止封套](evidence/item-groups/folder-detail-closed.png)、[微展开与操作条](evidence/item-groups/folder-detail-hover.png)。全部截图和测试采用隔离素材或控件区域。
+
 ## Font Awesome、删除顺序与 Group N
 
 实施及独立验收完成。Group/Ungroup 使用用户选择的 Font Awesome Free Regular 原版 `object-group` / `object-ungroup`，保留原 path、576×512/640×512 viewBox、版权与来源，以 16×16 contain/currentColor 显示，32×32 按钮与纯图标布局保持。选区 Delete 位于 DOM、视觉与 Tab 顺序最后。默认 Group N 由项目服务同事务递增分配，跨会话/重启/解组延续、失败回滚，显式与既有名称保持。

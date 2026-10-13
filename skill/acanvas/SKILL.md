@@ -38,6 +38,14 @@ Opening a bare browser URL creates a tab-local task scope and records its ID in 
 
 For background annotation screenshots, use `browser open --session <ID>` with the project arguments. The project's local service manages an independent Google Chrome profile and captures the user's original Page. `browser status` reads the owned pages and `browser close --session <ID>` closes that scope's window. The UI's **Open capture window** provides the same entry. Project shutdown closes the owned browser resources.
 
+## Inspect groups and place members
+
+Read the project's groups with `group list --project <root> --session <ID>`, then `group read --project <root> --session <ID> --group <group ID>`. The read result contains the group and its ordered `members`, each with the original `object` and `asset` metadata, including file name, asset ID, object ID and version. Use `asset read --asset <asset ID> --out <new file>` to inspect the original file bytes.
+
+Both canvas levels use project world coordinates. Member `x`, `y`, `width` and `height` describe the real item; they remain in that coordinate system when entering a folder. A folder's `x`/`y` is its stable main-board anchor, while its saved `width`/`height` describes the expanded group frame. `group read` also returns `displayBounds` for the current main-board layout, including the folder's name area. A newly imported asset enters a group through `board operations` or `task complete` with `create.object.groupId` and explicit world coordinates.
+
+Move an existing item with `group put --project <root> --session <ID> --group <group ID> --object <object ID> --version <current object version>`. Optional `--x` and `--y` set its world position; omitting them keeps the current position. The shared update operation preserves the object ID, original asset and source history and updates both groups' geometry and versions. Read back the target group after placement. For multiple items, submit one `update` per object with `changes: {"groupId":"<group ID>"}` in the same `board operations` request; include current object versions. `changes.groupId: null` returns a member to the main board.
+
 ## Consume the queue
 
 1. Start with `task next --session <ID>` and the project arguments. The CLI creates a consumer ID and returns its project/session binding. Reuse that returned consumer ID throughout this loop. A successful claim returns one task and its run ID. Keep these IDs for every progress, output and completion call. `task:null` means the queue is idle and this consumer activation has ended; stop. New requests remain saved for a new explicit continuation.
