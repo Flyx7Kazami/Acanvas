@@ -152,6 +152,64 @@ test('folder member edits preserve its anchor and expansion aligns current geome
   assert.equal(f.service.object('b').x - f.service.object('a').x, separation);
 });
 
+test('default group names advance across sessions, restarts and ungrouping', async t => {
+  const f = await fixture(t), other = f.service.createSession('Other');
+  f.create('a', 0, 0); f.create('b', 200, 0); f.group(['a', 'b'], 'first');
+  assert.equal(f.service.group('first').name, 'Group 1');
+  f.create('c', 500, 0); f.create('d', 700, 0);
+  f.service.boardOperations(other.id, [{ type: 'group.create', group: { id: 'second', objectIds: ['c', 'd'] }, expectedVersions: { c: 1, d: 1 } }]);
+  assert.equal(f.service.group('second').name, 'Group 2');
+  f.operations(['first', 'second'].map(groupId => ({ type: 'group.ungroup', groupId, expectedVersion: f.service.group(groupId).version })));
+  f.restart(); f.group(['a', 'b'], 'third');
+  assert.equal(f.service.group('third').name, 'Group 3');
+  f.update({ name: 'Selected references' }, 'third'); f.restart(); f.group(['c', 'd'], 'fourth');
+  assert.equal(f.service.group('third').name, 'Selected references'); assert.equal(f.service.group('fourth').name, 'Group 4');
+});
+
+test('explicit names stay intact and automatic names advance beyond existing valid numbers', async t => {
+  const f = await fixture(t);
+  const names = ['Personal archive', 'Group 9', 'Group 0', 'Group -40', 'Group 1e6', 'Group 9007199254740992'];
+  for (const [index, name] of names.entries()) {
+    const a = `a-${index}`, b = `b-${index}`;
+    f.create(a, index * 500, 0); f.create(b, index * 500 + 200, 0);
+    f.operations([{ type: 'group.create', group: { id: `named-${index}`, name, objectIds: [a, b] }, expectedVersions: { [a]: 1, [b]: 1 } }]);
+  }
+  assert.equal(f.service.db.prepare("SELECT value FROM metadata WHERE key='group_name_sequence'").get(), undefined);
+  f.create('auto-a', 0, 400); f.create('auto-b', 200, 400); f.group(['auto-a', 'auto-b'], 'auto');
+  assert.equal(f.service.group('auto').name, 'Group 10');
+  assert.deepEqual(names.map((_, index) => f.service.group(`named-${index}`).name), names);
+  f.update({ name: 'Group 25' }, 'named-0');
+  f.create('next-a', 500, 400); f.create('next-b', 700, 400); f.group(['next-a', 'next-b'], 'next');
+  assert.equal(f.service.group('next').name, 'Group 26'); assert.equal(f.service.group('named-0').name, 'Group 25');
+});
+
+test('a failed board transaction preserves the next automatic group number', async t => {
+  const f = await fixture(t); f.create('a', 0, 0); f.create('b', 200, 0);
+  assert.throws(() => f.operations([
+    { type: 'group.create', group: { id: 'failed', objectIds: ['a', 'b'] }, expectedVersions: { a: 1, b: 1 } },
+    { type: 'delete', objectId: 'a', expectedVersion: 0 },
+  ]), apiError(409, 'object_conflict'));
+  assert.equal(f.service.groups().length, 0); assert.equal(f.service.db.prepare("SELECT value FROM metadata WHERE key='group_name_sequence'").get(), undefined);
+  f.group(['a', 'b'], 'first'); assert.equal(f.service.group('first').name, 'Group 1');
+  f.create('c', 500, 0); f.create('d', 700, 0);
+  assert.throws(() => f.operations([
+    { type: 'group.create', group: { id: 'second-failed', objectIds: ['c', 'd'] }, expectedVersions: { c: 1, d: 1 } },
+    { type: 'delete', objectId: 'a', expectedVersion: 0 },
+  ]), apiError(409, 'object_conflict'));
+  f.restart(); f.group(['c', 'd'], 'second'); assert.equal(f.service.group('second').name, 'Group 2');
+});
+
+test('existing database names stay unchanged when automatic numbering starts', async t => {
+  const f = await fixture(t); f.create('a', 0, 0); f.create('b', 200, 0); f.group(['a', 'b'], 'old');
+  f.update({ name: 'Group' }, 'old');
+  f.create('c', 500, 0); f.create('d', 700, 0); f.group(['c', 'd'], 'numbered'); f.update({ name: 'Group 12' }, 'numbered');
+  f.service.db.prepare("DELETE FROM metadata WHERE key='group_name_sequence'").run();
+  const existing = f.service.groups(); f.restart(); assert.deepEqual(f.service.groups(), existing);
+  f.create('e', 0, 400); f.create('g', 200, 400); f.group(['e', 'g'], 'new');
+  assert.equal(f.service.group('new').name, 'Group 13');
+  assert.equal(f.service.group('old').name, 'Group'); assert.equal(f.service.group('numbered').name, 'Group 12');
+});
+
 test('creation chooses valid random colors that remain stable through changes and restart', async t => {
   const f = await fixture(t);
   const random = t.mock.method(Math, 'random', () => 0);

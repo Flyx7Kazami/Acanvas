@@ -502,6 +502,7 @@ details[open] summary svg { rotate: 180deg; }
 .group-action:hover:not(:disabled) { background:var(--soft); color:var(--ink); }
 .group-action-icon { color:inherit; display:flex; flex:none; align-items:center; justify-content:center; width:16px; height:16px; }
 .group-action-icon>svg { width:16px; height:16px; stroke-width:2; }
+.fontawesome-object-icon { display:block; width:16px; height:16px; background-color:currentColor; mask-repeat:no-repeat; mask-position:center; mask-size:contain; }
 .group-navigation-header { display:flex; align-items:center; flex:0 1 auto; gap:5px; min-width:0; }
 .group-navigation-name { min-width:0; font-size:12px; font-weight:500; padding-inline:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
 .group-navigation-header>small { flex:none; color:var(--muted); font-size:10px; margin-right:6px; }

@@ -1,8 +1,25 @@
 # Item 分组与文件夹验收
 
-日期：2026-10-13（Asia/Shanghai）。分支：`codex/item-groups-folders`。范围：R14 / A15，设计见 [ITEM_GROUPS_DESIGN.md](ITEM_GROUPS_DESIGN.md)。测试数据均在独立临时项目；本轮保持用户实际白板与运行服务原状。
+日期：2026-10-13（Asia/Shanghai）。分支：`codex/item-groups-folders`。范围：R14 / A15，设计见 [ITEM_GROUPS_DESIGN.md](ITEM_GROUPS_DESIGN.md)。测试使用独立临时项目；交互演示按下方记录更新运行代码，用户内容保持。
 
-## Group 纯图标修订
+## Font Awesome、删除顺序与 Group N
+
+实施及独立验收完成。Group/Ungroup 使用用户选择的 Font Awesome Free Regular 原版 `object-group` / `object-ungroup`，保留原 path、576×512/640×512 viewBox、版权与来源，以 16×16 contain/currentColor 显示，32×32 按钮与纯图标布局保持。选区 Delete 位于 DOM、视觉与 Tab 顺序最后。默认 Group N 由项目服务同事务递增分配，跨会话/重启/解组延续、失败回滚，显式与既有名称保持。
+
+- `npm run build:server`、`npm run typecheck`、`git diff --check`：通过。
+- `.runtime/node_modules/node/bin/node --test dist/tests/item-groups.test.js dist/tests/frontend-geometry.test.js`：42/42 通过（分组 26、几何 16）。
+- `.runtime/node_modules/node/bin/node node_modules/vite/bin/vite.js build --configLoader runner --outDir /private/tmp/acanvas-fa-group-web-r2`：通过，最终资源 `main-BVxjUEW6.js`。
+- `ACANVAS_TEST_WEB_ROOT=/private/tmp/acanvas-fa-group-web-r2 .runtime/node_modules/node/bin/node --test dist/tests/item-groups-ui.test.js`：最终 4/4 通过，28.21 秒，失败与跳过均为零。复用完整业务回归并增加键盘解组后重建、默认名称及继续改名/解组断言。同 ID 吸附检查显式复位至 100% 后测量，产品动画保持。
+
+独立 HTTP/CLI 验收覆盖跨任务范围、重启、解组、手动编号名称避重及整批事务回滚：默认 Group 1/2，改名 Group 9 后生成 Group 10，解组和重启后继续 11，显式 Group 25 后生成 26，经 HTTP 的已构建 CLI 创建 27；既有 Group 与自定义名称保持。失败批次的对象、组、版本和编号一起回滚。
+
+独立真实 Chrome 确认原 SVG 逐字节一致、16px 原比例及纯图标；多选为 Group → Align → Delete，单便签为 Color → Delete，Tab 遍历相应子菜单后抵达 Delete。真实 Sage 保存与单项/多项删除通过，原素材和未选对象保留。hover 连续命中、原位编辑、320/390px 单行导航与键盘通过；390px Chrome hasTouch 上实际 tap 进入、改名和返回通过，验证范围为触屏模拟。
+
+审查发现的工具条状态问题已闭合：按优先级解析仍存在的有效 group。独立复验键盘 Ungroup → 多选 → UI 新建 Group 2 → 立即 Rename/Ungroup → 实际改名和解组通过；外部移除已聚焦 group、正在改名/悬停的 group 后，仍能操作存活选中组。全部发现已闭合。独立报告与原失败/复验记录保存在 `/private/tmp/acanvas-fa-independent-review-YHkSzN/REVIEW.md`。
+
+原 58785 演示使用同项目、会话与固定最终资源目录更新，零 pageerror。主智能体刷新原 in-app tab 并核对 Font Awesome 原图、Group → Align → Delete 顺序；用户原名称、素材与位置、55% 视口与两项选区保持，点击原已选素材恢复两项引用预览。测试与截图使用隔离素材或控件裁切，用户新增 PNG 全板保持在运行项目。截图：[多选操作顺序](evidence/item-groups/fa-selection-order.png)、[便签操作顺序](evidence/item-groups/fa-note-order.png)、[默认 Group 1](evidence/item-groups/group-1.png)。
+
+## Group 纯图标修订（7cb317e 历史记录）
 
 实施及独立验收完成。全部分组动作使用纯图标按钮，文件夹与相反方向箭头表达收纳/展开，成对的框内/分离卡片表达分组/解组，带基线铅笔表达改名，左箭头返回。图标描线使用正文色，按钮保留 tooltip 和无障碍名称。
 

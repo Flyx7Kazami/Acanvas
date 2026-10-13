@@ -455,6 +455,20 @@ export class CanvasService {
     return row ? this.groupFrom(row) : fail(404, 'group_missing', 'The referenced group is unavailable.');
   }
   groups(): BoardGroup[] { return (this.db.prepare('SELECT * FROM groups ORDER BY created_at,id').all() as Row[]).map(row => this.groupFrom(row)); }
+  private nextGroupName(): string {
+    const saved = this.db.prepare("SELECT value FROM metadata WHERE key='group_name_sequence'").get() as Row | undefined;
+    let sequence = Number(saved?.value ?? 0);
+    if (!Number.isSafeInteger(sequence) || sequence < 0) fail(409, 'group_name_limit', 'Choose a group name.');
+    for (const row of this.db.prepare('SELECT name FROM groups').all() as Row[]) {
+      const match = /^Group ([1-9]\d*)$/.exec(row.name);
+      const number = match ? Number(match[1]) : 0;
+      if (Number.isSafeInteger(number) && number > sequence) sequence = number;
+    }
+    const next = sequence + 1;
+    if (!Number.isSafeInteger(next)) fail(409, 'group_name_limit', 'Choose a group name.');
+    this.db.prepare("INSERT INTO metadata(key,value) VALUES('group_name_sequence',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(String(next));
+    return `Group ${next}`;
+  }
   private groupMembers(id: string): BoardObject[] { return (this.db.prepare('SELECT * FROM objects WHERE group_id=? ORDER BY created_at,rowid').all(id) as Row[]).map(row => this.objectFrom(row)); }
   private refreshGroup(id: string, time: string) {
     const group = this.group(id), bounds = groupFrameBounds(this.groupMembers(id), group);
@@ -1076,7 +1090,7 @@ export class CanvasService {
         if (members.length < 2 || members.length !== input.objectIds.length) fail(400, 'invalid_group', 'A group starts with at least two distinct items.');
         const id = input.id === undefined ? randomUUID() : nonempty(input.id, 'Group ID', 200);
         if (this.db.prepare('SELECT id FROM groups WHERE id=?').get(id)) fail(409, 'group_conflict', 'The group ID already exists.');
-        const name = input.name === undefined ? 'Group' : nonempty(input.name, 'Group name', 200);
+        const requestedName = input.name === undefined ? undefined : nonempty(input.name, 'Group name', 200);
         const color = input.color === undefined ? GROUP_COLORS[Math.floor(Math.random() * GROUP_COLORS.length)] : input.color;
         if (!GROUP_COLORS.includes(color)) fail(400, 'invalid_group', 'Choose a folder color.');
         const objects = members.map(memberId => {
@@ -1086,6 +1100,7 @@ export class CanvasService {
           return object;
         });
         const bounds = groupFrameBounds(objects);
+        const name = requestedName ?? this.nextGroupName();
         this.db.prepare("INSERT INTO groups VALUES(?,?,'frame',?,?,?,?,?,1,?,?)").run(id, name, color, bounds.x, bounds.y, bounds.width, bounds.height, time, time);
         for (const object of objects) {
           this.db.prepare('UPDATE objects SET group_id=?,version=version+1,updated_at=? WHERE id=?').run(id, time, object.id);

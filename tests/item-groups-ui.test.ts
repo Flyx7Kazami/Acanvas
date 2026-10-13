@@ -55,6 +55,7 @@ test('item groups use real selection, folders, navigation, editing and current-l
   await expect(page.locator('.board-object.selected')).toHaveCount(3);
   await page.getByRole('button', { name: 'Group', exact: true }).click();
   await expect(page.locator('.group-frame')).toHaveCount(1);
+  await expect(page.locator('.group-frame .group-name-slot')).toHaveText('Group 1');
   let group = f.state().groups[0]; assert.deepEqual(new Set(group.objectIds), new Set([a.id, b.id, n.id]));
   await page.getByRole('button', { name: 'Rename', exact: true }).click();
   const name = page.getByRole('textbox', { name: 'Group name', exact: true }); await name.fill('Color studies'); await name.press('Enter');
@@ -126,7 +127,7 @@ test('item groups use real selection, folders, navigation, editing and current-l
   await page.screenshot({ path: join(evidence, 'secondary-dark-390.png') });
   await page.getByRole('button', { name: 'Expand on board', exact: true }).click(); await expect(page.locator('.group-frame')).toHaveCount(1);
   await page.getByRole('button', { name: 'Select group Color studies', exact: true }).focus(); await page.keyboard.press('Enter');
-  await page.getByRole('button', { name: 'Ungroup', exact: true }).click(); await expect(page.locator('.board-group')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Ungroup', exact: true }).focus(); await page.keyboard.press('Enter'); await expect(page.locator('.board-group')).toHaveCount(0);
   assert.equal(f.state().objects.length, 7); assert(f.state().objects.every(object => !object.groupId));
   // Region captures keep their identity after the collection is dissolved.
   await page.locator('.annotation-content').last().click();
@@ -147,6 +148,20 @@ test('item groups use real selection, folders, navigation, editing and current-l
   const retainedText = page.getByRole('textbox', { name: 'Annotation text', exact: true }); await expect(retainedText).toBeVisible(); await retainedText.fill('Retained capture after source removal');
   await expect(page.getByText('Source removed', { exact: true })).toBeVisible(); await page.getByRole('button', { name: 'Done', exact: true }).click();
   await expect.poll(() => f.state().draft.annotations.at(-1)?.text).toBe('Retained capture after source removal');
+  // A removed focused group does not mask a newly selected group.
+  await page.locator(`[data-object-id="${b.id}"]`).focus(); await page.keyboard.press('Enter');
+  await page.locator(`[data-object-id="${n.id}"]`).focus(); await page.keyboard.press('Shift+Enter');
+  await page.getByRole('button', { name: 'Group', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Select group Group 2', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Rename', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ungroup', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Rename', exact: true }).click();
+  const regroupName = page.getByRole('textbox', { name: 'Group name', exact: true }); await regroupName.fill('Regrouped'); await regroupName.press('Enter');
+  await expect.poll(() => f.state().groups[0]?.name).toBe('Regrouped');
+  await expect(page.getByRole('button', { name: 'Ungroup', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Ungroup', exact: true }).focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('.board-group')).toHaveCount(0);
+
 });
 
 test('layer projection excludes hidden snap targets and keeps asynchronous import ownership', { timeout: 90_000 }, async t => {
@@ -207,6 +222,8 @@ test('layer projection excludes hidden snap targets and keeps asynchronous impor
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByRole('button', { name: 'Back to board', exact: true }).click();
   await expect(page.locator('.canvas-world')).not.toHaveAttribute('data-transition-kind', /.+/);
+  await page.getByRole('button', { name: 'Reset zoom to 100%', exact: true }).click();
+  await expect.poll(() => page.locator('.canvas-world').evaluate(element => new DOMMatrix(getComputedStyle(element).transform).a)).toBe(1);
   // An object and a group may have the same persistent ID; their snap units remain distinct.
   const e = await f.add(image, 24, 40, 120, 80), h = await f.add(image, 144, 110, 72, 60);
   await createGroup(free.id, 'Shared ID collection', [e, h]);
