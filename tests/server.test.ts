@@ -645,6 +645,9 @@ test('inline reference positions validate UTF-16 boundaries, visual order, ident
 });
 
 test('opt-in bind and allowed hosts extend host and origin checks while localhost stays the default', async (t) => {
+  const hostThreadId = process.env.CODEX_THREAD_ID;
+  delete process.env.CODEX_THREAD_ID;
+  t.after(() => { if (hostThreadId === undefined) delete process.env.CODEX_THREAD_ID; else process.env.CODEX_THREAD_ID = hostThreadId; });
   const root = await mkdtemp(join(tmpdir(), 'acanvas-test-'));
   const status = (url: string, headers: Record<string, string>) => new Promise<number>((resolvePromise, reject) => { const request = rawRequest(url, { headers }, (response) => { response.resume(); response.on('end', () => resolvePromise(response.statusCode!)); }); request.on('error', reject); request.end(); });
   const local = await startServer({ root, port: 0 });

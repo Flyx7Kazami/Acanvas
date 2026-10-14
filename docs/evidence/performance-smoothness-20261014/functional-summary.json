@@ -1,0 +1,699 @@
+{
+  "date": "2026-10-14",
+  "timezone": "Asia/Shanghai",
+  "branch": "codex/performance-smoothness",
+  "status": "Functional comparisons completed; legacy suite failures and environment failures remain recorded.",
+  "productSourceScope": {
+    "changed": [
+      "src/web/App.tsx",
+      "src/web/HtmlPreviewPool.tsx",
+      "src/web/useCanvasLayout.ts"
+    ],
+    "unchanged": [
+      "server/service/API/transaction/version/history/synchronization implementations",
+      "CanvasAnnotationNote",
+      "useBoard",
+      "user running service and user board data"
+    ],
+    "notes": "Only test fixture corrections followed the stable product build used for measurements."
+  },
+  "rounds": [
+    {
+      "name": "sandbox initial default Node attempt",
+      "file": "node-final.tap.gz",
+      "tests": 210,
+      "pass": 54,
+      "fail": 112,
+      "cancelled": 35,
+      "skipped": 9,
+      "classification": "execution environment; loopback listen EPERM and browser launch restrictions; deliberately interrupted; excluded from product regression conclusions"
+    },
+    {
+      "name": "first unrestricted serial default Node",
+      "file": "node-final-escalated.tap.gz",
+      "tests": 365,
+      "pass": 325,
+      "fail": 4,
+      "cancelled": 0,
+      "skipped": 36,
+      "failed": [
+        "native HTML input append",
+        "annotation editor append focus",
+        "collapsed comment cross-theme new mark",
+        "opt-in host URL without explicit no-host environment"
+      ]
+    },
+    {
+      "name": "three original failing browser cases unchanged fixtures original build",
+      "file": "chatbox-baseline.tap.gz",
+      "tests": 3,
+      "pass": 1,
+      "fail": 2,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "name": "three original failing browser cases unchanged fixtures candidate",
+      "file": "chatbox-candidate.tap.gz",
+      "tests": 3,
+      "pass": 2,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "name": "initial corrected four fixtures original build",
+      "file": "fixed-baseline.tap.gz",
+      "tests": 4,
+      "pass": 3,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0,
+      "notes": "Native HTML center click still overlapped the annotation pin."
+    },
+    {
+      "name": "initial corrected four fixtures candidate",
+      "file": "fixed-candidate.tap.gz",
+      "tests": 4,
+      "pass": 4,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "name": "read-only native focus and selection diagnosis original build",
+      "file": "caret-baseline.tap.gz",
+      "tests": 1,
+      "pass": 0,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0,
+      "notes": "The native input stayed inactive after the default center click; the screenshot shows the parent annotation pin covering that point."
+    },
+    {
+      "name": "final corrected four fixtures original build",
+      "file": "stable-baseline.tap.gz",
+      "tests": 4,
+      "pass": 4,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "name": "final corrected four fixtures candidate",
+      "file": "stable-candidate.tap.gz",
+      "tests": 4,
+      "pass": 4,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "name": "second unrestricted serial default Node",
+      "file": "node-verified.tap.gz",
+      "tests": 365,
+      "pass": 328,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 36,
+      "failed": [
+        "reference neutral background compared against hover background"
+      ]
+    },
+    {
+      "name": "unchanged reference appearance fixture original build counterexample",
+      "file": "reference-baseline.tap.gz",
+      "tests": 1,
+      "pass": 0,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0,
+      "notes": "The ordinary color-mix background was compared with the hovered reference background; the same failure occurs in the original build."
+    },
+    {
+      "name": "corrected reference neutral and hover fixture original build",
+      "file": "reference-fixed-baseline.tap.gz",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "name": "corrected reference neutral and hover fixture candidate",
+      "file": "reference-fixed-candidate.tap.gz",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "name": "complete legacy Playwright candidate run",
+      "file": "browser-final.log.gz",
+      "tests": 104,
+      "pass": 53,
+      "fail": 51,
+      "cancelled": 0,
+      "notes": "Completed after the main agent terminated only the stalled isolated worker. Failures remain recorded; original-build exact comparisons are pending."
+    },
+    {
+      "name": "original frontend exact comparison of 50 candidate legacy failures",
+      "file": "browser-baseline-failed.log.gz",
+      "tests": 50,
+      "pass": 0,
+      "fail": 50,
+      "notes": "10000ms test timeout; original full candidate used 45000ms. 49 failed at the same assertion; one reached a later legacy screenshot assertion and was investigated at the original timeout."
+    },
+    {
+      "name": "unchanged shared reference case original frontend original timeout",
+      "file": "shared-reference-baseline.log.gz",
+      "tests": 1,
+      "pass": 0,
+      "fail": 1,
+      "timeoutMs": 45000,
+      "notes": "Reached the legacy screenshot naturalWidth expected 320, actual 452 assertion."
+    },
+    {
+      "name": "unchanged shared reference case candidate original timeout",
+      "file": "shared-reference-candidate.log.gz",
+      "tests": 1,
+      "pass": 0,
+      "fail": 1,
+      "timeoutMs": 45000,
+      "notes": "Entered before capture completion; third request remained in the draft under the unchanged incomplete-capture protection."
+    },
+    {
+      "name": "temporary Send-ready diagnostic original frontend",
+      "file": "shared-ready-baseline.log.gz",
+      "tests": 1,
+      "pass": 0,
+      "fail": 1,
+      "timeoutMs": 45000,
+      "actualQueueCount": 3,
+      "notes": "All original assertions retained; failed only at legacy screenshot width expected 320, actual 452."
+    },
+    {
+      "name": "temporary Send-ready diagnostic candidate frontend",
+      "file": "shared-ready-candidate.log.gz",
+      "tests": 1,
+      "pass": 0,
+      "fail": 1,
+      "timeoutMs": 45000,
+      "actualQueueCount": 3,
+      "notes": "All original assertions retained; failed only at the same legacy screenshot width expected 320, actual 452."
+    }
+  ],
+  "fixtureCorrections": [
+    {
+      "files": [
+        "tests/chatbox-ui.test.ts"
+      ],
+      "cause": "The input center was covered by the completed annotation pin, so a click could reopen the annotation; End also left an implicit native caret position.",
+      "change": "Click an exposed native input point, assert actual focus, use native SelectAll then ArrowRight, read selectionStart/selectionEnd before appending; retain final value, focus and iframe source assertions."
+    },
+    {
+      "files": [
+        "tests/chatbox-ui.test.ts"
+      ],
+      "cause": "A global Escape could run before the reopened annotation editor received focus, leaving the existing annotation as the Mark redraw target.",
+      "change": "Send Escape to the actual native annotation textarea, assert reader unmounted and Mark inactive; compare every existing saved annotation in full after creating the next one."
+    },
+    {
+      "files": [
+        "tests/server.test.ts"
+      ],
+      "cause": "CODEX_THREAD_ID automatically binds the CLI project-open call and adds its session query, while this fixture checks a no-host bare URL.",
+      "change": "Explicitly remove that environment key inside the fixture, restore its original presence/value in test cleanup, retain all allowed-host, Origin, bind and URL assertions."
+    },
+    {
+      "files": [
+        "tests/reference-occurrences-ui.test.ts"
+      ],
+      "cause": "Reference confirmation leaves the pointer over a formal token, making a hovered background compare with a neutral preview background.",
+      "change": "Move the real pointer away for both neutral readings; also assert preview and formal hover backgrounds agree and differ from neutral; keep identity, ordering, deletion and reload assertions.",
+      "verification": "Original and candidate builds each passed the same exact corrected test with all neutral and hover assertions."
+    },
+    {
+      "files": [
+        "tests/multimodal.spec.ts"
+      ],
+      "cause": "A child ended by signal has exitCode null and a non-null signalCode. Waiting for a new exit event after it has already exited can strand test cleanup.",
+      "change": "Wait only while both exitCode and signalCode are null; retain stderr and zero exit-code assertions and assert signalCode null.",
+      "verification": "Independent source review passed; the 50-case original-build browser comparison completed without a fixture cleanup hang. Signal-exited children remain explicit test failures."
+    }
+  ],
+  "stalledWorkerTimeline": [
+    {
+      "at": "2026-10-14T13:36:54+08:00",
+      "precision": "file modification timestamp",
+      "event": "Audio test error-context.md existed; its snapshot shows disabled Send and a reconnecting isolated board."
+    },
+    {
+      "at": "2026-10-14 around 13:40-13:41 Asia/Shanghai",
+      "precision": "approximate observation",
+      "event": "Runner PID 79521 had only worker PID 91988; worker was idle and had no service or Chrome children."
+    },
+    {
+      "at": "2026-10-14 around 13:41 Asia/Shanghai",
+      "precision": "approximate action time supplied by main agent",
+      "event": "Main agent sent SIGTERM only to isolated Playwright worker 91988. No broad Chrome/process termination was used."
+    },
+    {
+      "order": "after SIGTERM",
+      "event": "Runner recorded test 76 as a failure and progressed through 77 and later cases, eventually reporting 104 tests: 53 passed and 51 failed."
+    }
+  ],
+  "pendingComparisons": {
+    "status": "complete",
+    "playwrightFailedCases": 51,
+    "originalBuildExactCases": 50,
+    "originalBuildPasses": 0,
+    "originalBuildFailures": 50,
+    "independentSameFailureCases": 1,
+    "sameAssertionCases": 49,
+    "sendReadyDiagnosticCases": 1,
+    "unresolved": 0,
+    "caseDetails": "playwright-case-comparison.json",
+    "referenceCorrectedFixtures": "original 1/1 and candidate 1/1 passed"
+  },
+  "credentialScan": {
+    "method": "Regex scan and redaction of Bearer headers, Cookie headers, credential values and credential query parameters before archive; no raw trace archives included.",
+    "manifest": [
+      {
+        "file": "node-final.tap.gz",
+        "sourceBytes": 100685,
+        "archivedBytes": 14909,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {
+          "tests": 210,
+          "suites": 0,
+          "pass": 54,
+          "fail": 112,
+          "cancelled": 35,
+          "skipped": 9,
+          "todo": 0,
+          "duration_ms": 42590.395583
+        }
+      },
+      {
+        "file": "node-final-escalated.tap.gz",
+        "sourceBytes": 97741,
+        "archivedBytes": 19846,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {
+          "tests": 365,
+          "suites": 0,
+          "pass": 325,
+          "fail": 4,
+          "cancelled": 0,
+          "skipped": 36,
+          "todo": 0,
+          "duration_ms": 364373.718791
+        }
+      },
+      {
+        "file": "node-verified.tap.gz",
+        "sourceBytes": 94101,
+        "archivedBytes": 18915,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {
+          "tests": 365,
+          "suites": 0,
+          "pass": 328,
+          "fail": 1,
+          "cancelled": 0,
+          "skipped": 36,
+          "todo": 0,
+          "duration_ms": 568757.14225
+        }
+      },
+      {
+        "file": "browser-final.log.gz",
+        "sourceBytes": 191008,
+        "archivedBytes": 30357,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {}
+      },
+      {
+        "file": "chatbox-baseline.tap.gz",
+        "sourceBytes": 5184,
+        "archivedBytes": 1352,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {
+          "tests": 3,
+          "suites": 0,
+          "pass": 1,
+          "fail": 2,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "duration_ms": 23133.793042
+        }
+      },
+      {
+        "file": "chatbox-candidate.tap.gz",
+        "sourceBytes": 2486,
+        "archivedBytes": 977,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {
+          "tests": 3,
+          "suites": 0,
+          "pass": 2,
+          "fail": 1,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "duration_ms": 13087.790209
+        }
+      },
+      {
+        "file": "fixed-baseline.tap.gz",
+        "sourceBytes": 3615,
+        "archivedBytes": 1206,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {
+          "tests": 4,
+          "suites": 0,
+          "pass": 3,
+          "fail": 1,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "duration_ms": 14312.579334
+        }
+      },
+      {
+        "file": "fixed-candidate.tap.gz",
+        "sourceBytes": 898,
+        "archivedBytes": 482,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {
+          "tests": 4,
+          "suites": 0,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "duration_ms": 11432.527958
+        }
+      },
+      {
+        "file": "caret-baseline.tap.gz",
+        "sourceBytes": 2893,
+        "archivedBytes": 978,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {
+          "tests": 1,
+          "suites": 0,
+          "pass": 0,
+          "fail": 1,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "duration_ms": 12448.963166
+        }
+      },
+      {
+        "file": "stable-baseline.tap.gz",
+        "sourceBytes": 897,
+        "archivedBytes": 480,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {
+          "tests": 4,
+          "suites": 0,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "duration_ms": 11777.438084
+        }
+      },
+      {
+        "file": "stable-candidate.tap.gz",
+        "sourceBytes": 894,
+        "archivedBytes": 475,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {
+          "tests": 4,
+          "suites": 0,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "duration_ms": 9039.737833
+        }
+      },
+      {
+        "file": "reference-baseline.tap.gz",
+        "sourceBytes": 1212,
+        "archivedBytes": 634,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {
+          "tests": 1,
+          "suites": 0,
+          "pass": 0,
+          "fail": 1,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "duration_ms": 4663.299042
+        }
+      },
+      {
+        "file": "reference-fixed-baseline.tap.gz",
+        "sourceBytes": 348,
+        "archivedBytes": 268,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {
+          "tests": 1,
+          "suites": 0,
+          "pass": 1,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "duration_ms": 15636.42075
+        }
+      },
+      {
+        "file": "reference-fixed-candidate.tap.gz",
+        "sourceBytes": 347,
+        "archivedBytes": 266,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {
+          "tests": 1,
+          "suites": 0,
+          "pass": 1,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0,
+          "duration_ms": 7511.367042
+        }
+      },
+      {
+        "file": "browser-baseline-failed.log.gz",
+        "sourceBytes": 184054,
+        "archivedBytes": 27481,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {}
+      },
+      {
+        "file": "shared-reference-baseline.log.gz",
+        "sourceBytes": 4478,
+        "archivedBytes": 1457,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {}
+      },
+      {
+        "file": "shared-reference-candidate.log.gz",
+        "sourceBytes": 4105,
+        "archivedBytes": 1307,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {}
+      },
+      {
+        "file": "shared-ready-baseline.log.gz",
+        "sourceBytes": 4826,
+        "archivedBytes": 1535,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {}
+      },
+      {
+        "file": "shared-ready-candidate.log.gz",
+        "sourceBytes": 4934,
+        "archivedBytes": 1536,
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        },
+        "counts": {}
+      },
+      {
+        "file": "html-pool-before.json",
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        }
+      },
+      {
+        "file": "html-pool-after.json",
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        }
+      },
+      {
+        "file": "playwright-failure-classification.json",
+        "redactions": {
+          "bearer": 0,
+          "cookie": 0,
+          "credential_value": 0,
+          "url_credential": 0
+        }
+      }
+    ]
+  },
+  "sharedReferenceCausalEvidence": {
+    "originalTraceSummary": "shared-reference-trace-baseline.json",
+    "candidateTraceSummary": "shared-reference-trace-candidate.json",
+    "baseline": {
+      "enterStartMs": 5296.632,
+      "enterEndMs": 5315.36,
+      "pngUploadStartMs": 5210.521,
+      "pngUploadEndMs": 5220.109,
+      "captureConfirmationStartMs": 5224.762,
+      "thirdTasksPostStartMs": 5312.69
+    },
+    "candidate": {
+      "enterStartMs": 4665.687,
+      "enterEndMs": 4678.151,
+      "pngUploadStartMs": 4667.663,
+      "pngUploadEndMs": 4679.446,
+      "captureConfirmationStartMs": 4696.981,
+      "thirdTasksPostObserved": false,
+      "inputSnapshotCapturing": true
+    },
+    "timingScope": "Per-run Playwright monotonic timestamps explain ordering only; these tests are not performance benchmarks.",
+    "temporaryDiagnosticPatch": "shared-send-ready-diagnostic.patch"
+  },
+  "coverageConclusion": "No new product regression was found in the exercised paths. The legacy Playwright suite is not a clean passing suite: all 51 candidate failures are retained with original-build, independent, or Send-ready diagnostic evidence. This comparison does not prove every possible user interaction.",
+  "artifactScan": {
+    "scope": "All added logs and JSON/patch/command files",
+    "credentialPatterns": [
+      "Bearer token",
+      "Cookie header",
+      "quoted token/password/secret/api_key",
+      "token query parameter"
+    ],
+    "redactions": 0,
+    "rawTraceArchivesIncluded": false,
+    "filesScanned": 60,
+    "credentialPatternHits": 0
+  },
+  "independentReview": {
+    "testFixtureDiffs": "passed",
+    "sharedSendReadyDiagnostic": "passed; all original assertions retained and both queues reached 3 before the same existing PNG width failure",
+    "shortscreenComparison": "passed; 17 controls matched in both builds and only Fit all files center hit an existing annotation attachment"
+  }
+}

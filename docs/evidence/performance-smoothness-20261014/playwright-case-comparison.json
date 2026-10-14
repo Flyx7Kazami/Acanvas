@@ -1,0 +1,1151 @@
+{
+  "candidateTestTimeoutMs": 45000,
+  "originalComparisonTestTimeoutMs": 10000,
+  "counts": {
+    "sameFailingAssertionInOriginalBuild": 49,
+    "independentSameHitTargetFailure": 1,
+    "sendReadyDiagnosticSameExistingScreenshotAssertion": 1,
+    "originalBuildPassesAmongCandidateFailures": 0,
+    "unresolved": 0
+  },
+  "comparisons": [
+    {
+      "name": "draft comments autosave, restore and share one editor across numbered canvas and composer entries",
+      "file": "tests/annotation-system.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "draft comments autosave, restore and share one editor across numbered canvas and composer entries",
+        "error": "expect(locator).toBeVisible() failed",
+        "expected": "visible",
+        "received": "<element(s) not found>",
+        "locator": "getByRole('button', { name: 'Annotate', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "draft comments autosave, restore and share one editor across numbered canvas and composer entries",
+        "error": "expect(locator).toBeVisible() failed",
+        "expected": "visible",
+        "received": "<element(s) not found>",
+        "locator": "getByRole('button', { name: 'Annotate', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "main Send captures the latest active video comment after asynchronous frame preparation",
+      "file": "tests/annotation-system.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "main Send captures the latest active video comment after asynchronous frame preparation",
+        "error": "expect(locator).toBeVisible() failed",
+        "expected": "visible",
+        "received": "<element(s) not found>",
+        "locator": "getByRole('button', { name: 'Annotate', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "main Send captures the latest active video comment after asynchronous frame preparation",
+        "error": "expect(locator).toBeVisible() failed",
+        "expected": "visible",
+        "received": "<element(s) not found>",
+        "locator": "getByRole('button', { name: 'Annotate', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "video range selection keeps playback position and replaces its representative frame",
+      "file": "tests/annotation-system.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "video range selection keeps playback position and replaces its representative frame",
+        "error": "expect(locator).toBeVisible() failed",
+        "expected": "visible",
+        "received": "<element(s) not found>",
+        "locator": "getByRole('button', { name: 'Annotate', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "video range selection keeps playback position and replaces its representative frame",
+        "error": "expect(locator).toBeVisible() failed",
+        "expected": "visible",
+        "received": "<element(s) not found>",
+        "locator": "getByRole('button', { name: 'Annotate', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "a superseded video frame upload cannot attach to the next start point",
+      "file": "tests/annotation-system.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "a superseded video frame upload cannot attach to the next start point",
+        "error": "expect(locator).toBeVisible() failed",
+        "expected": "visible",
+        "received": "<element(s) not found>",
+        "locator": "getByRole('button', { name: 'Annotate', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "a superseded video frame upload cannot attach to the next start point",
+        "error": "expect(locator).toBeVisible() failed",
+        "expected": "visible",
+        "received": "<element(s) not found>",
+        "locator": "getByRole('button', { name: 'Annotate', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "removing an active new video comment preserves selection and late frame completion stays with its original identity",
+      "file": "tests/annotation-system.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "removing an active new video comment preserves selection and late frame completion stays with its original identity",
+        "error": "expect(locator).toBeVisible() failed",
+        "expected": "visible",
+        "received": "<element(s) not found>",
+        "locator": "getByRole('button', { name: 'Annotate', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "removing an active new video comment preserves selection and late frame completion stays with its original identity",
+        "error": "expect(locator).toBeVisible() failed",
+        "expected": "visible",
+        "received": "<element(s) not found>",
+        "locator": "getByRole('button', { name: 'Annotate', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "TaskEdit autosaves its comments while Save edit and Cancel edit preserve task order and the ordinary draft",
+      "file": "tests/annotation-system.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "TaskEdit autosaves its comments while Save edit and Cancel edit preserve task order and the ordinary draft",
+        "error": "expect.toHaveValue: Error: Not an input element",
+        "assertion": "  await saveEdit(page).click(); await expect(page.locator('#instruction')).toHaveValue('The next unsent request.');"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "TaskEdit autosaves its comments while Save edit and Cancel edit preserve task order and the ordinary draft",
+        "error": "expect.toHaveValue: Error: Not an input element",
+        "assertion": "  await saveEdit(page).click(); await expect(page.locator('#instruction')).toHaveValue('The next unsent request.');"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "the annotation range shows narrow rails, a flush rounded mask, a compact height and a restored span",
+      "file": "tests/annotation-system.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "the annotation range shows narrow rails, a flush rounded mask, a compact height and a restored span",
+        "error": "expect(locator).toBeVisible() failed",
+        "expected": "visible",
+        "received": "<element(s) not found>",
+        "locator": "getByRole('button', { name: 'Annotate', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "the annotation range shows narrow rails, a flush rounded mask, a compact height and a restored span",
+        "error": "expect(locator).toBeVisible() failed",
+        "expected": "visible",
+        "received": "<element(s) not found>",
+        "locator": "getByRole('button', { name: 'Annotate', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Annotate', exact: true })).toBeVisible();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "annotation text, bubble and full panel keep screen sizes while anchors follow zoom and focus stays stable",
+      "file": "tests/annotation-system.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "annotation text, bubble and full panel keep screen sizes while anchors follow zoom and focus stays stable",
+        "error": "expect(received).toBe(expected) // Object.is equality",
+        "expected": "\"220px\"",
+        "received": "\"204px\"",
+        "assertion": "        expect(metrics.inWorld).toBeFalsy(); expect(metrics.cssWidth).toBe('220px'); expect(metrics.summary.width).toBeCloseTo(220, 3);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "annotation text, bubble and full panel keep screen sizes while anchors follow zoom and focus stays stable",
+        "error": "expect(received).toBe(expected) // Object.is equality",
+        "expected": "\"220px\"",
+        "received": "\"204px\"",
+        "assertion": "        expect(metrics.inWorld).toBeFalsy(); expect(metrics.cssWidth).toBe('220px'); expect(metrics.summary.width).toBeCloseTo(220, 3);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "annotation expansion and retraction keep continuous screen bounds and support interruption and reduced motion",
+      "file": "tests/annotation-system.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "annotation expansion and retraction keep continuous screen bounds and support interruption and reduced motion",
+        "error": "width",
+        "expected": "< 0.1",
+        "received": "0.359375",
+        "assertion": "    for (const key of ['x', 'y', 'width', 'height'] as const) expect(Math.abs(actual[key] - expected[key]), key).toBeLessThan(tolerance);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "annotation expansion and retraction keep continuous screen bounds and support interruption and reduced motion",
+        "error": "width",
+        "expected": "< 0.1",
+        "received": "0.359375",
+        "assertion": "    for (const key of ['x', 'y', 'width', 'height'] as const) expect(Math.abs(actual[key] - expected[key]), key).toBeLessThan(tolerance);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "Cancel edit has theme-aware hover and keyboard feedback with stable bounds and restores the ordinary draft",
+      "file": "tests/annotation-system.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "Cancel edit has theme-aware hover and keyboard feedback with stable bounds and restores the ordinary draft",
+        "error": "expect.toHaveValue: Error: Not an input element",
+        "assertion": "    await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Original queued request.');"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "Cancel edit has theme-aware hover and keyboard feedback with stable bounds and restores the ordinary draft",
+        "error": "expect.toHaveValue: Error: Not an input element",
+        "assertion": "    await page.getByRole('button', { name: 'Edit request 1', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Original queued request.');"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "an open task annotation keeps its full box while ownership changes to the task edit draft",
+      "file": "tests/annotation-system.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "an open task annotation keeps its full box while ownership changes to the task edit draft",
+        "error": "expect.toHaveValue: Error: Not an input element",
+        "assertion": "    await page.getByRole('button', { name: 'Cancel edit', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Ordinary draft.');"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/annotation-system.spec.ts",
+        "name": "an open task annotation keeps its full box while ownership changes to the task edit draft",
+        "error": "expect.toHaveValue: Error: Not an input element",
+        "assertion": "    await page.getByRole('button', { name: 'Cancel edit', exact: true }).click(); await expect(page.locator('#instruction')).toHaveValue('Ordinary draft.');"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "queued annotation chips edit beside canvas markers and preserve the draft scope",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "queued annotation chips edit beside canvas markers and preserve the draft scope",
+        "error": "expect(received).toBeLessThan(expected)",
+        "expected": "< 0.5",
+        "received": "164",
+        "assertion": "  expect(editor.x).toBeGreaterThan(pin.x + pin.width); expect(Math.abs(editor.y - pin.y)).toBeLessThan(.5);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "queued annotation chips edit beside canvas markers and preserve the draft scope",
+        "error": "expect(received).toBeLessThan(expected)",
+        "expected": "< 0.5",
+        "received": "164",
+        "assertion": "  expect(editor.x).toBeGreaterThan(pin.x + pin.width); expect(Math.abs(editor.y - pin.y)).toBeLessThan(.5);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "annotation levels retain clipped regions and sent task markings follow explicit inspection only",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "annotation levels retain clipped regions and sent task markings follow explicit inspection only",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "3",
+        "received": "1",
+        "locator": "locator('.selection-primary-tools button')",
+        "assertion": "  await expect(page.locator('.selection-primary-tools button')).toHaveCount(3); await expect(page.getByRole('textbox', { name: 'Add a comment', exact: true })).toHaveCount(0); await expect(page.getByRole('button', { name: 'Snap to objects', exact: true })).toHaveCount(0);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "annotation levels retain clipped regions and sent task markings follow explicit inspection only",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "3",
+        "received": "1",
+        "locator": "locator('.selection-primary-tools button')",
+        "assertion": "  await expect(page.locator('.selection-primary-tools button')).toHaveCount(3); await expect(page.getByRole('textbox', { name: 'Add a comment', exact: true })).toHaveCount(0); await expect(page.getByRole('button', { name: 'Snap to objects', exact: true })).toHaveCount(0);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "second-level video annotation preserves time frame and pending target when leaving or switching",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "second-level video annotation preserves time frame and pending target when leaving or switching",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "1",
+        "received": "0",
+        "locator": "locator('.queue-item')",
+        "assertion": "  await retainedComment.press('Escape'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1); await expect(page.locator('.annotation-outline')).toHaveCount(0);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "second-level video annotation preserves time frame and pending target when leaving or switching",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "1",
+        "received": "0",
+        "locator": "locator('.queue-item')",
+        "assertion": "  await retainedComment.press('Escape'); await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(1); await expect(page.locator('.annotation-outline')).toHaveCount(0);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "shared annotation bubbles and static queue previews preserve snapshot references",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "shared annotation bubbles and static queue previews preserve snapshot references",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "3",
+        "received": "2",
+        "locator": "locator('.queue-item')",
+        "assertion": "  await page.locator('#instruction').press('Enter'); await expect(page.locator('.queue-item')).toHaveCount(3); const third = page.locator('.queue-item').nth(2); await expect(third.locator('.queue-preview')).toHaveCount(1); await expect(third.locator('.queue-preview-overflow')).toHaveCount(0); await expect(third.locator('.annotation-bubble text')).toHaveText('1');"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "shared annotation bubbles and static queue previews preserve snapshot references",
+        "error": "expect(locator).toHaveJSProperty(expected) failed",
+        "expected": "320",
+        "received": "452",
+        "locator": "locator('.queue-item').nth(2).locator('.queue-preview img')",
+        "assertion": "  await expect(third.locator('.queue-preview img')).toHaveJSProperty('naturalWidth', 320);"
+      },
+      "conclusion": "Send-ready diagnostic reaches queue 3 and the same existing PNG width assertion in both builds",
+      "diagnostic": {
+        "scope": "temporary test copy only; the repository legacy suite and product source retained",
+        "patch": "shared-send-ready-diagnostic.patch",
+        "baselineLog": "shared-ready-baseline.log.gz",
+        "candidateLog": "shared-ready-candidate.log.gz",
+        "baselineQueueCount": 3,
+        "candidateQueueCount": 3,
+        "baselineFailure": {
+          "locator": "locator('.queue-item').nth(2).locator('.queue-preview img')",
+          "property": "naturalWidth",
+          "expected": 320,
+          "received": 452
+        },
+        "candidateFailure": {
+          "locator": "locator('.queue-item').nth(2).locator('.queue-preview img')",
+          "property": "naturalWidth",
+          "expected": 320,
+          "received": 452
+        },
+        "sourceCause": "The legacy fixture waits for draft saved and Mark enabled, then sends while the candidate annotation capture is still incomplete. Both builds retain the same incomplete-capture Send guard. Waiting for the visible enabled Send state preserves the original queue and PNG assertions."
+      }
+    },
+    {
+      "name": "note color opens above the control beside delete",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "note color opens above the control beside delete",
+        "error": "expect(received).toBeGreaterThanOrEqual(expected)",
+        "expected": ">= 792",
+        "received": "727",
+        "assertion": "  expect(colorBox!.x).toBeGreaterThanOrEqual(removeBox!.x + removeBox!.width - 1);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "note color opens above the control beside delete",
+        "error": "expect(received).toBeGreaterThanOrEqual(expected)",
+        "expected": ">= 792",
+        "received": "727",
+        "assertion": "  expect(colorBox!.x).toBeGreaterThanOrEqual(removeBox!.x + removeBox!.width - 1);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "each confirmed local send animates once including SSE-first and recovered responses",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "each confirmed local send animates once including SSE-first and recovered responses",
+        "error": "locator.hover: Test timeout of 45000ms exceeded.",
+        "assertion": "    await replaceInstructionText(input, `Motion direction ${index}`); await input.press('Enter'); if (index === 1) await page.locator('.queue-stack').hover();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "each confirmed local send animates once including SSE-first and recovered responses",
+        "error": "locator.hover: Test timeout of 10000ms exceeded.",
+        "assertion": "    await replaceInstructionText(input, `Motion direction ${index}`); await input.press('Enter'); if (index === 1) await page.locator('.queue-stack').hover();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "composer contains asset and annotation chips with quiet success feedback across viewports",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "composer contains asset and annotation chips with quiet success feedback across viewports",
+        "error": "locator.evaluate: TypeError: Cannot read properties of null (reading 'getBoundingClientRect')"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "composer contains asset and annotation chips with quiet success feedback across viewports",
+        "error": "locator.evaluate: TypeError: Cannot read properties of null (reading 'getBoundingClientRect')"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "inline comments retain their targets through delayed snapshots and submit pending-only requests",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "inline comments retain their targets through delayed snapshots and submit pending-only requests",
+        "error": "expect(locator).toBeEnabled() failed",
+        "expected": "enabled",
+        "received": "disabled",
+        "locator": "getByRole('button', { name: 'Send request', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Send request', exact: true })).toBeEnabled();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "inline comments retain their targets through delayed snapshots and submit pending-only requests",
+        "error": "expect(locator).toBeEnabled() failed",
+        "expected": "enabled",
+        "received": "disabled",
+        "locator": "getByRole('button', { name: 'Send request', exact: true })",
+        "assertion": "  await expect(page.getByRole('button', { name: 'Send request', exact: true })).toBeEnabled();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "removing a file clears only its pending comment and external removal preserves a discard path",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "removing a file clears only its pending comment and external removal preserves a discard path",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "1",
+        "received": "0",
+        "locator": "locator('.queue-item')",
+        "assertion": "  await expect(page.locator('.queue-item')).toHaveCount(1);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "removing a file clears only its pending comment and external removal preserves a discard path",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "1",
+        "received": "0",
+        "locator": "locator('.queue-item')",
+        "assertion": "  await expect(page.locator('.queue-item')).toHaveCount(1);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "project identity and contextual actions follow selection, pan, zoom, resize and viewport edges",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "project identity and contextual actions follow selection, pan, zoom, resize and viewport edges",
+        "error": "expect(locator).toHaveAttribute(expected) failed",
+        "expected": "\"acanvas project: acanvas-browser-project-pLz4ai\"",
+        "received": "\"Acanvas project: acanvas-browser-project-pLz4ai\"",
+        "locator": "locator('.project-identity')",
+        "assertion": "  await expect(page.locator('.project-identity')).toHaveAttribute('aria-label', `acanvas project: ${initial.project.name}`);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "project identity and contextual actions follow selection, pan, zoom, resize and viewport edges",
+        "error": "expect(locator).toHaveAttribute(expected) failed",
+        "expected": "\"acanvas project: acanvas-browser-project-UfhVAP\"",
+        "received": "\"Acanvas project: acanvas-browser-project-UfhVAP\"",
+        "locator": "locator('.project-identity')",
+        "assertion": "  await expect(page.locator('.project-identity')).toHaveAttribute('aria-label', `acanvas project: ${initial.project.name}`);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "composer grows with wrap and newlines, restores height, sends Enter and protects IME confirmation",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "composer grows with wrap and newlines, restores height, sends Enter and protects IME confirmation",
+        "error": "expect(received).toBeGreaterThan(expected)",
+        "expected": "> 52",
+        "received": "52",
+        "assertion": "  await expect.poll(async () => (await composer.boundingBox())!.height).toBeGreaterThan(52);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "composer grows with wrap and newlines, restores height, sends Enter and protects IME confirmation",
+        "error": "expect(received).toBeGreaterThan(expected)",
+        "expected": "> 52",
+        "received": "52",
+        "assertion": "  await expect.poll(async () => (await composer.boundingBox())!.height).toBeGreaterThan(52);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "short-screen contextual video controls stay reachable beside a clipped selection and long queued draft",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "short-screen contextual video controls stay reachable beside a clipped selection and long queued draft",
+        "error": "expect(received).toBeTruthy()",
+        "received": "false",
+        "assertion": "    await expect.poll(async () => page.locator('.selection-actions button,.video-playback button,.video-playback input,.canvas-toolbar button,.canvas-actions button,.send-button').evaluateAll(elements => elements.every(element => { const rect = element.getBoundingClientRect(); const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2); return element instanceof HTMLInputElement ? hit === element : hit?.closest('button') === element; }))).toBeTruthy();"
+      },
+      "baseline": null,
+      "conclusion": "independent original and candidate comparison confirms the same Fit all files hit target failure",
+      "independentEvidence": "shortscreen-independent-comparison.json"
+    },
+    {
+      "name": "two URL task contexts keep drafts and sends isolated through delayed saves and refresh",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "two URL task contexts keep drafts and sends isolated through delayed saves and refresh",
+        "error": "expect(locator).toBeDisabled() failed",
+        "expected": "disabled",
+        "received": "enabled",
+        "locator": "locator('#instruction')",
+        "assertion": "  await expect(page.locator('#instruction')).toBeDisabled();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "two URL task contexts keep drafts and sends isolated through delayed saves and refresh",
+        "error": "expect(locator).toBeDisabled() failed",
+        "expected": "disabled",
+        "received": "enabled",
+        "locator": "locator('#instruction')",
+        "assertion": "  await expect(page.locator('#instruction')).toBeDisabled();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "video surface selects and moves at zoom/pan, with explicit keyboard playback and persisted layout",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "video surface selects and moves at zoom/pan, with explicit keyboard playback and persisted layout",
+        "error": "expect(received).toBeCloseTo(expected, precision)",
+        "expected": "-396.79999999999995",
+        "received": "-87.69648752638716",
+        "assertion": "  await expect.poll(async () => (await app.state()).session.view.x).toBeCloseTo(beforePan.x - 80, 2);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "video surface selects and moves at zoom/pan, with explicit keyboard playback and persisted layout",
+        "error": "expect(received).toBeCloseTo(expected, precision)",
+        "expected": "-396.79999999999995",
+        "received": "-93.39167094254503",
+        "assertion": "  await expect.poll(async () => (await app.state()).session.view.x).toBeCloseTo(beforePan.x - 80, 2);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "real video and file imports, time/frame annotations and decode fallback",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "real video and file imports, time/frame annotations and decode fallback",
+        "error": "expect(received).toEqual(expected) // deep equality",
+        "assertion": "  expect((await app.state()).tasks[0].snapshot.annotations[0]).toEqual(annotation);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "real video and file imports, time/frame annotations and decode fallback",
+        "error": "expect(received).toEqual(expected) // deep equality",
+        "assertion": "  expect((await app.state()).tasks[0].snapshot.annotations[0]).toEqual(annotation);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "full-screen canvas and floating controls preserve multiline drafts and references",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "full-screen canvas and floating controls preserve multiline drafts and references",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "7",
+        "received": "10",
+        "locator": "locator('.canvas-toolbar button')",
+        "assertion": "    await expect(page.locator('.canvas-toolbar button')).toHaveCount(7); await expect(page.getByRole('button', { name: 'Mark canvas', exact: true })).toBeEnabled();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "full-screen canvas and floating controls preserve multiline drafts and references",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "7",
+        "received": "10",
+        "locator": "locator('.canvas-toolbar button')",
+        "assertion": "    await expect(page.locator('.canvas-toolbar button')).toHaveCount(7); await expect(page.getByRole('button', { name: 'Mark canvas', exact: true })).toBeEnabled();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "a different project on the same port keeps dirty content and blocks asset/session/draft writes",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "a different project on the same port keeps dirty content and blocks asset/session/draft writes",
+        "error": "expect.toContainText: Error: strict mode violation: getByRole('alert') resolved to 2 elements:"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "a different project on the same port keeps dirty content and blocks asset/session/draft writes",
+        "error": "expect.toContainText: Error: strict mode violation: getByRole('alert') resolved to 2 elements:"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "queue accessible statuses and symmetric insets stay usable across viewport widths",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "queue accessible statuses and symmetric insets stay usable across viewport widths",
+        "error": "locator.hover: Error: strict mode violation: locator('.queue-stack') resolved to 2 elements:"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "queue accessible statuses and symmetric insets stay usable across viewport widths",
+        "error": "locator.hover: Error: strict mode violation: locator('.queue-stack') resolved to 2 elements:"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "compact queue opens on hover with nonlinear motion and supports keyboard and touch access",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "compact queue opens on hover with nonlinear motion and supports keyboard and touch access",
+        "error": "locator.hover: Error: strict mode violation: locator('.queue-stack') resolved to 2 elements:"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "compact queue opens on hover with nonlinear motion and supports keyboard and touch access",
+        "error": "locator.hover: Error: strict mode violation: locator('.queue-stack') resolved to 2 elements:"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "spring queue and composer keep compact references, editable FIFO slots and balanced controls",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "spring queue and composer keep compact references, editable FIFO slots and balanced controls",
+        "error": "expect.not.toHaveClass: Error: strict mode violation: locator('.queue-stack') resolved to 2 elements:"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "spring queue and composer keep compact references, editable FIFO slots and balanced controls",
+        "error": "expect.not.toHaveClass: Error: strict mode violation: locator('.queue-stack') resolved to 2 elements:"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "request details group each annotation once with all snapshot targets in one horizontal row",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "request details group each annotation once with all snapshot targets in one horizontal row",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "1",
+        "received": "3",
+        "locator": "locator('[data-annotation-source=task]')",
+        "assertion": "  const badge = groups.nth(1).getByRole('button', { name: 'View annotation 2: g', exact: true }); await badge.focus(); await badge.press('Enter'); await expect(badge).toBeFocused(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(1);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "request details group each annotation once with all snapshot targets in one horizontal row",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "1",
+        "received": "3",
+        "locator": "locator('[data-annotation-source=task]')",
+        "assertion": "  const badge = groups.nth(1).getByRole('button', { name: 'View annotation 2: g', exact: true }); await badge.focus(); await badge.press('Enter'); await expect(badge).toBeFocused(); await expect(page.locator('[data-annotation-source=task]')).toHaveCount(1);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "editing annotations restores their chips and preserves an explicit attachment to an annotated image",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "editing annotations restores their chips and preserves an explicit attachment to an annotated image",
+        "error": "expect(received).toHaveLength(expected)",
+        "assertion": "  const original = (await app.state()).tasks[0]; expect(original.snapshot.annotations.map(annotation => annotation.text)).toEqual(['abc', 'g']); expect(original.snapshot.referenceContent.assets).toHaveLength(4);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "editing annotations restores their chips and preserves an explicit attachment to an annotated image",
+        "error": "expect(received).toHaveLength(expected)",
+        "assertion": "  const original = (await app.state()).tasks[0]; expect(original.snapshot.annotations.map(annotation => annotation.text)).toEqual(['abc', 'g']); expect(original.snapshot.referenceContent.assets).toHaveLength(4);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "an earlier annotation-only request keeps its references after a normal composer correction",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "an earlier annotation-only request keeps its references after a normal composer correction",
+        "error": "expect(received).toEqual(expected) // deep equality",
+        "assertion": "  expect(revised.snapshot).toEqual({ ...original.snapshot, requestReferences: { attachmentIds: [], objectIds: [] } });"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "an earlier annotation-only request keeps its references after a normal composer correction",
+        "error": "expect(received).toEqual(expected) // deep equality",
+        "assertion": "  expect(revised.snapshot).toEqual({ ...original.snapshot, requestReferences: { attachmentIds: [], objectIds: [] } });"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "fit all files animates exact bounds, interrupts on input and persists one final view",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "fit all files animates exact bounds, interrupts on input and persists one final view",
+        "error": "expect(received).toHaveLength(expected)",
+        "assertion": "    await expect.poll(async () => { const view = (await app.state()).session.view; return Math.abs(view.x - final.x) < .01 && Math.abs(view.y - final.y) < .01 && Math.abs(view.zoom - final.zoom) < .00001; }).toBeTruthy(); expect(requests).toHaveLength(1);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "fit all files animates exact bounds, interrupts on input and persists one final view",
+        "error": "expect(received).toHaveLength(expected)",
+        "assertion": "    await expect.poll(async () => { const view = (await app.state()).session.view; return Math.abs(view.x - final.x) < .01 && Math.abs(view.y - final.y) < .01 && Math.abs(view.zoom - final.zoom) < .00001; }).toBeTruthy(); expect(requests).toHaveLength(1);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "inline queue references move below the instruction and expose every thumbnail in grouped rows",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "inline queue references move below the instruction and expose every thumbnail in grouped rows",
+        "error": "expect(received).toBeLessThan(expected)",
+        "expected": "< 35",
+        "received": "197.1875",
+        "assertion": "    expect(Math.abs(frames[1].pageY - start.pageY)).toBeLessThan(35); expect(Math.abs(frames[1].titlePageY - start.titlePageY)).toBeLessThan(35);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "inline queue references move below the instruction and expose every thumbnail in grouped rows",
+        "error": "expect(received).toBeLessThan(expected)",
+        "expected": "< 35",
+        "received": "197.1875",
+        "assertion": "    expect(Math.abs(frames[1].pageY - start.pageY)).toBeLessThan(35); expect(Math.abs(frames[1].titlePageY - start.titlePageY)).toBeLessThan(35);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "composer More menu preserves compact layout, real click targets, keyboard focus and canvas access",
+      "file": "tests/frontend.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "composer More menu preserves compact layout, real click targets, keyboard focus and canvas access",
+        "error": "expect(locator).toHaveAttribute(expected) failed",
+        "expected": "\"Create…\"",
+        "received": "\"\"",
+        "locator": "locator('#instruction')",
+        "assertion": "      await expect(input).toHaveAttribute('placeholder', 'Create…'); expect((await form.boundingBox())!.height).toBe(52);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/frontend.spec.ts",
+        "name": "composer More menu preserves compact layout, real click targets, keyboard focus and canvas access",
+        "error": "expect(locator).toHaveAttribute(expected) failed",
+        "expected": "\"Create…\"",
+        "received": "\"\"",
+        "locator": "locator('#instruction')",
+        "assertion": "      await expect(input).toHaveAttribute('placeholder', 'Create…'); expect((await form.boundingBox())!.height).toBe(52);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "trusted PNG keyboard paste routes BODY, button, canvas and composer once",
+      "file": "tests/import-binding.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/import-binding.spec.ts",
+        "name": "trusted PNG keyboard paste routes BODY, button, canvas and composer once",
+        "error": "expect.toHaveValue: Error: Not an input element",
+        "assertion": "  await expect(page.locator('.draft-asset')).toHaveCount(0); await expect(page.locator('#instruction')).toHaveValue('保留原输入');"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/import-binding.spec.ts",
+        "name": "trusted PNG keyboard paste routes BODY, button, canvas and composer once",
+        "error": "expect.toHaveValue: Error: Not an input element",
+        "assertion": "  await expect(page.locator('.draft-asset')).toHaveCount(0); await expect(page.locator('#instruction')).toHaveValue('保留原输入');"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "bare tabs receive independent contexts while bound legacy URLs retain their queue",
+      "file": "tests/import-binding.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/import-binding.spec.ts",
+        "name": "bare tabs receive independent contexts while bound legacy URLs retain their queue",
+        "error": "expect.toHaveValue: Error: Not an input element",
+        "assertion": "  await page.reload(); await expect(page.locator('#instruction')).toHaveValue('第一个标签页'); expect(await contextId(page)).toBe(first);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/import-binding.spec.ts",
+        "name": "bare tabs receive independent contexts while bound legacy URLs retain their queue",
+        "error": "expect.toHaveValue: Error: Not an input element",
+        "assertion": "  await page.reload(); await expect(page.locator('#instruction')).toHaveValue('第一个标签页'); expect(await contextId(page)).toBe(first);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "Markdown reads safely with direct selection and scrolling and persists whole original references",
+      "file": "tests/multimodal.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "Markdown reads safely with direct selection and scrolling and persists whole original references",
+        "error": "locator.click: Test timeout of 45000ms exceeded.",
+        "assertion": "  await page.locator('#instruction').fill('Use the notes'); await page.getByRole('button', { name: 'Send request', exact: true }).click();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "Markdown reads safely with direct selection and scrolling and persists whole original references",
+        "error": "locator.click: Test timeout of 10000ms exceeded.",
+        "assertion": "  await page.locator('#instruction').fill('Use the notes'); await page.getByRole('button', { name: 'Send request', exact: true }).click();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "audio plays real media in one row and saves explicit time range without frames",
+      "file": "tests/multimodal.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "audio plays real media in one row and saves explicit time range without frames",
+        "error": "locator.click: Test timeout of 45000ms exceeded.",
+        "assertion": "  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await input.press('Escape'); await page.locator('#instruction').fill('Compose from this range'); await page.getByRole('button', { name: 'Send request', exact: true }).click();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "audio plays real media in one row and saves explicit time range without frames",
+        "error": "locator.click: Test timeout of 10000ms exceeded.",
+        "assertion": "  await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await input.press('Escape'); await page.locator('#instruction').fill('Compose from this range'); await page.getByRole('button', { name: 'Send request', exact: true }).click();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "twelve HTML snapshots drain to zero frames, retain cached views and share four interaction slots",
+      "file": "tests/multimodal.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "twelve HTML snapshots drain to zero frames, retain cached views and share four interaction slots",
+        "error": "PUT /api/sessions/8e771537-e36a-4d37-98ab-aa9d2894d8d9/draft",
+        "received": "false",
+        "assertion": "    expect(response.ok, `${method} ${path}`).toBeTruthy(); return response.json();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "twelve HTML snapshots drain to zero frames, retain cached views and share four interaction slots",
+        "error": "PUT /api/sessions/ba82e96f-9fe9-4273-927c-6ec1de18040b/draft",
+        "received": "false",
+        "assertion": "    expect(response.ok, `${method} ${path}`).toBeTruthy(); return response.json();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "HTML origin changes request an explicit board reload and preserve the draft",
+      "file": "tests/multimodal.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "HTML origin changes request an explicit board reload and preserve the draft",
+        "error": "expect.toHaveValue: Error: Not an input element",
+        "assertion": "  await expect(page.getByText('Reload the board to run HTML preview.', { exact: true })).toBeVisible(); await expect(page.locator('iframe')).toHaveCount(0); await expect(page.locator('#instruction')).toHaveValue('Keep this unsent request.');"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "HTML origin changes request an explicit board reload and preserve the draft",
+        "error": "expect.toHaveValue: Error: Not an input element",
+        "assertion": "  await expect(page.getByText('Reload the board to run HTML preview.', { exact: true })).toBeVisible(); await expect(page.locator('iframe')).toHaveCount(0); await expect(page.locator('#instruction')).toHaveValue('Keep this unsent request.');"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "removed task sources use the shared document audio and HTML detail renderers",
+      "file": "tests/multimodal.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "removed task sources use the shared document audio and HTML detail renderers",
+        "error": "PUT /api/sessions/976d649d-26c3-4f55-b6d9-9268ab24b0ec/draft",
+        "received": "false",
+        "assertion": "    expect(response.ok, `${method} ${path}`).toBeTruthy(); return response.json();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "removed task sources use the shared document audio and HTML detail renderers",
+        "error": "PUT /api/sessions/f749e4c2-94fb-4378-a494-cf0adbb3999a/draft",
+        "received": "false",
+        "assertion": "    expect(response.ok, `${method} ${path}`).toBeTruthy(); return response.json();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "MP3 decodes plays seeks and exposes real amplitude in Chrome",
+      "file": "tests/multimodal.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "MP3 decodes plays seeks and exposes real amplitude in Chrome",
+        "error": "expect(received).toBeGreaterThan(expected)",
+        "expected": "> 0.06",
+        "received": "NaN",
+        "assertion": "  await expect.poll(() => object.locator('canvas').evaluate(element => Number(element.dataset.maximumRms))).toBeGreaterThan(.06);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "MP3 decodes plays seeks and exposes real amplitude in Chrome",
+        "error": "expect(received).toBeGreaterThan(expected)",
+        "expected": "> 0.06",
+        "received": "NaN",
+        "assertion": "  await expect.poll(() => object.locator('canvas').evaluate(element => Number(element.dataset.maximumRms))).toBeGreaterThan(.06);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "M4A decodes plays seeks and exposes real amplitude in Chrome",
+      "file": "tests/multimodal.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "M4A decodes plays seeks and exposes real amplitude in Chrome",
+        "error": "expect(received).toBeGreaterThan(expected)",
+        "expected": "> 0.06",
+        "received": "NaN",
+        "assertion": "  await expect.poll(() => object.locator('canvas').evaluate(element => Number(element.dataset.maximumRms))).toBeGreaterThan(.06);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "M4A decodes plays seeks and exposes real amplitude in Chrome",
+        "error": "expect(received).toBeGreaterThan(expected)",
+        "expected": "> 0.06",
+        "received": "NaN",
+        "assertion": "  await expect.poll(() => object.locator('canvas').evaluate(element => Number(element.dataset.maximumRms))).toBeGreaterThan(.06);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "standard play cancellation retains audio and an old rejection preserves newer playback",
+      "file": "tests/multimodal.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "standard play cancellation retains audio and an old rejection preserves newer playback",
+        "error": "expect(received).toBeGreaterThan(expected)",
+        "expected": "> 0.1",
+        "received": "NaN",
+        "assertion": "  await expect.poll(() => object.locator('canvas').evaluate(element => Number(element.dataset.maximumRms))).toBeGreaterThan(.1);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "standard play cancellation retains audio and an old rejection preserves newer playback",
+        "error": "expect(received).toBeGreaterThan(expected)",
+        "expected": "> 0.1",
+        "received": "NaN",
+        "assertion": "  await expect.poll(() => object.locator('canvas').evaluate(element => Number(element.dataset.maximumRms))).toBeGreaterThan(.1);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "mixed Markdown and HTML group annotation saves one comment and preserves full sources through edits and removal",
+      "file": "tests/multimodal.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "mixed Markdown and HTML group annotation saves one comment and preserves full sources through edits and removal",
+        "error": "expect(received).toBe(expected) // Object.is equality",
+        "expected": "\"group\"",
+        "received": "\"region\"",
+        "assertion": "  const created = await app.state(), annotation = created.draft.annotations[0]; expect(annotation.scope).toBe('group'); expect(annotation.objectIds).toHaveLength(2); expect(annotation.objectId).toBeUndefined(); expect(annotation.assetId).toBeUndefined(); expect(annotation.timeStart).toBeUndefined(); expect(annotation.snapshotAssetId).toBeUndefined(); await expect(page.locator('.annotation-outline')).toHaveCount(0);"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "mixed Markdown and HTML group annotation saves one comment and preserves full sources through edits and removal",
+        "error": "expect(received).toBe(expected) // Object.is equality",
+        "expected": "\"group\"",
+        "received": "\"region\"",
+        "assertion": "  const created = await app.state(), annotation = created.draft.annotations[0]; expect(annotation.scope).toBe('group'); expect(annotation.objectIds).toHaveLength(2); expect(annotation.objectId).toBeUndefined(); expect(annotation.assetId).toBeUndefined(); expect(annotation.timeStart).toBeUndefined(); expect(annotation.snapshotAssetId).toBeUndefined(); await expect(page.locator('.annotation-outline')).toHaveCount(0);"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "real embedded MP3 and M4A covers share stable canvas and thumbnail sources while playback stays native",
+      "file": "tests/multimodal.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "real embedded MP3 and M4A covers share stable canvas and thumbnail sources while playback stays native",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "0",
+        "received": "1",
+        "locator": "locator('.board-object[data-content-kind=\"audio\"]').first().locator('.audio-player-cover')",
+        "assertion": "  const nodes = page.locator('.board-object[data-content-kind=\"audio\"]'); await expect(nodes).toHaveCount(3); const layout = await app.state(); await app.call('/api/board/operations', 'POST', { sessionId: layout.session.id, operations: layout.objects.map((object, index) => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: 140 + (index % 2) * 520, y: 180 + Math.floor(index / 2) * 180 } })) }); await expect(nodes.nth(0).locator('.audio-player-cover')).toHaveCount(0); await expect(nodes.nth(2).locator('.audio-player-cover')).toBeVisible(); await expect(nodes.nth(1).locator('.audio-player-cover')).toBeVisible();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "real embedded MP3 and M4A covers share stable canvas and thumbnail sources while playback stays native",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "0",
+        "received": "1",
+        "locator": "locator('.board-object[data-content-kind=\"audio\"]').first().locator('.audio-player-cover')",
+        "assertion": "  const nodes = page.locator('.board-object[data-content-kind=\"audio\"]'); await expect(nodes).toHaveCount(3); const layout = await app.state(); await app.call('/api/board/operations', 'POST', { sessionId: layout.session.id, operations: layout.objects.map((object, index) => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: 140 + (index % 2) * 520, y: 180 + Math.floor(index / 2) * 180 } })) }); await expect(nodes.nth(0).locator('.audio-player-cover')).toHaveCount(0); await expect(nodes.nth(2).locator('.audio-player-cover')).toBeVisible(); await expect(nodes.nth(1).locator('.audio-player-cover')).toBeVisible();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "an explicit multi-image region drag previews the area and saves region instead of whole group",
+      "file": "tests/multimodal.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "an explicit multi-image region drag previews the area and saves region instead of whole group",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "0",
+        "received": "1",
+        "locator": "locator('.annotation-outline')",
+        "assertion": "  await expect(page.locator('.annotation-outline')).toHaveCount(0); await page.mouse.move(200, 230); await page.mouse.down(); await page.mouse.move(780, 335, { steps: 10 }); await expect(page.locator('.editing-outline')).toBeVisible(); await page.mouse.up();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "an explicit multi-image region drag previews the area and saves region instead of whole group",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "0",
+        "received": "1",
+        "locator": "locator('.annotation-outline')",
+        "assertion": "  await expect(page.locator('.annotation-outline')).toHaveCount(0); await page.mouse.move(200, 230); await page.mouse.down(); await page.mouse.move(780, 335, { steps: 10 }); await expect(page.locator('.editing-outline')).toBeVisible(); await page.mouse.up();"
+      },
+      "conclusion": "same failing assertion in original build"
+    },
+    {
+      "name": "single audio rows show real optional artwork and a rolling observed amplitude window",
+      "file": "tests/multimodal.spec.ts",
+      "candidate": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "single audio rows show real optional artwork and a rolling observed amplitude window",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "0",
+        "received": "1",
+        "locator": "locator('.board-object[data-content-kind=\"audio\"]').first().locator('.audio-player-cover')",
+        "assertion": "  const nodes = page.locator('.board-object[data-content-kind=\"audio\"]'); await expect(nodes.nth(0).locator('.audio-player-cover')).toHaveCount(0); await expect(nodes.nth(1).locator('.audio-player-cover')).toBeVisible();"
+      },
+      "baseline": {
+        "status": "failed",
+        "file": "tests/multimodal.spec.ts",
+        "name": "single audio rows show real optional artwork and a rolling observed amplitude window",
+        "error": "expect(locator).toHaveCount(expected) failed",
+        "expected": "0",
+        "received": "1",
+        "locator": "locator('.board-object[data-content-kind=\"audio\"]').first().locator('.audio-player-cover')",
+        "assertion": "  const nodes = page.locator('.board-object[data-content-kind=\"audio\"]'); await expect(nodes.nth(0).locator('.audio-player-cover')).toHaveCount(0); await expect(nodes.nth(1).locator('.audio-player-cover')).toBeVisible();"
+      },
+      "conclusion": "same failing assertion in original build"
+    }
+  ]
+}

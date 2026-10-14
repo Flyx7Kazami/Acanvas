@@ -1,4 +1,4 @@
-import { useLayoutEffect, type RefObject } from 'react';
+import { useLayoutEffect, useRef, type RefObject } from 'react';
 import type { Draft, SessionView } from '../shared/types';
 import { placeFloatingControl, placeVideoControl, screenBounds, unionBounds, type Rect } from './geometry';
 
@@ -97,12 +97,39 @@ export function useComposerLayout(input: ElementRef, dock: ElementRef, draft: Dr
 }
 
 export function useContextualControls(canvas: ElementRef, actions: ElementRef, playback: ElementRef, selected: Rect[], video: Rect | undefined, view: SessionView) {
+  const currentLayout = useRef<() => void>(() => {});
+  const resizeObserver = useRef<ResizeObserver | null>(null);
+  const observed = useRef(new Set<Element>());
+  useLayoutEffect(() => {
+    const layout = () => currentLayout.current();
+    const observer = new ResizeObserver(layout);
+    resizeObserver.current = observer;
+    window.addEventListener('resize', layout);
+    return () => {
+      currentLayout.current = () => {};
+      observer.disconnect(); observed.current.clear(); resizeObserver.current = null;
+      window.removeEventListener('resize', layout);
+    };
+  }, []);
   useLayoutEffect(() => {
     const board = canvas.current, actionBar = actions.current, videoBar = playback.current;
     const dock = document.querySelector<HTMLElement>('.creation-dock');
-    if (!board || (!actionBar && !videoBar) || !selected.length) { dock?.style.removeProperty('--queue-context-limit'); return; }
+    const observe = (elements: (Element | null)[]) => {
+      const next = new Set(elements.filter((element): element is Element => !!element));
+      for (const element of observed.current) if (!next.has(element)) { resizeObserver.current?.unobserve(element); observed.current.delete(element); }
+      for (const element of next) if (!observed.current.has(element)) { resizeObserver.current?.observe(element); observed.current.add(element); }
+    };
+    const clearQueueLimit = () => { if (dock?.style.getPropertyValue('--queue-context-limit')) dock.style.removeProperty('--queue-context-limit'); };
+    if (!board || (!actionBar && !videoBar) || !selected.length) { currentLayout.current = () => {}; observe([]); clearQueueLimit(); return; }
     const groupTitles = [...board.querySelectorAll<HTMLElement>('.group-frame-title')].filter(element => !element.closest('[inert],[aria-hidden="true"]') && element.getClientRects().length > 0);
     const persistent = [...document.querySelectorAll<HTMLElement>('.project-identity,.canvas-actions,.canvas-toolbar,.composer,.composer-menu,.draft-attachments,.draft-conflict,.inline-resume,.unavailable-comments,.queue-stack,.annotation-pin,.canvas-annotation-note'), ...groupTitles];
+    const setStyle = (element: HTMLElement, property: 'left' | 'top' | 'width', value: string) => { if (element.style[property] !== value) element.style[property] = value; };
+    const setPositioned = (control: HTMLElement, positioned: boolean) => {
+      const value = String(positioned), hidden = String(!positioned);
+      if (control.dataset.positioned !== value) control.dataset.positioned = value;
+      if (control.inert === positioned) control.inert = !positioned;
+      if (control.getAttribute('aria-hidden') !== hidden) control.setAttribute('aria-hidden', hidden);
+    };
     const layout = () => {
       const bounds = board.getBoundingClientRect();
       const viewport = { x: 0, y: 0, width: bounds.width, height: bounds.height };
@@ -110,15 +137,14 @@ export function useContextualControls(canvas: ElementRef, actions: ElementRef, p
       const visible = projected.some(rect => rect.x < viewport.width && rect.x + rect.width > 0 && rect.y < viewport.height && rect.y + rect.height > 0);
       for (const control of [actionBar, videoBar]) {
         if (!control) continue;
-        control.dataset.positioned = String(visible);
-        control.inert = !visible;
-        control.setAttribute('aria-hidden', String(!visible));
+        setPositioned(control, visible);
       }
-      if (!visible) { dock?.style.removeProperty('--queue-context-limit'); return; }
+      if (!visible) { clearQueueLimit(); return; }
       if (dock) {
         const fixedBottom = Math.max(...persistent.filter(element => element.matches('.project-identity,.canvas-actions')).map(element => element.getBoundingClientRect().bottom));
         const queueLimit = Math.max(76, dock.getBoundingClientRect().top - fixedBottom - (actionBar?.offsetHeight || 0) - (videoBar?.offsetHeight || 0) - 24);
-        dock.style.setProperty('--queue-context-limit', `${queueLimit}px`);
+        const value = `${queueLimit}px`;
+        if (dock.style.getPropertyValue('--queue-context-limit') !== value) dock.style.setProperty('--queue-context-limit', value);
       }
       const obstacles = persistent.map(element => { const rect = element.getBoundingClientRect(); return { x: rect.x - bounds.x, y: rect.y - bounds.y, width: rect.width, height: rect.height }; });
       const anchor = unionBounds(projected);
@@ -126,19 +152,17 @@ export function useContextualControls(canvas: ElementRef, actions: ElementRef, p
       if (videoBar && video) {
         const position = placeVideoControl(screenBounds(video, view), viewport, obstacles);
         videoPosition = position?.bounds || null;
-        if (position) { videoBar.dataset.layout = position.layout; videoBar.style.width = `${position.bounds.width}px`; }
+        if (position) { if (videoBar.dataset.layout !== position.layout) videoBar.dataset.layout = position.layout; setStyle(videoBar, 'width', `${position.bounds.width}px`); }
       }
       const actionPosition = actionBar ? placeFloatingControl(anchor, { width: actionBar.offsetWidth, height: actionBar.offsetHeight }, viewport, 'above', videoPosition ? [...obstacles, videoPosition] : obstacles) : null;
       for (const [control, position] of [[actionBar, actionPosition], [videoBar, videoPosition]] as const) {
         if (!control) continue;
-        control.dataset.positioned = String(!!position); control.inert = !position; control.setAttribute('aria-hidden', String(!position));
-        if (position) { control.style.left = `${position.x}px`; control.style.top = `${position.y}px`; }
+        setPositioned(control, !!position);
+        if (position) { setStyle(control, 'left', `${position.x}px`); setStyle(control, 'top', `${position.y}px`); }
       }
     };
-    const observer = new ResizeObserver(layout);
-    for (const element of [board, actionBar, videoBar, ...persistent]) if (element) observer.observe(element);
-    window.addEventListener('resize', layout);
+    currentLayout.current = layout;
+    observe([board, actionBar, videoBar, ...persistent]);
     layout();
-    return () => { observer.disconnect(); window.removeEventListener('resize', layout); };
   });
 }

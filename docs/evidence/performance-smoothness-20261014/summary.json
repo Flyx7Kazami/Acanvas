@@ -1,0 +1,5006 @@
+{
+  "status": "fixed-fixture-complete",
+  "sequence": [
+    "folder-fixed-baseline-r1",
+    "canvas-fixed-baseline-r1",
+    "folder-fixed-candidate-r1",
+    "canvas-fixed-candidate-r1",
+    "folder-fixed-candidate-r2",
+    "canvas-fixed-candidate-r2",
+    "folder-fixed-baseline-r2",
+    "canvas-fixed-baseline-r2"
+  ],
+  "baselineSource": "7165e91 saved dist/web before product changes",
+  "browser": "155.0.8059.40",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "dpr": 2,
+  "instrumentation": "Isolated projects, system Chrome headless and real Playwright pointer/wheel input. Canvas bounds/computed-style wrappers add equal microtiming overhead. Latency ends at the first requestAnimationFrame observation of the exact DOM camera or object pose; it excludes compositor presentation delay. Inputs are counted as matched, superseded by a later committed pose, or pending, and final input plus persisted/reloaded state are asserted. CDP durations cover gesture plus 150ms settling; persistence polling is excluded. Fixture assets are synthetic and fixture media. These figures describe the measured scenes and input cadence.",
+  "fixtureAgreement": true,
+  "notes": [
+    "Final comparison uses sequentially created fixed IDs and explicit perf-object-00 target (Image 0.svg at x70/y100,250x160), with fixture order/name/geometry asserted equal across all four rounds.",
+    "Per-round p95 values are retained. Means of those p95 values describe variation in the measured scenes and are not a pooled percentile.",
+    "Older baseline-r1/r2/r3 and candidate-r1/r2 files, and exploratory-summary.json, used a random first object and are excluded from this fixed-fixture comparison.",
+    "CDP timings cover each action and 150ms settling; they include browser event work, DOM/layout and observation overhead, and exclude later persistence polling. DOM response ends at RAF observation and excludes compositor presentation delay.",
+    "Matched plus superseded plus pending inputs are fully accounted. Every final input, persisted view/geometry, cancellation and refreshed state is asserted. Activity media must continue increasing its cumulative video frame count in every phase."
+  ],
+  "rounds": {
+    "baseline-r1": {
+      "measuredAt": "2026-10-14T05:51:06.963Z",
+      "errors": [],
+      "inputCount": 880,
+      "matchedInputs": 876,
+      "supersededInputs": 4,
+      "pendingInputs": 0,
+      "scenes": [
+        {
+          "annotations": 0,
+          "activeMedia": false,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Image 10.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            }
+          ]
+        },
+        {
+          "annotations": 5,
+          "activeMedia": false,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Image 10.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            }
+          ]
+        },
+        {
+          "annotations": 15,
+          "activeMedia": false,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Image 10.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            }
+          ]
+        },
+        {
+          "annotations": 5,
+          "activeMedia": true,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Video.mp4",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 13,
+                  "currentTime": 0.698839
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 0.035108,
+                  "readyState": 4,
+                  "totalVideoFrames": 29
+                }
+              ]
+            },
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 29,
+                  "currentTime": 0.050033
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 1.365646,
+                  "readyState": 4,
+                  "totalVideoFrames": 45
+                }
+              ]
+            },
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 47,
+                  "currentTime": 1.501533
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 0.989279,
+                  "readyState": 4,
+                  "totalVideoFrames": 65
+                }
+              ]
+            },
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 65,
+                  "currentTime": 1.001134
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 0.258123,
+                  "readyState": 4,
+                  "totalVideoFrames": 80
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "candidate-r1": {
+      "measuredAt": "2026-10-14T05:52:44.237Z",
+      "errors": [],
+      "inputCount": 880,
+      "matchedInputs": 876,
+      "supersededInputs": 4,
+      "pendingInputs": 0,
+      "scenes": [
+        {
+          "annotations": 0,
+          "activeMedia": false,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Image 10.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            }
+          ]
+        },
+        {
+          "annotations": 5,
+          "activeMedia": false,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Image 10.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            }
+          ]
+        },
+        {
+          "annotations": 15,
+          "activeMedia": false,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Image 10.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            }
+          ]
+        },
+        {
+          "annotations": 5,
+          "activeMedia": true,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Video.mp4",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 13,
+                  "currentTime": 0.698125
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 1.962078,
+                  "readyState": 4,
+                  "totalVideoFrames": 24
+                }
+              ]
+            },
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 24,
+                  "currentTime": 1.975798
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 1.172635,
+                  "readyState": 4,
+                  "totalVideoFrames": 43
+                }
+              ]
+            },
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 45,
+                  "currentTime": 1.307915
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 0.798609,
+                  "readyState": 4,
+                  "totalVideoFrames": 62
+                }
+              ]
+            },
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 62,
+                  "currentTime": 0.811521
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 0.013332,
+                  "readyState": 4,
+                  "totalVideoFrames": 77
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "candidate-r2": {
+      "measuredAt": "2026-10-14T05:53:52.324Z",
+      "errors": [],
+      "inputCount": 880,
+      "matchedInputs": 876,
+      "supersededInputs": 4,
+      "pendingInputs": 0,
+      "scenes": [
+        {
+          "annotations": 0,
+          "activeMedia": false,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Image 10.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            }
+          ]
+        },
+        {
+          "annotations": 5,
+          "activeMedia": false,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Image 10.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            }
+          ]
+        },
+        {
+          "annotations": 15,
+          "activeMedia": false,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Image 10.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            }
+          ]
+        },
+        {
+          "annotations": 5,
+          "activeMedia": true,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Video.mp4",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 13,
+                  "currentTime": 0.698251
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 0.137556,
+                  "readyState": 4,
+                  "totalVideoFrames": 29
+                }
+              ]
+            },
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 31,
+                  "currentTime": 0.152556
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 1.451824,
+                  "readyState": 4,
+                  "totalVideoFrames": 46
+                }
+              ]
+            },
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 48,
+                  "currentTime": 1.583558
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 1.079205,
+                  "readyState": 4,
+                  "totalVideoFrames": 66
+                }
+              ]
+            },
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 66,
+                  "currentTime": 1.089302
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 0.280105,
+                  "readyState": 4,
+                  "totalVideoFrames": 80
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "baseline-r2": {
+      "measuredAt": "2026-10-14T05:54:53.202Z",
+      "errors": [],
+      "inputCount": 880,
+      "matchedInputs": 876,
+      "supersededInputs": 4,
+      "pendingInputs": 0,
+      "scenes": [
+        {
+          "annotations": 0,
+          "activeMedia": false,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Image 10.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            }
+          ]
+        },
+        {
+          "annotations": 5,
+          "activeMedia": false,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Image 10.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            }
+          ]
+        },
+        {
+          "annotations": 15,
+          "activeMedia": false,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Image 10.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            },
+            {
+              "start": [],
+              "end": []
+            }
+          ]
+        },
+        {
+          "annotations": 5,
+          "activeMedia": true,
+          "targetId": "perf-object-00",
+          "fixture": [
+            {
+              "id": "perf-object-00",
+              "assetName": "Image 0.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-01",
+              "assetName": "Image 1.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-02",
+              "assetName": "Image 2.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-03",
+              "assetName": "Image 3.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 100,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-04",
+              "assetName": "Image 4.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-05",
+              "assetName": "Image 5.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-06",
+              "assetName": "Image 6.svg",
+              "fixturePosition": {
+                "x": 710,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-07",
+              "assetName": "Image 7.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 345,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-08",
+              "assetName": "Image 8.svg",
+              "fixturePosition": {
+                "x": 70,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-09",
+              "assetName": "Image 9.svg",
+              "fixturePosition": {
+                "x": 390,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-10",
+              "assetName": "Video.mp4",
+              "fixturePosition": {
+                "x": 710,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            },
+            {
+              "id": "perf-object-11",
+              "assetName": "Image 11.svg",
+              "fixturePosition": {
+                "x": 1030,
+                "y": 590,
+                "width": 250,
+                "height": 160
+              }
+            }
+          ],
+          "initialObjectOrder": [
+            "perf-object-00",
+            "perf-object-01",
+            "perf-object-02",
+            "perf-object-03",
+            "perf-object-04",
+            "perf-object-05",
+            "perf-object-06",
+            "perf-object-07",
+            "perf-object-08",
+            "perf-object-09",
+            "perf-object-10",
+            "perf-object-11"
+          ],
+          "cancelled": {
+            "input": "Real pointer drag followed by a synthetic pointercancel lifecycle event",
+            "displayedRollback": true,
+            "persistedUnchanged": true
+          },
+          "reload": {
+            "camera": true,
+            "objects": true
+          },
+          "media": [
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 13,
+                  "currentTime": 0.687924
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 1.923618,
+                  "readyState": 4,
+                  "totalVideoFrames": 24
+                }
+              ]
+            },
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 24,
+                  "currentTime": 1.933266
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 1.314625,
+                  "readyState": 4,
+                  "totalVideoFrames": 45
+                }
+              ]
+            },
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 46,
+                  "currentTime": 1.446609
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 0.9409,
+                  "readyState": 4,
+                  "totalVideoFrames": 64
+                }
+              ]
+            },
+            {
+              "start": [
+                {
+                  "totalVideoFrames": 64,
+                  "currentTime": 0.952195
+                }
+              ],
+              "end": [
+                {
+                  "paused": false,
+                  "currentTime": 0.156956,
+                  "readyState": 4,
+                  "totalVideoFrames": 79
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "measurements": [
+    {
+      "annotations": 0,
+      "activeMedia": false,
+      "phase": "drag-alt",
+      "baseline": {
+        "p95Ms": [
+          17.600000000558794,
+          18.40000000037253
+        ],
+        "scriptMs": [
+          67.31300000000002,
+          66.09899999999999
+        ],
+        "layoutMs": [
+          6.756999999999999,
+          6.883
+        ],
+        "bounds": [
+          1286,
+          1286
+        ],
+        "observers": [
+          67,
+          67
+        ],
+        "observerCallbacks": [
+          62,
+          62
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          59,
+          59
+        ],
+        "supersededInputs": [
+          1,
+          1
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          18,
+          17.300000000745058
+        ],
+        "scriptMs": [
+          61.92100000000002,
+          61.128
+        ],
+        "layoutMs": [
+          6.9780000000000015,
+          6.702
+        ],
+        "bounds": [
+          728,
+          728
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          0,
+          0
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          59,
+          59
+        ],
+        "supersededInputs": [
+          1,
+          1
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": -0.35000000009313226,
+      "meanScriptChangePercent": -7.7676670764249,
+      "meanLayoutChangePercent": 0.29325513196483133
+    },
+    {
+      "annotations": 0,
+      "activeMedia": false,
+      "phase": "pan-selected",
+      "baseline": {
+        "p95Ms": [
+          17.299999999813735,
+          17.40000000037253
+        ],
+        "scriptMs": [
+          58.86899999999998,
+          57.873000000000005
+        ],
+        "layoutMs": [
+          3.241000000000004,
+          3.2629999999999986
+        ],
+        "bounds": [
+          1179,
+          1179
+        ],
+        "observers": [
+          63,
+          63
+        ],
+        "observerCallbacks": [
+          61,
+          61
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          17.5,
+          17.200000000186265
+        ],
+        "scriptMs": [
+          54.96000000000001,
+          52.87900000000001
+        ],
+        "layoutMs": [
+          3.426000000000002,
+          3.199999999999998
+        ],
+        "bounds": [
+          630,
+          630
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          0,
+          0
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": 0,
+      "meanScriptChangePercent": -7.626218498912108,
+      "meanLayoutChangePercent": 1.8757687576875348
+    },
+    {
+      "annotations": 0,
+      "activeMedia": false,
+      "phase": "zoom-selected",
+      "baseline": {
+        "p95Ms": [
+          17.700000000186265,
+          17.59999999962747
+        ],
+        "scriptMs": [
+          41.59099999999999,
+          40.78100000000001
+        ],
+        "layoutMs": [
+          5.039999999999996,
+          4.997999999999999
+        ],
+        "bounds": [
+          827,
+          818
+        ],
+        "observers": [
+          41,
+          41
+        ],
+        "observerCallbacks": [
+          42,
+          41
+        ],
+        "inputCount": [
+          40,
+          40
+        ],
+        "matchedInputs": [
+          40,
+          40
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          17.90000000037253,
+          17
+        ],
+        "scriptMs": [
+          37.429000000000016,
+          36.42000000000001
+        ],
+        "layoutMs": [
+          5.169,
+          5.288000000000005
+        ],
+        "bounds": [
+          449,
+          449
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          0,
+          0
+        ],
+        "inputCount": [
+          40,
+          40
+        ],
+        "matchedInputs": [
+          40,
+          40
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": -0.19999999972060323,
+      "meanScriptChangePercent": -10.346962560093209,
+      "meanLayoutChangePercent": 4.174138274556793
+    },
+    {
+      "annotations": 0,
+      "activeMedia": false,
+      "phase": "pan-unselected",
+      "baseline": {
+        "p95Ms": [
+          17,
+          17.5
+        ],
+        "scriptMs": [
+          42.97700000000002,
+          44.21000000000003
+        ],
+        "layoutMs": [
+          2.6020000000000003,
+          2.768
+        ],
+        "bounds": [
+          199,
+          199
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          53,
+          53
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          17.700000000186265,
+          17.299999999813735
+        ],
+        "scriptMs": [
+          42.46400000000003,
+          44.12799999999997
+        ],
+        "layoutMs": [
+          2.6830000000000047,
+          2.6409999999999973
+        ],
+        "bounds": [
+          199,
+          199
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          53,
+          53
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": 0.25,
+      "meanScriptChangePercent": -0.6824411896269367,
+      "meanLayoutChangePercent": -0.8566108007448281
+    },
+    {
+      "annotations": 5,
+      "activeMedia": false,
+      "phase": "drag-alt",
+      "baseline": {
+        "p95Ms": [
+          18.40000000037253,
+          17.799999999813735
+        ],
+        "scriptMs": [
+          110.209,
+          109.98
+        ],
+        "layoutMs": [
+          7.716000000000001,
+          7.788999999999997
+        ],
+        "bounds": [
+          2576,
+          2576
+        ],
+        "observers": [
+          67,
+          67
+        ],
+        "observerCallbacks": [
+          62,
+          62
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          59,
+          59
+        ],
+        "supersededInputs": [
+          1,
+          1
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          17.5,
+          17.59999999962747
+        ],
+        "scriptMs": [
+          85.11,
+          86.209
+        ],
+        "layoutMs": [
+          7.518000000000001,
+          7.6659999999999995
+        ],
+        "bounds": [
+          1398,
+          1398
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          0,
+          0
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          59,
+          59
+        ],
+        "supersededInputs": [
+          1,
+          1
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": -0.5500000002793968,
+      "meanScriptChangePercent": -22.19456921099602,
+      "meanLayoutChangePercent": -2.070299903257
+    },
+    {
+      "annotations": 5,
+      "activeMedia": false,
+      "phase": "pan-selected",
+      "baseline": {
+        "p95Ms": [
+          18.200000000186265,
+          17.700000000186265
+        ],
+        "scriptMs": [
+          202.023,
+          204.266
+        ],
+        "layoutMs": [
+          9.227999999999996,
+          8.983
+        ],
+        "bounds": [
+          6605,
+          6605
+        ],
+        "observers": [
+          63,
+          63
+        ],
+        "observerCallbacks": [
+          66,
+          66
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          17.09999999962747,
+          17.40000000037253
+        ],
+        "scriptMs": [
+          171.598,
+          172.09600000000003
+        ],
+        "layoutMs": [
+          7.940000000000003,
+          8.038
+        ],
+        "bounds": [
+          5446,
+          5446
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          5,
+          5
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": -0.7000000001862645,
+      "meanScriptChangePercent": -15.406520973986481,
+      "meanLayoutChangePercent": -12.261819779254267
+    },
+    {
+      "annotations": 5,
+      "activeMedia": false,
+      "phase": "zoom-selected",
+      "baseline": {
+        "p95Ms": [
+          18,
+          17.199999999254942
+        ],
+        "scriptMs": [
+          108.649,
+          115.61800000000005
+        ],
+        "layoutMs": [
+          8.100000000000003,
+          8.443
+        ],
+        "bounds": [
+          4282,
+          4282
+        ],
+        "observers": [
+          41,
+          41
+        ],
+        "observerCallbacks": [
+          41,
+          41
+        ],
+        "inputCount": [
+          40,
+          40
+        ],
+        "matchedInputs": [
+          40,
+          40
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          17.700000000186265,
+          17.700000000186265
+        ],
+        "scriptMs": [
+          93.63199999999999,
+          94.17800000000004
+        ],
+        "layoutMs": [
+          7.817999999999999,
+          7.726999999999998
+        ],
+        "bounds": [
+          3503,
+          3503
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          0,
+          0
+        ],
+        "inputCount": [
+          40,
+          40
+        ],
+        "matchedInputs": [
+          40,
+          40
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": 0.10000000055879354,
+      "meanScriptChangePercent": -16.25606977397478,
+      "meanLayoutChangePercent": -6.032763102218497
+    },
+    {
+      "annotations": 5,
+      "activeMedia": false,
+      "phase": "pan-unselected",
+      "baseline": {
+        "p95Ms": [
+          18.299999999813735,
+          17.40000000037253
+        ],
+        "scriptMs": [
+          131.42700000000008,
+          139.04099999999997
+        ],
+        "layoutMs": [
+          5.5350000000000055,
+          6.3119999999999985
+        ],
+        "bounds": [
+          4109,
+          4109
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          1,
+          1
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          18.200000000186265,
+          17.299999999813735
+        ],
+        "scriptMs": [
+          125.42799999999998,
+          125.96000000000002
+        ],
+        "layoutMs": [
+          5.115999999999995,
+          5.0829999999999975
+        ],
+        "bounds": [
+          4109,
+          4109
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          1,
+          1
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": -0.10000000009313226,
+      "meanScriptChangePercent": -7.054438972447774,
+      "meanLayoutChangePercent": -13.910694690639069
+    },
+    {
+      "annotations": 15,
+      "activeMedia": false,
+      "phase": "drag-alt",
+      "baseline": {
+        "p95Ms": [
+          17.199999999254942,
+          18.600000000558794
+        ],
+        "scriptMs": [
+          257.87899999999996,
+          258.231
+        ],
+        "layoutMs": [
+          8.737000000000002,
+          8.573999999999998
+        ],
+        "bounds": [
+          5156,
+          5195
+        ],
+        "observers": [
+          67,
+          67
+        ],
+        "observerCallbacks": [
+          62,
+          63
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          59,
+          59
+        ],
+        "supersededInputs": [
+          1,
+          1
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          18.200000000186265,
+          17.800000000745058
+        ],
+        "scriptMs": [
+          170.00300000000001,
+          172.613
+        ],
+        "layoutMs": [
+          8.464999999999996,
+          8.593
+        ],
+        "bounds": [
+          2738,
+          2738
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          0,
+          0
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          59,
+          59
+        ],
+        "supersededInputs": [
+          1,
+          1
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": 0.10000000055879354,
+      "meanScriptChangePercent": -33.615702079014156,
+      "meanLayoutChangePercent": -1.4614984691814659
+    },
+    {
+      "annotations": 15,
+      "activeMedia": false,
+      "phase": "pan-selected",
+      "baseline": {
+        "p95Ms": [
+          25.100000000558794,
+          24.700000000186265
+        ],
+        "scriptMs": [
+          1528.69,
+          1519.3370000000002
+        ],
+        "layoutMs": [
+          24.125,
+          23.349999999999998
+        ],
+        "bounds": [
+          21869,
+          21869
+        ],
+        "observers": [
+          63,
+          63
+        ],
+        "observerCallbacks": [
+          77,
+          77
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          25,
+          31.200000000186265
+        ],
+        "scriptMs": [
+          1404.507,
+          1525.271
+        ],
+        "layoutMs": [
+          23.256,
+          27.778000000000006
+        ],
+        "bounds": [
+          19451,
+          19451
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          15,
+          15
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": 3.1999999997206032,
+      "meanScriptChangePercent": -3.8795260015741295,
+      "meanLayoutChangePercent": 7.496577145866246
+    },
+    {
+      "annotations": 15,
+      "activeMedia": false,
+      "phase": "zoom-selected",
+      "baseline": {
+        "p95Ms": [
+          25.699999999254942,
+          24.899999999441206
+        ],
+        "scriptMs": [
+          738.3829999999998,
+          736.1519999999999
+        ],
+        "layoutMs": [
+          17.689999999999998,
+          16.617
+        ],
+        "bounds": [
+          13810,
+          13810
+        ],
+        "observers": [
+          41,
+          41
+        ],
+        "observerCallbacks": [
+          42,
+          42
+        ],
+        "inputCount": [
+          40,
+          40
+        ],
+        "matchedInputs": [
+          40,
+          40
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          24.300000000745058,
+          31
+        ],
+        "scriptMs": [
+          670.3320000000001,
+          806.2830000000001
+        ],
+        "layoutMs": [
+          16.843999999999998,
+          22.319
+        ],
+        "bounds": [
+          12172,
+          12172
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          0,
+          0
+        ],
+        "inputCount": [
+          40,
+          40
+        ],
+        "matchedInputs": [
+          40,
+          40
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          [
+            {
+              "at": 7993.5999999996275,
+              "duration": 52
+            }
+          ]
+        ]
+      },
+      "meanP95DeltaMs": 2.350000001024455,
+      "meanScriptChangePercent": 0.1410614193627424,
+      "meanLayoutChangePercent": 14.154545719532452
+    },
+    {
+      "annotations": 15,
+      "activeMedia": false,
+      "phase": "pan-unselected",
+      "baseline": {
+        "p95Ms": [
+          21.299999999813735,
+          21.399999999441206
+        ],
+        "scriptMs": [
+          1069.8689999999997,
+          1064.1970000000001
+        ],
+        "layoutMs": [
+          19.644999999999996,
+          18.528000000000002
+        ],
+        "bounds": [
+          16239,
+          16234
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          1,
+          0
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          21.299999999813735,
+          24.299999999813735
+        ],
+        "scriptMs": [
+          1051.8899999999999,
+          1078.462
+        ],
+        "layoutMs": [
+          18.233,
+          18.670999999999992
+        ],
+        "bounds": [
+          16234,
+          16234
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          0,
+          0
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": 1.4500000001862645,
+      "meanScriptChangePercent": -0.174033980204924,
+      "meanLayoutChangePercent": -3.3243391926230714
+    },
+    {
+      "annotations": 5,
+      "activeMedia": true,
+      "phase": "drag-alt",
+      "baseline": {
+        "p95Ms": [
+          17.40000000037253,
+          18.5
+        ],
+        "scriptMs": [
+          106.85399999999998,
+          107.96799999999998
+        ],
+        "layoutMs": [
+          7.741000000000001,
+          7.651999999999999
+        ],
+        "bounds": [
+          2576,
+          2576
+        ],
+        "observers": [
+          67,
+          67
+        ],
+        "observerCallbacks": [
+          62,
+          62
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          59,
+          59
+        ],
+        "supersededInputs": [
+          1,
+          1
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          17.40000000037253,
+          17.40000000037253
+        ],
+        "scriptMs": [
+          87.228,
+          91.426
+        ],
+        "layoutMs": [
+          7.631000000000002,
+          8.086
+        ],
+        "bounds": [
+          1398,
+          1398
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          0,
+          0
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          59,
+          59
+        ],
+        "supersededInputs": [
+          1,
+          1
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": -0.5499999998137355,
+      "meanScriptChangePercent": -16.836264442189332,
+      "meanLayoutChangePercent": 2.1048528551939283
+    },
+    {
+      "annotations": 5,
+      "activeMedia": true,
+      "phase": "pan-selected",
+      "baseline": {
+        "p95Ms": [
+          17.90000000037253,
+          18.799999999813735
+        ],
+        "scriptMs": [
+          201.303,
+          200.55900000000003
+        ],
+        "layoutMs": [
+          8.621,
+          8.998999999999997
+        ],
+        "bounds": [
+          6605,
+          6605
+        ],
+        "observers": [
+          63,
+          63
+        ],
+        "observerCallbacks": [
+          66,
+          66
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          17.300000000745058,
+          17.600000000558794
+        ],
+        "scriptMs": [
+          173.73600000000002,
+          185.17499999999998
+        ],
+        "layoutMs": [
+          8.016000000000002,
+          9.753000000000002
+        ],
+        "bounds": [
+          5446,
+          5446
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          5,
+          5
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": -0.8999999994412065,
+      "meanScriptChangePercent": -10.687997372232271,
+      "meanLayoutChangePercent": 0.8456299659478361
+    },
+    {
+      "annotations": 5,
+      "activeMedia": true,
+      "phase": "zoom-selected",
+      "baseline": {
+        "p95Ms": [
+          17.300000000745058,
+          18.59999999962747
+        ],
+        "scriptMs": [
+          107.628,
+          113.234
+        ],
+        "layoutMs": [
+          7.647999999999995,
+          8.453000000000003
+        ],
+        "bounds": [
+          4282,
+          4301
+        ],
+        "observers": [
+          41,
+          41
+        ],
+        "observerCallbacks": [
+          41,
+          42
+        ],
+        "inputCount": [
+          40,
+          40
+        ],
+        "matchedInputs": [
+          40,
+          40
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          17.600000000558794,
+          17.59999999962747
+        ],
+        "scriptMs": [
+          92.81500000000004,
+          101.41
+        ],
+        "layoutMs": [
+          7.515999999999995,
+          8.479000000000001
+        ],
+        "bounds": [
+          3503,
+          3503
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          0,
+          0
+        ],
+        "inputCount": [
+          40,
+          40
+        ],
+        "matchedInputs": [
+          40,
+          40
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": -0.35000000009313226,
+      "meanScriptChangePercent": -12.060472150030321,
+      "meanLayoutChangePercent": -0.658344202223482
+    },
+    {
+      "annotations": 5,
+      "activeMedia": true,
+      "phase": "pan-unselected",
+      "baseline": {
+        "p95Ms": [
+          17.40000000037253,
+          18.200000000186265
+        ],
+        "scriptMs": [
+          134.10299999999998,
+          139.03300000000007
+        ],
+        "layoutMs": [
+          5.285999999999999,
+          5.9799999999999995
+        ],
+        "bounds": [
+          4109,
+          4109
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          1,
+          1
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "candidate": {
+        "p95Ms": [
+          17.299999999813735,
+          17.5
+        ],
+        "scriptMs": [
+          125.63100000000004,
+          134.15799999999993
+        ],
+        "layoutMs": [
+          5.351999999999996,
+          6.398000000000001
+        ],
+        "bounds": [
+          4109,
+          4109
+        ],
+        "observers": [
+          0,
+          0
+        ],
+        "observerCallbacks": [
+          1,
+          1
+        ],
+        "inputCount": [
+          60,
+          60
+        ],
+        "matchedInputs": [
+          60,
+          60
+        ],
+        "supersededInputs": [
+          0,
+          0
+        ],
+        "pendingInputs": [
+          0,
+          0
+        ],
+        "finalInputMatched": [
+          true,
+          true
+        ],
+        "persistence": [
+          {
+            "camera": true,
+            "objects": true
+          },
+          {
+            "camera": true,
+            "objects": true
+          }
+        ],
+        "longTasks": [
+          [],
+          []
+        ]
+      },
+      "meanP95DeltaMs": -0.40000000037252903,
+      "meanScriptChangePercent": -4.886576650459862,
+      "meanLayoutChangePercent": 4.296112195987911
+    }
+  ]
+}
