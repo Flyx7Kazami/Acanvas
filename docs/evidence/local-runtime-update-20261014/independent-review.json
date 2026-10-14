@@ -1,0 +1,90 @@
+{
+  "status": "PASS",
+  "candidate": "/private/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-delivery-build-16Cndk",
+  "checks": [
+    "1280/0 opening",
+    "1280/0 closing",
+    "1280/2 opening",
+    "1280/2 closing",
+    "390/0 opening",
+    "390/0 closing",
+    "390/2 opening",
+    "390/2 closing",
+    "legacy reader remains inside history boundary",
+    "outside composer click closes with target focus",
+    "Escape restores menu focus",
+    "rapid reversal remains bottom anchored and settles open",
+    "reduced motion immediate terminal states",
+    "zero page exceptions"
+  ],
+  "errors": [],
+  "geometry": [
+    {
+      "name": "opening",
+      "totalFrames": 24,
+      "visibleFrames": 20,
+      "maxGeometrySpread": 0,
+      "maxBottomToClip": 0
+    },
+    {
+      "name": "closing",
+      "totalFrames": 25,
+      "visibleFrames": 10,
+      "maxGeometrySpread": 0,
+      "maxBottomToClip": 0
+    },
+    {
+      "name": "opening",
+      "totalFrames": 24,
+      "visibleFrames": 19,
+      "maxGeometrySpread": 0,
+      "maxBottomToClip": 0
+    },
+    {
+      "name": "closing",
+      "totalFrames": 25,
+      "visibleFrames": 9,
+      "maxGeometrySpread": 0,
+      "maxBottomToClip": 0
+    },
+    {
+      "name": "opening",
+      "totalFrames": 24,
+      "visibleFrames": 21,
+      "maxGeometrySpread": 0,
+      "maxBottomToClip": 0
+    },
+    {
+      "name": "closing",
+      "totalFrames": 26,
+      "visibleFrames": 10,
+      "maxGeometrySpread": 0,
+      "maxBottomToClip": 0
+    },
+    {
+      "name": "opening",
+      "totalFrames": 24,
+      "visibleFrames": 21,
+      "maxGeometrySpread": 0,
+      "maxBottomToClip": 0
+    },
+    {
+      "name": "closing",
+      "totalFrames": 25,
+      "visibleFrames": 9,
+      "maxGeometrySpread": 0,
+      "maxBottomToClip": 0
+    }
+  ],
+  "rapidBottomAligned": true,
+  "independentUI": [
+    "real shift multiselect exposes enabled Group and creates frame",
+    "visible Undo removes frame while preserving two objects",
+    "visible Redo restores group and members",
+    "folder Store Open Back controls operate in the real UI",
+    "zero page exceptions"
+  ],
+  "reviewedMigrationCases": 14,
+  "reviewedDeploymentScript": "/private/tmp/acanvas-runtime-update-20261014/deploy-update.mjs",
+  "scope": "Synthetic temporary projects and read-only source/script review. Original service data and dist were not modified."
+}

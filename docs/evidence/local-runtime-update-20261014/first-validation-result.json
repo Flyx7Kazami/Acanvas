@@ -1,0 +1,13 @@
+{
+  "stage": "candidate-running",
+  "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ '{\"instanceId\":\"066ebdb4-4e83-4746-9dbd-95bc08dc3742\",\"pages\":[],\"projectId\":\"c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd\",\"running\":false}'\n- '{\"instanceId\":\"6cc3b872-3c47-4ba3-b2c8-adc08f89a910\",\"pages\":[],\"projectId\":\"c3e8d1a5-3b11-4bb8-b63f-b3f4d25e48fd\",\"running\":false}'\n",
+  "runtimeIdentity": {
+    "pid": 56388,
+    "instanceId": "066ebdb4-4e83-4746-9dbd-95bc08dc3742"
+  },
+  "openedService": {
+    "pid": 56388,
+    "instanceId": "066ebdb4-4e83-4746-9dbd-95bc08dc3742"
+  },
+  "retainedBackup": "/private/tmp/acanvas-runtime-update-execution-alBkGr"
+}

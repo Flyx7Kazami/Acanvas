@@ -1,0 +1,12 @@
+{
+  "candidate": "/private/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-delivery-build-16Cndk",
+  "project": "/private/tmp/acanvas-runtime-ui-review-G67pJx",
+  "checks": [
+    "real shift multiselect exposes enabled Group and creates frame",
+    "visible Undo removes frame while preserving two objects",
+    "visible Redo restores group and members",
+    "folder Store Open Back controls operate in the real UI",
+    "zero page exceptions"
+  ],
+  "errors": []
+}

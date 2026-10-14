@@ -1,5 +1,29 @@
 # Acanvas 验证记录
 
+## 品牌位移与间距微调（2026-10-14）
+
+用户先要求icon下移并调整留白，随后要求Acanvas上移。当前header字标上移1px、icon下移1px，项目名Y保持；移除brand原向下transform，icon独立translateY(1px)。inner/outer gap均为6px，project宽屏padding-left10px，540媒体下gap6px/padding8px。按实际字形与SVG路径测得宽屏可见三段间隙约9.996/9.863/11.350px、390约9.996/9.863/9.350px。字体/图标尺寸/配色、pill位置高度保持，宽度分别收窄7.094/1.094px。
+
+私有Vite生产构建、真实Chrome亮1440/暗390前后四组、390长名称省略和无溢出通过，页面异常零。独立只读差异/图片/数字复核PASS；17资源仅CSS的5处精确替换，source与候选10项header/startup/history规则对应，启动页与历史逻辑保持。首次Chrome受执行环境限制后，同一隔离验证在获准环境通过。
+
+原4317仅原子更新main-CTE4lG58.css，入口/引用资源HTTP200且字节匹配；备份/private/tmp/acanvas-brand-spacing-Orwa31/live-backup。当前会话在保存且无编辑焦点后刷新，实读wordmark y24（上轮25）、icon y25（上轮24）、project y27.796875保持；inner/outer gap6、padding10，pill x16/y16/170.4375×38.09375。见[实测](evidence/brand-spacing-20261014/verification.json)、[候选差异](evidence/brand-spacing-20261014/candidate.json)、[HTTP核对](evidence/brand-spacing-20261014/live-static.json)与[实际截图](evidence/brand-spacing-20261014/live-header.jpg)。
+
+## 品牌字标与图标换位（2026-10-14）
+
+左上顺序改为 Acanvas → icon → 分隔线 → 真实项目名，现有header字体、1px垂直位移及pill几何保持。仅在原header品牌规则设置row-reverse与.3em gap，并将header icon的原margin-right归零；全局/startup规则及history逻辑保持。私有Vite生产构建通过，真实Chrome宽屏暗色与390亮色的前后四组通过、页面异常零，独立视觉/几何/17资源字节核对PASS；390暗色与startup未另跑，startup规则字节保持。
+
+原4317仅原子更新main-CTE4lG58.css，其他JS/HTML/素材保持；入口与引用资源HTTP200且字节匹配。原会话在draft saved、无编辑焦点时刷新，实读flex-direction row-reverse、gap5.1px、icon移至字样右侧，pill仍为x16/y16/177.53125×38.09375，项目名位置保持。本轮未执行白板业务操作或重启后台。备份为/private/tmp/acanvas-brand-order-xPpfrT/live-backup。见[实测](evidence/brand-order-20261014/verification.json)、[候选差异](evidence/brand-order-20261014/candidate.json)、[HTTP核对](evidence/brand-order-20261014/live-static.json)和[实际页面截图](evidence/brand-order-20261014/live-header.jpg)。
+
+## 历史底边动效与完整服务更新（2026-10-14）
+
+历史宽度、横向位置及底边固定，220ms 高度裁剪、180ms 淡化。执行19项、独立14项和宽窄屏/待办0及多条的逐帧结果均通过，漂移0px，引用/阅读器、外点击、退出、快反、减少动态效果与队列正常。前后端类型检查/隔离构建、旧版迁移14项、独立真实UI5项通过。实际原4317/60186正常更新整套版本，新PID56388；两次回读及独立原始比较证明旧业务字段、6草稿、42任务（7待办）、138原素材共97,795,492字节保持，17 HTTP资源与283文件候选一致。首轮校验的实例ID比较已按运行时语义修正，纯只读续验完成；没有再次重启/恢复覆盖。原a087页面已刷新，Undo/Redo、双选Group与实际历史开合通过。备份、证据和边界见[完整更新记录](LOCAL_RUNTIME_UPDATE_20261014.md)。
+
+## 品牌区光学对齐（2026-10-14）
+
+左上品牌区采用字标 translateY(1px)、项目名及分隔线 translateY(-1px)，图标相对父字标反向 1px 抵消位移。品牌区位置、尺寸、图标绝对位置及原 Google Sans 17px/600、字距、配色和间距保持，启动页保持。前端 `tsc --noEmit`、后端私有输出编译及隔离 Vite 生产构建通过。真实 Chrome 的原版/兼容候选/源码构建 × 1440/390 × 明暗共 12 组通过，零页面异常；四组源码与兼容候选 header 逐像素一致。独立 Chrome 复拍暗色宽屏、亮色窄屏和长名称省略通过，独立视觉审查 PASS。
+
+兼容候选的 38 份资源仅现有主 CSS 变化，其余 JS/HTML/素材字节一致；原子替换原 4317 的单一 CSS 后，HTTP200、入口与引用资源字节核对通过。原服务保持，备份为 `/private/tmp/acanvas-brand-alignment-4jQskj/live-backup`。实际 in-app tab 在输入保存后刷新，读回字标 +1px、项目名 −1px、图标原位，pill 仍为 x16/y16/177.53125×38.09375。验收使用隔离临时项目，自有服务/浏览器均关闭。见[汇总](evidence/brand-alignment-20261014/verification.json)、[独立审查](evidence/brand-alignment-20261014/independent-review.json)、[HTTP核对](evidence/brand-alignment-20261014/live-static.json)和[实际页面局部截图](evidence/brand-alignment-20261014/live-header.jpg)。
+
 ## Acanvas 命名、5% 画布缩放与远端整合（2026-10-14）
 
 品牌显示、页面/SVG 标题、README/文档与 CLI 帮助已统一 Acanvas。独立大小写审查通过；技术标识和路径保持。`zoomAt` 与 `fitView` 下限统一 0.05，几何/手势 20/20、两项 `--noEmit` 与隔离构建通过。原 4317 兼容前端已更新，HTTP 字节核对通过，实际 in-app 页面只读显示 Acanvas 标题与 9% 画布。用户视口由原页面保存，本轮没有修改视口数据。

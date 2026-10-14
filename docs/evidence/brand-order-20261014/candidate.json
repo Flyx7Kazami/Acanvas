@@ -1,0 +1,16 @@
+{
+  "changed": [
+    "/assets/main-CTE4lG58.css"
+  ],
+  "replacements": [
+    [
+      ".project-identity .brand{font-size:17px;letter-spacing:-.7px;line-height:20px;transform:translateY(1px)}",
+      ".project-identity .brand{flex-direction:row-reverse;gap:.3em;font-size:17px;letter-spacing:-.7px;line-height:20px;transform:translateY(1px)}"
+    ],
+    [
+      ".project-identity .brand-icon{transform:translateY(-1px)}",
+      ".project-identity .brand-icon{margin-right:0;transform:translateY(-1px)}"
+    ]
+  ],
+  "cssFile": "assets/main-CTE4lG58.css"
+}

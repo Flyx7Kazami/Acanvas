@@ -1,0 +1,134 @@
+{
+  "status": "passed",
+  "candidate": "/private/var/folders/fg/z9w29z3n0lj7cm7cw_jh8cjh0000gn/T/acanvas-host-delivery-build-16Cndk",
+  "fixture": "/private/tmp/acanvas-runtime-migration-suxIat",
+  "cases": [
+    "old fixture has two scopes, queued request and unsent draft",
+    "old CLI normal stop confirms completion",
+    "normal stop clears runtime",
+    "all prior public business fields survive migration exactly",
+    "all original material byte reads survive migration exactly",
+    "network and preview origin stay identical",
+    "sessions and consumers stay identical",
+    "group command creates Group 1 with original members",
+    "undo removes frame and retains materials",
+    "redo restores same group and members",
+    "group, folder, saved draft, queue and history persist through normal restart",
+    "persisted undo returns folder to frame",
+    "persisted redo returns frame to folder",
+    "host stays unattached with empty outbox"
+  ],
+  "before": {
+    "capturedAt": "2026-10-13T17:43:21.471Z",
+    "service": {
+      "pid": 53920,
+      "instanceId": "1e2e6004-f42a-4b17-8e3e-45a2e1d3a1fc"
+    },
+    "projectId": "fee2ba40-35f2-4e92-b61a-f57be6182fa8",
+    "sessions": 2,
+    "drafts": 2,
+    "tasks": 1,
+    "taskStatuses": {
+      "queued": 1
+    },
+    "runs": 0,
+    "receipts": 0,
+    "lateResults": 0,
+    "assets": 1,
+    "assetBytes": 47,
+    "objects": 2,
+    "annotations": 0,
+    "quiescence": {
+      "activeConsumers": 0,
+      "runningTasks": 0,
+      "runningRuns": 0,
+      "editingTasks": 0,
+      "editingDrafts": 0
+    },
+    "businessSha256": "7016eb26771876bc6817e36e94a46738a58f3b83a7cb8db729b8d31618860711",
+    "assetBytesSha256": "545c51891ca13d32877e5a7dca7149a731c18d8dda1faf3848133901402d32c4",
+    "sessionsSha256": "71d30ba7b08b31b1d437b51a99f6b16347ed55a7ac31170379be646966693418",
+    "network": {
+      "url": "http://127.0.0.1:56777",
+      "bind": "127.0.0.1",
+      "allowedHosts": [],
+      "previewOrigins": [],
+      "urls": [],
+      "loopbackPreviewOrigins": [
+        "http://localhost:56776"
+      ]
+    },
+    "managedBrowser": {
+      "running": false,
+      "pages": 0,
+      "contextSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "httpResources": {
+      "files": 38,
+      "sha256": "178a2eb926c1a5c3650848cd6702b0c9b10125730d0d3a0fa9325f4a33cf422e"
+    },
+    "dist": {
+      "files": 282,
+      "sha256": "536fb2ccd93b4943fabfef2158f21edc8e701036daad55a0da939b4b2a6c5775"
+    },
+    "stableDuringCapture": true
+  },
+  "after": {
+    "capturedAt": "2026-10-13T17:43:23.130Z",
+    "service": {
+      "pid": 53940,
+      "instanceId": "a3f0ffa0-5d30-4e37-bfa4-f6c3968ac951"
+    },
+    "projectId": "fee2ba40-35f2-4e92-b61a-f57be6182fa8",
+    "sessions": 2,
+    "drafts": 2,
+    "tasks": 1,
+    "taskStatuses": {
+      "queued": 1
+    },
+    "runs": 0,
+    "receipts": 0,
+    "lateResults": 0,
+    "assets": 1,
+    "assetBytes": 47,
+    "objects": 2,
+    "annotations": 0,
+    "quiescence": {
+      "activeConsumers": 0,
+      "runningTasks": 0,
+      "runningRuns": 0,
+      "editingTasks": 0,
+      "editingDrafts": 0
+    },
+    "businessSha256": "0a12ed9ce56c3c35ab4c50bcf181617ec4380f9149cd1d96eec1920c65fc0854",
+    "assetBytesSha256": "545c51891ca13d32877e5a7dca7149a731c18d8dda1faf3848133901402d32c4",
+    "sessionsSha256": "71d30ba7b08b31b1d437b51a99f6b16347ed55a7ac31170379be646966693418",
+    "network": {
+      "url": "http://127.0.0.1:56777",
+      "bind": "127.0.0.1",
+      "allowedHosts": [],
+      "previewOrigins": [],
+      "urls": [],
+      "loopbackPreviewOrigins": [
+        "http://localhost:56776"
+      ]
+    },
+    "managedBrowser": {
+      "running": false,
+      "pages": 0,
+      "contextSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "httpResources": {
+      "files": 17,
+      "sha256": "a59d4a3ad52848eff7ebe5913710106d7339134df2f87631b0d02ab53d8356fa"
+    },
+    "dist": {
+      "files": 283,
+      "sha256": "8187abaf6be36f7e38b62aed0e06e67232998325e79ae2668182b68fdee64cf8"
+    },
+    "stableDuringCapture": true
+  },
+  "syntheticOnly": true,
+  "normalCliLifecycle": true,
+  "completeStoppedDataArchiveCreated": true
+}

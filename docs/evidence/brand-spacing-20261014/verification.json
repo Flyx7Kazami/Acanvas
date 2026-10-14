@@ -1,0 +1,447 @@
+{
+  "result": "passed",
+  "node": "v24.21.0",
+  "browser": "155.0.8059.40",
+  "checks": [
+    "wordmark y -1px, icon y +1px, project y unchanged",
+    "Acanvas → icon → divider → real project name",
+    "pill position and height, font, colors, icon size unchanged",
+    "SVG path visible edges and real font ink measured",
+    "1440 light and 390 dark actual Chrome before/after",
+    "390 long project name retains ellipsis and no horizontal overflow",
+    "source build and compatible candidate header/startup/history rules match"
+  ],
+  "ruleParity": [
+    {
+      "selector": ".project-identity",
+      "rules": 2,
+      "match": true
+    },
+    {
+      "selector": ".project-identity .brand",
+      "rules": 1,
+      "match": true
+    },
+    {
+      "selector": ".project-identity .brand-icon",
+      "rules": 1,
+      "match": true
+    },
+    {
+      "selector": ".project-name",
+      "rules": 2,
+      "match": true
+    },
+    {
+      "selector": ".brand",
+      "rules": 3,
+      "match": true
+    },
+    {
+      "selector": ".brand-icon",
+      "rules": 2,
+      "match": true
+    },
+    {
+      "selector": ".startup",
+      "rules": 1,
+      "match": true
+    },
+    {
+      "selector": ".startup .brand",
+      "rules": 1,
+      "match": true
+    },
+    {
+      "selector": ".history-stack",
+      "rules": 1,
+      "match": true
+    },
+    {
+      "selector": ".history-content",
+      "rules": 1,
+      "match": true
+    }
+  ],
+  "errors": [],
+  "results": [
+    {
+      "label": "before",
+      "width": 1440,
+      "theme": "light",
+      "pill": {
+        "x": 16,
+        "y": 16,
+        "width": 177.546875,
+        "height": 38.09375,
+        "top": 16,
+        "right": 193.546875,
+        "bottom": 54.09375,
+        "left": 16
+      },
+      "brand": {
+        "x": 29,
+        "y": 25,
+        "width": 90.125,
+        "height": 22.09375,
+        "top": 25,
+        "right": 119.125,
+        "bottom": 47.09375,
+        "left": 29
+      },
+      "word": {
+        "x": 29,
+        "y": 25.046875,
+        "width": 62.9375,
+        "height": 21,
+        "top": 25.046875,
+        "right": 91.9375,
+        "bottom": 46.046875,
+        "left": 29
+      },
+      "icon": {
+        "x": 97.03125,
+        "y": 24,
+        "width": 22.09375,
+        "height": 22.09375,
+        "top": 24,
+        "right": 119.125,
+        "bottom": 46.09375,
+        "left": 97.03125
+      },
+      "name": {
+        "x": 131.125,
+        "y": 27.546875,
+        "width": 49.421875,
+        "height": 13,
+        "top": 27.546875,
+        "right": 180.546875,
+        "bottom": 40.546875,
+        "left": 131.125
+      },
+      "project": "acanvas",
+      "wordmark": "Acanvas",
+      "font": "600 17px / 20px \"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+      "letterSpacing": "-0.7px",
+      "direction": "row-reverse",
+      "gap": "5.1px",
+      "identityGap": "12px",
+      "namePadding": "12px",
+      "marginRight": "0px",
+      "brandTransform": "matrix(1, 0, 0, 1, 0, 1)",
+      "iconTransform": "matrix(1, 0, 0, 1, 0, -1)",
+      "nameTransform": "matrix(1, 0, 0, 1, 0, -1)",
+      "color": "rgb(32, 32, 32)",
+      "nameColor": "rgb(112, 112, 112)",
+      "background": "rgb(255, 255, 255)",
+      "borderRadius": "9px",
+      "iconVisible": {
+        "left": 101.21322752832415,
+        "right": 115.26214166957607,
+        "top": 27.045505538131252,
+        "bottom": 42.96230099493997
+      },
+      "ink": {
+        "wordLeft": 29.25499999523163,
+        "wordRight": 92.12346267700195,
+        "projectLeft": 144.47499999403954
+      },
+      "visibleGaps": {
+        "wordToIcon": 9.089764851322201,
+        "iconToDivider": 15.862858330423933,
+        "dividerToProject": 13.349999994039536
+      },
+      "overflow": false,
+      "fontLoaded": true
+    },
+    {
+      "label": "before",
+      "width": 390,
+      "theme": "dark",
+      "pill": {
+        "x": 14,
+        "y": 14,
+        "width": 163.546875,
+        "height": 38.09375,
+        "top": 14,
+        "right": 177.546875,
+        "bottom": 52.09375,
+        "left": 14
+      },
+      "brand": {
+        "x": 24,
+        "y": 23,
+        "width": 90.125,
+        "height": 22.09375,
+        "top": 23,
+        "right": 114.125,
+        "bottom": 45.09375,
+        "left": 24
+      },
+      "word": {
+        "x": 24,
+        "y": 23.046875,
+        "width": 62.9375,
+        "height": 21,
+        "top": 23.046875,
+        "right": 86.9375,
+        "bottom": 44.046875,
+        "left": 24
+      },
+      "icon": {
+        "x": 92.03125,
+        "y": 22,
+        "width": 22.09375,
+        "height": 22.09375,
+        "top": 22,
+        "right": 114.125,
+        "bottom": 44.09375,
+        "left": 92.03125
+      },
+      "name": {
+        "x": 122.125,
+        "y": 25.546875,
+        "width": 45.421875,
+        "height": 13,
+        "top": 25.546875,
+        "right": 167.546875,
+        "bottom": 38.546875,
+        "left": 122.125
+      },
+      "project": "acanvas",
+      "wordmark": "Acanvas",
+      "font": "600 17px / 20px \"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+      "letterSpacing": "-0.7px",
+      "direction": "row-reverse",
+      "gap": "5.1px",
+      "identityGap": "8px",
+      "namePadding": "8px",
+      "marginRight": "0px",
+      "brandTransform": "matrix(1, 0, 0, 1, 0, 1)",
+      "iconTransform": "matrix(1, 0, 0, 1, 0, -1)",
+      "nameTransform": "matrix(1, 0, 0, 1, 0, -1)",
+      "color": "rgb(243, 243, 243)",
+      "nameColor": "rgb(170, 170, 170)",
+      "background": "rgb(34, 34, 34)",
+      "borderRadius": "9px",
+      "iconVisible": {
+        "left": 96.21322752832415,
+        "right": 110.26214166957607,
+        "top": 25.045505538131252,
+        "bottom": 40.96230099493997
+      },
+      "ink": {
+        "wordLeft": 24.25499999523163,
+        "wordRight": 87.12346267700195,
+        "projectLeft": 131.47499999403954
+      },
+      "visibleGaps": {
+        "wordToIcon": 9.089764851322201,
+        "iconToDivider": 11.862858330423933,
+        "dividerToProject": 9.349999994039536
+      },
+      "overflow": false,
+      "fontLoaded": true,
+      "longName": {
+        "text": "Acanvas project with a very long descriptive name for narrow screens",
+        "clientWidth": 149,
+        "scrollWidth": 319,
+        "overflow": "hidden",
+        "textOverflow": "ellipsis",
+        "whiteSpace": "nowrap",
+        "pillRight": 282,
+        "viewport": 390,
+        "overflowPage": false
+      }
+    },
+    {
+      "label": "after",
+      "width": 1440,
+      "theme": "light",
+      "pill": {
+        "x": 16,
+        "y": 16,
+        "width": 170.453125,
+        "height": 38.09375,
+        "top": 16,
+        "right": 186.453125,
+        "bottom": 54.09375,
+        "left": 16
+      },
+      "brand": {
+        "x": 29,
+        "y": 24,
+        "width": 91.03125,
+        "height": 22.09375,
+        "top": 24,
+        "right": 120.03125,
+        "bottom": 46.09375,
+        "left": 29
+      },
+      "word": {
+        "x": 29,
+        "y": 24.046875,
+        "width": 62.9375,
+        "height": 21,
+        "top": 24.046875,
+        "right": 91.9375,
+        "bottom": 45.046875,
+        "left": 29
+      },
+      "icon": {
+        "x": 97.9375,
+        "y": 25,
+        "width": 22.09375,
+        "height": 22.09375,
+        "top": 25,
+        "right": 120.03125,
+        "bottom": 47.09375,
+        "left": 97.9375
+      },
+      "name": {
+        "x": 126.03125,
+        "y": 27.546875,
+        "width": 47.421875,
+        "height": 13,
+        "top": 27.546875,
+        "right": 173.453125,
+        "bottom": 40.546875,
+        "left": 126.03125
+      },
+      "project": "acanvas",
+      "wordmark": "Acanvas",
+      "font": "600 17px / 20px \"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+      "letterSpacing": "-0.7px",
+      "direction": "row-reverse",
+      "gap": "6px",
+      "identityGap": "6px",
+      "namePadding": "10px",
+      "marginRight": "0px",
+      "brandTransform": "none",
+      "iconTransform": "matrix(1, 0, 0, 1, 0, 1)",
+      "nameTransform": "matrix(1, 0, 0, 1, 0, -1)",
+      "color": "rgb(32, 32, 32)",
+      "nameColor": "rgb(112, 112, 112)",
+      "background": "rgb(255, 255, 255)",
+      "borderRadius": "9px",
+      "iconVisible": {
+        "left": 102.11947752832415,
+        "right": 116.16839166957607,
+        "top": 28.045505538131252,
+        "bottom": 43.96230099493997
+      },
+      "ink": {
+        "wordLeft": 29.25499999523163,
+        "wordRight": 92.12346267700195,
+        "projectLeft": 137.38124999403954
+      },
+      "visibleGaps": {
+        "wordToIcon": 9.996014851322201,
+        "iconToDivider": 9.862858330423933,
+        "dividerToProject": 11.349999994039536
+      },
+      "overflow": false,
+      "fontLoaded": true
+    },
+    {
+      "label": "after",
+      "width": 390,
+      "theme": "dark",
+      "pill": {
+        "x": 14,
+        "y": 14,
+        "width": 162.453125,
+        "height": 38.09375,
+        "top": 14,
+        "right": 176.453125,
+        "bottom": 52.09375,
+        "left": 14
+      },
+      "brand": {
+        "x": 24,
+        "y": 22,
+        "width": 91.03125,
+        "height": 22.09375,
+        "top": 22,
+        "right": 115.03125,
+        "bottom": 44.09375,
+        "left": 24
+      },
+      "word": {
+        "x": 24,
+        "y": 22.046875,
+        "width": 62.9375,
+        "height": 21,
+        "top": 22.046875,
+        "right": 86.9375,
+        "bottom": 43.046875,
+        "left": 24
+      },
+      "icon": {
+        "x": 92.9375,
+        "y": 23,
+        "width": 22.09375,
+        "height": 22.09375,
+        "top": 23,
+        "right": 115.03125,
+        "bottom": 45.09375,
+        "left": 92.9375
+      },
+      "name": {
+        "x": 121.03125,
+        "y": 25.546875,
+        "width": 45.421875,
+        "height": 13,
+        "top": 25.546875,
+        "right": 166.453125,
+        "bottom": 38.546875,
+        "left": 121.03125
+      },
+      "project": "acanvas",
+      "wordmark": "Acanvas",
+      "font": "600 17px / 20px \"Google Sans\", -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+      "letterSpacing": "-0.7px",
+      "direction": "row-reverse",
+      "gap": "6px",
+      "identityGap": "6px",
+      "namePadding": "8px",
+      "marginRight": "0px",
+      "brandTransform": "none",
+      "iconTransform": "matrix(1, 0, 0, 1, 0, 1)",
+      "nameTransform": "matrix(1, 0, 0, 1, 0, -1)",
+      "color": "rgb(243, 243, 243)",
+      "nameColor": "rgb(170, 170, 170)",
+      "background": "rgb(34, 34, 34)",
+      "borderRadius": "9px",
+      "iconVisible": {
+        "left": 97.11947752832415,
+        "right": 111.16839166957607,
+        "top": 26.045505538131252,
+        "bottom": 41.96230099493997
+      },
+      "ink": {
+        "wordLeft": 24.25499999523163,
+        "wordRight": 87.12346267700195,
+        "projectLeft": 130.38124999403954
+      },
+      "visibleGaps": {
+        "wordToIcon": 9.996014851322201,
+        "iconToDivider": 9.862858330423933,
+        "dividerToProject": 9.349999994039536
+      },
+      "overflow": false,
+      "fontLoaded": true,
+      "longName": {
+        "text": "Acanvas project with a very long descriptive name for narrow screens",
+        "clientWidth": 150,
+        "scrollWidth": 319,
+        "overflow": "hidden",
+        "textOverflow": "ellipsis",
+        "whiteSpace": "nowrap",
+        "pillRight": 282,
+        "viewport": 390,
+        "overflowPage": false
+      }
+    }
+  ]
+}
