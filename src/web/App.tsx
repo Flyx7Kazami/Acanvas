@@ -1,5 +1,5 @@
 import { randomId } from './random-id.js';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from 'react';
 import { AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignStartHorizontal, AlignStartVertical, ArrowDownToLine, ArrowLeft, ArrowUp, FolderInput, FolderOutput, Check, ChevronDown, Circle, Copy, Ellipsis, Hand, History, LoaderCircle, Maximize, Minus, Monitor, Moon, MousePointer2, Palette, Pause, Pencil, PencilLine, Play, Plus, Redo2, Sun, Trash2, Type, Undo2, Upload, X } from 'lucide-react';
 import { DominoLoader } from './DominoLoader';
 import type { AnnotationInput, Asset, BaseSceneSnapshot, BoardGroup, BoardObject, BoardOperation, CaptureView, Draft, RequestReference, SessionView, Task, TaskStatus } from '../shared/types';
@@ -37,6 +37,11 @@ import { useTaskQueue } from './useTaskQueue';
 const statusLabels: Record<TaskStatus, string> = { queued: 'Queued', editing: 'Editing', running: 'Running', blocked: 'Needs input', interrupted: 'Interrupted', completed: 'Completed', cancelled: 'Cancelled' };
 const timeLabel = (value: number) => `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}`;
 const unique = (values: string[]) => [...new Set(values)];
+const indexById = <T extends { id: string }>(values: readonly T[]) => {
+  const index = new Map<string, T>();
+  for (const value of values) if (!index.has(value.id)) index.set(value.id, value);
+  return index;
+};
 
 function requestParts(task: Task) {
   const snapshot = task.snapshot;
@@ -366,26 +371,45 @@ export default function App() {
   const videoRefs = useRef(new Map<string, HTMLVideoElement>());
   const audioRefs = useRef(new Map<string, HTMLAudioElement>());
   const boardInput = useRef<HTMLInputElement>(null);
-  const allObjects = (projectScene?.snapshot?.objects || []).map(object => preview[object.id] ? { ...object, ...preview[object.id] } : object);
-  const groups = (state?.groups || []).map(group => {
-    const members = allObjects.filter(object => object.groupId === group.id);
-    const bounds = group.mode === 'frame' ? groupFrameBounds(members, group) : group;
+  const canonicalObjectsById = useMemo(() => indexById(state?.objects || []), [state?.objects]);
+  const allObjects = useMemo(() => (projectScene?.snapshot?.objects || []).map(object => preview[object.id] ? { ...object, ...preview[object.id] } : object), [projectScene?.snapshot?.objects, preview]);
+  const allObjectsById = useMemo(() => indexById(allObjects), [allObjects]);
+  const membersByGroup = useMemo(() => {
+    const members = new Map<string, BoardObject[]>();
+    for (const object of allObjects) {
+      if (!object.groupId) continue;
+      const group = members.get(object.groupId);
+      if (group) group.push(object); else members.set(object.groupId, [object]);
+    }
+    return members;
+  }, [allObjects]);
+  const groups = useMemo(() => (state?.groups || []).map(group => {
+    const bounds = group.mode === 'frame' ? groupFrameBounds(membersByGroup.get(group.id) || [], group) : group;
     return { ...group, ...bounds, ...(groupPosition?.id === group.id ? { x: groupPosition.x, y: groupPosition.y } : {}) };
-  });
-  const activeGroup = groups.find(group => group.id === view.activeGroupId);
-  const rootObjects = allObjects.filter(object => !object.groupId || groups.find(group => group.id === object.groupId)?.mode !== 'folder');
-  const objects = activeGroup ? allObjects.filter(object => object.groupId === activeGroup.id) : rootObjects;
-  const exteriorObjects = activeGroup ? rootObjects.filter(object => object.groupId !== activeGroup.id) : [];
-  const departingGroup = groupTransition && ['collapse', 'leave'].includes(groupTransition.kind) && !activeGroup ? groups.find(group => group.id === groupTransition.id && group.mode === 'folder') : undefined;
-  const departingObjects = departingGroup ? allObjects.filter(object => object.groupId === departingGroup.id) : [];
-  const displayObjects = [...exteriorObjects, ...objects, ...departingObjects.filter(object => !objects.some(item => item.id === object.id))];
-  const selectedGroup = !activeGroup ? [renamingGroupId, hoveredGroupId, focusedGroupId, selectedGroupId].map(id => groups.find(group => group.id === id)).find(group => !!group) : undefined;
-  const fitTargets = activeGroup ? objects : [...objects.filter(object => !object.groupId), ...groups.map(groupDisplayBounds)];
-  const selectedIds = view.selectedObjectIds.filter(id => objects.some(object => object.id === id));
-  const selected = objects.filter(object => selectedIds.includes(object.id));
+  }), [state?.groups, membersByGroup, groupPosition]);
+  const groupsById = useMemo(() => indexById(groups), [groups]);
+  const activeGroup = groupsById.get(view.activeGroupId || '');
+  const rootObjects = useMemo(() => allObjects.filter(object => !object.groupId || groupsById.get(object.groupId)?.mode !== 'folder'), [allObjects, groupsById]);
+  const objects = activeGroup ? membersByGroup.get(activeGroup.id) || [] : rootObjects;
+  const objectsById = useMemo(() => indexById(objects), [objects]);
+  const exteriorObjects = useMemo(() => activeGroup ? rootObjects.filter(object => object.groupId !== activeGroup.id) : [], [activeGroup, rootObjects]);
+  const exteriorObjectIds = useMemo(() => new Set(exteriorObjects.map(object => object.id)), [exteriorObjects]);
+  const departingGroup = groupTransition && ['collapse', 'leave'].includes(groupTransition.kind) && !activeGroup && groupsById.get(groupTransition.id)?.mode === 'folder' ? groupsById.get(groupTransition.id) : undefined;
+  const departingObjects = useMemo(() => departingGroup ? membersByGroup.get(departingGroup.id) || [] : [], [departingGroup, membersByGroup]);
+  const departingObjectIds = useMemo(() => new Set(departingObjects.map(object => object.id)), [departingObjects]);
+  const displayObjects = useMemo(() => [...exteriorObjects, ...objects, ...departingObjects.filter(object => !objectsById.has(object.id))], [exteriorObjects, objects, departingObjects, objectsById]);
+  const selectedGroup = !activeGroup ? [renamingGroupId, hoveredGroupId, focusedGroupId, selectedGroupId].map(id => groupsById.get(id)).find(group => !!group) : undefined;
+  const fitTargets = useMemo(() => activeGroup ? objects : [...objects.filter(object => !object.groupId), ...groups.map(groupDisplayBounds)], [activeGroup, objects, groups]);
+  const selectedIds = useMemo(() => view.selectedObjectIds.filter(id => objectsById.has(id)), [view.selectedObjectIds, objectsById]);
+  const selectedObjectIds = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const selected = useMemo(() => objects.filter(object => selectedObjectIds.has(object.id)), [objects, selectedObjectIds]);
   const selectedVideo = selected.length === 1 && selected[0].type === 'video' && !mediaErrors[selected[0].id] ? selected[0] : undefined;
-  const assets = [...(projectScene?.snapshot?.assets || []), ...(state?.assets || []).filter(asset => !projectScene?.snapshot?.assets.some(value => value.id === asset.id))];
-  const assetFor = (id: string) => assets.find(asset => asset.id === id);
+  const assets = useMemo(() => {
+    const snapshotAssets = projectScene?.snapshot?.assets || [], snapshotIds = new Set(snapshotAssets.map(asset => asset.id));
+    return [...snapshotAssets, ...(state?.assets || []).filter(asset => !snapshotIds.has(asset.id))];
+  }, [projectScene?.snapshot?.assets, state?.assets]);
+  const assetsById = useMemo(() => indexById(assets), [assets]);
+  const assetFor = (id: string) => assetsById.get(id);
   const selectedNote = selected.length === 1 && resolveContentKind(assetFor(selected[0].assetId)) === 'note' ? selected[0] : undefined;
   const shownNoteFill = (object: BoardObject): NoteFill | undefined => {
     if (noteColorHover !== undefined && selectedNote?.id === object.id) return noteColorHover ?? undefined;
@@ -416,21 +440,22 @@ export default function App() {
   const projectedAnnotations = (inspectableTask?.snapshot.annotations || []).filter(annotation => !annotation.capture).map(annotation => ({ ...annotation, inspectionTaskId: inspectableTask!.id }));
   const layerAnnotations: (AnnotationInput & { inspectionTaskId?: string })[] = inspectableTask && !viewingEditedTask ? projectedAnnotations : [...(draft?.annotations || []), ...(annotationEdit && annotationRead && !draft?.annotations.some(annotation => annotation.id === annotationRead.id) ? [annotationRead] : [])];
   const allAnnotations = layerAnnotations.filter(annotation => {
-    const live = allObjects.filter(object => annotation.objectIds.includes(object.id));
-    if (live.length) return live.some(object => objects.some(visible => visible.id === object.id));
-    const ownerGroupId = groups.some(group => group.id === annotation.boardGroupId && group.mode === 'folder') ? annotation.boardGroupId : undefined;
+    const live = annotation.objectIds.filter(id => allObjectsById.has(id));
+    if (live.length) return live.some(id => objectsById.has(id));
+    const ownerGroupId = groupsById.get(annotation.boardGroupId || '')?.mode === 'folder' ? annotation.boardGroupId : undefined;
     return ownerGroupId === activeGroup?.id;
   });
-  const unavailableComments = (draft?.annotations || []).filter(annotation => !annotation.capture && !annotation.sceneSource && captureJob.current?.owner.annotationId !== annotation.id && annotation.objectIds.some(id => !allObjects.some(object => object.id === id)) && !editingSourceTask?.snapshot.annotations.some(value => value.id === annotation.id));
+  const unavailableComments = (draft?.annotations || []).filter(annotation => !annotation.capture && !annotation.sceneSource && captureJob.current?.owner.annotationId !== annotation.id && annotation.objectIds.some(id => !allObjectsById.has(id)) && !editingSourceTask?.snapshot.annotations.some(value => value.id === annotation.id));
   const hasRequest = !!(draft?.text.trim() || draft?.attachments.length || draft?.annotations.length || draft?.references.objectIds.length || draft?.references.taskIds.length || draft?.references.groupIds?.length || referencePreview.length);
   const incompleteAnnotations = draft?.annotations.filter(annotation => annotation.captureState?.status === 'incomplete') || [];
-  const candidates = state ? referenceCandidates(allObjects, groups, assets, state.tasks, state.session.id, mention?.query || '') : [];
+  const candidates = useMemo(() => state && mention ? referenceCandidates(allObjects, groups, assets, state.tasks, state.session.id, mention.query) : [], [allObjects, groups, assets, state?.tasks, state?.session.id, mention?.query]);
   const composerCompact = !composerFocused && !hasRequest && !pending && !draft?.editingTaskId && !draft?.references.objectIds.length && !draft?.references.taskIds.length && !draft?.references.groupIds?.length && !board.draftConflict && !uploads.length && !board.sending;
   function annotationSources(annotation: AnnotationInput): BoardObject[] {
     const source = inspectableTask && !viewingEditedTask ? inspectableTask : editingSourceTask;
     return annotation.objectIds.flatMap(id => {
       const original = source?.snapshot.referenceContent.objects.find(object => object.id === id);
-      const current = allObjects.find(object => object.id === id && (!original || original.assetId === object.assetId));
+      const live = allObjectsById.get(id);
+      const current = live && (!original || original.assetId === live.assetId) ? live : undefined;
       return current || original ? [current || original!] : [];
     });
   }
@@ -438,14 +463,15 @@ export default function App() {
     if (annotation.scope === 'group') { const sources = annotationSources(annotation); return sources.length ? unionBounds(sources) : annotation.bounds; }
     if (annotation.coordinateSpace === 'world') return annotation.bounds;
     const object = annotationSources(annotation).find(object => object.id === annotation.objectId && (!annotation.assetId || object.assetId === annotation.assetId));
-    const live = object && allObjects.find(current => current.id === object.id && current.assetId === object.assetId);
+    const current = object && allObjectsById.get(object.id);
+    const live = current && current.assetId === object.assetId ? current : undefined;
     const retained = [...retainedCaptures.current.values()].find(value => value.frame.identity.sessionId === state?.session.id && value.frame.identity.draftId === draft?.id && value.frame.identity.annotationId === annotation.id && value.frame.identity.version === annotation.captureState?.version);
     return object ? objectRegion(annotation.bounds, live ? contentBounds(live) : object) : annotation.capture?.worldBounds || retained?.frame.worldBounds || (captureJob.current?.owner.annotationId === annotation.id ? captureJob.current.worldBounds : undefined);
   }
   function annotationDisplayBounds(annotation: AnnotationInput): Rect {
     const sources = annotationSources(annotation);
     if (annotation.scope === 'group') return sources.length ? unionBounds(sources) : annotation.bounds;
-    return sources.length ? unionBounds(sources.map(source => { const live = allObjects.find(object => object.id === source.id && object.assetId === source.assetId); return live ? contentBounds(live) : source; })) : annotation.capture?.worldBounds || annotation.bounds;
+    return sources.length ? unionBounds(sources.map(source => { const live = allObjectsById.get(source.id); return live?.assetId === source.assetId ? contentBounds(live) : source; })) : annotation.capture?.worldBounds || annotation.bounds;
   }
   function annotationActive(annotation: AnnotationInput & { inspectionTaskId?: string }) { return annotationRead?.id === annotation.id && ((!!annotationReader?.draftId || readingEditDraft) === !annotation.inspectionTaskId); }
   const annotationMarks = allAnnotations.flatMap((annotation, index) => { const bounds = annotationBounds(annotation); return bounds ? [{ annotation, bounds, number: index + 1 }] : []; });
@@ -1108,8 +1134,10 @@ export default function App() {
     transitionTimer.current = window.setTimeout(() => setGroupTransition(null), 620);
     return () => window.clearTimeout(transitionTimer.current);
   }, [groupTransition, state?.groups]);
-  const snapObjects = objects.map(object => ({ ...object, id: `object:${object.id}` }));
-  const snapTargets = activeGroup ? snapObjects : [...snapObjects, ...groups.filter(group => group.mode === 'folder' && group.id !== selectedGroupId).map(group => ({ ...groupDisplayBounds(group), id: `group:${group.id}` }))];
+  const snapTargets = useMemo(() => {
+    const snapObjects = objects.map(object => ({ ...object, id: `object:${object.id}` }));
+    return activeGroup ? snapObjects : [...snapObjects, ...groups.filter(group => group.mode === 'folder' && group.id !== selectedGroupId).map(group => ({ ...groupDisplayBounds(group), id: `group:${group.id}` }))];
+  }, [objects, activeGroup, groups, selectedGroupId]);
   function enterGroup(group: BoardGroup) {
     if (disabled) return;
     clearInspection(); exitAnnotation(); selectGroupTarget(''); setReferencePreview([]); setPreview({}); setMode('select');
@@ -1460,10 +1488,10 @@ export default function App() {
   return <div className="app-shell" data-capturing={!!captureBusyId || undefined} data-sampling={!!samplingIdentity || undefined}><a className="skip-link" href="#whiteboard">Skip to canvas</a>
     <main className="canvas-main"><div id="whiteboard" className={`whiteboard mode-${spacePan ? 'pan' : mode} ${dragOver ? 'drag-over' : ''} ${board.switching ? 'is-loading' : ''}`} ref={canvas} data-view-id={projectScene?.view?.viewId} data-view-generation={projectScene?.view?.viewGeneration} tabIndex={0} role="region" aria-label="Project board. Enter selects files, arrow keys move them, and Space pans the canvas." onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerLeave={() => updateMarkHover(null)} onPointerCancel={() => { gesture.current = null; dragAppearance.current = {}; setGroupPosition(null); updateMarkHover(null); setPreview({}); setSelectionRect(null); setSnapGuides([]); setMarkPreview(null); }} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === ' ') { event.preventDefault(); setSpacePan(true); } if (event.key === 'Enter' && mode === 'mark') { event.preventDefault(); if (selected.length === 1 && !annotationEdit) enterAnnotation(); else { const point = screenToWorld({ x: canvas.current!.clientWidth / 2, y: canvas.current!.clientHeight / 2 }, view); applyMark({ ...point, width: 0, height: 0 }, 'point', annotationEdit); } } if (event.key === 'Escape') { setReferencePreview([]); if (captureBusyId) void cancelCapture(); else if (annotationRead) closeAnnotation(); else if (annotating) { exitAnnotation(); setMode('select'); } else { clearInspection(); selectObjects([]); setMode('select'); } } if (event.key === '+' || event.key === '=') { event.preventDefault(); zoom(1.2); } if (event.key === '-') { event.preventDefault(); zoom(1 / 1.2); } }} onKeyUp={event => { if (event.key === ' ') setSpacePan(false); }} onBlur={() => setSpacePan(false)} onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); setDragOver(true); } }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragOver(false); }} onDrop={event => { event.preventDefault(); setDragOver(false); void importFiles(filesFromTransfer(event.dataTransfer), localPoint(event)); }}>
       {activeGroup && <div className="group-navigation" data-canvas-control><div className="group-navigation-header"><GroupActionButton label="Back to board" onClick={leaveGroup}><ArrowLeft size={16}/></GroupActionButton>{groupName(activeGroup, 'group-navigation-name')}</div>{groupActions(activeGroup)}</div>}
-      <div className={`canvas-world${groupTransition ? ' layout-transitioning' : ''}`} data-transition-kind={groupTransition?.kind} style={{ transform: `translate(${view.x}px,${view.y}px) scale(${view.zoom})` }}>{!activeGroup && groups.map(group => renderGroup(group))}{!activeGroup && groupTransition?.ghost && !groups.some(group => group.id === groupTransition.ghost!.id) && renderGroup(groupTransition.ghost, true)}{activeGroup && groups.filter(group => group.id !== activeGroup.id).map(group => renderGroup(group, true))}{activeGroup && groupTransition?.kind === 'enter' && renderGroup(activeGroup, true)}{displayObjects.map((object, index) => { const canonical = state.objects.find(value => value.id === object.id) || object; const asset = assetFor(canonical.assetId); const exterior = exteriorObjects.some(item => item.id === object.id); const departing = departingObjects.some(item => item.id === object.id); const arriving = !!groupTransition && (groupTransition.id === object.groupId || !!groupTransition.ghost?.objectIds.includes(object.id)) && (groupTransition.kind === 'enter' || groupTransition.kind === 'expand'); const isSelected = !exterior && !departing && selectedIds.includes(object.id); return <article key={object.id} className={`board-object object-${object.type} ${isSelected ? 'selected' : ''} ${exterior ? 'group-exterior' : ''} ${departing ? 'group-member-departing' : ''} ${arriving ? 'group-member-arriving' : ''}`} inert={exterior || departing} data-moving={gesture.current?.objects.some(item => item.id === object.id) || undefined} aria-hidden={exterior || undefined} data-object-id={object.id} data-content-kind={resolveContentKind(asset)} data-object-version={canonical.version} data-selected={isSelected || undefined} style={{ left: object.x, top: object.y, width: object.width, height: object.height, ...(dragAppearance.current[object.id] ? { transform: `scale(${dragAppearance.current[object.id].scale})`, transformOrigin: '0 0', opacity: dragAppearance.current[object.id].opacity } : {}), ...(departing && departingGroup ? { transform: `translate(${departingGroup.x + 20 - object.x}px,${departingGroup.y + 16 - object.y}px) scale(.22)` } : {}) }} tabIndex={exterior || departing ? -1 : 0} role="group" aria-label={`${asset?.name || 'File'}${isSelected ? ', selected' : ''}`} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectObjects(event.shiftKey ? unique([...selectedIds, object.id]) : [object.id]); } const delta = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key]; if (delta) { event.preventDefault(); event.stopPropagation(); void board.operations([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: object.x + delta[0], y: object.y + delta[1] } }]).catch(() => undefined); } }}>
+      <div className={`canvas-world${groupTransition ? ' layout-transitioning' : ''}`} data-transition-kind={groupTransition?.kind} style={{ transform: `translate(${view.x}px,${view.y}px) scale(${view.zoom})` }}>{!activeGroup && groups.map(group => renderGroup(group))}{!activeGroup && groupTransition?.ghost && !groups.some(group => group.id === groupTransition.ghost!.id) && renderGroup(groupTransition.ghost, true)}{activeGroup && groups.filter(group => group.id !== activeGroup.id).map(group => renderGroup(group, true))}{activeGroup && groupTransition?.kind === 'enter' && renderGroup(activeGroup, true)}{displayObjects.map((object, index) => { const canonical = canonicalObjectsById.get(object.id) || object; const asset = assetFor(canonical.assetId); const exterior = exteriorObjectIds.has(object.id); const departing = departingObjectIds.has(object.id); const arriving = !!groupTransition && (groupTransition.id === object.groupId || !!groupTransition.ghost?.objectIds.includes(object.id)) && (groupTransition.kind === 'enter' || groupTransition.kind === 'expand'); const isSelected = !exterior && !departing && selectedObjectIds.has(object.id); return <article key={object.id} className={`board-object object-${object.type} ${isSelected ? 'selected' : ''} ${exterior ? 'group-exterior' : ''} ${departing ? 'group-member-departing' : ''} ${arriving ? 'group-member-arriving' : ''}`} inert={exterior || departing} data-moving={gesture.current?.objects.some(item => item.id === object.id) || undefined} aria-hidden={exterior || undefined} data-object-id={object.id} data-content-kind={resolveContentKind(asset)} data-object-version={canonical.version} data-selected={isSelected || undefined} style={{ left: object.x, top: object.y, width: object.width, height: object.height, ...(dragAppearance.current[object.id] ? { transform: `scale(${dragAppearance.current[object.id].scale})`, transformOrigin: '0 0', opacity: dragAppearance.current[object.id].opacity } : {}), ...(departing && departingGroup ? { transform: `translate(${departingGroup.x + 20 - object.x}px,${departingGroup.y + 16 - object.y}px) scale(.22)` } : {}) }} tabIndex={exterior || departing ? -1 : 0} role="group" aria-label={`${asset?.name || 'File'}${isSelected ? ', selected' : ''}`} onKeyDown={event => { if (event.target !== event.currentTarget || disabled) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectObjects(event.shiftKey ? unique([...selectedIds, object.id]) : [object.id]); } const delta = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key]; if (delta) { event.preventDefault(); event.stopPropagation(); void board.operations([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x: object.x + delta[0], y: object.y + delta[1] } }]).catch(() => undefined); } }}>
         <div className="object-media"><SceneContentContext.Provider value={{ registry: sceneRegistry, objectId: object.id, width: object.width, height: object.height, captureView: projectScene?.view }}><ContentRenderer asset={asset} src={board.api.content(canonical.assetId)} api={board.api} objectId={object.id} objectVersion={canonical.version} sessionId={state.session.id} readOnly={!!board.historyBusy || exterior || departing} saveContent={(text, expectedVersion) => board.saveContent(object.id, text, expectedVersion, state.session.id)} registerContentEditor={board.registerContentEditor} onContentDirtyChange={dirty => board.setContentDirty(state.session.id, object.id, dirty)} onContentCompositionChange={composing => board.setContentComposing(state.session.id, object.id, composing)} onReloadBoard={reloadBoard} onBlankPointerDown={event => { event.stopPropagation(); pointerDown(event, true); }} onFrameWheel={canvasWheel} onFrameDrag={(frame, start, event) => frameDrag(object.id, frame, start, event)} disabled={disabled || annotating || exterior} preserveScene={annotating || !!annotationRead} error={mediaErrors[object.id]} onSize={size => setMediaSizes(current => ({ ...current, [object.id]: size }))} onError={() => setMediaErrors(current => ({ ...current, [object.id]: true }))} onActivate={() => selectObjects([object.id])} onSaveError={board.showError} fill={shownNoteFill(object)} onMediaElement={element => { const refs = resolveContentKind(asset) === 'audio' ? audioRefs.current : videoRefs.current; if (element) (refs as Map<string, HTMLMediaElement>).set(object.id, element); else refs.delete(object.id); }}/></SceneContentContext.Provider></div>
         <div className="object-caption"><span className="object-index">{String(index + 1).padStart(2, '0')}</span><span title={asset?.name}>{asset?.name || 'File'}</span>{object.sourceTaskId && <span className="generated-label">Output</span>}</div>{isSelected && ((capabilityFor(object).freeResize ? ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] : ['nw', 'ne', 'sw', 'se']) as ResizeHandle[]).map(corner => <button key={corner} type="button" className="resize-handle" data-resize-id={object.id} data-resize-corner={corner} aria-label={`Resize ${asset?.name || 'File'} ${ { nw: 'top left', n: 'top', ne: 'top right', e: 'right', se: 'bottom right', s: 'bottom', sw: 'bottom left', w: 'left' }[corner]}`} onKeyDown={event => { if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key) || layoutBusy.current || disabled) return; event.preventDefault(); event.stopPropagation(); const delta = { x: event.key === 'ArrowRight' ? 10 : event.key === 'ArrowLeft' ? -10 : 0, y: event.key === 'ArrowDown' ? 10 : event.key === 'ArrowUp' ? -10 : 0 }; const capability = capabilityFor(object), bounds = capability.freeResize ? resizeViewportBounds(object, corner, delta, capability.minimum) : resizeBounds(object, corner as ResizeCorner, delta); void writeLayout([{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: bounds }], state.session.id); }}/>) }</article>; })}
-      {visibleOutlines.map(({ annotation, bounds }) => <div className={`annotation-outline ${!annotation.inspectionTaskId ? 'draft-outline' : ''}`} key={`${annotation.inspectionTaskId || 'draft'}-${annotation.id}`} data-annotation-id={annotation.id} data-annotation-source={annotation.inspectionTaskId ? 'task' : 'draft'} data-source-removed={annotation.objectIds.some(id => !allObjects.some(object => object.id === id)) || undefined} style={{ left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height }}/>)}
+      {visibleOutlines.map(({ annotation, bounds }) => <div className={`annotation-outline ${!annotation.inspectionTaskId ? 'draft-outline' : ''}`} key={`${annotation.inspectionTaskId || 'draft'}-${annotation.id}`} data-annotation-id={annotation.id} data-annotation-source={annotation.inspectionTaskId ? 'task' : 'draft'} data-source-removed={annotation.objectIds.some(id => !allObjectsById.has(id)) || undefined} style={{ left: bounds.x, top: bounds.y, width: bounds.width, height: bounds.height }}/>)}
       {editingBounds && <div className="annotation-outline editing-outline" data-annotation-source="editing" style={{ left: editingBounds.x, top: editingBounds.y, width: editingBounds.width, height: editingBounds.height }}/>}
       {!!snapGuides.length && <svg className="alignment-guides" aria-hidden="true">{snapGuides.map(guide => <line key={guide.axis} data-snap-axis={guide.axis} vectorEffect="non-scaling-stroke" x1={guide.axis === 'x' ? guide.position : guide.start} y1={guide.axis === 'y' ? guide.position : guide.start} x2={guide.axis === 'x' ? guide.position : guide.end} y2={guide.axis === 'y' ? guide.position : guide.end}/>)}</svg>}
       {selectionRect && <div className="selection-rect" style={{ left: selectionRect.x, top: selectionRect.y, width: selectionRect.width, height: selectionRect.height }}/> }</div>
@@ -1477,7 +1505,7 @@ export default function App() {
         const timeControl = editable && annotationEdit && (kind === 'audio' || kind === 'video') && annotation.assetId ? <AnnotationTimeRange key={annotation.id} kind={kind} src={board.api.content(annotation.assetId)} media={annotation.objectId ? kind === 'video' ? videoRefs.current.get(annotation.objectId) : audioRefs.current.get(annotation.objectId) : undefined} start={annotation.timeStart} end={annotation.timeEnd} fresh={annotationEdit.fresh} disabled={disabled} onCommit={(start, end) => changeAnnotationRange(annotationEdit, kind, board.api.content(annotation.assetId!), start, end)} onError={board.showError}/> : undefined;
         return <CanvasAnnotationNote key={`${annotation.inspectionTaskId || draft?.editingTaskId || 'draft'}-${annotation.id}`} canvas={canvas} bounds={annotationDisplayBounds(annotation)} markBounds={bounds} pin={pinFor.get(annotation)} geometry={annotation.geometry} view={view} layoutVersion={noteLayoutVersion} number={index + 1} onOpen={() => openAnnotation(annotation, !annotation.inspectionTaskId)} annotationId={annotation.id} active={active} redrawing={active && mode === 'mark'} control={{ text: annotation.text, compositionRef: active ? commentComposing : undefined, mode: active ? editable ? 'edit' : 'view' : 'display', inputLabel: active ? editable ? creation ? 'Add a comment' : 'Annotation text' : 'Annotation comment' : `Comment ${index + 1}: ${annotation.text}`, inputRef: active ? annotationInput : undefined, disabled: active && disabled, busy: active && annotationSaving, onOpen: () => openAnnotation(annotation, !annotation.inspectionTaskId), onBack: closeAnnotation, onDone: editable ? () => void finishAnnotation(annotation) : undefined, onChange: changeAnnotationText, mediaControl: timeControl, children: <>
           <div className="annotation-source-thumbs">{sourceAssetIds.map(id => <AssetThumb hoverPreview key={id} asset={assetFor(id)} src={board.api.content(id)}/>)}</div>
-          {annotation.objectIds.some(id => !allObjects.some(object => object.id === id)) && <span className="annotation-source-status">Source removed</span>}
+          {annotation.objectIds.some(id => !allObjectsById.has(id)) && <span className="annotation-source-status">Source removed</span>}
           {timeControl && annotationEdit?.frameNote && <span className="annotation-source-status" title={annotationEdit.frameNote}>Frame unavailable</span>}
           {!timeControl && (kind === 'audio' || annotation.timeStart !== undefined) && <div className="comment-video-meta"><span>{annotation.timeStart === undefined ? 'Whole audio' : `${timeLabel(annotation.timeStart)}${annotation.timeEnd !== undefined ? ` – ${timeLabel(annotation.timeEnd)}` : ''}`}</span>{annotation.timeStart !== undefined && annotation.objectId && (videoRefs.current.has(annotation.objectId) || audioRefs.current.has(annotation.objectId)) && <button type="button" className="annotation-media-action" onClick={() => { const media = videoRefs.current.get(annotation.objectId!) || audioRefs.current.get(annotation.objectId!); if (media) { media.pause(); media.currentTime = annotation.timeStart!; } }}>{kind === 'audio' ? 'Jump to time' : 'Jump to frame'}</button>}{annotationEdit?.frameNote && <span title={annotationEdit.frameNote}>Timestamp only</span>}</div>}
         </> }}/>

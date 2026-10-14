@@ -7,16 +7,18 @@ export const HTML_SNAPSHOT_BYTES = 64 * 1024 * 1024;
 type Slot = 'hidden' | 'waiting' | 'capturing' | 'live' | 'freezing' | 'frozen' | 'stopped';
 type Entry = { element: HTMLElement; intersecting: boolean; attempted: boolean; requested: boolean; phase?: 'capturing' | 'live' | 'freezing'; width: number; height: number; generation: number; used: number; hovered: boolean; preserved?: boolean; resizeTimer?: number };
 type Cached = { image: HtmlSnapshot; cost: number };
+type PreviewState = { slot: Slot; image?: HtmlSnapshot; width: number; height: number; generation: number };
 
 // Both initial screenshot jobs and explicit interactive previews reserve slots,
 // including pending grants and the short capture handoff before an eviction.
-class HtmlPreviewPool {
+export class HtmlPreviewPool {
   private entries = new Map<symbol, Entry>();
   private active = new Set<symbol>();
   private cache = new Map<symbol, Cached>();
   private cacheBytes = 0;
   private listeners = new Set<() => void>();
   private version = 0;
+  private published = new Map<symbol, PreviewState>();
   private usage = 0;
   private permits = 0;
   private permitQueue: (() => void)[] = [];
@@ -51,23 +53,32 @@ class HtmlPreviewPool {
   private visible(entry: Entry) {
     return entry.intersecting && (!document.hidden || entry.preserved && !!entry.phase) && !entry.element.closest('[inert], [hidden], [aria-hidden="true"]') && entry.element.checkVisibility({ checkVisibilityCSS: true });
   }
-  read(id: symbol) {
-    const entry = this.entries.get(id), image = this.cache.get(id)?.image;
-    const slot: Slot = !entry || !this.visible(entry) ? 'hidden' : entry.phase || (entry.requested || !entry.attempted ? 'waiting' : image ? 'frozen' : 'stopped');
+  private state(id: symbol, entry: Entry | undefined, visible: boolean): PreviewState {
+    const image = this.cache.get(id)?.image;
+    const slot: Slot = !entry || !visible ? 'hidden' : entry.phase || (entry.requested || !entry.attempted ? 'waiting' : image ? 'frozen' : 'stopped');
     return { slot, image, width: entry?.width || 0, height: entry?.height || 0, generation: entry?.generation || 0 };
+  }
+  read(id: symbol) {
+    const entry = this.entries.get(id);
+    return this.state(id, entry, !!(entry && this.visible(entry)));
   }
   private release(id: symbol) { const entry = this.entries.get(id); if (entry) entry.phase = undefined; this.active.delete(id); }
   private reconcile = () => {
+    const visibility = new Map<Entry, boolean>();
+    const visible = (entry: Entry) => {
+      if (!visibility.has(entry)) visibility.set(entry, !!this.visible(entry));
+      return visibility.get(entry)!;
+    };
     for (const id of this.active) {
       const entry = this.entries.get(id);
-      if (!entry || !this.visible(entry)) {
+      if (!entry || !visible(entry)) {
         if (entry && entry.phase !== 'capturing') { entry.attempted = true; entry.requested = false; }
         this.release(id);
       }
     }
     // Explicit requests have priority. Warm-up never evicts an interactive frame.
     for (const [id, entry] of [...this.entries].sort((a, b) => b[1].used - a[1].used)) {
-      if (!entry.requested || !this.visible(entry) || this.active.has(id)) continue;
+      if (!entry.requested || !visible(entry) || this.active.has(id)) continue;
       if (this.active.size >= HTML_PREVIEW_LIMIT) {
         const warming = [...this.active].find(key => this.entries.get(key)?.phase === 'capturing' && !this.entries.get(key)?.preserved);
         if (warming) this.release(warming);
@@ -85,9 +96,19 @@ class HtmlPreviewPool {
     }
     for (const [id, entry] of this.entries) {
       if (this.active.size >= HTML_PREVIEW_LIMIT) break;
-      if (!entry.attempted && !entry.phase && this.visible(entry) && entry.width > 0 && entry.height > 0) { entry.phase = 'capturing'; this.active.add(id); }
+      if (!entry.attempted && !entry.phase && visible(entry) && entry.width > 0 && entry.height > 0) { entry.phase = 'capturing'; this.active.add(id); }
     }
-    this.version++; this.listeners.forEach(listener => listener());
+    const next = new Map<symbol, PreviewState>();
+    let changed = this.published.size !== this.entries.size;
+    for (const [id, entry] of this.entries) {
+      const value = this.state(id, entry, visible(entry)), previous = this.published.get(id);
+      next.set(id, value);
+      if (!previous || previous.slot !== value.slot || previous.image !== value.image || previous.width !== value.width || previous.height !== value.height || previous.generation !== value.generation) changed = true;
+    }
+    if (changed) {
+      this.published = next;
+      this.version++; this.listeners.forEach(listener => listener());
+    }
   };
   register(id: symbol, element: HTMLElement) {
     if (!this.intersection) {

@@ -64,11 +64,16 @@ test('reselecting one object creates individual atoms with neutral preview styli
   for (const theme of ['light', 'dark']) {
     if (theme === 'dark') { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); }
     await page.locator(`[data-object-id="${object.id}"]`).click({ position: { x: 90, y: 54 } });
+    await page.mouse.move(5, 5);
     await expect(preview).toHaveCount(1); const before = await appearance(preview);
+    await preview.hover(); const hoveredPreview = await appearance(preview); assert.notEqual(hoveredPreview.background, before.background);
     await preview.screenshot({ path: join(app.evidence, `${theme}-preview.png`) });
     await page.getByRole('button', { name: 'Add selected Repeated.png to request', exact: true }).click();
     await expect(formal).toHaveCount(theme === 'light' ? 1 : 2);
+    await page.mouse.move(5, 5);
     const after = await appearance(formal.first()); assert.equal(after.background, before.background); assert.equal(after.border, before.border); assert.notEqual(after.color, before.color);
+    await formal.first().hover(); const hoveredFormal = await appearance(formal.first()); assert.equal(hoveredFormal.background, hoveredPreview.background); assert.notEqual(hoveredFormal.background, after.background);
+    await page.mouse.move(5, 5);
     assert.deepEqual(await formal.locator('span[title]').allTextContents(), Array(theme === 'light' ? 1 : 2).fill('Repeated.png'));
     await page.locator('.composer').screenshot({ path: join(app.evidence, `${theme}-confirmed.png`) });
     await app.saved();

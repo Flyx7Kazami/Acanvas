@@ -1,0 +1,278 @@
+{
+  "reviewedAt": "2026-10-14T06:25:15.673Z",
+  "reviewer": "independent clean-context reviewer",
+  "status": "approved_to_commit",
+  "scope": {
+    "productFiles": [
+      "src/web/App.tsx",
+      "src/web/useCanvasLayout.ts",
+      "src/web/HtmlPreviewPool.tsx"
+    ],
+    "testFilesReviewed": [
+      "tests/canvas-control-layout.test.ts",
+      "tests/html-preview-pool.test.ts",
+      "tests/chatbox-ui.test.ts",
+      "tests/server.test.ts",
+      "tests/reference-occurrences-ui.test.ts",
+      "tests/multimodal.spec.ts"
+    ],
+    "measurementScripts": [
+      "scripts/measure-canvas-smoothness.mjs",
+      "scripts/measure-folder-smoothness.mjs"
+    ],
+    "documents": [
+      "docs/PERFORMANCE_SMOOTHNESS.md",
+      "docs/PLAN.md",
+      "docs/VALIDATION.md"
+    ],
+    "excluded": [
+      "User original board and running service",
+      "Deployment",
+      "Physical touchpad and other browser worst-case loads"
+    ]
+  },
+  "sourceReview": {
+    "result": "passed",
+    "unresolvedProductFindings": [],
+    "covered": [
+      "Memo dependencies and immutable inputs",
+      "Displayed order, first-match indexes, snapshot asset priority and current object versions",
+      "Group and folder projection, transition ghosts and selection",
+      "Annotation current and original sources",
+      "Same-commit control positioning, dynamic observed targets and cleanup",
+      "HTML visibility, state publication, slot admission, cache eviction, resize generation and permit lifetime"
+    ],
+    "testCorrections": "Original business assertions retained; explicit native focus/caret, annotation exit, neutral/hover states, host environment and process exit states reviewed."
+  },
+  "independentlyExecuted": {
+    "passed": 10,
+    "failedKnownBaseline": 1,
+    "groups": [
+      {
+        "name": "contextual controls and HTML pool",
+        "passed": 2
+      },
+      {
+        "name": "group and folder native UI",
+        "passed": 6
+      },
+      {
+        "name": "video light/dark and narrow reduced motion",
+        "passed": 2
+      }
+    ],
+    "folderCoverage": [
+      "Frame and folder conversion",
+      "Caption drag and hover/focus ownership",
+      "Enter and exact parent-view return",
+      "Nested object movement, new note, import and annotation",
+      "Direct ungroup and transition takeover",
+      "Content Undo/Redo, membership and reload"
+    ],
+    "knownFailure": "390x480 long draft plus annotation: identical Fit all center hit failure in original and candidate; 17 controls compared."
+  },
+  "fixedMeasurementAudit": {
+    "result": "passed",
+    "rawCrossRoundIssues": [],
+    "canvasRounds": 4,
+    "canvasTimedPhases": 64,
+    "canvasInputCount": 3520,
+    "canvasMatchedInputs": 3504,
+    "canvasSupersededInputs": 16,
+    "pendingInputs": 0,
+    "canvasGeometryAndFixtureAgreement": true,
+    "canvasFinalSaveCancelReload": true,
+    "videoContinuesProducingFrames": true,
+    "folderRounds": 4,
+    "folderTimedPhases": 64,
+    "folderSnapshotsPerRound": 19,
+    "folderFixtureAndSemanticAgreement": true,
+    "folderDomApiMaximumDifferenceWorldPixels": 0.00033333333334439885,
+    "folderDomApiDifferenceCause": "CSS decimal serialization",
+    "folderDragInputCounts": {
+      "pointerDown": 1,
+      "movesWithButtons": 30,
+      "pointerUp": 1
+    },
+    "annotationSourceAudit": [
+      {
+        "run": "baseline-r1",
+        "targetStableMember": true,
+        "targetMatchesCapture": true,
+        "sourceMatchesCapture": true,
+        "ownerAndVersion": true,
+        "pngWidth": 584,
+        "pngHeight": 488,
+        "pngMetadataMatch": true,
+        "pngIdenticalAcrossRounds": true,
+        "sourceTargetX": 430,
+        "currentTargetX": 490,
+        "noteSourceRetained": true
+      },
+      {
+        "run": "baseline-r2",
+        "targetStableMember": true,
+        "targetMatchesCapture": true,
+        "sourceMatchesCapture": true,
+        "ownerAndVersion": true,
+        "pngWidth": 584,
+        "pngHeight": 488,
+        "pngMetadataMatch": true,
+        "pngIdenticalAcrossRounds": true,
+        "sourceTargetX": 430,
+        "currentTargetX": 490,
+        "noteSourceRetained": true
+      },
+      {
+        "run": "candidate-r1",
+        "targetStableMember": true,
+        "targetMatchesCapture": true,
+        "sourceMatchesCapture": true,
+        "ownerAndVersion": true,
+        "pngWidth": 584,
+        "pngHeight": 488,
+        "pngMetadataMatch": true,
+        "pngIdenticalAcrossRounds": true,
+        "sourceTargetX": 430,
+        "currentTargetX": 490,
+        "noteSourceRetained": true
+      },
+      {
+        "run": "candidate-r2",
+        "targetStableMember": true,
+        "targetMatchesCapture": true,
+        "sourceMatchesCapture": true,
+        "ownerAndVersion": true,
+        "pngWidth": 584,
+        "pngHeight": 488,
+        "pngMetadataMatch": true,
+        "pngIdenticalAcrossRounds": true,
+        "sourceTargetX": 430,
+        "currentTargetX": 490,
+        "noteSourceRetained": true
+      }
+    ],
+    "representativeScriptChangePercent": {
+      "fiveAnnotations": {
+        "drag": -22.195,
+        "selectedPan": -15.407,
+        "zoom": -16.256
+      },
+      "folder": {
+        "drag": -17.619,
+        "internalMove": -18.193
+      }
+    }
+  },
+  "focusedAndProfileAudit": {
+    "result": "passed",
+    "untracedRounds": 4,
+    "tracedDiagnosticRounds": 2,
+    "inputCountPerRound": 220,
+    "sameFixed15AnnotationFixtureAndFinalGeometry": true,
+    "errors": [],
+    "longTasks": [],
+    "cancelSaveReload": true,
+    "servedAndPrivateMappedBundlesByteIdentical": {
+      "baseline": true,
+      "candidate": true
+    },
+    "focusedP95Ms": {
+      "selectedPan": {
+        "baseline": [
+          24,
+          23.8
+        ],
+        "candidate": [
+          23.9,
+          24.6
+        ]
+      },
+      "zoom": {
+        "baseline": [
+          25,
+          23.5
+        ],
+        "candidate": [
+          22.4,
+          23
+        ]
+      }
+    },
+    "profile": {
+      "rawNegativeDeltaCounts": {
+        "baseline": 672,
+        "candidate": 578
+      },
+      "rawNegativeDeltaSumUs": {
+        "baseline": -547406,
+        "candidate": -506584
+      },
+      "analysis": "Cumulative absolute sample timestamps sorted; nonnegative preceding intervals clipped to phase boundaries. Raw data retained.",
+      "allFinalSourceDurationsNonnegative": true,
+      "independentlyMappedPointLayoutSamples": {
+        "baseline": {
+          "count": 725,
+          "mappedWebTotal": 916
+        },
+        "candidate": {
+          "count": 725,
+          "mappedWebTotal": 858
+        }
+      },
+      "percentageDenominator": "Samples mapped to src/web; not total CPU",
+      "original52msCause": "Unknown; original sample had no captured call stack. Later GC samples do not establish its cause."
+    }
+  },
+  "knownBoundaries": [
+    {
+      "name": "Dense annotation tail latency",
+      "details": "Fixed candidate second round retained selected-pan p95 31.2ms and zoom p95 31ms, one 52ms long task, maximum input latency 53.7ms. Focused repeats did not reproduce that task; rare tails remain open."
+    },
+    {
+      "name": "Measured timing regressions",
+      "details": "All raw regressions retained, including focused drag and selected-pan p95, layout changes, folder first feedback, note Undo and redo-ungroup. Folder event timing separately explains driver pacing differences; intermediate folder moves were not individually asserted as presented."
+    },
+    {
+      "name": "Legacy browser suite",
+      "result": {
+        "total": 104,
+        "pass": 53,
+        "fail": 51
+      },
+      "classification": {
+        "sameOriginalAssertion": 49,
+        "sameIndependentShortscreenHit": 1,
+        "sendReadySameOldPngAssertion": 1,
+        "unresolved": 0
+      },
+      "details": "Original failures remain failures, rather than being reported as passing."
+    },
+    {
+      "name": "Shared reference capture readiness",
+      "details": "Original candidate Enter preceded PNG completion. Temporary copy only waited for actual Send enabled; both builds then produced queue count 3 and reached the unchanged PNG expected 320 / actual 452 assertion. Original test and product were retained."
+    }
+  ],
+  "evidenceCorrections": [
+    {
+      "issue": "Random first-object target and layer order",
+      "resolution": "Fixed IDs, asset names, creation/display order, initial geometry and explicit target. Earlier rounds retained as exploratory."
+    },
+    {
+      "issue": "Negative CPU profile interval weights",
+      "resolution": "Raw values retained; analysis reconstructed sorted nonnegative adjacent intervals. Source sample counts are primary."
+    },
+    {
+      "issue": "Diagnostic layout numbers",
+      "resolution": "Document corrected to CDP ScriptDuration about 1460/1362ms and LayoutDuration 19.503/19.516ms."
+    }
+  ],
+  "finalConclusion": "Approved to commit the reviewed optimization, tests, scripts and documentation. No introduced functional regression was found in the exercised scope. Evidence supports reduced repeated work, and retains performance tails and existing UI/test boundaries. Formal user service remains unchanged.",
+  "artifactScan": {
+    "scope": "Text, JSON, log, TAP and gzip artifacts in this evidence directory",
+    "textFiles": 64,
+    "jsonFiles": 43,
+    "parseErrors": [],
+    "credentialFindings": []
+  }
+}

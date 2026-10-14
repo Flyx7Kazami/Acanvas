@@ -27,7 +27,7 @@ const test = base.extend<{ app: Fixture }>({ app: async ({ page }, use) => {
   const sessionId = new URL(page.url()).searchParams.get('session')!;
   const restart = async () => { const exited = once(child, 'exit'); child.kill('SIGTERM'); await exited; child = spawn(resolve('.runtime/node_modules/node/bin/node'), [resolve(process.env.ACANVAS_TEST_OUT_DIR || 'dist', 'src/server/main.js'), '--project', root, '--port', new URL(url).port], { stdio: ['ignore', 'pipe', 'pipe'] }); child.stderr.on('data', value => { errors += value; }); await once(child.stdout, 'data'); bootstrap = await (await fetch(`${url}/api/bootstrap`)).json(); };
   try { await use({ root, url, restart, call, state: () => call(`/api/state?sessionId=${sessionId}`) }); }
-  finally { if (child.exitCode === null) { const exited = once(child, 'exit'); child.kill('SIGTERM'); await exited; } expect(child.exitCode, errors).toBe(0); await rm(root, { recursive: true, force: true }); }
+  finally { if (child.exitCode === null && child.signalCode === null) { const exited = once(child, 'exit'); child.kill('SIGTERM'); await exited; } expect(child.signalCode, errors).toBeNull(); expect(child.exitCode, errors).toBe(0); await rm(root, { recursive: true, force: true }); }
 } });
 
 async function confirmSelectedReferences(page: import('@playwright/test').Page) {

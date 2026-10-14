@@ -1,0 +1,466 @@
+{
+  "readChannel": "CanvasService draft/readableAsset/assetPath against this run own temporary project after its service closed",
+  "annotation": {
+    "id": "7dc0022b-63a4-47a8-bac7-52c728b9711b",
+    "scope": "object",
+    "objectIds": [
+      "member-b"
+    ],
+    "bounds": {
+      "x": 0.16666666666666666,
+      "y": 0.32222222222222224,
+      "width": 0.38888888888888895,
+      "height": 0.4444444444444445
+    },
+    "coordinateSpace": "normalized",
+    "text": "Preserve this reference.",
+    "geometry": "rect",
+    "captureState": {
+      "version": 1,
+      "status": "complete",
+      "captureId": "6fdcef62-179e-49aa-ac0e-b667a3b05074"
+    },
+    "objectId": "member-b",
+    "assetId": "03556469-64ca-436d-befa-a99c9592b609",
+    "sceneSource": {
+      "projectId": "637df418-925d-495c-b9b7-dac5ce30a98c",
+      "sessionId": "4452d8af-fe8d-40b9-a8e7-ee494f0c0276",
+      "documentId": "d562ebe2-8020-48e4-85b4-5231dd5532d9",
+      "viewId": "2b9e7c50-d9ec-4b75-a846-92efe1bf3123",
+      "viewGeneration": 1,
+      "id": "69f5a974-ec06-4c8b-8a9f-1b69b6504f0b",
+      "baseSceneId": "21d8635b-f2f1-4a96-b41c-397248d789c1",
+      "frameSeq": 1791957166179,
+      "operationSeq": 3,
+      "sourceMode": "scene-bitmap",
+      "createdAt": "2026-10-14T05:52:46.195Z"
+    },
+    "capture": {
+      "capturedAt": "2026-10-14T05:52:46.182Z",
+      "target": {
+        "scope": "object",
+        "coordinateSpace": "normalized",
+        "objectIds": [
+          "member-b"
+        ],
+        "objectId": "member-b",
+        "assetId": "03556469-64ca-436d-befa-a99c9592b609",
+        "bounds": {
+          "x": 0.16666666666666666,
+          "y": 0.32222222222222224,
+          "width": 0.38888888888888895,
+          "height": 0.4444444444444445
+        },
+        "geometry": "rect"
+      },
+      "worldBounds": {
+        "x": 460,
+        "y": 250,
+        "width": 70.00000000000001,
+        "height": 50
+      },
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1,
+        "width": 1280,
+        "height": 900,
+        "devicePixelRatio": 2
+      },
+      "mapping": {
+        "crop": {
+          "x": 374,
+          "y": 154,
+          "width": 292,
+          "height": 244
+        },
+        "pixelWidth": 584,
+        "pixelHeight": 488,
+        "scaleX": 2,
+        "scaleY": 2
+      },
+      "scene": {
+        "objects": [
+          {
+            "object": {
+              "id": "member-a",
+              "assetId": "03556469-64ca-436d-befa-a99c9592b609",
+              "type": "image",
+              "x": 220,
+              "y": 210,
+              "width": 180,
+              "height": 120,
+              "version": 1,
+              "createdAt": "2026-10-14T05:52:45.180Z",
+              "updatedAt": "2026-10-14T05:52:45.180Z"
+            },
+            "renderedBounds": {
+              "x": 180,
+              "y": 170,
+              "width": 260,
+              "height": 212
+            },
+            "layer": 0
+          },
+          {
+            "object": {
+              "id": "member-b",
+              "assetId": "03556469-64ca-436d-befa-a99c9592b609",
+              "type": "image",
+              "x": 430,
+              "y": 210,
+              "width": 180,
+              "height": 120,
+              "version": 1,
+              "createdAt": "2026-10-14T05:52:45.189Z",
+              "updatedAt": "2026-10-14T05:52:45.189Z"
+            },
+            "renderedBounds": {
+              "x": 390,
+              "y": 170,
+              "width": 260,
+              "height": 212
+            },
+            "layer": 1
+          },
+          {
+            "object": {
+              "id": "member-note",
+              "assetId": "09813cc5-5246-46f0-bc4f-f719bd7ba8fb",
+              "type": "file",
+              "x": 220,
+              "y": 390,
+              "width": 240,
+              "height": 128,
+              "version": 1,
+              "createdAt": "2026-10-14T05:52:45.196Z",
+              "updatedAt": "2026-10-14T05:52:45.196Z"
+            },
+            "renderedBounds": {
+              "x": 180,
+              "y": 350,
+              "width": 320,
+              "height": 220
+            },
+            "layer": 2
+          }
+        ],
+        "assets": [
+          {
+            "id": "03556469-64ca-436d-befa-a99c9592b609",
+            "name": "Study image.svg",
+            "mime": "image/svg+xml",
+            "size": 166,
+            "kind": "image",
+            "createdAt": "2026-10-14T05:52:45.152Z"
+          },
+          {
+            "id": "09813cc5-5246-46f0-bc4f-f719bd7ba8fb",
+            "name": "Field notes",
+            "mime": "text/x-acanvas-note",
+            "size": 16,
+            "kind": "file",
+            "createdAt": "2026-10-14T05:52:45.163Z"
+          }
+        ],
+        "omittedCount": 0
+      },
+      "image": {
+        "mime": "image/png",
+        "width": 584,
+        "height": 488,
+        "bytes": 22228
+      },
+      "sourceMode": "scene-bitmap",
+      "sceneSource": {
+        "projectId": "637df418-925d-495c-b9b7-dac5ce30a98c",
+        "sessionId": "4452d8af-fe8d-40b9-a8e7-ee494f0c0276",
+        "documentId": "d562ebe2-8020-48e4-85b4-5231dd5532d9",
+        "viewId": "2b9e7c50-d9ec-4b75-a846-92efe1bf3123",
+        "viewGeneration": 1,
+        "id": "69f5a974-ec06-4c8b-8a9f-1b69b6504f0b",
+        "baseSceneId": "21d8635b-f2f1-4a96-b41c-397248d789c1",
+        "frameSeq": 1791957166179,
+        "operationSeq": 3,
+        "sourceMode": "scene-bitmap",
+        "createdAt": "2026-10-14T05:52:46.195Z"
+      },
+      "presentation": {
+        "documentId": "d562ebe2-8020-48e4-85b4-5231dd5532d9",
+        "viewId": "2b9e7c50-d9ec-4b75-a846-92efe1bf3123",
+        "frameSeq": 1791957166179,
+        "baseSceneId": "21d8635b-f2f1-4a96-b41c-397248d789c1",
+        "camera": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        },
+        "cssViewport": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 900
+        },
+        "bitmap": {
+          "width": 2560,
+          "height": 1800
+        },
+        "layers": [
+          {
+            "objectId": "member-a",
+            "assetId": "03556469-64ca-436d-befa-a99c9592b609",
+            "objectVersion": 1,
+            "worldBounds": {
+              "x": 180,
+              "y": 170,
+              "width": 260,
+              "height": 212
+            },
+            "contentWorldBounds": {
+              "x": 220,
+              "y": 213.75,
+              "width": 180,
+              "height": 112.5
+            },
+            "renderedBounds": {
+              "x": 180,
+              "y": 170,
+              "width": 260,
+              "height": 212
+            },
+            "layer": 0
+          },
+          {
+            "objectId": "member-b",
+            "assetId": "03556469-64ca-436d-befa-a99c9592b609",
+            "objectVersion": 1,
+            "worldBounds": {
+              "x": 390,
+              "y": 170,
+              "width": 260,
+              "height": 212
+            },
+            "contentWorldBounds": {
+              "x": 430,
+              "y": 213.75,
+              "width": 180,
+              "height": 112.5
+            },
+            "renderedBounds": {
+              "x": 390,
+              "y": 170,
+              "width": 260,
+              "height": 212
+            },
+            "layer": 1
+          },
+          {
+            "objectId": "member-note",
+            "assetId": "09813cc5-5246-46f0-bc4f-f719bd7ba8fb",
+            "objectVersion": 1,
+            "worldBounds": {
+              "x": 180,
+              "y": 350,
+              "width": 320,
+              "height": 220
+            },
+            "contentWorldBounds": {
+              "id": "member-note",
+              "assetId": "09813cc5-5246-46f0-bc4f-f719bd7ba8fb",
+              "type": "file",
+              "x": 220,
+              "y": 390,
+              "width": 240,
+              "height": 128,
+              "version": 1,
+              "createdAt": "2026-10-14T05:52:45.196Z",
+              "updatedAt": "2026-10-14T05:52:45.196Z"
+            },
+            "renderedBounds": {
+              "x": 180,
+              "y": 350,
+              "width": 320,
+              "height": 220
+            },
+            "layer": 2
+          },
+          {
+            "objectId": "outside-right",
+            "assetId": "f0c5120f-6f64-419e-bc08-c7c658b58ed2",
+            "objectVersion": 1,
+            "worldBounds": {
+              "x": 720,
+              "y": 170,
+              "width": 260,
+              "height": 212
+            },
+            "contentWorldBounds": {
+              "x": 760,
+              "y": 213.75,
+              "width": 180,
+              "height": 112.5
+            },
+            "renderedBounds": {
+              "x": 720,
+              "y": 170,
+              "width": 260,
+              "height": 212
+            },
+            "layer": 3
+          },
+          {
+            "objectId": "outside-below",
+            "assetId": "f0c5120f-6f64-419e-bc08-c7c658b58ed2",
+            "objectVersion": 1,
+            "worldBounds": {
+              "x": 180,
+              "y": 600,
+              "width": 260,
+              "height": 212
+            },
+            "contentWorldBounds": {
+              "x": 220,
+              "y": 643.75,
+              "width": 180,
+              "height": 112.5
+            },
+            "renderedBounds": {
+              "x": 180,
+              "y": 600,
+              "width": 260,
+              "height": 212
+            },
+            "layer": 4
+          }
+        ],
+        "media": []
+      },
+      "id": "6fdcef62-179e-49aa-ac0e-b667a3b05074",
+      "sessionId": "4452d8af-fe8d-40b9-a8e7-ee494f0c0276",
+      "draftId": "50a7a35c-6506-4304-99df-09fc18d716a8",
+      "annotationId": "7dc0022b-63a4-47a8-bac7-52c728b9711b",
+      "version": 1,
+      "screenshotAssetId": "e8691252-a644-438b-8ee3-fefd137f0891",
+      "source": "reference_content"
+    }
+  },
+  "sourceObjects": [
+    {
+      "id": "member-a",
+      "assetId": "03556469-64ca-436d-befa-a99c9592b609",
+      "type": "image",
+      "x": 220,
+      "y": 210,
+      "width": 180,
+      "height": 120,
+      "version": 1,
+      "createdAt": "2026-10-14T05:52:45.180Z",
+      "updatedAt": "2026-10-14T05:52:45.180Z"
+    },
+    {
+      "id": "member-b",
+      "assetId": "03556469-64ca-436d-befa-a99c9592b609",
+      "type": "image",
+      "x": 430,
+      "y": 210,
+      "width": 180,
+      "height": 120,
+      "version": 1,
+      "createdAt": "2026-10-14T05:52:45.189Z",
+      "updatedAt": "2026-10-14T05:52:45.189Z"
+    },
+    {
+      "id": "member-note",
+      "assetId": "09813cc5-5246-46f0-bc4f-f719bd7ba8fb",
+      "type": "file",
+      "x": 220,
+      "y": 390,
+      "width": 240,
+      "height": 128,
+      "version": 1,
+      "createdAt": "2026-10-14T05:52:45.196Z",
+      "updatedAt": "2026-10-14T05:52:45.196Z"
+    }
+  ],
+  "currentObjects": [
+    {
+      "id": "member-a",
+      "assetId": "03556469-64ca-436d-befa-a99c9592b609",
+      "type": "image",
+      "x": 313.3333333333333,
+      "y": 243.33333333333334,
+      "width": 180,
+      "height": 120,
+      "version": 9,
+      "createdAt": "2026-10-14T05:52:45.180Z",
+      "updatedAt": "2026-10-14T05:52:53.599Z"
+    },
+    {
+      "id": "member-b",
+      "assetId": "03556469-64ca-436d-befa-a99c9592b609",
+      "type": "image",
+      "x": 490,
+      "y": 230,
+      "width": 180,
+      "height": 120,
+      "version": 6,
+      "createdAt": "2026-10-14T05:52:45.189Z",
+      "updatedAt": "2026-10-14T05:52:53.599Z"
+    },
+    {
+      "id": "member-note",
+      "assetId": "5c3e4991-753a-4ade-a9ed-f75eb6f65409",
+      "type": "file",
+      "x": 280,
+      "y": 410,
+      "width": 240,
+      "height": 128,
+      "version": 9,
+      "createdAt": "2026-10-14T05:52:45.196Z",
+      "updatedAt": "2026-10-14T05:52:53.599Z"
+    },
+    {
+      "id": "outside-right",
+      "assetId": "f0c5120f-6f64-419e-bc08-c7c658b58ed2",
+      "type": "image",
+      "x": 718,
+      "y": 210,
+      "width": 180,
+      "height": 120,
+      "version": 9,
+      "createdAt": "2026-10-14T05:52:45.202Z",
+      "updatedAt": "2026-10-14T05:52:53.599Z"
+    },
+    {
+      "id": "outside-below",
+      "assetId": "f0c5120f-6f64-419e-bc08-c7c658b58ed2",
+      "type": "image",
+      "x": 220,
+      "y": 618,
+      "width": 180,
+      "height": 120,
+      "version": 9,
+      "createdAt": "2026-10-14T05:52:45.209Z",
+      "updatedAt": "2026-10-14T05:52:53.599Z"
+    }
+  ],
+  "screenshot": {
+    "asset": {
+      "evidence": {
+        "sessionId": "4452d8af-fe8d-40b9-a8e7-ee494f0c0276",
+        "draftId": "50a7a35c-6506-4304-99df-09fc18d716a8",
+        "captureId": "6fdcef62-179e-49aa-ac0e-b667a3b05074"
+      },
+      "id": "e8691252-a644-438b-8ee3-fefd137f0891",
+      "name": "capture-7dc0022b-63a4-47a8-bac7-52c728b9711b.png",
+      "mime": "image/png",
+      "size": 22228,
+      "kind": "image",
+      "createdAt": "2026-10-14T05:52:46.238Z"
+    },
+    "bytes": 22228,
+    "width": 584,
+    "height": 488
+  },
+  "perStepAssertion": "Each measured state compared its complete target, sceneSource and capture against the original captured annotation in memory; raw snapshots record all passing per-step checks."
+}

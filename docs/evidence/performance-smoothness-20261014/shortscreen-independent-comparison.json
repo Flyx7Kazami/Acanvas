@@ -1,0 +1,576 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 480
+  },
+  "baseline": [
+    {
+      "label": "Remove selected files from canvas",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 216,
+        "y": 64.09375,
+        "width": 32,
+        "height": 32,
+        "top": 64.09375,
+        "right": 248,
+        "bottom": 96.09375,
+        "left": 216
+      },
+      "hit": {},
+      "pass": true
+    },
+    {
+      "label": "Play video",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 268,
+        "y": 134,
+        "width": 28,
+        "height": 28,
+        "top": 134,
+        "right": 296,
+        "bottom": 162,
+        "left": 268
+      },
+      "hit": {},
+      "pass": true
+    },
+    {
+      "label": "Video timeline",
+      "tag": "INPUT",
+      "rect": {
+        "x": 302,
+        "y": 135,
+        "width": 80,
+        "height": 26,
+        "top": 135,
+        "right": 382,
+        "bottom": 161,
+        "left": 302
+      },
+      "hit": "Video timeline",
+      "pass": true
+    },
+    {
+      "label": "Select files",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 68,
+        "width": 32,
+        "height": 32,
+        "top": 68,
+        "right": 52,
+        "bottom": 100,
+        "left": 20
+      },
+      "hit": {},
+      "pass": true
+    },
+    {
+      "label": "Pan canvas",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 102,
+        "width": 32,
+        "height": 32,
+        "top": 102,
+        "right": 52,
+        "bottom": 134,
+        "left": 20
+      },
+      "hit": {},
+      "pass": true
+    },
+    {
+      "label": "Mark canvas",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 136,
+        "width": 32,
+        "height": 32,
+        "top": 136,
+        "right": 52,
+        "bottom": 168,
+        "left": 20
+      },
+      "hit": {},
+      "pass": true
+    },
+    {
+      "label": "Add note",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 170,
+        "width": 32,
+        "height": 32,
+        "top": 170,
+        "right": 52,
+        "bottom": 202,
+        "left": 20
+      },
+      "hit": {},
+      "pass": true
+    },
+    {
+      "label": "Undo",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 211,
+        "width": 32,
+        "height": 32,
+        "top": 211,
+        "right": 52,
+        "bottom": 243,
+        "left": 20
+      },
+      "hit": {},
+      "pass": true
+    },
+    {
+      "label": "Redo",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 245,
+        "width": 32,
+        "height": 32,
+        "top": 245,
+        "right": 52,
+        "bottom": 277,
+        "left": 20
+      },
+      "hit": {},
+      "pass": true
+    },
+    {
+      "label": "Zoom out",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 286,
+        "width": 32,
+        "height": 32,
+        "top": 286,
+        "right": 52,
+        "bottom": 318,
+        "left": 20
+      },
+      "hit": {},
+      "pass": true
+    },
+    {
+      "label": "Reset zoom to 100%",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 320,
+        "width": 32,
+        "height": 32,
+        "top": 320,
+        "right": 52,
+        "bottom": 352,
+        "left": 20
+      },
+      "hit": "Reset zoom to 100%",
+      "pass": true
+    },
+    {
+      "label": "Zoom in",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 354,
+        "width": 32,
+        "height": 32,
+        "top": 354,
+        "right": 52,
+        "bottom": 386,
+        "left": 20
+      },
+      "hit": {},
+      "pass": true
+    },
+    {
+      "label": "Fit all files",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 395,
+        "width": 32,
+        "height": 32,
+        "top": 395,
+        "right": 52,
+        "bottom": 427,
+        "left": 20
+      },
+      "hit": {},
+      "pass": false
+    },
+    {
+      "label": "Import files",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 296,
+        "y": 14,
+        "width": 36,
+        "height": 36,
+        "top": 14,
+        "right": 332,
+        "bottom": 50,
+        "left": 296
+      },
+      "hit": {},
+      "pass": true
+    },
+    {
+      "label": "Theme",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 340,
+        "y": 14,
+        "width": 36,
+        "height": 36,
+        "top": 14,
+        "right": 376,
+        "bottom": 50,
+        "left": 340
+      },
+      "hit": {},
+      "pass": true
+    },
+    {
+      "label": "Send request",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 332,
+        "y": 426,
+        "width": 32,
+        "height": 32,
+        "top": 426,
+        "right": 364,
+        "bottom": 458,
+        "left": 332
+      },
+      "hit": {},
+      "pass": true
+    }
+  ],
+  "candidate": [
+    {
+      "label": "Remove selected files from canvas",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 216,
+        "y": 64.09375,
+        "width": 32,
+        "height": 32,
+        "top": 64.09375,
+        "right": 248,
+        "bottom": 96.09375,
+        "left": 216
+      },
+      "hitTag": "svg",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "icon-button ",
+      "hitText": "",
+      "pass": true
+    },
+    {
+      "label": "Play video",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 268,
+        "y": 134,
+        "width": 28,
+        "height": 28,
+        "top": 134,
+        "right": 296,
+        "bottom": 162,
+        "left": 268
+      },
+      "hitTag": "svg",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "icon-button ",
+      "hitText": "",
+      "pass": true
+    },
+    {
+      "label": "Video timeline",
+      "tag": "INPUT",
+      "rect": {
+        "x": 302,
+        "y": 135,
+        "width": 80,
+        "height": 26,
+        "top": 135,
+        "right": 382,
+        "bottom": 161,
+        "left": 302
+      },
+      "hitTag": "INPUT",
+      "hit": "Video timeline",
+      "pass": true
+    },
+    {
+      "label": "Select files",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 68,
+        "width": 32,
+        "height": 32,
+        "top": 68,
+        "right": 52,
+        "bottom": 100,
+        "left": 20
+      },
+      "hitTag": "svg",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "icon-button ",
+      "hitText": "",
+      "pass": true
+    },
+    {
+      "label": "Pan canvas",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 102,
+        "width": 32,
+        "height": 32,
+        "top": 102,
+        "right": 52,
+        "bottom": 134,
+        "left": 20
+      },
+      "hitTag": "svg",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "icon-button ",
+      "hitText": "",
+      "pass": true
+    },
+    {
+      "label": "Mark canvas",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 136,
+        "width": 32,
+        "height": 32,
+        "top": 136,
+        "right": 52,
+        "bottom": 168,
+        "left": 20
+      },
+      "hitTag": "svg",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "icon-button ",
+      "hitText": "",
+      "pass": true
+    },
+    {
+      "label": "Add note",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 170,
+        "width": 32,
+        "height": 32,
+        "top": 170,
+        "right": 52,
+        "bottom": 202,
+        "left": 20
+      },
+      "hitTag": "line",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "icon-button ",
+      "hitText": "",
+      "pass": true
+    },
+    {
+      "label": "Undo",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 211,
+        "width": 32,
+        "height": 32,
+        "top": 211,
+        "right": 52,
+        "bottom": 243,
+        "left": 20
+      },
+      "hitTag": "svg",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "icon-button ",
+      "hitText": "",
+      "pass": true
+    },
+    {
+      "label": "Redo",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 245,
+        "width": 32,
+        "height": 32,
+        "top": 245,
+        "right": 52,
+        "bottom": 277,
+        "left": 20
+      },
+      "hitTag": "svg",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "icon-button ",
+      "hitText": "",
+      "pass": true
+    },
+    {
+      "label": "Zoom out",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 286,
+        "width": 32,
+        "height": 32,
+        "top": 286,
+        "right": 52,
+        "bottom": 318,
+        "left": 20
+      },
+      "hitTag": "path",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "icon-button ",
+      "hitText": "",
+      "pass": true
+    },
+    {
+      "label": "Reset zoom to 100%",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 320,
+        "width": 32,
+        "height": 32,
+        "top": 320,
+        "right": 52,
+        "bottom": 352,
+        "left": 20
+      },
+      "hitTag": "BUTTON",
+      "hit": "Reset zoom to 100%",
+      "hitButton": "zoom-label",
+      "hitText": "170%",
+      "pass": true
+    },
+    {
+      "label": "Zoom in",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 354,
+        "width": 32,
+        "height": 32,
+        "top": 354,
+        "right": 52,
+        "bottom": 386,
+        "left": 20
+      },
+      "hitTag": "path",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "icon-button ",
+      "hitText": "",
+      "pass": true
+    },
+    {
+      "label": "Fit all files",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 20,
+        "y": 395,
+        "width": 32,
+        "height": 32,
+        "top": 395,
+        "right": 52,
+        "bottom": 427,
+        "left": 20
+      },
+      "hitTag": "svg",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "annotation-content",
+      "hitText": "1Keep this moment.0:00 \u2013 0:02",
+      "pass": false
+    },
+    {
+      "label": "Import files",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 296,
+        "y": 14,
+        "width": 36,
+        "height": 36,
+        "top": 14,
+        "right": 332,
+        "bottom": 50,
+        "left": 296
+      },
+      "hitTag": "line",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "icon-button floating-control import-button",
+      "hitText": "",
+      "pass": true
+    },
+    {
+      "label": "Theme",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 340,
+        "y": 14,
+        "width": 36,
+        "height": 36,
+        "top": 14,
+        "right": 376,
+        "bottom": 50,
+        "left": 340
+      },
+      "hitTag": "svg",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "icon-button floating-control",
+      "hitText": "",
+      "pass": true
+    },
+    {
+      "label": "Send request",
+      "tag": "BUTTON",
+      "rect": {
+        "x": 332,
+        "y": 426,
+        "width": 32,
+        "height": 32,
+        "top": 426,
+        "right": 364,
+        "bottom": 458,
+        "left": 332
+      },
+      "hitTag": "path",
+      "hit": "[object SVGAnimatedString]",
+      "hitButton": "send-button",
+      "hitText": "",
+      "pass": true
+    }
+  ],
+  "sameControlRectsAndHitResults": true,
+  "failedLabels": [
+    "Fit all files"
+  ],
+  "candidateOriginalLog": "/private/tmp/acanvas-review-hitfacts-candidate.tap",
+  "baselineOriginalTrace": "/private/tmp/acanvas-review-hitfacts-baseline/frontend-short-screen-cont-e0df9-ction-and-long-queued-draft/trace.zip",
+  "testCopy": "/private/tmp/acanvas-review-hitfacts-l1rjxt60/frontend.spec.ts",
+  "assertionPreserved": true
+}

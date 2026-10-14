@@ -649,7 +649,12 @@ test('managed React records Markdown intent and displayed anchors and keeps the 
   await composer.click(); await composer.pressSequentially('Composer keeps focus');
   await expect(composer).toBeFocused(); assert.equal((await app.saved()).text, 'Composer keeps focus');
   await expect(liveInput).toHaveValue('Saved live input');
-  await liveInput.click(); await liveInput.press('End'); await liveInput.pressSequentially(' again');
+  await liveInput.click({ position: { x: 12, y: 10 } }); await expect(liveInput).toBeFocused();
+  await liveInput.press('ControlOrMeta+A');
+  await expect.poll(() => liveInput.evaluate((input: HTMLInputElement) => [input.selectionStart, input.selectionEnd])).toEqual([0, 'Saved live input'.length]);
+  await liveInput.press('ArrowRight');
+  await expect.poll(() => liveInput.evaluate((input: HTMLInputElement) => [input.selectionStart, input.selectionEnd])).toEqual(['Saved live input'.length, 'Saved live input'.length]);
+  await liveInput.pressSequentially(' again');
   await expect(liveInput).toHaveValue('Saved live input again');
   await expect(liveInput).toBeFocused(); assert.equal(await htmlContent.locator('iframe').getAttribute('src'), source);
 });
@@ -892,14 +897,14 @@ test('annotation focus follows the active editor when a pending reader is closed
   });
   const editor = page.getByRole('textbox', { name: 'Annotation text', exact: true });
   await expect(editor).toHaveValue('Second owner'); await expect(editor).toBeFocused();
-  await editor.press('End'); await editor.pressSequentially('Z');
+  await editor.press('ControlOrMeta+A'); await editor.press('ArrowRight'); await editor.pressSequentially('Z');
   await expect(editor).toHaveValue('Second ownerZ');
   await page.evaluate(() => {
     document.querySelector('.annotation-full')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     document.querySelectorAll<HTMLButtonElement>('.draft-annotation .annotation-content')[0].click();
   });
   await expect(editor).toHaveValue('First owner'); await expect(editor).toBeFocused();
-  await editor.press('End'); await editor.pressSequentially('Y'); await expect(editor).toHaveValue('First ownerY');
+  await editor.press('ControlOrMeta+A'); await editor.press('ArrowRight'); await editor.pressSequentially('Y'); await expect(editor).toHaveValue('First ownerY');
   const saved = await app.saved();
   assert.equal(saved.annotations.find(annotation => annotation.id === first.id)?.text, 'First ownerY');
   assert.equal(saved.annotations.find(annotation => annotation.id === second.id)?.text, 'Second ownerZ');
@@ -909,7 +914,11 @@ test('refinement collapsed comment surfaces are displayed by the DOM and keep th
   const app = await fixture(t), { page } = app;
   for (const theme of ['light', 'dark']) {
     if (theme === 'dark') { await page.getByRole('button', { name: 'Theme', exact: true }).click(); await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click(); }
+    const previousAnnotations = (await app.saved()).annotations;
     await app.mark({ x: 900, y: theme === 'light' ? 350 : 550 }); const first = await app.done(`${theme} short comment`);
+    const currentAnnotations = (await app.saved()).annotations;
+    assert.equal(currentAnnotations.length, previousAnnotations.length + 1);
+    for (const previous of previousAnnotations) assert.deepEqual(currentAnnotations.find(annotation => annotation.id === previous.id), previous);
     const note = page.locator(`.canvas-annotation-comment[data-annotation-id="${first.id}"]`);
     await expect(note).toHaveCSS('opacity', '1'); assert.equal(await note.getAttribute('data-scene-drawn'), null);
     await note.evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))); });
@@ -923,7 +932,11 @@ test('refinement collapsed comment surfaces are displayed by the DOM and keep th
     const captured = await page.evaluate(async ({ capture, sample }) => { const image = await createImageBitmap(await (await fetch(`/api/assets/${capture.screenshotAssetId}/content?sessionId=${capture.sessionId}`)).blob()); const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; canvas.getContext('2d')!.drawImage(image, 0, 0); return [...canvas.getContext('2d')!.getImageData(Math.floor((sample.x - capture.mapping.crop.x) * capture.mapping.scaleX), Math.floor((sample.y - capture.mapping.crop.y) * capture.mapping.scaleY), 1, 1).data]; }, { capture: next.capture!, sample });
     for (let index = 0; index < 4; index++) assert(Math.abs(captured[index] - shown[index]) <= 1, JSON.stringify({ captured, shown }));
     await note.locator('button').focus(); await expect(page.getByRole('button', { name: `Comment ${theme === 'light' ? 1 : 3}: ${theme} short comment`, exact: true })).toBeFocused();
-    await page.keyboard.press('Enter'); await expect(page.getByRole('textbox', { name: 'Annotation text', exact: true })).toBeVisible(); await page.keyboard.press('Escape');
+    await page.keyboard.press('Enter');
+    const reopened = page.getByRole('textbox', { name: 'Annotation text', exact: true });
+    await expect(reopened).toBeVisible(); await reopened.press('Escape');
+    await expect(page.locator('.annotation-full')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Mark canvas', exact: true })).toHaveAttribute('aria-pressed', 'false');
     await page.screenshot({ path: join(app.evidence, `collapsed-comment-${theme}.png`) });
   }
 });
