@@ -40,13 +40,11 @@ On first use, Acanvas prepares Node.js 24, its dependencies, and the local appli
 
 ## Showcase <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
-![Geometric artwork and four parametric mobile app studies in Acanvas beside a Codex conversation](assets/readme/showcase.jpg)
-
-Slow Signal in Codex: geometric directions, four interactive mobile studies with dithering and ASCII, audio with cover art, notes, folders, and queued work. All example content is fictional.
+![Geometric artwork and four parametric mobile app studies in Acanvas beside a Codex conversation](assets/readme/showcase.png)
 
 ## Core features <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
-- **One canvas for your materials.** Arrange images, video, audio, notes, Markdown, and interactive HTML.
+- **Multimodal, multi-format canvas.** Combine images, GIFs, video, audio, notes, Markdown, and interactive HTML in one workspace.
 - **Visual instructions.** Reference items or groups, mark points and regions, and attach precise feedback to a request.
 - **Iteration in place.** Bring agent outputs back beside their references. Compare directions, organize groups and folders, and undo or redo board edits.
 - **A canvas for your existing agent.** Use the bundled Skill and CLI with an agent that can run local tools. Boards and original files stay in your project; requests and history stay with their task context.

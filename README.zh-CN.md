@@ -40,13 +40,11 @@ npx skills add Flyx7Kazami/acanvas --skill acanvas -a codex
 
 ## 效果展示 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
-![Codex 会话右侧的 Acanvas，包含几何素材、四个参数化手机方案、带封面音乐和请求队列](assets/readme/showcase.jpg)
-
-Codex 右侧的 Slow Signal：几何创作方向、包含 dithering 与 ASCII 的四个可交互手机方案、带封面音乐、便笺、文件夹和后续请求。所有示例内容均为虚构。
+![Codex 会话右侧的 Acanvas，包含几何素材、四个参数化手机方案、带封面音乐和请求队列](assets/readme/showcase.png)
 
 ## 核心功能 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
-- **多模态画布。** 自由摆放图片、视频、音频、便笺、Markdown 和可交互 HTML。
+- **多模态、多格式画布。** 将图片、GIF、视频、音频、便笺、Markdown 和可交互 HTML 放进同一工作区。
 - **可视化指令。** 引用素材或分组，标记点位和区域，把具体反馈加入创作请求。
 - **原位迭代。** 将 agent 产物放回参考旁边，比较不同方向，用分组和文件夹组织内容，支持白板编辑的撤销与重做。
 - **连接已有的 agent。** 通过内置 Skill 和 CLI，与能够执行本地工具的智能体协作。白板和原始文件归项目保存，请求和历史跟随对应的任务上下文。
