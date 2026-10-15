@@ -33,6 +33,10 @@ coverage/
 !/assets/brand/domino/vendor/anatomy/LICENSE
 !/assets/readme/domino-loading.gif
 !/assets/readme/showcase.png
+!/assets/readme/details/annotation.png
+!/assets/readme/details/folders.gif
+!/assets/readme/details/html.gif
+!/assets/readme/details/context.png
 
 # Local measurement and prototype tools
 /scripts/measure-*.mjs

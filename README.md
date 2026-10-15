@@ -42,6 +42,27 @@ On first use, Acanvas prepares Node.js 24, its dependencies, and the local appli
 
 ![Geometric artwork and four parametric mobile app studies in Acanvas beside a Codex conversation](assets/readme/showcase.png)
 
+<details>
+<summary><strong>Explore the product details</strong></summary>
+
+**Point to the exact change.**
+
+[![Point and region annotations with comments](assets/readme/details/annotation.png)](assets/readme/details/annotation.png)
+
+**Group, fold, and explore.**
+
+[![Collect references in a folder and open its canvas](assets/readme/details/folders.gif)](assets/readme/details/folders.gif)
+
+**Interact with HTML in place.**
+
+[![Change a visual parameter and interact with an HTML app](assets/readme/details/html.gif)](assets/readme/details/html.gif)
+
+**Keep every request in context.**
+
+[![Images, covered audio, notes, and a request with visual references](assets/readme/details/context.png)](assets/readme/details/context.png)
+
+</details>
+
 ## Core features <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 - **Multimodal, multi-format canvas.** Combine images, GIFs, video, audio, notes, Markdown, and interactive HTML in one workspace.
