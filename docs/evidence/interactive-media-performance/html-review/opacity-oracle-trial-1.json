@@ -1,7 +1,0 @@
-{
-  "status": "FAIL",
-  "output": "/private/tmp/acanvas-html-independent-clock-states-20261009-01",
-  "rows": [],
-  "boundary": "Independent exact screenshot/semantic/style checks at DPR1/2 using sole production root shot and unchanged sampler. Source retains running negative-rate, paused, idle animation references and original promise identities. No product-source edits, tolerance, retry or post-shot semantic rewrite.",
-  "error": "AssertionError [ERR_ASSERTION]: {\"index\":0,\"scale\":1,\"id\":\"opacity\",\"opacity\":0.25}\n+ actual - expected\n\n  [\n+   192,\n-   191,\n    255,\n+   192\n-   191\n  ]\n"
-}

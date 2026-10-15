@@ -1,4 +1,4 @@
-<h1 align="center"><img src="assets/brand/domino/icon.svg" width="48" height="48" alt=""> Acanvas</h1>
+<h1 align="center"><img src="assets/brand/domino/icon.svg" width="48" height="48" align="absmiddle" alt=""> Acanvas</h1>
 <p align="center"><strong>canvas for agent-ready harnesses</strong><br>把参考、指令和创作结果放进你与 agent 的共享视觉工作区。</p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 
 > **积极开发中。** 数据库结构及内部格式仍在演进，暂不保证跨版本兼容。建议二次开发先 fork 仓库。
 
-## 快速开始 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## 快速开始 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 为当前项目的 Codex 安装 Skill：
 
@@ -38,26 +38,26 @@ npx skills add Flyx7Kazami/acanvas --skill acanvas -a codex
 
 首次使用时，Acanvas 在 Skill 安装目录准备 Node.js 24、依赖和本地应用。打开返回的白板 URL，即可开始添加参考。全局 Node 配置沿用你现有的环境。
 
-## 效果展示 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## 效果展示 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 ![Codex 会话右侧的 Acanvas，包含几何素材、四个参数化手机方案、带封面音乐和请求队列](assets/readme/showcase.jpg)
 
 Codex 右侧的 Slow Signal：几何创作方向、包含 dithering 与 ASCII 的四个可交互手机方案、带封面音乐、便笺、文件夹和后续请求。所有示例内容均为虚构。
 
-## 核心功能 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## 核心功能 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 - **多模态画布。** 自由摆放图片、视频、音频、便笺、Markdown 和可交互 HTML。
 - **可视化指令。** 引用素材或分组，标记点位和区域，把具体反馈加入创作请求。
 - **原位迭代。** 将 agent 产物放回参考旁边，比较不同方向，用分组和文件夹组织内容，支持白板编辑的撤销与重做。
 - **连接已有的 agent。** 通过内置 Skill 和 CLI，与能够执行本地工具的智能体协作。白板和原始文件归项目保存，请求和历史跟随对应的任务上下文。
 
-## 应用场景 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## 应用场景 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 - **视觉创作。** 把参考和创作要求交给 agent，制作海报、页面概念或交互原型。你把握审美方向，agent 完成具体制作；在画布上比较产物并持续调整。
 - **视觉 idea 共创与搜集。** 借助 agent 的搜索工具搜集灵感，把参考和笔记汇成共享情绪板。整理主题、一起发散方案，再把有潜力的想法深化为明确方向。
 - **更直观的人机交互。** 选中素材、标记区域或引用分组，用“这里暖一点”“把这两个方向结合起来”表达反馈。每个请求保留对应的视觉上下文，结果也回到同一工作区中查看。
 
-## 安装 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## 安装 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 仓库本身就是标准 Agent Skill：[SKILL.md](SKILL.md) 是根入口，随附执行脚本与操作参考。
 
@@ -96,7 +96,7 @@ node scripts/acanvas.mjs project open --project "$PWD"
 
 </details>
 
-## 使用 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## 使用 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 1. 将素材加入画布，整理成创作上下文。
 2. 选择参考，标记点位或区域，再发送请求。
@@ -116,7 +116,7 @@ node scripts/acanvas.mjs project open --project "$PWD"
 
 HTML 预览与批注截图在浏览器中完成。[使用指南](references/usage.md)包含服务管理、媒体行为和进阶设置；[工作流指南](references/workflow.md)包含 CLI 操作与保存队列的接续方式。
 
-## 工作方式 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## 工作方式 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 Skill 告诉 agent 如何读取视觉上下文与调用共享 CLI。本地应用保存项目素材与对应任务的请求、提供白板，并通过与界面相同的业务接口发布变更。
 
@@ -126,12 +126,9 @@ scripts/       CLI、环境准备与开发脚本
 references/    按需读取的操作指南
 app/           应用源码、测试与原生支持
 assets/        品牌与效果展示素材
-docs/          维护者计划、设计与验证记录
 ```
 
-开发进度与已验证范围见[项目计划](docs/PLAN.md)和[验证记录](docs/VALIDATION.md)。
-
-## 运行要求 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## 运行要求 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 | 要求 | 用途 |
 | --- | --- |
@@ -143,18 +140,23 @@ docs/          维护者计划、设计与验证记录
 
 宿主绑定用于选择任务范围。自动投递需要单独连接兼容的 runtime；常规使用通过保存队列和接续口令继续。可选原生渲染与其他平台细节见使用指南。
 
-## 联系方式 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## 联系方式 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 问题、想法和反馈可以提交到 [Issues](https://github.com/Flyx7Kazami/acanvas/issues)，或发送邮件至 [yingbowu.yw@gmail.com](mailto:yingbowu.yw@gmail.com)。
 
-## 支持项目 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## 支持项目 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 欢迎 Star 项目、分享创作成果、反馈问题或贡献改进。
 
-## 开源协议 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## 开源协议 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 [MIT](LICENSE) © 2026 Flyx7Kazami。保留版权声明和许可证后，可自由使用、修改、分发和商用，也可用于闭源产品。第三方依赖和素材沿用各自的许可证。
 
-## Star History <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## Star History <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
-[查看 Acanvas 的 Star History](https://www.star-history.com/?repos=Flyx7Kazami%2Facanvas&type=date)。图表支持公开仓库。
+<a href="https://www.star-history.com/?repos=Flyx7Kazami%2FAcanvas&type=date&legend=top-left">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Flyx7Kazami/Acanvas&type=date&legend=top-left&theme=dark">
+    <img src="https://api.star-history.com/chart?repos=Flyx7Kazami/Acanvas&type=date&legend=top-left" alt="Star History 趋势图" width="800">
+  </picture>
+</a>

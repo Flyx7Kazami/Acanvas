@@ -1,9 +1,0 @@
-{
-  "status": "failed",
-  "failure": "AssertionError [ERR_ASSERTION]: nonforeground computed difference text-emphasis-color\n    at compare (file:///private/tmp/acanvas-reference-review-build-lvBcYZ/supplement.mjs:13:600)\n    at file:///private/tmp/acanvas-reference-review-build-lvBcYZ/supplement.mjs:16:760",
-  "errors": [],
-  "results": [],
-  "root": "/private/tmp/acanvas-reference-review-project-57AzjA",
-  "url": "http://127.0.0.1:65136",
-  "scope": "actual App + private browser, no Send/Done; fallback state fixtures intercepted read-only"
-}

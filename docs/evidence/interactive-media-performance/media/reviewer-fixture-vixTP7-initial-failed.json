@@ -1,7 +1,0 @@
-{
-  "error": "TimeoutError: page.waitForFunction: Timeout 8000ms exceeded.",
-  "results": [],
-  "errors": [
-    "Unexpected token '<'"
-  ]
-}

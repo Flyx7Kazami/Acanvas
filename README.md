@@ -1,4 +1,4 @@
-<h1 align="center"><img src="assets/brand/domino/icon.svg" width="48" height="48" alt=""> Acanvas</h1>
+<h1 align="center"><img src="assets/brand/domino/icon.svg" width="48" height="48" align="absmiddle" alt=""> Acanvas</h1>
 <p align="center"><strong>canvas for agent-ready harnesses</strong><br>A shared visual workspace for references, instructions, and creative results.</p>
 
 <p align="center">
@@ -22,7 +22,7 @@ Bring references, mark what matters, and keep new drafts beside the ideas that s
 
 > **Under active development.** Database schemas and internal formats are still evolving, and backward compatibility across versions is not guaranteed. Fork the repository for custom development.
 
-## Quick start <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## Quick start <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 Install the Skill for Codex in your current project:
 
@@ -38,26 +38,26 @@ Use Acanvas to open a canvas for this project.
 
 On first use, Acanvas prepares Node.js 24, its dependencies, and the local application inside the Skill installation. Open the returned whiteboard URL to start adding references. Your global Node configuration stays with your existing environment.
 
-## Showcase <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## Showcase <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 ![Geometric artwork and four parametric mobile app studies in Acanvas beside a Codex conversation](assets/readme/showcase.jpg)
 
 Slow Signal in Codex: geometric directions, four interactive mobile studies with dithering and ASCII, audio with cover art, notes, folders, and queued work. All example content is fictional.
 
-## Core features <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## Core features <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 - **One canvas for your materials.** Arrange images, video, audio, notes, Markdown, and interactive HTML.
 - **Visual instructions.** Reference items or groups, mark points and regions, and attach precise feedback to a request.
 - **Iteration in place.** Bring agent outputs back beside their references. Compare directions, organize groups and folders, and undo or redo board edits.
 - **A canvas for your existing agent.** Use the bundled Skill and CLI with an agent that can run local tools. Boards and original files stay in your project; requests and history stay with their task context.
 
-## Use cases <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## Use cases <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 - **Visual creation.** Turn references and a brief into posters, page concepts, or interactive prototypes with your agent. You choose the aesthetic direction; your agent does the making. Compare outputs and refine them on the canvas.
 - **Visual idea coworking and collection.** Use your agent’s search tools to collect inspiration, then gather references and notes into a shared moodboard. Group themes, explore alternatives together, and develop promising ideas into a clear direction.
 - **More intuitive human–agent interaction.** Select an item, mark a region, or reference a group to say “make this warmer” or “combine these two.” Keep the visual context with each request and review the result in the same workspace.
 
-## Install <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## Install <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 This repository is a standard Agent Skill: [SKILL.md](SKILL.md) is its root entry, with executable helpers and references included.
 
@@ -96,7 +96,7 @@ Open the `openUrl` printed by the CLI. The service continues running after the l
 
 </details>
 
-## Usage <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## Usage <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 1. Add materials to the canvas and arrange them into a working context.
 2. Select references, annotate a point or region, and send a request.
@@ -116,7 +116,7 @@ Keep the grain, soften the typography, and add a short sonic sketch.
 
 HTML previews and annotation snapshots run in your browser. The [usage guide](references/usage.md) covers service controls, media behavior, and advanced setup; the [workflow guide](references/workflow.md) covers CLI operations and saved queues.
 
-## How it works <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## How it works <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 The Skill tells your agent how to read visual context and use the shared CLI. The local application stores project materials and scoped requests, serves the canvas, and publishes changes through the same business interface used by the UI.
 
@@ -126,12 +126,9 @@ scripts/       CLI, setup, and development helpers
 references/    Operating guides loaded when needed
 app/           Application source, tests, and native support
 assets/        Brand and showcase materials
-docs/          Maintainer plans, design, and validation
 ```
 
-See [the project plan](docs/PLAN.md) and [validation record](docs/VALIDATION.md) for development status and verified scope.
-
-## Requirements <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## Requirements <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 | Requirement | Used for |
 | --- | --- |
@@ -143,18 +140,23 @@ See [the project plan](docs/PLAN.md) and [validation record](docs/VALIDATION.md)
 
 Host binding selects the task scope. Automatic delivery requires a separately attached compatible runtime; ordinary use continues through the saved queue and resume prompt. Optional native rendering and further platform details are in the usage guide.
 
-## Contact <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## Contact <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 Questions, ideas, or feedback: [open an issue](https://github.com/Flyx7Kazami/acanvas/issues) or email [yingbowu.yw@gmail.com](mailto:yingbowu.yw@gmail.com).
 
-## Support <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## Support <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 Help Acanvas grow: star the repository, share what you make, report issues, or contribute improvements.
 
-## License <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## License <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
 [MIT](LICENSE) © 2026 Flyx7Kazami. Free to use, modify, distribute, and use commercially, including in closed-source products, with the copyright and license notice preserved. Third-party dependencies and assets retain their own licenses.
 
-## Star History <img src="assets/readme/domino-loading.gif" width="24" height="24" align="middle" alt="">
+## Star History <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
-[View Acanvas on Star History](https://www.star-history.com/?repos=Flyx7Kazami%2Facanvas&type=date). Charts are available for public repositories.
+<a href="https://www.star-history.com/?repos=Flyx7Kazami%2FAcanvas&type=date&legend=top-left">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Flyx7Kazami/Acanvas&type=date&legend=top-left&theme=dark">
+    <img src="https://api.star-history.com/chart?repos=Flyx7Kazami/Acanvas&type=date&legend=top-left" alt="Star History Chart" width="800">
+  </picture>
+</a>

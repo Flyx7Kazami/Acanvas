@@ -1,8 +1,0 @@
-{
-  "elapsedMs": 27.17383299999983,
-  "browser": "Chrome",
-  "result": "PASS",
-  "trace": "off to measure parent controls without child snapshot instrumentation",
-  "securityFlags": "standard Chrome channel defaults",
-  "scope": "one isolated synchronous loop; no general CPU or memory quota"
-}

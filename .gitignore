@@ -19,3 +19,25 @@ coverage/
 # Temporary editor files
 *.swp
 *.swo
+
+# Local maintainer workspace
+/docs/
+/AGENTS.md
+/.agents/
+/.codex/
+
+# Published visual assets
+/assets/**
+!/assets/**/
+!/assets/brand/domino/icon.svg
+!/assets/brand/domino/vendor/anatomy/LICENSE
+!/assets/readme/domino-loading.gif
+!/assets/readme/showcase.jpg
+
+# Local measurement and prototype tools
+/scripts/measure-*.mjs
+/scripts/chatbox-capture-prototype.mjs
+/scripts/chatbox-capture-probe.js
+/scripts/chatbox-background-host.mjs
+/scripts/prepare-host-delivery-build.mjs
+/scripts/prepare-interactive-media-build.mjs

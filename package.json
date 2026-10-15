@@ -16,7 +16,6 @@
     "cli": "node scripts/runtime.mjs cli",
     "dev": "node scripts/runtime.mjs dev",
     "typecheck": "node scripts/runtime.mjs typecheck",
-    "verify:host-delivery": "node scripts/prepare-host-delivery-build.mjs",
     "demo": "node scripts/runtime.mjs demo",
     "test:browser": "node scripts/runtime.mjs test-browser",
     "install:render-engine": "node scripts/runtime.mjs install-render-engine",

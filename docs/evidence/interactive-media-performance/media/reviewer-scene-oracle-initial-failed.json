@@ -1,4 +1,0 @@
-{
-  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n",
-  "errors": []
-}

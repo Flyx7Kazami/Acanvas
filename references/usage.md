@@ -107,13 +107,13 @@ npm run cli -- host status --project "$ACANVAS_PROJECT" --session SESSION_ID
 npm run cli -- host detach --project "$ACANVAS_PROJECT" --session SESSION_ID
 ```
 
-The endpoint must be an actual socket owned by the current user. Socket-file symlinks are rejected. The tested bundled Codex `0.162.0-alpha.17.2` creates a symlink at its requested listener path; supply the canonical socket path explicitly. `host attach` checks that the exact original thread is already loaded in that runtime. It never starts or resumes another Codex thread, changes host permissions, or approves tools. Approval prompts remain with the original host.
+The endpoint must be an actual socket owned by the current user. Supply its canonical path when the runtime listener creates a symlink. `host attach` checks that the exact original thread is already loaded in that runtime. The original host retains its thread lifecycle, permissions, and tool approvals.
 
 After attachment, new Send requests are saved before delivery. Known busy threads wait until idle; the tested Codex version can append an input to the same active turn if activity changes between the idle check and delivery. Existing queued requests from before attachment keep their normal continuation workflow. A repeated Send of the same draft does not dispatch twice.
 
 Use `host status` to inspect the runtime connection and delivery state. A host-accepted input remains saved work until an agent claims it; completion requires the task's saved receipt. If a response is lost after dispatch, the delivery stays unknown. Copy the resume prompt and read the queue with a fresh consumer before continuing. The durable queue remains available after disconnect or service restart.
 
-This checkout has verified the adapter against an expressly created test runtime. One authorized native task-tool message also reached the exact existing Codex conversation. That tool is available inside the agent context; a supported invocation endpoint and authentication flow for the independent Canvas service have not been established. Canvas Send into that existing conversation remains unconnected. Codex Desktop, ordinary CLI sessions without a supported endpoint, Claude Code and other agents continue through the saved queue and the resume prompt until an appropriate connection is explicitly configured. Host conversation binding alone does not enable automatic delivery. See the [native tool and service boundary](../docs/chatbox/CODEX_RUNTIME_DELIVERY_VALIDATION.md#当前既有对话的宿主工具与独立服务边界).
+The Codex adapter requires an endpoint supplied by the host runtime. Codex Desktop, CLI sessions, Claude Code and other agents use the saved queue and resume prompt when that endpoint is unavailable. Host conversation binding identifies the task scope; automatic delivery also requires a runtime attachment.
 
 ## Content types and interactions
 
@@ -154,7 +154,7 @@ Use `group.update` with `mode: "frame"` to expand, or `group.ungroup` with `grou
 
 A mixed selection can share one group annotation, with a common number and comment while preserving each material's source. Image and video region annotations retain explicit region bounds.
 
-Canvas controls, including audio timelines, inherit canvas pan and zoom gestures. Components that need ordinary content scrolling declare a content wheel region; click, drag, and keyboard controls retain their own behavior. See [canvas input responsibilities](../docs/CANVAS_INPUT.md) when adding a component.
+Canvas controls, including audio timelines, inherit canvas pan and zoom gestures. Components that need ordinary content scrolling declare a content wheel region; click, drag, and keyboard controls retain their own behavior.
 
 Use **Undo** and **Redo** on the left toolbar to step through object creation, deletion, movement, resizing, alignment, note color changes and text edits. A submitted group operation is one step, and continuous text input forms an editing step. History belongs to the current task scope and continues after refresh or service restart. A new object edit ends the Redo branch. Objects keep their IDs and output provenance when restored, together with the corresponding content version; competing edits to the same object produce a conflict.
 
@@ -178,9 +178,7 @@ Bundles accept HTML, CSS, JavaScript, images and fonts, up to 128 files and 128 
 
 Audio waveforms are calculated from the complete file on first view; playback uses the native audio element. A small waveform summary is reused on remount and in the same browser tab across refreshes. Waveform decoding currently supports files up to 32 MB. If waveform decoding is unavailable, native playback and time-based seeking remain available when supported by the browser. Audio playback and HTML runtime state are local viewing state; tasks preserve original files and explicitly submitted annotations.
 
-See the [multimodal design](../docs/MULTIMODAL_CANVAS_DESIGN.md) for interaction and reference semantics, and the [validation record](../docs/VALIDATION.md) for tested formats and browsers.
-
-## Validation
+## Development
 
 ```sh
 npm run typecheck
@@ -198,36 +196,17 @@ npm run test:browser -- --config app/tests/content-surface.config.ts
 npm run test:browser -- --config app/tests/html-preview-security.config.ts
 ```
 
-The isolated background capture prototype uses the project runtime and a managed Chrome page:
-
-```sh
-.runtime/node_modules/node/bin/node scripts/chatbox-capture-prototype.mjs background
-```
-
-The prototype preserves the initial capture experiments. Current capture uses the open whiteboard's SceneRenderer and project API; see the browser-independent capture implementation results. The optional visual HTML prototype installs its test engine with `npm run install:render-engine`.
-
-Tests use isolated temporary projects. Localhost services and Chrome may require execution permissions in restricted environments. Validation records distinguish environment restrictions from product failures.
-
-To verify the delivery change while the formal service is running, build and test a private candidate instead of writing its served `dist`:
-
-```sh
-env -u CODEX_THREAD_ID npm run verify:host-delivery
-env -u CODEX_THREAD_ID ACANVAS_HOST_DELIVERY_UI_TESTS=1 npm run verify:host-delivery -- --test host-delivery-cli.test.js
-```
-
-The helper copies declared repository inputs to a newly owned temporary directory, selects the existing project Node 24 runtime and dependencies, and records source/build hashes. It excludes `.acanvas/` and retains the candidate for inspection. The default command runs the production build and serial Node suite; the optional UI test uses installed Chrome with its sandbox enabled. Clearing `CODEX_THREAD_ID` only for the test process prevents unrelated automatic host binding in temporary projects.
+Tests use isolated temporary projects. Browser suites require the browser engines selected by their configuration; `npm run install:render-engine` installs the managed Chromium engine. Localhost services and Chrome may require execution permissions in restricted environments. Stop an existing project service before rebuilding its served `dist`, then reopen the project after the build.
 
 ## Data and change history
 
-Git tracks source, plans, tests, dependency locks, and necessary validation artifacts. Runtime data lives in the target project's `.acanvas/` directory, including its database, original materials, and generated outputs. This directory is excluded from Git. Tasks, execution attempts, and receipts retain operation history.
+Git tracks source, tests, dependency locks, operating guides, and product assets. Runtime data lives in the target project's `.acanvas/` directory, including its database, original materials, and generated outputs. This directory is excluded from Git. Tasks, execution attempts, and receipts retain operation history.
 
-Automated backup and recovery commands are planned. To make a manual archive, stop the service normally and copy the complete `.acanvas/` directory, including the database and all associated materials.
-
-Check Git status before implementation and organize changes by planned stages and requirements. Record verification results and complete the applicable acceptance process before committing. The project plan records implementation status; `git log` and `git show` provide version history.
+To make a manual archive, stop the service normally and copy the complete `.acanvas/` directory, including the database and all associated materials. Use `git log` and `git show` to inspect application version history.
 
 ## Support boundaries
 
-- Finder file paste has been confirmed manually in the Codex in-app browser. Broader operating system, file type, Safari, and host coverage remains under validation. Automated coverage and manual confirmation are recorded separately.
+- File paste depends on the browser and host clipboard capabilities. Import controls and drag-and-drop provide alternative ways to add files.
 - Video and audio playback depend on browser codec support. Original files remain available. Full video understanding is provided by the chosen agent or parsing tools.
 - Image generation and Pinterest imports require further integrations. The service currently provides material and task interfaces; agents use their existing tools for creative work.
 - The current design targets one user on one machine. Cloud and cross-device access and comprehensive backup/recovery are planned work. The Skill installs source and prepares its local runtime on first use.
