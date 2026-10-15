@@ -42,26 +42,28 @@ On first use, Acanvas prepares Node.js 24, its dependencies, and the local appli
 
 ![Geometric artwork and four parametric mobile app studies in Acanvas beside a Codex conversation](assets/readme/showcase.png)
 
-<details>
-<summary><strong>Explore the product details</strong></summary>
-
-**Point to the exact change.**
-
-[![Point and region annotations with comments](assets/readme/details/annotation.png)](assets/readme/details/annotation.png)
-
-**Group, fold, and explore.**
-
-[![Collect references in a folder and open its canvas](assets/readme/details/folders.gif)](assets/readme/details/folders.gif)
-
-**Interact with HTML in place.**
-
-[![Change a visual parameter and interact with an HTML app](assets/readme/details/html.gif)](assets/readme/details/html.gif)
-
-**Keep every request in context.**
-
-[![Images, covered audio, notes, and a request with visual references](assets/readme/details/context.png)](assets/readme/details/context.png)
-
-</details>
+<table>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <a href="assets/readme/details/annotation.png"><img src="assets/readme/details/annotation.png" width="100%" alt="Point and region annotations with comments"></a><br>
+      <strong>Point to the exact change.</strong>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <a href="assets/readme/details/folders.gif"><img src="assets/readme/details/folders.gif" width="100%" alt="Collect references in a folder and open its canvas"></a><br>
+      <strong>Group, fold, and explore.</strong>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <a href="assets/readme/details/html.gif"><img src="assets/readme/details/html.gif" width="100%" alt="Change a visual parameter and interact with an HTML app"></a><br>
+      <strong>Interact with HTML in place.</strong>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <a href="assets/readme/details/context.png"><img src="assets/readme/details/context.png" width="100%" alt="Images, covered audio, notes, and a request with visual references"></a><br>
+      <strong>Keep every request in context.</strong>
+    </td>
+  </tr>
+</table>
 
 ## Core features <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 

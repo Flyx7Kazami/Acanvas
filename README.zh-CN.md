@@ -42,26 +42,28 @@ npx skills add Flyx7Kazami/acanvas --skill acanvas -a codex
 
 ![Codex 会话右侧的 Acanvas，包含几何素材、四个参数化手机方案、带封面音乐和请求队列](assets/readme/showcase.png)
 
-<details>
-<summary><strong>查看产品细节</strong></summary>
-
-**指明具体的修改位置。**
-
-[![点位和区域标记及其批注](assets/readme/details/annotation.png)](assets/readme/details/annotation.png)
-
-**分组、收纳、展开查看。**
-
-[![将参考收进文件夹，并打开其中的画布](assets/readme/details/folders.gif)](assets/readme/details/folders.gif)
-
-**直接操作画布里的 HTML。**
-
-[![调整视觉参数，并与 HTML App 交互](assets/readme/details/html.gif)](assets/readme/details/html.gif)
-
-**让每条请求带上视觉上下文。**
-
-[![图片、带封面音频、便笺和包含素材引用的请求](assets/readme/details/context.png)](assets/readme/details/context.png)
-
-</details>
+<table>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <a href="assets/readme/details/annotation.png"><img src="assets/readme/details/annotation.png" width="100%" alt="点位和区域标记及其批注"></a><br>
+      <strong>指明具体的修改位置。</strong>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <a href="assets/readme/details/folders.gif"><img src="assets/readme/details/folders.gif" width="100%" alt="将参考收进文件夹，并打开其中的画布"></a><br>
+      <strong>分组、收纳、展开查看。</strong>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <a href="assets/readme/details/html.gif"><img src="assets/readme/details/html.gif" width="100%" alt="调整视觉参数，并与 HTML App 交互"></a><br>
+      <strong>直接操作画布里的 HTML。</strong>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <a href="assets/readme/details/context.png"><img src="assets/readme/details/context.png" width="100%" alt="图片、带封面音频、便笺和包含素材引用的请求"></a><br>
+      <strong>让每条请求带上视觉上下文。</strong>
+    </td>
+  </tr>
+</table>
 
 ## 核心功能 <img src="assets/readme/domino-loading.gif" width="24" height="24" align="absmiddle" alt="">
 
