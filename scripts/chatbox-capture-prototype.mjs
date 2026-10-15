@@ -27,9 +27,9 @@ const call = async (path, method = 'GET', body) => {
 const session = await call('/api/sessions', 'POST', { name: 'Capture media laboratory' });
 const fixtures = [
   ['Reference.svg', 'image/svg+xml', Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="340" height="200"><rect width="340" height="200" fill="#cbd5df"/><circle cx="150" cy="100" r="65" fill="#456477"/><path d="M20 170L310 35" stroke="#f2a45d" stroke-width="14"/></svg>'), { x: 120, y: 100, width: 340, height: 200 }],
-  ['Playing.mp4', 'video/mp4', await readFile(resolve('tests/fixtures/frontend-video.mp4')), { x: 500, y: 100, width: 400, height: 225 }],
-  ['Motion.gif', 'image/gif', await readFile(resolve('tests/fixtures/animated-reference.gif')), { x: 950, y: 100, width: 250, height: 210 }],
-  ['Waveform.m4a', 'audio/mp4', await readFile(resolve('tests/fixtures/amplitude-cover.m4a')), { x: 120, y: 410, width: 390, height: 100 }],
+  ['Playing.mp4', 'video/mp4', await readFile(resolve('app/tests/fixtures/frontend-video.mp4')), { x: 500, y: 100, width: 400, height: 225 }],
+  ['Motion.gif', 'image/gif', await readFile(resolve('app/tests/fixtures/animated-reference.gif')), { x: 950, y: 100, width: 250, height: 210 }],
+  ['Waveform.m4a', 'audio/mp4', await readFile(resolve('app/tests/fixtures/amplitude-cover.m4a')), { x: 120, y: 410, width: 390, height: 100 }],
   ['Field-notes.md', 'text/markdown', Buffer.from('# Field notes\n\n' + Array.from({ length: 30 }, (_, index) => `## Observation ${index + 1}\n\nThe visible horizon shifts as the text scrolls.\n\n`).join('')), { x: 560, y: 410, width: 350, height: 340 }],
   ['Dynamic.html', 'text/html', Buffer.from('<style>body{margin:0;padding:20px;background:#cfdace;font:18px sans-serif}canvas{display:block}button{margin-top:12px}</style><h2>Dynamic scene</h2><canvas width="300" height="130"></canvas><button onclick="this.textContent=\'Selected\'">Choose</button><script>let tick=0;const canvas=document.querySelector("canvas"),ctx=canvas.getContext("2d");function paint(){tick++;ctx.fillStyle="#6b806b";ctx.fillRect(0,0,300,130);ctx.fillStyle="#eeaf5a";ctx.fillRect((tick*3)%260,24,40,70);ctx.fillStyle="#fff";ctx.font="20px monospace";ctx.fillText("Frame "+tick,15,120);requestAnimationFrame(paint)}paint();</script>'), { x: 950, y: 410, width: 360, height: 310 }],
   ['Archive.zip', 'application/zip', Buffer.from('Capture laboratory fixture, downloadable as a file.'), { x: 120, y: 600, width: 310, height: 140 }],

@@ -6,8 +6,8 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Copy only repository inputs. Running project scripts in the original checkout writes its served dist.
-const directories = ['src', 'tests', 'scripts', 'skill', 'public'];
-const files = ['package.json', 'package-lock.json', 'tsconfig.json', 'tsconfig.server.json', 'vite.config.ts', 'index.html'];
+const directories = ['app', 'scripts', 'references', 'assets', 'agents'];
+const files = ['package.json', 'package-lock.json', 'SKILL.md', 'LICENSE'];
 const source = await realpath(fileURLToPath(new URL('..', import.meta.url)));
 let selectedOutput, prepareOnly = false;
 const selectedTests = [];
@@ -52,8 +52,8 @@ async function copyInput(path, optional = false) {
     manifest.push({ path, bytes: bytes.length, sha256: sha256(bytes) });
   } else throw new Error(`Candidate inputs must be regular files or directories: ${path}`);
 }
-for (const path of directories) await copyInput(path, path === 'public');
-for (const path of files) await copyInput(path, path === 'index.html');
+for (const path of directories) await copyInput(path, path === 'agents');
+for (const path of files) await copyInput(path, path === 'LICENSE');
 // Refuse a mixed snapshot if another execution changed an input while it was being copied.
 for (const entry of manifest) if (sha256(await readFile(join(source, entry.path))) !== entry.sha256) throw new Error(`Source changed while preparing the candidate: ${entry.path}. The owned candidate is retained for inspection.`);
 await writeFile(join(output, 'source-manifest.json'), `${JSON.stringify({ owner: ownership.owner, files: manifest }, null, 2)}\n`, { flag: 'wx', mode: 0o444 });

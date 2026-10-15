@@ -1,10 +1,74 @@
 # Acanvas 项目计划
 
 - 文档日期：2026-09-30（Asia/Shanghai）。
-- 最新工作记录：2026-10-14（Asia/Shanghai）。
+- 最新工作记录：2026-10-15（Asia/Shanghai）。
 - 状态：P0 原型及底部输入/队列、宿主绑定、粘贴与服务生命周期修订已实现；验收见[验证记录](VALIDATION.md)，后续阶段继续完善。
 - 适用范围：本地项目创作白板、通用 Agent Skill、同一用户的多个 agent 会话。
 - 计划变更通过 Git 记录；本文件的进度区记录实际执行与验收情况。
+
+## v0.1.0 与公开发布（2026-10-15）
+
+英中 README 新增与 package.json 一致的 v0.1.0 标签，沿用 20px flat-square 样式。首页明确项目积极开发中，数据库结构与内部格式仍在演进，暂不保证跨版本兼容，并建议二次开发先 fork 仓库。
+
+用户已授权提交、推送与将 Flyx7Kazami/acanvas 设为 public。发布前独立只读审查覆盖当前候选树、全部可达 Git 历史与压缩材料；迁移文件保全，未发现实际凭据、运行数据库、原始 Codex 会话导出或安装包 renderer。master 与最新 origin/master 一致，后续正常推送保留现有历史。公开后的 ZIP、npx 安装和远端页面按实际结果补充记录。
+
+## Skill 接续、队列提示与 README 标签（2026-10-15）
+
+本轮对应 R01/R02/R06 与 A01/A03/A07。英中 README 新增 Claude Code Skill 标签、Download ZIP 与 npx 安装入口；两排全部采用 flat-square，实际渲染均为 20px 高。下载说明使用 master ZIP，区分 skills CLI 的 Git 要求与直接下载方式。harness 定位、标题对齐与用户手工 showcase 保持。
+
+Skill 的描述与接续段覆盖 continue、cotinue、继续等简短请求：优先接续对话中明确未完成的任务；否则读取已建立的 Acanvas 项目和精确 session，检查并消费其队列。上下文缺失时先取得准确画布链接，运行中保留消费所有权，中断时先核对 run、job 与产物后恢复。空队列或需要用户编辑、信息、权限时结束本次激活。README、workflow 和 usage 说明同步。
+
+画布沿用现有 composer placeholder：当前 session 有 queued/editing/running/blocked/interrupted 请求时显示 **Send “continue” to your agent**。completed 的离场动画单独呈现，提示随最后一个真实未完成任务结束而恢复 Create… / What would you like to create?；输入内容、引用与历史保持原有逻辑。
+
+两项 TypeScript --noEmit、私有生产构建与四项既有队列/草稿/恢复服务测试通过。服务测试首轮受 sandbox loopback listen EPERM 限制，同一命令批准后 4/4 通过。执行者 CUA 覆盖各未完成状态、完成离场、取消与双 session；主端 CUA 核对 queued 提示、正常输入/清空草稿、另一空 session 和英中六个标签高度，独立源码/场景决策/截图审查通过。验收在自建临时项目 52949 执行，原 63887/62240/61893 未执行数据写入、刷新或重启。
+
+验收后的 17 项前端编译资源已复制到 dist/web，保留已有资源，最后更新入口。三个原服务的实际入口均引用新脚本，HTTP 回读与构建字节相同，见[静态资源核对](evidence/continue-queue-20261015/static-resources.json)。页面沿用已打开状态，刷新后使用新提示。
+
+Skill YAML、长度与相对引用按 [Agent Skills 规范](https://agentskills.io/specification) 核对通过。随 skill-creator 提供的 quick_validate.py 未识别仓库原有 compatibility 字段；官方规范支持该字段，保留原环境要求并记录为校验工具版本限制。远端 ZIP 与 npx 安装继续等待当前仓库改动发布后验证。证据见[本轮记录](evidence/continue-queue-20261015/verification.json)、[标签截图](evidence/continue-queue-20261015/readme-badges.jpg)和[队列提示](evidence/continue-queue-20261015/queued-hint.jpg)。
+
+## README harness 定位（2026-10-15）
+
+英中两版首页的核心定位统一为 **canvas for agent-ready harnesses**，保留用户最初明确的 harness 概念。普通 agent 名单与各章节继续沿用当前框架。两版实际预览与独立文案审查通过，见[首页效果](evidence/readme-heading-alignment-20261015/harness-positioning.jpg)。
+
+## README 节标题光学对齐与间距（2026-10-15）
+
+英中两版共 24 个 H2 的 Domino 主体上移 4 CSS px，标题后采用单个 en-space，实测间距约 12.07px。导出使用外层 96×96 画框及上移 16px 的原 SVG 视窗，保留原视窗裁切；标题图片继续按 24×24 显示并使用 `align="middle"`。H1 采用静态 icon 与 Acanvas，章节行高保持约 38.2px。
+
+主智能体已在实际 README 预览核对[英文](evidence/readme-heading-alignment-20261015/english.jpg)与[中文](evidence/readme-heading-alignment-20261015/chinese.jpg)，标题锚点与图片加载正常。独立审查通过：225 帧的 alpha 与可见像素精确平移，原有帧时序、5630ms 周期和无限循环保持；两版页内导航全部匹配，`git diff --check` 通过。测量见[验收数据](evidence/readme-heading-alignment-20261015/verification.json)，远端 GitHub 发布后的页面单列验证。
+
+## Skill 标准仓库、安装与 README 框架（2026-10-15）
+
+按用户要求先同步最新 master，已从 `7165e91` 快进到 `cfdeac6` 并恢复保全的本地文档/MIT/素材；PLAN 同时保留上游性能记录与本地进度。仓库根新增标准 `SKILL.md`（小写 name acanvas）、agents metadata，业务源码/测试/配置迁至 app，操作指南迁至 references，CLI 统一为 `scripts/acanvas.mjs`，首次使用在 Skill 安装目录准备声明的运行环境与应用。
+
+主智能体亲写 [结构与安装设计](SKILL_DISTRIBUTION_20261015.md)、Skill/metadata 与两版 README。README 按 Anatomy 的快速开始/安装/使用/能力/要求框架重组，原有功能、三类场景、普通 agent 名单、展示、联系/支持/MIT/StarHistory 保留；主标题为静态 icon 与 Acanvas 并排，其他节标题 GIF 在文字后。官方 skills CLI 的本地复制安装、独立 fresh bootstrap、构建/类型及生命周期验证完成，Node 路径环境失败的定向复验通过；技术迁移与公开文档的干净上下文独立审查通过。历史性能构建路径问题已修复，原 master 的过期测量 hook 单列为已有限制。远端安装等待当前内容发布后验证。
+
+## Showcase 真实前端与布局修订（2026-10-15）
+
+按用户最新验收要求，展示采用实际 Acanvas 前端与实际 Codex renderer，示例数据保持虚构。工作包括：从本机已安装 Codex 的应用资源提取 renderer 到独立临时目录，只适配数据与宿主桥接边界；恢复自有 Slow Signal 示例服务，通过 CLI 调整对象与分组几何；以实际界面重新检查组件、素材标签和底部队列的遮挡情况。项目中保留复现适配与来源记录，安装包前端资源保留在临时环境。
+
+本机实际来源已确认是 `/Applications/ChatGPT.app`（bundle `com.openai.codex`，26.1007.30912）。原 renderer 会话、composer 与原生 browser pane 已在隔离 Electron fixture 显示；918.5×798 的真实 webview 加载真实 Acanvas 服务及 HTML 预览。几何主图（拒绝的 Vector-drift 换为 Eccentric-rhythm）、四个有 dithering/ASCII 与真实参数控件的手机 HTML、两段带嵌入封面的音乐已发布。最终布局原样映射用户手工版本的 16 对象/3 组，坐标与尺寸差值为 0，仅 camera 适配为 32%；3 条示例请求保存，9 素材回读逐字节相同。目录迁移、素材来源与范围独立审查通过，四个参数控件均通过主智能体原生 UI 实测。
+
+用户解锁后已完成两轨原生播放至 12/12 与 9/9 秒、Studies 三图开合返回。交互示例保持用户手工调整，最终独立 presentation 使用等几何的副本，实际宿主绑定为空。两版 README 已采用真实原生窗口的最终无选择态截图，四个 HTML、两封面和三个 folder/frame 完整可见；queue 收起，首条仅引用 Chromatic-interlock 与 Eccentric-rhythm 两张图片，总计 3 条请求。独立源码/隔离/手工几何及本次最终视觉审查通过。用户实际 Codex 会话、账号与原白板保持。详情见[展示记录](README_SHOWCASE_20261014.md)。
+
+## README 普通名单、Domino 标题与复杂展示（2026-10-14）
+
+按用户最新反馈，agent 名称融入正文，以逗号分隔的普通文字呈现；每个 H1/H2 标题旁加入当前 Domino loading 的小尺寸循环 GIF。展示采用虚构 Codex 会话与右侧 Acanvas 等价 mock，内容全部属于 Slow Signal 示例项目，包含多色颗粒/dithering 图像、HTML、音频、便笺、Markdown、frame、folder 与 queue。用户参考只确定质感，各素材采用不同颜色。
+
+主智能体已形成[展示方案与验收记录](README_SHOWCASE_20261014.md)。两版名单与 9 处标题动画完成，96px/225帧/5630ms 透明 GIF 已实际加载；内置 imagegen 的 6 个图像已保存，完整实际提示词随素材交付。独立示例 18 对象、frame/folder、3 queued 和引用草稿保存及原素材字节回读通过。等价 mock 与 1280×720 复杂截图完成，主智能体已实际验证音频、HTML按钮、folder开合和queue展开；独立源码、数据与截图审查 PASS，审查者的 mock 浏览器连接限制单独记录。当前浏览器 HTML 预览/批注与可选 CEF 边界已修正文案，`git diff --check` 通过；用户实际 Codex 数据与白板保持。
+
+## README 应用场景与 For any agent（2026-10-14）
+
+用户补充当前定位为 “Acanvas: canvas for any agent”。两版 README 将应用场景具体化为视觉创作、视觉 idea 共创与搜集、直观的人机交互；对应流程为参考与要求→产物→画布迭代、agent 搜集→情绪板→发散深化、对象/区域/分组→精确反馈→同工作区查看结果。搜集与创作使用宿主 agent 的工具，Acanvas 提供共享视觉上下文与队列。
+
+新增 For any agent 节及导航，列出 20 个 agent/harness 的官方入口，说明统一 Skill/CLI 的权限与服务访问前提，实际接入和投递流程见使用指南。名称已按当前官方页面核对，Windsurf 同列现名 Devin Desktop，Mistral Vibe 指向其官方 CLI 仓库；产品入口与适配验证分别表述。两版各 89 行，三类场景、20 项名称/顺序/URL、Skill/CLI 条件和页内导航经独立只读审查 PASS，`git diff --check` 通过。本轮为文案和入口核对，各宿主端到端接入按实际验证范围声明。改动仅涉及两版首页和本计划，原有 MIT、示例素材及使用指南保留。
+
+## 英中 README 与 MIT 授权（2026-10-14）
+
+本轮为 P0 对外文档与分发说明整理，启动及素材/请求流程对应 R01–R06 / A01–A08。英文 `README.md` 为默认入口，顶部互链 `README.zh-CN.md`；围绕 “Acanvas: canvas for agent ready harness” 精简为核心功能、两类应用场景、快速开始、效果展示、联系方式、项目支持、MIT 和 Star History。格式参考用户指定的 [infinite-canvas README](https://github.com/basketikun/infinite-canvas)，文案与示例采用 Acanvas 的实际能力与独立素材。
+
+详细运行、网络、宿主接续和开发说明归入 [使用指南](../references/usage.md)。根目录 MIT 署名为 `2026 Flyx7Kazami`，包与锁文件根元数据同步；第三方授权沿用原声明。用户确认公开邮箱为 `yingbowu.yw@gmail.com`，当前支持方式为 Star、反馈与贡献。GitHub 实时元数据确认仓库为私有，Star History 采用链接入口。
+
+两版各 74 行、8 个对应章节。独立临时项目 Morrow Studio 通过已构建 CLI 上板 4 个原创 SVG，并保存包含两项引用的真实草稿；主智能体使用真实白板 Fit all 截取当时的 1280×720 `showcase.jpg`（该路径现已替换），原始示例保存在 [examples](../assets/readme/examples/)。两版 Markdown 的品牌区、章节及图片已实际渲染，Logo、徽章和展示图加载正常；相对链接/锚点、英中事实、CLI help、包与锁文件 JSON、标准 MIT 和 `git diff --check` 通过。独立审查 PASS，迁入使用指南的颜色按钮方位已修正为相邻 Delete。基础安装按现有运行配置与 CLI help 核对，本轮验证范围为文档、元数据和真实示例，完整新克隆安装另行验证。示例服务已正常停止，用户原白板服务保持；改动保留为本地工作树供用户继续确认。
 
 ## 画布与文件夹操作性能（2026-10-14）
 
@@ -602,6 +666,15 @@ Git 提交描述当前行为，可在正文关联阶段、R/A 编号、验证命
 
 | 日期 | 工作 | 验证与状态 |
 | --- | --- | --- |
+| 2026-10-15 | v0.1.0 版本与开发状态说明 | 英中版本标签与 package.json 一致；数据库/内部格式跨版本兼容边界及 fork 二开建议置于首页。用户授权公开发布，发布树与历史独立初审通过，实际发布验证继续记录 |
+| 2026-10-15 | Skill 接续、队列提示与 README 标签 | 英中 Claude Code/ZIP/npx 标签统一 20px；continue/继续按已有任务优先、精确 scope 读取队列接续。真实未完成队列显示接续 placeholder，完成离场/取消/空 scope 恢复原提示；两项类型检查、私有构建、4服务测试、执行与主端 CUA 及独立审查通过。旧 quick validator 的 compatibility 字段支持限制与远端发布后验证单列，见[证据](evidence/continue-queue-20261015/verification.json) |
+| 2026-10-15 | README harness 定位 | 英中两版核心定位统一为 canvas for agent-ready harnesses，实际预览与独立文案审查通过 |
+| 2026-10-15 | README 节标题光学对齐与间距 | 英中24个H2主体上移4px、文字后间距约12px，24×24图片与标题行高保持。实际英中预览、锚点与图片通过；独立225帧像素/alpha/时序及18项导航核对通过，见[验收数据](evidence/readme-heading-alignment-20261015/verification.json) |
+| 2026-10-15 | Skill 标准仓库、安装与 README 框架 | master已ff到cfdeac6并完整恢复本地改动；rootSkill/metadata、app/references迁移、唯一CLI与bootstrap、Anatomy框架英中README完成。实际skills1.7.2安装/freshNode24与105依赖/build/help/SQLite/HTTP生命周期及恢复重试通过，类型/构建通过；全Node320通过/9路径环境失败/36跳过，17项定向复验通过。技术迁移与公开文档独立审查通过，远端安装单列，见[结构与安装记录](SKILL_DISTRIBUTION_20261015.md) |
+| 2026-10-15 | Showcase 真实 Codex/Acanvas 前端与用户布局 | 原renderer/native webview与Acanvas生产资源来源核对通过；独立presentation原样映射用户手工布局的16对象/3组，几何差值0，含4参数化HTML、2封面音乐、3请求，9素材字节一致。四滑杆、两曲目完整播放、folder开合返回通过原生UI检查；英中README采用收起queue/首条双图片引用/无选择态的真实截图，原交互示例保持。独立源码/隔离/手工几何及最终截图视觉复核通过，见[展示记录](README_SHOWCASE_20261014.md) |
+| 2026-10-14 | README 普通名单、Domino 标题与复杂展示（P0/P2 对外材料） | 正文名单/9处标题GIF、6张imagegen与实际提示词、18对象及frame/folder/3queued、虚构Codex右侧Acanvas mock及1280×720截图完成。主端audio/HTML/folder/queue实际交互通过，独立源码/数据/截图PASS，英中导航与图片加载/diff通过；HTML文案P2闭合，独立mock交互连接限制分列，见[验收记录](README_SHOWCASE_20261014.md) |
+| 2026-10-14 | README 三类场景与 For any agent（P0 对外文档） | 两版各89行，视觉创作、idea共创搜集、人机交互三类流程及20个agent/harness官方入口完成；名称/顺序/URL、页内导航和Skill/CLI权限条件经独立只读审查PASS，官方名称已核对，diff检查通过；端到端宿主接入按已有验证范围声明 |
+| 2026-10-14 | 英中 README、MIT 与快速开始（P0 对外文档，R01–R06） | 两版各74行/8章节，品牌导航、产品场景、快速开始、联系/支持及MIT完成；详细说明移至USAGE。独立临时项目4个原创SVG/两项真实草稿引用、1280×720截图与英中实际渲染通过；链接/锚点、CLI help、JSON、MIT正文、diff检查及独立审查PASS。颜色按钮方位已修正。原服务保持，仓库private采用Star History链接，完整新克隆安装另行验证，改动留本地工作树 |
 | 2026-10-14 | 画布与文件夹操作性能（P0/P2、R03–R05/R08/R14/R15） | 三处前端优化；固定画布 3,520 输入和文件夹 64 步保真核对、聚焦诊断、独立 10 项通过。默认 Node 第二完整运行 328 通过/1 悬停 fixture 失败/36 跳过，校准后该项两版定向通过；旧浏览器 104 项为 53/51，原版逐项对照闭合，实际结果保留。已有高批注尾延迟/短屏 Fit 边界单列，正式服务保持，见[设计与验证](PERFORMANCE_SMOOTHNESS.md) |
 | 2026-10-14 | Acanvas/icon上下微调及可见留白均衡 | 字标−1px/icon+1px/project Y保持，inner/outer gap6px、宽屏padding10px；私有构建/4组实测/独立复核PASS。单CSS安装及HTTP字节核对完成，原页已刷新读回位移与170.4375×38.09375品牌区，见[验证记录](VALIDATION.md#品牌位移与间距微调2026-10-14) |
 | 2026-10-14 | 左上品牌字标与icon换位 | Acanvas在前、icon在后，分隔线及项目名保持；两处CSS原规则更新，原字体/1px位移/品牌区几何及history底边逻辑保持。私有构建、4组前后实测与独立审查通过；单CSS更新/HTTP核对/原页刷新完成，当前排列供用户继续观察。见[验证记录](VALIDATION.md#品牌字标与图标换位2026-10-14) |

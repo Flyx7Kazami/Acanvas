@@ -1,0 +1,503 @@
+{
+  "viewport": {
+    "width": 831,
+    "height": 798
+  },
+  "view": {
+    "x": 84,
+    "y": 76,
+    "zoom": 0.34,
+    "selectedObjectIds": []
+  },
+  "art": [
+    {
+      "file": "geometric/art/Chromatic-interlock.png",
+      "assetId": "a9c619b0-f348-4486-8e97-dcc7f96590f9"
+    },
+    {
+      "file": "geometric/art/Eccentric-rhythm.png",
+      "assetId": "7ced2ca8-45a3-4f74-8aeb-c1bdfe99f9ec"
+    },
+    {
+      "file": "geometric/art/Frequency-index.png",
+      "assetId": "be2bac19-05b1-411f-9e20-7aa1bf03f4a6"
+    }
+  ],
+  "audio": [
+    {
+      "file": "geometric/music/Afterimage.mp3",
+      "assetId": "231f2cea-dbc4-4d17-bf4e-27f2a3d1f6df"
+    },
+    {
+      "file": "geometric/music/Small-hours.mp3",
+      "assetId": "4e3a9284-3b8d-4f92-ba8e-fe5c35dc5a3b"
+    }
+  ],
+  "apps": [
+    {
+      "file": "geometric/mobile/01-Precision.html",
+      "assetId": "3b2ffa83-6709-485b-8267-5e7957a280fc"
+    },
+    {
+      "file": "geometric/mobile/02-Modular.html",
+      "assetId": "9bb7055a-1e65-4a44-bcc1-a179afd3c49f"
+    },
+    {
+      "file": "geometric/mobile/03-Chromatic.html",
+      "assetId": "d1d9c717-b153-4b32-894c-8ad1ca678a92"
+    },
+    {
+      "file": "geometric/mobile/04-Mono.html",
+      "assetId": "756b96b0-8ad0-46cd-acac-d6a23e89afc5"
+    }
+  ],
+  "created": [
+    {
+      "key": "art-1",
+      "id": "48753025-3a27-4b8e-b814-eb4b3789f060",
+      "assetId": "a9c619b0-f348-4486-8e97-dcc7f96590f9",
+      "x": 0,
+      "y": 72,
+      "width": 360,
+      "height": 360,
+      "groupId": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82"
+    },
+    {
+      "key": "folder-art-1",
+      "id": "583ce7f4-e5fe-429d-a0f3-25e09d56a502",
+      "assetId": "a9c619b0-f348-4486-8e97-dcc7f96590f9",
+      "x": 1354,
+      "y": 715,
+      "width": 360,
+      "height": 360,
+      "groupId": "73299cd7-c1bf-437d-b2ef-0f90c470b356"
+    },
+    {
+      "key": "art-2",
+      "id": "9f46f132-b6d6-445b-8a42-b62c09c43fa7",
+      "assetId": "7ced2ca8-45a3-4f74-8aeb-c1bdfe99f9ec",
+      "x": 432,
+      "y": 120,
+      "width": 300,
+      "height": 300,
+      "groupId": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82"
+    },
+    {
+      "key": "folder-art-2",
+      "id": "5181236b-3148-4a29-88f4-5554f52f13c0",
+      "assetId": "7ced2ca8-45a3-4f74-8aeb-c1bdfe99f9ec",
+      "x": 1764,
+      "y": 715,
+      "width": 360,
+      "height": 360,
+      "groupId": "73299cd7-c1bf-437d-b2ef-0f90c470b356"
+    },
+    {
+      "key": "art-3",
+      "id": "6cd3fe73-ad10-4cf7-8985-10913e523f39",
+      "assetId": "be2bac19-05b1-411f-9e20-7aa1bf03f4a6",
+      "x": 816,
+      "y": 48,
+      "width": 336,
+      "height": 336,
+      "groupId": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82"
+    },
+    {
+      "key": "folder-art-3",
+      "id": "00eb12d9-c151-4330-a743-2ef154fb1b15",
+      "assetId": "be2bac19-05b1-411f-9e20-7aa1bf03f4a6",
+      "x": 2174,
+      "y": 715,
+      "width": 360,
+      "height": 360,
+      "groupId": "73299cd7-c1bf-437d-b2ef-0f90c470b356"
+    },
+    {
+      "key": "audio-1",
+      "id": "4077ad94-637c-4a75-940a-7cf331584d54",
+      "assetId": "231f2cea-dbc4-4d17-bf4e-27f2a3d1f6df",
+      "x": 1248,
+      "y": 72,
+      "width": 535,
+      "height": 132
+    },
+    {
+      "key": "audio-2",
+      "id": "f9969e54-1773-4749-945e-4e8a202955a5",
+      "assetId": "4e3a9284-3b8d-4f92-ba8e-fe5c35dc5a3b",
+      "x": 1284,
+      "y": 252,
+      "width": 535,
+      "height": 132
+    },
+    {
+      "key": "app-1",
+      "id": "87fefb71-458a-462c-999e-3ad041851adf",
+      "assetId": "3b2ffa83-6709-485b-8267-5e7957a280fc",
+      "x": 0,
+      "y": 804,
+      "width": 360,
+      "height": 640
+    },
+    {
+      "key": "app-2",
+      "id": "ad6d8009-f114-4249-b6ec-512e11175068",
+      "assetId": "9bb7055a-1e65-4a44-bcc1-a179afd3c49f",
+      "x": 432,
+      "y": 840,
+      "width": 360,
+      "height": 640
+    },
+    {
+      "key": "app-3",
+      "id": "9b6ef201-558f-4ba1-8c09-bac5100ccf4d",
+      "assetId": "d1d9c717-b153-4b32-894c-8ad1ca678a92",
+      "x": 864,
+      "y": 780,
+      "width": 360,
+      "height": 640
+    },
+    {
+      "key": "app-4",
+      "id": "fe653fed-29e5-46a8-9c54-00b760dba78d",
+      "assetId": "756b96b0-8ad0-46cd-acac-d6a23e89afc5",
+      "x": 1296,
+      "y": 828,
+      "width": 360,
+      "height": 640
+    }
+  ],
+  "fixtureGroups": {
+    "frame": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82",
+    "folder": "73299cd7-c1bf-437d-b2ef-0f90c470b356"
+  },
+  "fixtureTaskIds": [
+    "e0a08e5d-449b-43cd-95d6-57a08a156ced",
+    "5ff4f2ad-88d1-4fbb-8892-ec244777bdfa",
+    "fd5f7c56-2f61-4a50-9319-4ea67138d3e0"
+  ],
+  "fixtureDraft": {
+    "id": "716bc855-abe8-43e4-8815-d4d5d213be71",
+    "sessionId": "aba68074-71b7-4d77-a817-d3018075366d",
+    "revision": 22,
+    "text": "Refine direction 02.",
+    "attachments": [],
+    "annotations": [],
+    "references": {
+      "objectIds": [
+        "ad6d8009-f114-4249-b6ec-512e11175068"
+      ],
+      "taskIds": [],
+      "groupIds": [
+        "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82"
+      ],
+      "order": [
+        {
+          "kind": "object",
+          "id": "ad6d8009-f114-4249-b6ec-512e11175068"
+        },
+        {
+          "kind": "group",
+          "id": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82"
+        }
+      ]
+    },
+    "updatedAt": "2026-10-14T21:34:02.813Z"
+  },
+  "preservedObjectIds": [],
+  "updatedTaskIds": [
+    "e0a08e5d-449b-43cd-95d6-57a08a156ced",
+    "5ff4f2ad-88d1-4fbb-8892-ec244777bdfa",
+    "fd5f7c56-2f61-4a50-9319-4ea67138d3e0"
+  ],
+  "preservedDraft": false,
+  "objects": [
+    {
+      "id": "6c15d6b3-dbe7-4839-9132-7b0512e54359",
+      "assetId": "4ee66a85-8f83-4315-b648-9f89b3996e22",
+      "type": "file",
+      "x": 432,
+      "y": 552,
+      "width": 336,
+      "height": 120,
+      "version": 8,
+      "createdAt": "2026-10-14T05:41:30.648Z",
+      "updatedAt": "2026-10-14T21:23:13.749Z",
+      "fill": "sand"
+    },
+    {
+      "id": "77a0bd9f-4dbe-49f7-9ee2-bcc5847f9491",
+      "assetId": "2223d2c1-1017-4cc8-bb1e-032a4160fb95",
+      "type": "file",
+      "x": 816,
+      "y": 540,
+      "width": 384,
+      "height": 144,
+      "version": 7,
+      "createdAt": "2026-10-14T05:41:30.648Z",
+      "updatedAt": "2026-10-14T21:23:13.749Z"
+    },
+    {
+      "id": "e4ecd209-abd2-4e2a-bf0a-499c357dfbab",
+      "assetId": "07a9a74d-e0e5-4433-9d50-2d9ed7668ae5",
+      "type": "file",
+      "x": 24,
+      "y": 516,
+      "width": 312,
+      "height": 144,
+      "version": 9,
+      "createdAt": "2026-10-14T05:41:30.648Z",
+      "updatedAt": "2026-10-14T21:23:13.749Z",
+      "fill": "mist"
+    },
+    {
+      "id": "e9678f37-e9a0-442c-8b44-6834ce7a82b8",
+      "assetId": "8e81dc5c-00a4-42d3-9089-d5613832f11e",
+      "type": "file",
+      "x": 1584,
+      "y": 492,
+      "width": 216,
+      "height": 144,
+      "version": 8,
+      "createdAt": "2026-10-14T05:41:30.648Z",
+      "updatedAt": "2026-10-14T21:23:13.749Z",
+      "fill": "blush"
+    },
+    {
+      "id": "00eb12d9-c151-4330-a743-2ef154fb1b15",
+      "assetId": "be2bac19-05b1-411f-9e20-7aa1bf03f4a6",
+      "type": "image",
+      "x": 2174,
+      "y": 715,
+      "width": 360,
+      "height": 360,
+      "version": 1,
+      "createdAt": "2026-10-14T21:33:50.139Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z",
+      "groupId": "73299cd7-c1bf-437d-b2ef-0f90c470b356"
+    },
+    {
+      "id": "4077ad94-637c-4a75-940a-7cf331584d54",
+      "assetId": "231f2cea-dbc4-4d17-bf4e-27f2a3d1f6df",
+      "type": "file",
+      "x": 1248,
+      "y": 72,
+      "width": 535,
+      "height": 132,
+      "version": 1,
+      "createdAt": "2026-10-14T21:33:50.139Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z"
+    },
+    {
+      "id": "48753025-3a27-4b8e-b814-eb4b3789f060",
+      "assetId": "a9c619b0-f348-4486-8e97-dcc7f96590f9",
+      "type": "image",
+      "x": 0,
+      "y": 72,
+      "width": 360,
+      "height": 360,
+      "version": 1,
+      "createdAt": "2026-10-14T21:33:50.139Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z",
+      "groupId": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82"
+    },
+    {
+      "id": "5181236b-3148-4a29-88f4-5554f52f13c0",
+      "assetId": "7ced2ca8-45a3-4f74-8aeb-c1bdfe99f9ec",
+      "type": "image",
+      "x": 1764,
+      "y": 715,
+      "width": 360,
+      "height": 360,
+      "version": 1,
+      "createdAt": "2026-10-14T21:33:50.139Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z",
+      "groupId": "73299cd7-c1bf-437d-b2ef-0f90c470b356"
+    },
+    {
+      "id": "583ce7f4-e5fe-429d-a0f3-25e09d56a502",
+      "assetId": "a9c619b0-f348-4486-8e97-dcc7f96590f9",
+      "type": "image",
+      "x": 1354,
+      "y": 715,
+      "width": 360,
+      "height": 360,
+      "version": 1,
+      "createdAt": "2026-10-14T21:33:50.139Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z",
+      "groupId": "73299cd7-c1bf-437d-b2ef-0f90c470b356"
+    },
+    {
+      "id": "6cd3fe73-ad10-4cf7-8985-10913e523f39",
+      "assetId": "be2bac19-05b1-411f-9e20-7aa1bf03f4a6",
+      "type": "image",
+      "x": 816,
+      "y": 48,
+      "width": 336,
+      "height": 336,
+      "version": 1,
+      "createdAt": "2026-10-14T21:33:50.139Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z",
+      "groupId": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82"
+    },
+    {
+      "id": "87fefb71-458a-462c-999e-3ad041851adf",
+      "assetId": "3b2ffa83-6709-485b-8267-5e7957a280fc",
+      "type": "file",
+      "x": 0,
+      "y": 804,
+      "width": 360,
+      "height": 640,
+      "version": 1,
+      "createdAt": "2026-10-14T21:33:50.139Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z"
+    },
+    {
+      "id": "9b6ef201-558f-4ba1-8c09-bac5100ccf4d",
+      "assetId": "d1d9c717-b153-4b32-894c-8ad1ca678a92",
+      "type": "file",
+      "x": 864,
+      "y": 780,
+      "width": 360,
+      "height": 640,
+      "version": 1,
+      "createdAt": "2026-10-14T21:33:50.139Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z"
+    },
+    {
+      "id": "9f46f132-b6d6-445b-8a42-b62c09c43fa7",
+      "assetId": "7ced2ca8-45a3-4f74-8aeb-c1bdfe99f9ec",
+      "type": "image",
+      "x": 432,
+      "y": 120,
+      "width": 300,
+      "height": 300,
+      "version": 1,
+      "createdAt": "2026-10-14T21:33:50.139Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z",
+      "groupId": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82"
+    },
+    {
+      "id": "ad6d8009-f114-4249-b6ec-512e11175068",
+      "assetId": "9bb7055a-1e65-4a44-bcc1-a179afd3c49f",
+      "type": "file",
+      "x": 432,
+      "y": 840,
+      "width": 360,
+      "height": 640,
+      "version": 1,
+      "createdAt": "2026-10-14T21:33:50.139Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z"
+    },
+    {
+      "id": "f9969e54-1773-4749-945e-4e8a202955a5",
+      "assetId": "4e3a9284-3b8d-4f92-ba8e-fe5c35dc5a3b",
+      "type": "file",
+      "x": 1284,
+      "y": 252,
+      "width": 535,
+      "height": 132,
+      "version": 1,
+      "createdAt": "2026-10-14T21:33:50.139Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z"
+    },
+    {
+      "id": "fe653fed-29e5-46a8-9c54-00b760dba78d",
+      "assetId": "756b96b0-8ad0-46cd-acac-d6a23e89afc5",
+      "type": "file",
+      "x": 1296,
+      "y": 828,
+      "width": 360,
+      "height": 640,
+      "version": 1,
+      "createdAt": "2026-10-14T21:33:50.139Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z"
+    }
+  ],
+  "groups": [
+    {
+      "id": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82",
+      "name": "Visual language",
+      "mode": "frame",
+      "color": "cobalt",
+      "x": -24,
+      "y": 8,
+      "width": 1200,
+      "height": 480,
+      "version": 10,
+      "createdAt": "2026-10-14T05:48:55.361Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z",
+      "objectIds": [
+        "48753025-3a27-4b8e-b814-eb4b3789f060",
+        "6cd3fe73-ad10-4cf7-8985-10913e523f39",
+        "9f46f132-b6d6-445b-8a42-b62c09c43fa7"
+      ]
+    },
+    {
+      "id": "73299cd7-c1bf-437d-b2ef-0f90c470b356",
+      "name": "Studies",
+      "mode": "folder",
+      "color": "cobalt",
+      "x": 1296,
+      "y": 468,
+      "width": 1228,
+      "height": 456,
+      "version": 12,
+      "createdAt": "2026-10-14T05:48:55.576Z",
+      "updatedAt": "2026-10-14T21:33:50.139Z",
+      "objectIds": [
+        "00eb12d9-c151-4330-a743-2ef154fb1b15",
+        "5181236b-3148-4a29-88f4-5554f52f13c0",
+        "583ce7f4-e5fe-429d-a0f3-25e09d56a502"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "e0a08e5d-449b-43cd-95d6-57a08a156ced",
+      "sequence": 1,
+      "status": "queued",
+      "text": "Compare the four mobile directions."
+    },
+    {
+      "id": "5ff4f2ad-88d1-4fbb-8892-ec244777bdfa",
+      "sequence": 2,
+      "status": "queued",
+      "text": "Try the warm pulse with direction 02."
+    },
+    {
+      "id": "fd5f7c56-2f61-4a50-9319-4ea67138d3e0",
+      "sequence": 3,
+      "status": "queued",
+      "text": "Extend the visual language into motion."
+    }
+  ],
+  "draft": {
+    "id": "716bc855-abe8-43e4-8815-d4d5d213be71",
+    "sessionId": "aba68074-71b7-4d77-a817-d3018075366d",
+    "revision": 22,
+    "text": "Refine direction 02.",
+    "attachments": [],
+    "annotations": [],
+    "references": {
+      "objectIds": [
+        "ad6d8009-f114-4249-b6ec-512e11175068"
+      ],
+      "taskIds": [],
+      "groupIds": [
+        "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82"
+      ],
+      "order": [
+        {
+          "kind": "object",
+          "id": "ad6d8009-f114-4249-b6ec-512e11175068"
+        },
+        {
+          "kind": "group",
+          "id": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82"
+        }
+      ]
+    },
+    "updatedAt": "2026-10-14T21:34:02.813Z"
+  }
+}

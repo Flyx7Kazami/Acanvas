@@ -1,0 +1,468 @@
+{
+  "dimensions": [
+    {
+      "elements": [
+        {
+          "bottom": 60,
+          "className": "eyebrow",
+          "top": 50
+        },
+        {
+          "bottom": 148,
+          "className": "headline",
+          "top": 68
+        },
+        {
+          "bottom": 306,
+          "className": "hero",
+          "top": 160
+        },
+        {
+          "bottom": 338,
+          "className": "meta",
+          "top": 306
+        },
+        {
+          "bottom": 380,
+          "className": "filters",
+          "top": 346
+        },
+        {
+          "bottom": 398,
+          "className": "section-label",
+          "top": 386
+        },
+        {
+          "bottom": 452,
+          "className": "track",
+          "top": 398
+        },
+        {
+          "bottom": 504,
+          "className": "programme",
+          "top": 466
+        },
+        {
+          "bottom": 584,
+          "className": "reserve",
+          "top": 544
+        }
+      ],
+      "navigation": {
+        "bottom": 640,
+        "height": 48,
+        "left": 20,
+        "right": 340,
+        "top": 592,
+        "width": 320,
+        "x": 20,
+        "y": 592
+      },
+      "scroll": [
+        360,
+        640
+      ],
+      "title": "Slow Signal — Precision",
+      "viewport": [
+        360,
+        640
+      ]
+    },
+    {
+      "elements": [
+        {
+          "bottom": 60,
+          "className": "eyebrow",
+          "top": 50
+        },
+        {
+          "bottom": 148,
+          "className": "headline",
+          "top": 68
+        },
+        {
+          "bottom": 306,
+          "className": "hero",
+          "top": 160
+        },
+        {
+          "bottom": 338,
+          "className": "meta",
+          "top": 306
+        },
+        {
+          "bottom": 380,
+          "className": "filters",
+          "top": 346
+        },
+        {
+          "bottom": 398,
+          "className": "section-label",
+          "top": 386
+        },
+        {
+          "bottom": 452,
+          "className": "track",
+          "top": 398
+        },
+        {
+          "bottom": 504,
+          "className": "programme",
+          "top": 466
+        },
+        {
+          "bottom": 584,
+          "className": "reserve",
+          "top": 544
+        }
+      ],
+      "navigation": {
+        "bottom": 640,
+        "height": 48,
+        "left": 14,
+        "right": 346,
+        "top": 592,
+        "width": 332,
+        "x": 14,
+        "y": 592
+      },
+      "scroll": [
+        360,
+        640
+      ],
+      "title": "Slow Signal — Modular",
+      "viewport": [
+        360,
+        640
+      ]
+    },
+    {
+      "elements": [
+        {
+          "bottom": 60,
+          "className": "eyebrow",
+          "top": 50
+        },
+        {
+          "bottom": 148,
+          "className": "headline",
+          "top": 68
+        },
+        {
+          "bottom": 306,
+          "className": "hero",
+          "top": 160
+        },
+        {
+          "bottom": 338,
+          "className": "meta",
+          "top": 306
+        },
+        {
+          "bottom": 380,
+          "className": "filters",
+          "top": 346
+        },
+        {
+          "bottom": 398,
+          "className": "section-label",
+          "top": 386
+        },
+        {
+          "bottom": 452,
+          "className": "track",
+          "top": 398
+        },
+        {
+          "bottom": 504,
+          "className": "programme",
+          "top": 466
+        },
+        {
+          "bottom": 584,
+          "className": "reserve",
+          "top": 544
+        }
+      ],
+      "navigation": {
+        "bottom": 640,
+        "height": 48,
+        "left": 20,
+        "right": 340,
+        "top": 592,
+        "width": 320,
+        "x": 20,
+        "y": 592
+      },
+      "scroll": [
+        360,
+        640
+      ],
+      "title": "Slow Signal — Chromatic",
+      "viewport": [
+        360,
+        640
+      ]
+    },
+    {
+      "elements": [
+        {
+          "bottom": 60,
+          "className": "eyebrow",
+          "top": 50
+        },
+        {
+          "bottom": 148,
+          "className": "headline",
+          "top": 68
+        },
+        {
+          "bottom": 306,
+          "className": "hero",
+          "top": 160
+        },
+        {
+          "bottom": 338,
+          "className": "meta",
+          "top": 306
+        },
+        {
+          "bottom": 380,
+          "className": "filters",
+          "top": 346
+        },
+        {
+          "bottom": 398,
+          "className": "section-label",
+          "top": 386
+        },
+        {
+          "bottom": 452,
+          "className": "track",
+          "top": 398
+        },
+        {
+          "bottom": 504,
+          "className": "programme",
+          "top": 466
+        },
+        {
+          "bottom": 584,
+          "className": "reserve",
+          "top": 544
+        }
+      ],
+      "navigation": {
+        "bottom": 640,
+        "height": 48,
+        "left": 20,
+        "right": 340,
+        "top": 592,
+        "width": 320,
+        "x": 20,
+        "y": 592
+      },
+      "scroll": [
+        360,
+        640
+      ],
+      "title": "Slow Signal — Mono",
+      "viewport": [
+        360,
+        640
+      ]
+    }
+  ],
+  "interactions": [
+    {
+      "page": "01-Precision",
+      "playing": {
+        "duration": 12,
+        "paused": false,
+        "time": 0.345234
+      },
+      "selected": {
+        "label": "Play Small hours",
+        "paused": true,
+        "title": "Small hours"
+      },
+      "alternate": {
+        "duration": 9,
+        "paused": false,
+        "time": 0.376012
+      },
+      "reserved": {
+        "feedback": "Studio 04 · November 21 · Reserved",
+        "nav": "Your pass",
+        "reserved": true,
+        "saved": "true"
+      },
+      "released": true
+    },
+    {
+      "page": "02-Modular",
+      "playing": {
+        "duration": 9,
+        "paused": false,
+        "time": 0.343795
+      },
+      "selected": {
+        "label": "Play Afterimage",
+        "paused": true,
+        "title": "Afterimage"
+      },
+      "alternate": {
+        "duration": 12,
+        "paused": false,
+        "time": 0.324635
+      },
+      "reserved": {
+        "feedback": "Studio 04 · November 21 · Reserved",
+        "nav": "Your pass",
+        "reserved": true,
+        "saved": "true"
+      },
+      "released": true
+    },
+    {
+      "page": "03-Chromatic",
+      "playing": {
+        "duration": 12,
+        "paused": false,
+        "time": 0.329324
+      },
+      "selected": {
+        "label": "Play Small hours",
+        "paused": true,
+        "title": "Small hours"
+      },
+      "alternate": {
+        "duration": 9,
+        "paused": false,
+        "time": 0.312303
+      },
+      "reserved": {
+        "feedback": "Studio 04 · November 21 · Reserved",
+        "nav": "Your pass",
+        "reserved": true,
+        "saved": "true"
+      },
+      "released": true
+    },
+    {
+      "page": "04-Mono",
+      "playing": {
+        "duration": 9,
+        "paused": false,
+        "time": 0.409681
+      },
+      "selected": {
+        "label": "Play Afterimage",
+        "paused": true,
+        "title": "Afterimage"
+      },
+      "alternate": {
+        "duration": 12,
+        "paused": false,
+        "time": 0.337276
+      },
+      "reserved": {
+        "feedback": "Studio 04 · November 21 · Reserved",
+        "nav": "Your pass",
+        "reserved": true,
+        "saved": "true"
+      },
+      "released": true
+    }
+  ],
+  "narrow": [
+    {
+      "navigation": {
+        "bottom": 600,
+        "height": 44,
+        "left": 20,
+        "right": 300,
+        "top": 556,
+        "width": 280,
+        "x": 20,
+        "y": 556
+      },
+      "overlaps": [],
+      "scroll": [
+        320,
+        600
+      ],
+      "title": "Slow Signal — Precision",
+      "viewport": [
+        320,
+        600
+      ]
+    },
+    {
+      "navigation": {
+        "bottom": 600,
+        "height": 44,
+        "left": 14,
+        "right": 306,
+        "top": 556,
+        "width": 292,
+        "x": 14,
+        "y": 556
+      },
+      "overlaps": [],
+      "scroll": [
+        320,
+        600
+      ],
+      "title": "Slow Signal — Modular",
+      "viewport": [
+        320,
+        600
+      ]
+    },
+    {
+      "navigation": {
+        "bottom": 600,
+        "height": 44,
+        "left": 20,
+        "right": 300,
+        "top": 556,
+        "width": 280,
+        "x": 20,
+        "y": 556
+      },
+      "overlaps": [],
+      "scroll": [
+        320,
+        600
+      ],
+      "title": "Slow Signal — Chromatic",
+      "viewport": [
+        320,
+        600
+      ]
+    },
+    {
+      "navigation": {
+        "bottom": 600,
+        "height": 44,
+        "left": 20,
+        "right": 300,
+        "top": 556,
+        "width": 280,
+        "x": 20,
+        "y": 556
+      },
+      "overlaps": [],
+      "scroll": [
+        320,
+        600
+      ],
+      "title": "Slow Signal — Mono",
+      "viewport": [
+        320,
+        600
+      ]
+    }
+  ]
+}

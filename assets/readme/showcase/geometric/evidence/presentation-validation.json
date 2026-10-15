@@ -1,0 +1,78 @@
+{
+  "presentation": {
+    "kind": "Independent README presentation",
+    "builder": "content/build-presentation.mjs",
+    "projectId": "a1a9e993-72e7-4149-a2ba-00242c205d4b",
+    "sessionId": "038517c8-da1f-4d8a-b834-00a816cd4269",
+    "hostBindingConfigured": false,
+    "runtimeMode": "queue",
+    "runtimeConnection": "none",
+    "layoutSource": "content/manual-layout.json"
+  },
+  "layoutSource": "content/manual-layout.json",
+  "queuePresentation": "collapsed",
+  "service": {
+    "pid": 32192,
+    "parentPid": 1,
+    "previewOrigin": "http://localhost:61892"
+  },
+  "viewport": {
+    "width": 918.5,
+    "height": 798
+  },
+  "view": {
+    "x": 90.38294340354233,
+    "y": 71.76,
+    "zoom": 0.32,
+    "selectedObjectIds": []
+  },
+  "objects": 16,
+  "groups": [
+    {
+      "name": "Visual language",
+      "mode": "frame",
+      "members": 3
+    },
+    {
+      "name": "Studies",
+      "mode": "folder",
+      "members": 3
+    },
+    {
+      "name": "Group 1",
+      "mode": "frame",
+      "members": 4
+    }
+  ],
+  "queued": 3,
+  "firstRequest": {
+    "id": "c61b6805-d24f-43d4-b1a5-ffa2405a2c3a",
+    "text": "Create a new poster from these studies.",
+    "referenceKinds": [
+      "image/png",
+      "image/png"
+    ],
+    "referenceRoles": [
+      "art-1",
+      "art-2"
+    ]
+  },
+  "allManualObjectGeometryMatches": true,
+  "allManualGroupsMatch": true,
+  "otherRequestsUnchanged": true,
+  "draftContentRestored": true,
+  "resources": 9,
+  "resourcesMatch": true,
+  "sourceMaterialFiles": [
+    "geometric/art/Chromatic-interlock.png",
+    "geometric/art/Eccentric-rhythm.png",
+    "geometric/art/Frequency-index.png",
+    "geometric/music/Afterimage.mp3",
+    "geometric/music/Small-hours.mp3",
+    "geometric/mobile/01-Precision.html",
+    "geometric/mobile/02-Modular.html",
+    "geometric/mobile/03-Chromatic.html",
+    "geometric/mobile/04-Mono.html"
+  ],
+  "originalScopes": "The original manual demo and user project receive no write commands from this synchronization."
+}

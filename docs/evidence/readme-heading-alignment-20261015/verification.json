@@ -1,0 +1,38 @@
+{
+  "display": {
+    "width": 24,
+    "height": 24,
+    "subjectOffsetY": -4,
+    "horizontalGapTarget": 12
+  },
+  "english": {
+    "heading": "Quick start",
+    "measuredGap": 12.0703125,
+    "headingHeight": 38.1953125,
+    "anchor": "quick-start"
+  },
+  "chinese": {
+    "heading": "快速开始",
+    "measuredGap": 12.0703125,
+    "headingHeight": 38.1953125,
+    "anchor": "快速开始"
+  },
+  "headingCount": {
+    "README.md": 12,
+    "README.zh-CN.md": 12
+  },
+  "animation": {
+    "canvas": {
+      "width": 96,
+      "height": 96
+    },
+    "frames": 225,
+    "durationMs": 5630,
+    "loop": "infinite"
+  },
+  "uiEvidence": [
+    "english.jpg",
+    "chinese.jpg"
+  ],
+  "scope": "Section headings only. Main static brand title retained."
+}

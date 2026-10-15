@@ -1,0 +1,202 @@
+{
+  "kind": "User-authored manual showcase layout",
+  "objects": [
+    {
+      "key": "art-1",
+      "sourceObjectId": "48753025-3a27-4b8e-b814-eb4b3789f060",
+      "x": 0,
+      "y": 72,
+      "width": 360,
+      "height": 360,
+      "sourceGroupId": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82"
+    },
+    {
+      "key": "folder-art-1",
+      "sourceObjectId": "583ce7f4-e5fe-429d-a0f3-25e09d56a502",
+      "x": 1888.7167980048553,
+      "y": 707,
+      "width": 360,
+      "height": 360,
+      "sourceGroupId": "73299cd7-c1bf-437d-b2ef-0f90c470b356"
+    },
+    {
+      "key": "art-2",
+      "sourceObjectId": "9f46f132-b6d6-445b-8a42-b62c09c43fa7",
+      "x": 432,
+      "y": 72,
+      "width": 360,
+      "height": 360,
+      "sourceGroupId": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82"
+    },
+    {
+      "key": "folder-art-2",
+      "sourceObjectId": "5181236b-3148-4a29-88f4-5554f52f13c0",
+      "x": 2298.7167980048553,
+      "y": 707,
+      "width": 360,
+      "height": 360,
+      "sourceGroupId": "73299cd7-c1bf-437d-b2ef-0f90c470b356"
+    },
+    {
+      "key": "art-3",
+      "sourceObjectId": "6cd3fe73-ad10-4cf7-8985-10913e523f39",
+      "x": 864.0000000000001,
+      "y": 72,
+      "width": 359.6851923147209,
+      "height": 359.6851923147209,
+      "sourceGroupId": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82"
+    },
+    {
+      "key": "folder-art-3",
+      "sourceObjectId": "00eb12d9-c151-4330-a743-2ef154fb1b15",
+      "x": 2708.7167980048553,
+      "y": 707,
+      "width": 360,
+      "height": 360,
+      "sourceGroupId": "73299cd7-c1bf-437d-b2ef-0f90c470b356"
+    },
+    {
+      "key": "audio-1",
+      "sourceObjectId": "4077ad94-637c-4a75-940a-7cf331584d54",
+      "x": 1830.7167980048555,
+      "y": 72,
+      "width": 679.4869047665037,
+      "height": 132
+    },
+    {
+      "key": "audio-2",
+      "sourceObjectId": "f9969e54-1773-4749-945e-4e8a202955a5",
+      "x": 1830.7167980048553,
+      "y": 252,
+      "width": 679.4869047665038,
+      "height": 132
+    },
+    {
+      "key": "app-1",
+      "sourceObjectId": "87fefb71-458a-462c-999e-3ad041851adf",
+      "x": -8.446698136069791,
+      "y": 946.643793868483,
+      "width": 360,
+      "height": 640,
+      "sourceGroupId": "6e626410-a816-4272-800c-2f78787cd48d"
+    },
+    {
+      "key": "app-2",
+      "sourceObjectId": "ad6d8009-f114-4249-b6ec-512e11175068",
+      "x": 423.5533018639302,
+      "y": 946.643793868483,
+      "width": 360,
+      "height": 640,
+      "sourceGroupId": "6e626410-a816-4272-800c-2f78787cd48d"
+    },
+    {
+      "key": "app-3",
+      "sourceObjectId": "9b6ef201-558f-4ba1-8c09-bac5100ccf4d",
+      "x": 855.2384941786513,
+      "y": 946.6437938684832,
+      "width": 360,
+      "height": 640,
+      "sourceGroupId": "6e626410-a816-4272-800c-2f78787cd48d"
+    },
+    {
+      "key": "app-4",
+      "sourceObjectId": "fe653fed-29e5-46a8-9c54-00b760dba78d",
+      "x": 1301.8849217362576,
+      "y": 946.6437938684832,
+      "width": 360,
+      "height": 640,
+      "sourceGroupId": "6e626410-a816-4272-800c-2f78787cd48d"
+    },
+    {
+      "key": "direction",
+      "sourceObjectId": "e4ecd209-abd2-4e2a-bf0a-499c357dfbab",
+      "x": 0,
+      "y": 562.9496750493297,
+      "width": 612,
+      "height": 144,
+      "fill": "mist"
+    },
+    {
+      "key": "listening",
+      "sourceObjectId": "6c15d6b3-dbe7-4839-9132-7b0512e54359",
+      "x": 1333.0269959392547,
+      "y": 72,
+      "width": 384,
+      "height": 120,
+      "fill": "sand"
+    },
+    {
+      "key": "brief",
+      "sourceObjectId": "77a0bd9f-4dbe-49f7-9ee2-bcc5847f9491",
+      "x": 1333.0269959392547,
+      "y": 292.15740384263955,
+      "width": 384,
+      "height": 309.8993500986593
+    },
+    {
+      "key": "next",
+      "sourceObjectId": "e9678f37-e9a0-442c-8b44-6834ce7a82b8",
+      "x": 2130.4656020934913,
+      "y": 588,
+      "width": 379.7381006778678,
+      "height": 237.89935009865928,
+      "fill": "blush"
+    }
+  ],
+  "groups": [
+    {
+      "key": "frame",
+      "sourceGroupId": "3af0a6d9-3fe7-4d46-a31f-05ffc3a94e82",
+      "name": "Visual language",
+      "mode": "frame",
+      "color": "cobalt",
+      "x": -24,
+      "y": 32,
+      "width": 1271.685192314721,
+      "height": 456,
+      "members": [
+        "art-1",
+        "art-3",
+        "art-2"
+      ]
+    },
+    {
+      "key": "folder",
+      "sourceGroupId": "73299cd7-c1bf-437d-b2ef-0f90c470b356",
+      "name": "Studies",
+      "mode": "folder",
+      "color": "cobalt",
+      "x": 1830.7167980048553,
+      "y": 460,
+      "width": 1228,
+      "height": 456,
+      "members": [
+        "folder-art-3",
+        "folder-art-2",
+        "folder-art-1"
+      ]
+    },
+    {
+      "key": "manual-3",
+      "sourceGroupId": "6e626410-a816-4272-800c-2f78787cd48d",
+      "name": "Group 1",
+      "mode": "frame",
+      "color": "coral",
+      "x": -32.44669813606979,
+      "y": 906.643793868483,
+      "width": 1718.3316198723273,
+      "height": 736,
+      "members": [
+        "app-1",
+        "app-3",
+        "app-2",
+        "app-4"
+      ]
+    }
+  ],
+  "viewport": {
+    "width": 918.5,
+    "height": 798
+  },
+  "queuePresentation": "collapsed"
+}

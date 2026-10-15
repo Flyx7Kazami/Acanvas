@@ -1,0 +1,303 @@
+{
+  "method": "CLI readback projected with production object, group, caption, and control dimensions; rendered inspection follows in the Codex window.",
+  "viewport": {
+    "width": 831,
+    "height": 798
+  },
+  "suggestedView": {
+    "x": 84,
+    "y": 76,
+    "zoom": 0.34,
+    "selectedObjectIds": []
+  },
+  "actualSavedView": {
+    "x": 84,
+    "y": 76,
+    "zoom": 0.34,
+    "selectedObjectIds": []
+  },
+  "projected": [
+    {
+      "key": "art-1",
+      "objectId": "e3b83aaf-50b6-4407-a6d5-4096868de7a4",
+      "groupId": "6fc84358-10cf-4f27-a973-2062a989ae73",
+      "body": {
+        "x": 84,
+        "y": 100.48,
+        "width": 122.4,
+        "height": 122.4
+      },
+      "caption": {
+        "x": 84,
+        "y": 226.28,
+        "width": 122.4,
+        "height": 7.48
+      }
+    },
+    {
+      "key": "art-2",
+      "objectId": "a58f96a1-a29d-445f-bf34-07993428f84d",
+      "groupId": "6fc84358-10cf-4f27-a973-2062a989ae73",
+      "body": {
+        "x": 230.88000000000002,
+        "y": 116.80000000000001,
+        "width": 102.00000000000001,
+        "height": 102.00000000000001
+      },
+      "caption": {
+        "x": 230.88000000000002,
+        "y": 222.20000000000002,
+        "width": 102.00000000000001,
+        "height": 7.48
+      }
+    },
+    {
+      "key": "art-3",
+      "objectId": "d078da6e-4bae-479d-9596-21199138b317",
+      "groupId": "6fc84358-10cf-4f27-a973-2062a989ae73",
+      "body": {
+        "x": 361.44,
+        "y": 92.32,
+        "width": 114.24000000000001,
+        "height": 114.24000000000001
+      },
+      "caption": {
+        "x": 361.44,
+        "y": 209.96,
+        "width": 114.24000000000001,
+        "height": 7.48
+      }
+    },
+    {
+      "key": "audio-1",
+      "objectId": "ce609312-21f6-48b3-b536-a1345ca400f7",
+      "body": {
+        "x": 508.32000000000005,
+        "y": 100.48,
+        "width": 181.9,
+        "height": 44.88
+      },
+      "caption": {
+        "x": 508.32000000000005,
+        "y": 148.76,
+        "width": 181.9,
+        "height": 7.48
+      }
+    },
+    {
+      "key": "audio-2",
+      "objectId": "c60c242c-2510-4a27-b4c3-a8066e2fd2e9",
+      "body": {
+        "x": 520.5600000000001,
+        "y": 161.68,
+        "width": 181.9,
+        "height": 44.88
+      },
+      "caption": {
+        "x": 520.5600000000001,
+        "y": 209.96,
+        "width": 181.9,
+        "height": 7.48
+      }
+    },
+    {
+      "key": "direction",
+      "objectId": "33db3be2-c375-4031-a24a-2e4869141916",
+      "body": {
+        "x": 92.16,
+        "y": 251.44000000000003,
+        "width": 106.08000000000001,
+        "height": 48.96
+      },
+      "caption": {
+        "x": 92.16,
+        "y": 303.8,
+        "width": 106.08000000000001,
+        "height": 7.48
+      }
+    },
+    {
+      "key": "listening",
+      "objectId": "538f1287-c917-4b06-af0b-51d6d4ae6fc3",
+      "body": {
+        "x": 230.88000000000002,
+        "y": 263.68,
+        "width": 114.24000000000001,
+        "height": 40.800000000000004
+      },
+      "caption": {
+        "x": 230.88000000000002,
+        "y": 307.88,
+        "width": 114.24000000000001,
+        "height": 7.48
+      }
+    },
+    {
+      "key": "brief",
+      "objectId": "2e3e409d-d940-4ec1-92f8-721300192935",
+      "body": {
+        "x": 361.44,
+        "y": 259.6,
+        "width": 130.56,
+        "height": 48.96
+      },
+      "caption": {
+        "x": 361.44,
+        "y": 311.96000000000004,
+        "width": 130.56,
+        "height": 7.48
+      }
+    },
+    {
+      "key": "next",
+      "objectId": "078553b5-4c9d-49bc-8c42-94068d75c5fd",
+      "body": {
+        "x": 622.5600000000001,
+        "y": 243.28,
+        "width": 73.44000000000001,
+        "height": 48.96
+      },
+      "caption": {
+        "x": 622.5600000000001,
+        "y": 295.64,
+        "width": 73.44000000000001,
+        "height": 7.48
+      }
+    },
+    {
+      "key": "app-1",
+      "objectId": "7e99cb89-9dcb-4836-a549-9e2a08d5a485",
+      "body": {
+        "x": 84,
+        "y": 349.36,
+        "width": 122.4,
+        "height": 217.60000000000002
+      },
+      "caption": {
+        "x": 84,
+        "y": 570.36,
+        "width": 122.4,
+        "height": 7.48
+      }
+    },
+    {
+      "key": "app-2",
+      "objectId": "e7985dc8-7775-4b95-b5a6-11e8ab47da26",
+      "body": {
+        "x": 230.88000000000002,
+        "y": 361.6,
+        "width": 122.4,
+        "height": 217.60000000000002
+      },
+      "caption": {
+        "x": 230.88000000000002,
+        "y": 582.6,
+        "width": 122.4,
+        "height": 7.48
+      }
+    },
+    {
+      "key": "app-3",
+      "objectId": "c5317507-0dc2-46c7-b609-cef908bf5378",
+      "body": {
+        "x": 377.76000000000005,
+        "y": 341.20000000000005,
+        "width": 122.4,
+        "height": 217.60000000000002
+      },
+      "caption": {
+        "x": 377.76000000000005,
+        "y": 562.2,
+        "width": 122.4,
+        "height": 7.48
+      }
+    },
+    {
+      "key": "app-4",
+      "objectId": "92737e26-da2a-4e4d-8827-243b4f3690fc",
+      "body": {
+        "x": 524.6400000000001,
+        "y": 357.52000000000004,
+        "width": 122.4,
+        "height": 217.60000000000002
+      },
+      "caption": {
+        "x": 524.6400000000001,
+        "y": 578.52,
+        "width": 122.4,
+        "height": 7.48
+      }
+    }
+  ],
+  "sections": [
+    {
+      "key": "frame",
+      "groupId": "6fc84358-10cf-4f27-a973-2062a989ae73",
+      "body": {
+        "x": 75.84,
+        "y": 78.72,
+        "width": 408.00000000000006,
+        "height": 163.20000000000002
+      }
+    },
+    {
+      "key": "folder",
+      "groupId": "c8cbdb9b-a513-4fcf-8065-542393925811",
+      "body": {
+        "x": 524.6400000000001,
+        "y": 235.12,
+        "width": 73.44000000000001,
+        "height": 87.04
+      }
+    }
+  ],
+  "titles": [
+    {
+      "key": "frame-title",
+      "body": {
+        "x": 79.92,
+        "y": 80.76,
+        "width": 399.84000000000003,
+        "height": 9.180000000000001
+      }
+    },
+    {
+      "key": "folder-title",
+      "body": {
+        "x": 524.6400000000001,
+        "y": 315.70000000000005,
+        "width": 73.44000000000001,
+        "height": 5.1000000000000005
+      }
+    }
+  ],
+  "controls": [
+    {
+      "key": "toolbar",
+      "x": 16,
+      "y": 215.5,
+      "width": 40,
+      "height": 367
+    },
+    {
+      "key": "brand",
+      "x": 16,
+      "y": 16,
+      "width": 183,
+      "height": 38
+    },
+    {
+      "key": "expanded-queue",
+      "x": 71.5,
+      "y": 620,
+      "width": 688,
+      "height": 128
+    }
+  ],
+  "collisions": [],
+  "controlCollisions": [],
+  "contentBottom": 590.08,
+  "expectedExpandedQueueTop": 620,
+  "toolbarRight": 56,
+  "leftmostObject": 84
+}

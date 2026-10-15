@@ -1,0 +1,4 @@
+interface:
+  display_name: "Acanvas"
+  short_description: "A shared visual canvas for working with agents"
+  default_prompt: "Use $acanvas to open this project's canvas and work with my references and requests."

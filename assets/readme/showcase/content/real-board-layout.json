@@ -1,0 +1,307 @@
+{
+  "presentation": {
+    "kind": "Independent README presentation",
+    "builder": "content/build-presentation.mjs",
+    "projectId": "a1a9e993-72e7-4149-a2ba-00242c205d4b",
+    "sessionId": "038517c8-da1f-4d8a-b834-00a816cd4269",
+    "hostBindingConfigured": false,
+    "runtimeMode": "queue",
+    "runtimeConnection": "none",
+    "layoutSource": "content/manual-layout.json"
+  },
+  "viewport": {
+    "width": 918.5,
+    "height": 798
+  },
+  "view": {
+    "x": 90.38294340354233,
+    "y": 71.76,
+    "zoom": 0.32,
+    "selectedObjectIds": []
+  },
+  "queuePresentation": "collapsed",
+  "objects": [
+    {
+      "id": "078553b5-4c9d-49bc-8c42-94068d75c5fd",
+      "assetId": "71cfc94a-774b-495d-9daf-db8f1f44b7bd",
+      "type": "file",
+      "x": 2130.4656020934913,
+      "y": 588,
+      "width": 379.7381006778678,
+      "height": 237.89935009865928,
+      "version": 3,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "fill": "blush"
+    },
+    {
+      "id": "29689500-088c-4d5a-a684-83df6887947b",
+      "assetId": "af0ed687-08b8-46a2-a9a5-1e6d682e9fd7",
+      "type": "image",
+      "x": 2708.7167980048553,
+      "y": 707,
+      "width": 360,
+      "height": 360,
+      "version": 5,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "groupId": "c8cbdb9b-a513-4fcf-8065-542393925811"
+    },
+    {
+      "id": "2e3e409d-d940-4ec1-92f8-721300192935",
+      "assetId": "797e6ad7-9004-4b43-9b1c-fb129d460de0",
+      "type": "file",
+      "x": 1333.0269959392547,
+      "y": 292.15740384263955,
+      "width": 384,
+      "height": 309.8993500986593,
+      "version": 2,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z"
+    },
+    {
+      "id": "33db3be2-c375-4031-a24a-2e4869141916",
+      "assetId": "520b4fdd-115f-4827-8c60-7e48faa5c8dc",
+      "type": "file",
+      "x": 0,
+      "y": 562.9496750493297,
+      "width": 612,
+      "height": 144,
+      "version": 3,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "fill": "mist"
+    },
+    {
+      "id": "538f1287-c917-4b06-af0b-51d6d4ae6fc3",
+      "assetId": "77151440-a9e2-4633-8809-d0d9b98ef73c",
+      "type": "file",
+      "x": 1333.0269959392547,
+      "y": 72,
+      "width": 384,
+      "height": 120,
+      "version": 3,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "fill": "sand"
+    },
+    {
+      "id": "7e99cb89-9dcb-4836-a549-9e2a08d5a485",
+      "assetId": "a69813bd-c275-41ec-b2a4-65ab8c3bf857",
+      "type": "file",
+      "x": -8.446698136069791,
+      "y": 946.643793868483,
+      "width": 360,
+      "height": 640,
+      "version": 4,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "groupId": "9d39f1b6-ab7b-4fa6-aaf8-ec1c9193d62c"
+    },
+    {
+      "id": "92737e26-da2a-4e4d-8827-243b4f3690fc",
+      "assetId": "748bdd36-1dcf-4c83-a224-52f5fb28c12f",
+      "type": "file",
+      "x": 1301.8849217362576,
+      "y": 946.6437938684832,
+      "width": 360,
+      "height": 640,
+      "version": 4,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "groupId": "9d39f1b6-ab7b-4fa6-aaf8-ec1c9193d62c"
+    },
+    {
+      "id": "a58f96a1-a29d-445f-bf34-07993428f84d",
+      "assetId": "1d33834e-30fe-48d6-af07-962e43bff46e",
+      "type": "image",
+      "x": 432,
+      "y": 72,
+      "width": 360,
+      "height": 360,
+      "version": 4,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "groupId": "6fc84358-10cf-4f27-a973-2062a989ae73"
+    },
+    {
+      "id": "a6523e92-6dc2-4c78-8700-2fe107d97ad6",
+      "assetId": "1d33834e-30fe-48d6-af07-962e43bff46e",
+      "type": "image",
+      "x": 2298.7167980048553,
+      "y": 707,
+      "width": 360,
+      "height": 360,
+      "version": 5,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "groupId": "c8cbdb9b-a513-4fcf-8065-542393925811"
+    },
+    {
+      "id": "c5317507-0dc2-46c7-b609-cef908bf5378",
+      "assetId": "5c02a8b2-23a7-4d28-842c-8d77590b8894",
+      "type": "file",
+      "x": 855.2384941786513,
+      "y": 946.6437938684832,
+      "width": 360,
+      "height": 640,
+      "version": 4,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "groupId": "9d39f1b6-ab7b-4fa6-aaf8-ec1c9193d62c"
+    },
+    {
+      "id": "c60c242c-2510-4a27-b4c3-a8066e2fd2e9",
+      "assetId": "eac6bc1b-e653-4681-ba44-af7b5850ad54",
+      "type": "file",
+      "x": 1830.7167980048553,
+      "y": 252,
+      "width": 679.4869047665038,
+      "height": 132,
+      "version": 2,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z"
+    },
+    {
+      "id": "ce609312-21f6-48b3-b536-a1345ca400f7",
+      "assetId": "c79e6ddd-b135-4810-a575-884f3821684a",
+      "type": "file",
+      "x": 1830.7167980048555,
+      "y": 72,
+      "width": 679.4869047665037,
+      "height": 132,
+      "version": 2,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z"
+    },
+    {
+      "id": "cffee4a9-ff90-434f-9411-2750e9d4a8ee",
+      "assetId": "f5e3666f-5d06-41a3-9bf3-9a26943eeec1",
+      "type": "image",
+      "x": 1888.7167980048553,
+      "y": 707,
+      "width": 360,
+      "height": 360,
+      "version": 5,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "groupId": "c8cbdb9b-a513-4fcf-8065-542393925811"
+    },
+    {
+      "id": "d078da6e-4bae-479d-9596-21199138b317",
+      "assetId": "af0ed687-08b8-46a2-a9a5-1e6d682e9fd7",
+      "type": "image",
+      "x": 864.0000000000001,
+      "y": 72,
+      "width": 359.6851923147209,
+      "height": 359.6851923147209,
+      "version": 4,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "groupId": "6fc84358-10cf-4f27-a973-2062a989ae73"
+    },
+    {
+      "id": "e3b83aaf-50b6-4407-a6d5-4096868de7a4",
+      "assetId": "f5e3666f-5d06-41a3-9bf3-9a26943eeec1",
+      "type": "image",
+      "x": 0,
+      "y": 72,
+      "width": 360,
+      "height": 360,
+      "version": 4,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "groupId": "6fc84358-10cf-4f27-a973-2062a989ae73"
+    },
+    {
+      "id": "e7985dc8-7775-4b95-b5a6-11e8ab47da26",
+      "assetId": "5c480104-ff1d-404d-8bb1-bf588c6cd6d4",
+      "type": "file",
+      "x": 423.5533018639302,
+      "y": 946.643793868483,
+      "width": 360,
+      "height": 640,
+      "version": 4,
+      "createdAt": "2026-10-15T02:12:07.055Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "groupId": "9d39f1b6-ab7b-4fa6-aaf8-ec1c9193d62c"
+    }
+  ],
+  "groups": [
+    {
+      "id": "6fc84358-10cf-4f27-a973-2062a989ae73",
+      "name": "Visual language",
+      "mode": "frame",
+      "color": "cobalt",
+      "x": -24,
+      "y": 32,
+      "width": 1271.685192314721,
+      "height": 456,
+      "version": 3,
+      "createdAt": "2026-10-15T02:12:09.539Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "objectIds": [
+        "a58f96a1-a29d-445f-bf34-07993428f84d",
+        "d078da6e-4bae-479d-9596-21199138b317",
+        "e3b83aaf-50b6-4407-a6d5-4096868de7a4"
+      ]
+    },
+    {
+      "id": "c8cbdb9b-a513-4fcf-8065-542393925811",
+      "name": "Studies",
+      "mode": "folder",
+      "color": "cobalt",
+      "x": 1830.7167980048553,
+      "y": 460,
+      "width": 1228,
+      "height": 456,
+      "version": 4,
+      "createdAt": "2026-10-15T02:12:09.539Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "objectIds": [
+        "29689500-088c-4d5a-a684-83df6887947b",
+        "a6523e92-6dc2-4c78-8700-2fe107d97ad6",
+        "cffee4a9-ff90-434f-9411-2750e9d4a8ee"
+      ]
+    },
+    {
+      "id": "9d39f1b6-ab7b-4fa6-aaf8-ec1c9193d62c",
+      "name": "Group 1",
+      "mode": "frame",
+      "color": "coral",
+      "x": -32.44669813606979,
+      "y": 906.643793868483,
+      "width": 1718.3316198723273,
+      "height": 736,
+      "version": 3,
+      "createdAt": "2026-10-15T03:33:09.063Z",
+      "updatedAt": "2026-10-15T03:33:11.424Z",
+      "objectIds": [
+        "7e99cb89-9dcb-4836-a549-9e2a08d5a485",
+        "92737e26-da2a-4e4d-8827-243b4f3690fc",
+        "c5317507-0dc2-46c7-b609-cef908bf5378",
+        "e7985dc8-7775-4b95-b5a6-11e8ab47da26"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "c61b6805-d24f-43d4-b1a5-ffa2405a2c3a",
+      "sequence": 1,
+      "status": "queued",
+      "text": "Create a new poster from these studies."
+    },
+    {
+      "id": "2846b27b-df15-408c-aa80-4d65f44b5b14",
+      "sequence": 2,
+      "status": "queued",
+      "text": "Try the warm pulse with direction 02."
+    },
+    {
+      "id": "2a3da81a-da49-4b25-8dd3-e411a8185ca6",
+      "sequence": 3,
+      "status": "queued",
+      "text": "Extend the visual language into motion."
+    }
+  ]
+}

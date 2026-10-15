@@ -21,9 +21,9 @@ const upload = async(name,mime,bytes) => {const r=await fetch(server.url+'/api/a
 const session=await call('/api/sessions','POST',{name:'12 object performance'});
 const assets=[];
 for(let i=0;i<3;i++)assets.push(await upload('Image '+i+'.svg','image/svg+xml','<svg xmlns="http://www.w3.org/2000/svg" width="250" height="140"><rect width="250" height="140" fill="#aac4df"/><circle cx="120" cy="70" r="45" fill="#456477"/></svg>'));
-assets.push(await upload('Motion.gif','image/gif',await readFile('tests/fixtures/animated-reference.gif')));
-assets.push(await upload('Video.mp4','video/mp4',await readFile('tests/fixtures/frontend-video.mp4')));
-assets.push(await upload('Tone.mp3','audio/mpeg',await readFile('tests/fixtures/reference-tone.mp3')));
+assets.push(await upload('Motion.gif','image/gif',await readFile('app/tests/fixtures/animated-reference.gif')));
+assets.push(await upload('Video.mp4','video/mp4',await readFile('app/tests/fixtures/frontend-video.mp4')));
+assets.push(await upload('Tone.mp3','audio/mpeg',await readFile('app/tests/fixtures/reference-tone.mp3')));
 assets.push(await upload('Notes.md','text/markdown','# Document\n\nA controlled performance notebook.\n\n'+('Measured board text. '.repeat(40))));
 assets.push(await upload('Archive.zip','application/zip','Controlled archive'));
 for(let i=0;i<4;i++)assets.push(await upload('HTML '+i+'.html','text/html',`<!doctype html><style>body{margin:0;padding:10px;font:14px sans-serif;background:#f7f7f2}input{width:130px}.dot{width:30px;height:30px;background:#69c;animation:move 2s infinite alternate linear;animation-play-state:paused}@keyframes move{to{transform:translateX(110px)}}</style><h3>Notebook ${i+1}</h3><input value="Owned field"><p>Performance reference</p><div class="dot"></div>`));

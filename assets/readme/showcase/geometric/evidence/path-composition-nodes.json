@@ -1,0 +1,94 @@
+[
+  {
+    "entry": "01-Precision.html",
+    "states": {
+      "default": {
+        "elements": 82,
+        "textNodes": 27,
+        "estimatedSnapshotNodes": 111
+      },
+      "min": {
+        "elements": 82,
+        "textNodes": 27,
+        "estimatedSnapshotNodes": 111
+      },
+      "max": {
+        "elements": 82,
+        "textNodes": 27,
+        "estimatedSnapshotNodes": 111
+      }
+    },
+    "heroBytes": 80267,
+    "sameHeroAsBefore": false,
+    "sameOutsideSharedGenerator": false
+  },
+  {
+    "entry": "02-Modular.html",
+    "states": {
+      "default": {
+        "elements": 176,
+        "textNodes": 25,
+        "estimatedSnapshotNodes": 203
+      },
+      "min": {
+        "elements": 180,
+        "textNodes": 25,
+        "estimatedSnapshotNodes": 207
+      },
+      "max": {
+        "elements": 181,
+        "textNodes": 25,
+        "estimatedSnapshotNodes": 208
+      }
+    },
+    "heroBytes": 7302,
+    "sameHeroAsBefore": true,
+    "sameOutsideSharedGenerator": true
+  },
+  {
+    "entry": "03-Chromatic.html",
+    "states": {
+      "default": {
+        "elements": 172,
+        "textNodes": 31,
+        "estimatedSnapshotNodes": 205
+      },
+      "min": {
+        "elements": 175,
+        "textNodes": 31,
+        "estimatedSnapshotNodes": 208
+      },
+      "max": {
+        "elements": 175,
+        "textNodes": 31,
+        "estimatedSnapshotNodes": 208
+      }
+    },
+    "heroBytes": 308224,
+    "sameHeroAsBefore": false,
+    "sameOutsideSharedGenerator": false
+  },
+  {
+    "entry": "04-Mono.html",
+    "states": {
+      "default": {
+        "elements": 99,
+        "textNodes": 49,
+        "estimatedSnapshotNodes": 150
+      },
+      "min": {
+        "elements": 99,
+        "textNodes": 49,
+        "estimatedSnapshotNodes": 150
+      },
+      "max": {
+        "elements": 99,
+        "textNodes": 49,
+        "estimatedSnapshotNodes": 150
+      }
+    },
+    "heroBytes": 4426,
+    "sameHeroAsBefore": true,
+    "sameOutsideSharedGenerator": true
+  }
+]

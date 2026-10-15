@@ -1,0 +1,47 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { dirname, resolve, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { manualLayout, geometricLayout, geometricFolder, geometricView, projectGeometricLayout } from './geometric-layout.mjs';
+
+const content = dirname(fileURLToPath(import.meta.url));
+const installation = resolve(content, '../../../..');
+const [project, session, width = String(manualLayout.viewport?.width ?? 918.5), height = String(manualLayout.viewport?.height ?? 798)] = process.argv.slice(2);
+if (!project || !session) throw new Error('Pass the isolated demonstration project and session.');
+const base = JSON.parse(await readFile(join(project, 'demo-base.json'), 'utf8'));
+if (base.project !== project || base.session !== session) throw new Error('Use the demonstration builder project and session.');
+const checkpointPath = join(content, 'geometric-board-layout.json');
+const checkpoint = JSON.parse(await readFile(checkpointPath, 'utf8'));
+const run = promisify(execFile);
+const command = async (...args) => JSON.parse((await run(process.execPath, [join(installation, 'scripts/acanvas.mjs'), ...args, '--project', project, '--session', session], { cwd: installation })).stdout);
+const input = async (name, value) => { const file = join(project, name); await writeFile(file, JSON.stringify(value, null, 2)); return file; };
+const viewport = { width: Number(width), height: Number(height) };
+let state = await command('session', 'read');
+const ids = Object.fromEntries(checkpoint.created.map(object => [object.key, object.id]));
+for (const key of ['direction', 'listening', 'brief', 'next']) ids[key] = base.objects.find(object => object.key === key).id;
+const operations = Object.entries(geometricLayout).map(([key, bounds]) => {
+  const object = state.objects.find(object => object.id === ids[key]);
+  if (!object) throw new Error(`The demonstration object is unavailable: ${key}`);
+  const [x, y, objectWidth, objectHeight] = bounds;
+  return { type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x, y, width: objectWidth, height: objectHeight } };
+});
+const folder = state.groups.find(group => group.id === checkpoint.fixtureGroups.folder);
+operations.push({ type: 'group.update', groupId: folder.id, expectedVersion: folder.version, changes: geometricFolder });
+await command('board', 'operations', '--input', await input('staggered-layout.json', { operations }));
+state = await command('session', 'read');
+const suggestedView = geometricView(viewport);
+await input('staggered-layout-view.json', suggestedView);
+const owned = new Set(checkpoint.objects.map(object => object.id));
+checkpoint.viewport = viewport;
+checkpoint.suggestedView = suggestedView;
+checkpoint.view = state.session.view;
+checkpoint.objects = state.objects.filter(object => owned.has(object.id));
+checkpoint.groups = state.groups.filter(group => Object.values(checkpoint.fixtureGroups).includes(group.id));
+checkpoint.created = checkpoint.created.map(object => ({ ...object, ...state.objects.find(value => value.id === object.id) }));
+await writeFile(checkpointPath, JSON.stringify(checkpoint, null, 2));
+await input('staggered-layout-readback.json', state);
+
+const evidence = projectGeometricLayout(state, ids, checkpoint.fixtureGroups, viewport, suggestedView);
+await writeFile(resolve(content, '../geometric/evidence/staggered-layout-projection.json'), JSON.stringify(evidence, null, 2));
+console.log(JSON.stringify({ objects: checkpoint.objects.length, changedObjects: Object.keys(geometricLayout).length, suggestedView, actualSavedView: state.session.view, collisions: evidence.collisions, controlCollisions: evidence.controlCollisions, contentBottom: evidence.contentBottom, expectedExpandedQueueTop: evidence.expectedExpandedQueueTop }));

@@ -1,0 +1,46 @@
+{
+  "html": [
+    {
+      "entry": "01-Precision",
+      "scriptSyntax": true,
+      "externalResources": 0,
+      "htmlAudioElement": false,
+      "bytes": 99050
+    },
+    {
+      "entry": "02-Modular",
+      "scriptSyntax": true,
+      "externalResources": 0,
+      "htmlAudioElement": false,
+      "bytes": 26611
+    },
+    {
+      "entry": "03-Chromatic",
+      "scriptSyntax": true,
+      "externalResources": 0,
+      "htmlAudioElement": false,
+      "bytes": 327534
+    },
+    {
+      "entry": "04-Mono",
+      "scriptSyntax": true,
+      "externalResources": 0,
+      "htmlAudioElement": false,
+      "bytes": 23633
+    }
+  ],
+  "covers": [
+    {
+      "name": "Afterimage",
+      "mime": "image/png",
+      "bytes": 28861,
+      "exactCover": true
+    },
+    {
+      "name": "Small-hours",
+      "mime": "image/png",
+      "bytes": 34408,
+      "exactCover": true
+    }
+  ]
+}
