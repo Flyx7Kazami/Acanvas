@@ -155,7 +155,11 @@ export function ContentRenderer({ asset, src, api, surface = 'canvas', disabled,
   if (kind === 'gif') return <SceneGifContent src={src} title={title} onSize={onSize} onError={onError}/>;
   if (kind === 'video') return <SceneVideoContent src={src} title={title} controls={surface === 'detail'} tabIndex={surface === 'detail' ? 0 : -1} onMediaElement={onMediaElement} onSize={onSize} onError={onError}/>;
   if (kind === 'audio') return <AudioCanvasPlayer key={asset?.id || src} src={src} title={title} assetId={asset?.id} disabled={disabled} onElement={element => onMediaElement?.(element)} onError={onError}/>;
-  return <div className="content-shell" data-content-kind={kind} data-canvas-control onPointerDown={event => { if (surface === 'canvas' && !isContentInteraction(event.currentTarget, event.clientX, event.clientY, event.target as Element)) onBlankPointerDown?.(event); event.stopPropagation(); }}>
+  return <div className="content-shell" data-content-kind={kind} data-canvas-control onPointerDown={event => {
+    if (surface === 'canvas' && !isContentInteraction(event.currentTarget, event.clientX, event.clientY, event.target as Element)) onBlankPointerDown?.(event);
+    if (kind === 'markdown' && event.button === 0) event.currentTarget.querySelector<HTMLElement>('.markdown-content')?.focus({ preventScroll: true });
+    event.stopPropagation();
+  }}>
     {kind === 'markdown' ? <MarkdownBlock asset={asset} src={src} title={title} api={api} disabled={contentDisabled} readOnly={readOnly} objectId={objectId} objectVersion={objectVersion} sessionId={sessionId} saveContent={saveContent} registerContentEditor={registerContentEditor} onContentDirtyChange={onContentDirtyChange} onCompositionChange={onContentCompositionChange} onSaveError={onSaveError}/> : asset && <HtmlCanvasContent key={asset.id} asset={asset} api={api} preserveScene={preserveScene} onReloadBoard={onReloadBoard} onBlankPointerDown={onBlankPointerDown} onFrameDrag={onFrameDrag} onFrameWheel={surface === 'canvas' ? onFrameWheel : undefined}/>}
   </div>;
 }

@@ -8,6 +8,7 @@ import { chromium } from 'playwright-core';
 import { startServer } from '../../dist/src/server/http.js';
 const original = process.env.ORIGINAL_WEB_ROOT;
 const motion = process.env.MOTION === '1';
+const folder = process.env.FOLDER === '1';
 if (!original) throw new Error('Supply ORIGINAL_WEB_ROOT with a built comparison revision.');
 const output = process.env.OUTPUT || await mkdtemp(join(tmpdir(), 'acanvas-camera-quality-'));
 await mkdir(output, { recursive: true });
@@ -28,8 +29,14 @@ try {
     try {
       for (const asset of assets) { const bytes = Buffer.from(asset.text), path = `assets/${asset.id}`; await writeFile(join(server.service.dataDir, path), bytes); server.service.registerAsset({ ...asset, size: bytes.length, createdAt: '2026-10-17T00:00:00.000Z' }, path); }
       const session = server.service.createSession('Image quality');
-      server.service.boardOperations(session.id, assets.map((asset,index)=>({type:'create',object:{id:asset.id,assetId:asset.id,x:index*600,y:0,width:300,height:210}})));
-      server.service.saveView(session.id, { x: 300, y: 200, zoom: 1, selectedObjectIds: [] });
+      const objects = assets.map((asset,index)=>({type:'create',object:{id:asset.id,assetId:asset.id,x:index*600,y:0,width:300,height:210}}));
+      if (folder) {
+        server.service.boardOperations(session.id, objects.slice(0, 2));
+        server.service.boardOperations(session.id, [{ type: 'group.create', group: { id: 'collection', name: 'Collection', objectIds: ['image', 'note'] }, expectedVersions: { image: 1, note: 1 } }]);
+        server.service.boardOperations(session.id, [{ type: 'group.update', groupId: 'collection', expectedVersion: server.service.groups()[0].version, changes: { mode: 'folder' } }]);
+        server.service.boardOperations(session.id, objects.slice(2));
+      } else server.service.boardOperations(session.id, objects);
+      server.service.saveView(session.id, { x: 300, y: 200, zoom: 1, selectedObjectIds: [], ...(folder ? { activeGroupId: 'collection', parentView: { x: 300, y: 200, zoom: 1 } } : {}) });
       await page.goto(`${server.url}/?session=${session.id}`);
       await page.waitForFunction(()=>document.querySelectorAll('.board-object').length===3 && !document.querySelector('.content-loading'));
       await page.evaluate(()=>document.fonts.ready);

@@ -4,12 +4,14 @@ import { zoomAt } from './geometry.js';
 export type CanvasWheelInput = { clientX: number; clientY: number; deltaX: number; deltaY: number; deltaMode: number; ctrlKey: boolean; metaKey: boolean };
 
 // Pointer controls inherit canvas gestures. Reading regions opt into content
-// scrolling; the nearest declaration can restore canvas gestures within them.
+// scrolling, either continuously or while focused; the nearest declaration wins.
 export function routesWheelToCanvas(canvas: Element, event: Pick<WheelEvent, 'target' | 'ctrlKey' | 'metaKey'>): boolean {
   if (event.ctrlKey || event.metaKey) return true;
   const target = event.target instanceof Element ? event.target : event.target instanceof Node ? event.target.parentElement : null;
   const region = target?.closest('[data-canvas-wheel]');
-  return !region || !canvas.contains(region) || region.getAttribute('data-canvas-wheel') !== 'content';
+  if (!region || !canvas.contains(region)) return true;
+  const policy = region.getAttribute('data-canvas-wheel');
+  return !(policy === 'content' || policy === 'focused-content' && region.contains(region.ownerDocument.activeElement));
 }
 
 export function canvasWheelView(view: SessionView, event: CanvasWheelInput, bounds: Pick<DOMRect, 'left' | 'top' | 'height'>): SessionView {

@@ -57,8 +57,15 @@ test('Markdown reads safely with direct selection and scrolling and persists who
   await expect(object.locator('strong')).toHaveText('clear'); await expect(object.locator('img')).toHaveCount(0); await expect(object.locator('a[href^="javascript:"]')).toHaveCount(0);
   expect(await page.evaluate(() => (window as any).mdInjected)).toBeUndefined(); expect(externalLoads).toBe(0);
   await object.locator('.object-caption').click(); const state = await app.state(), original = state.objects[0], originalAsset = state.assets[0];
-  const world = await page.locator('.canvas-world').getAttribute('style'); await expect(page.getByRole('button', { name: 'Interact with content', exact: true })).toHaveCount(0);
-  const document = object.locator('.markdown-content'); await document.hover(); await page.mouse.wheel(0, 220); await expect.poll(() => document.evaluate(element => element.scrollTop)).toBeGreaterThan(0); expect(await page.locator('.canvas-world').getAttribute('style')).toBe(world);
+  await expect(page.getByRole('button', { name: 'Interact with content', exact: true })).toHaveCount(0);
+  const document = object.locator('.markdown-content');
+  const camera = () => page.locator('.canvas-world').evaluate(element => { const matrix = new DOMMatrix(getComputedStyle(element).transform); return { x: matrix.e, y: matrix.f, zoom: matrix.a }; });
+  const beforeHover = await camera(); await document.hover(); await page.mouse.wheel(12, 60);
+  await expect.poll(camera).toEqual({ ...beforeHover, x: beforeHover.x - 12, y: beforeHover.y - 60 });
+  expect(await document.evaluate(element => element.scrollTop)).toBe(0);
+  await document.locator('h1').click(); await expect(document).toBeFocused();
+  const world = await page.locator('.canvas-world').getAttribute('style');
+  await document.hover(); await page.mouse.wheel(0, 220); await expect.poll(() => document.evaluate(element => element.scrollTop)).toBeGreaterThan(0); expect(await page.locator('.canvas-world').getAttribute('style')).toBe(world);
   const markdownScroll = await document.evaluate(element => element.scrollTop);
   for (const modifier of ['Control', 'Meta'] as const) {
     const beforeZoom = (await app.state()).session.view.zoom;
@@ -68,11 +75,43 @@ test('Markdown reads safely with direct selection and scrolling and persists who
   }
   await document.focus(); await document.press('Escape');
   const resize = object.getByRole('button', { name: /Resize field-notes.md bottom right/ }); await resize.focus(); await resize.press('ArrowRight'); await expect.poll(async () => (await app.state()).objects[0].width).toBe(original.width + 10); expect((await app.state()).objects[0].height).toBe(original.height);
-  await beginAnnotating(page); await page.getByLabel('Add a comment', { exact: true }).fill('Read this document.'); await expect(page.locator('.composer')).toHaveAttribute('data-save-state', 'saved'); await page.getByLabel('Add a comment', { exact: true }).press('Escape');
+  await beginAnnotating(page); await page.getByLabel('Add a comment', { exact: true }).fill('Read this document.'); await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.draft-annotation')).toHaveAttribute('data-capture-state', 'complete');
   await page.locator('#instruction').fill('Use the notes'); await page.getByRole('button', { name: 'Send request', exact: true }).click();
-  await expect.poll(async () => (await app.state()).tasks.length).toBe(1); const saved = await app.state(), annotation = saved.tasks[0].snapshot.annotations[0]; expect(annotation.bounds).toEqual({ x: 0, y: 0, width: 1, height: 1 }); expect(annotation.timeStart).toBeUndefined(); expect(annotation.snapshotAssetId).toBeUndefined(); expect(saved.tasks[0].snapshot.referenceContent.assets[0].id).toBe(originalAsset.id);
+  await expect.poll(async () => (await app.state()).tasks.length).toBe(1); const saved = await app.state(), annotation = saved.tasks[0].snapshot.annotations[0]; expect(annotation.bounds).toEqual({ x: 0, y: 0, width: 1, height: 1 }); expect(annotation.timeStart).toBeUndefined(); expect(annotation.snapshotAssetId).toBeUndefined(); expect(saved.tasks[0].snapshot.referenceContent.assets.map(asset => asset.id)).toContain(originalAsset.id);
   const originalResponse = await page.request.get(`${app.url}/api/assets/${originalAsset.id}/content`); expect(await originalResponse.text()).toBe(source);
   await page.screenshot({ path: info.outputPath('markdown-whole-reference.png') });
+});
+
+test('Markdown preview and source scroll while focused and return wheel input to the canvas on blur', async ({ page, app }) => {
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'reading.md', mimeType: 'text/markdown', buffer: Buffer.from('# Reading\n\n[Section](#reading)\n\n' + 'A line of document text.\n\n'.repeat(100)) });
+  const object = page.locator('.board-object[data-content-kind="markdown"]'), preview = object.locator('.markdown-content');
+  await expect(preview.locator('h1')).toHaveText('Reading');
+  const camera = () => page.locator('.canvas-world').evaluate(element => { const matrix = new DOMMatrix(getComputedStyle(element).transform); return { x: matrix.e, y: matrix.f, zoom: matrix.a }; });
+  const pan = async (region: import('@playwright/test').Locator) => {
+    const before = await camera(), scroll = await region.evaluate(element => element.scrollTop);
+    await region.hover(); await page.mouse.wheel(0, 40);
+    await expect.poll(camera).toEqual({ ...before, y: before.y - 40 });
+    expect(await region.evaluate(element => element.scrollTop)).toBe(scroll);
+  };
+  await preview.click({ position: { x: 8, y: 8 } }); await expect(preview).toBeFocused();
+  let before = await camera(); await preview.hover(); await page.mouse.wheel(0, 120);
+  await expect.poll(() => preview.evaluate(element => element.scrollTop)).toBeGreaterThan(0); expect(await camera()).toEqual(before);
+  await page.locator('#instruction').click(); await pan(preview);
+  await object.getByRole('button', { name: 'Download reading.md', exact: true }).focus(); await page.keyboard.press('Tab'); await expect(preview).toBeFocused();
+  before = await camera(); const scroll = await preview.evaluate(element => element.scrollTop);
+  await preview.hover(); await page.mouse.wheel(0, 100); await expect.poll(() => preview.evaluate(element => element.scrollTop)).toBeGreaterThan(scroll); expect(await camera()).toEqual(before);
+  const link = preview.getByRole('link', { name: 'Section', exact: true }); await link.focus(); await link.press('Escape'); await expect(link).not.toBeFocused(); await pan(preview);
+  await object.getByRole('button', { name: 'Edit Markdown', exact: true }).click();
+  const editor = object.getByRole('textbox', { name: 'Edit reading.md', exact: true });
+  await expect(editor).toBeVisible(); await pan(editor); await editor.click();
+  before = await camera(); await editor.hover(); await page.mouse.wheel(0, 120);
+  await expect.poll(() => editor.evaluate(element => element.scrollTop)).toBeGreaterThan(0); expect(await camera()).toEqual(before);
+  for (const modifier of ['Control', 'Meta'] as const) {
+    const beforeZoom = (await camera()).zoom, scroll = await editor.evaluate(element => element.scrollTop);
+    await page.keyboard.down(modifier); await page.mouse.wheel(0, -20); await page.keyboard.up(modifier);
+    await expect.poll(async () => (await camera()).zoom).toBeGreaterThan(beforeZoom); expect(await editor.evaluate(element => element.scrollTop)).toBe(scroll);
+  }
+  await editor.press('Escape'); await pan(editor);
 });
 
 test('GIF retains native animation and shared thumbnail rendering', async ({ page, app }, info) => {

@@ -15,7 +15,7 @@ export function MarkdownCanvasContent({ title, source }: { title: string; source
   const root = useRef<HTMLDivElement>(null);
   useControlledScenePanel(root, { resolveRoot: element => element.closest<HTMLElement>('.content-shell') ?? element, textRoot: element => element.querySelector<HTMLElement>('.markdown-body') ?? undefined, metadata: () => { const contentAnchor = root.current && readMarkdownContentAnchor(root.current); return contentAnchor ? { scroll: contentAnchor.scroll, contentAnchor } : {}; } });
   const markup = useMemo(() => source === undefined ? undefined : { __html: renderMarkdown(source) }, [source]);
-  return <div ref={root} className="markdown-content" data-canvas-wheel="content" role="document" aria-label={title} tabIndex={0}>
+  return <div ref={root} className="markdown-content" data-canvas-wheel="focused-content" role="document" aria-label={title} tabIndex={0} onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); const active = event.currentTarget.ownerDocument.activeElement; if (active instanceof HTMLElement) active.blur(); } }}>
     {markup ? <div className="markdown-body" dangerouslySetInnerHTML={markup}/> : <div className="content-loading" role="status"><DominoLoader size={36}/><span>Loading document…</span></div>}
   </div>;
 }
@@ -23,7 +23,7 @@ export function MarkdownCanvasContent({ title, source }: { title: string; source
 function MarkdownSource({ title, value, disabled, readOnly, onChange, onBlur, onCompositionStart, onCompositionEnd }: { title: string; value: string; disabled?: boolean; readOnly?: boolean; onChange: (value: string) => void; onBlur: () => void; onCompositionStart?: () => void; onCompositionEnd?: () => void }) {
   const root = useRef<HTMLDivElement>(null);
   useControlledScenePanel(root, { resolveRoot: element => element.closest<HTMLElement>('.content-shell') ?? element, textRoot: element => element.querySelector<HTMLElement>('.plain-text-mirror') ?? undefined });
-  return <div ref={root} className="markdown-source-wrap"><PlainTextEditor variant="markdown" className="markdown-source" label={`Edit ${title}`} value={value} disabled={disabled} readOnly={readOnly} onChange={onChange} onBlur={onBlur} onCompositionStart={onCompositionStart} onCompositionEnd={onCompositionEnd}/></div>;
+  return <div ref={root} className="markdown-source-wrap" data-canvas-wheel="focused-content"><PlainTextEditor variant="markdown" className="markdown-source" label={`Edit ${title}`} value={value} disabled={disabled} readOnly={readOnly} onChange={onChange} onBlur={onBlur} onCompositionStart={onCompositionStart} onCompositionEnd={onCompositionEnd}/></div>;
 }
 
 export function MarkdownBlock({ asset, src, title, api, disabled, readOnly, objectId, objectVersion, sessionId, saveContent, registerContentEditor, onContentDirtyChange, onCompositionChange, onSaveError }: { asset?: Asset; src: string; title: string; api: BoardApi; disabled?: boolean; readOnly?: boolean; objectId?: string; objectVersion?: number; sessionId?: string; saveContent?: (text: string, expectedVersion?: number) => Promise<ContentSaveResult | void>; registerContentEditor?: RegisterContentEditor; onContentDirtyChange?: (dirty: boolean) => void; onCompositionChange?: (composing: boolean) => void; onSaveError?: (cause: unknown) => void }) {

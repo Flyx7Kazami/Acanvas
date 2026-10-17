@@ -36,6 +36,15 @@ async function assertSceneCopy(page: Page, annotation: AnnotationInput) {
   assert.equal(pixels.mismatches, 0); assert.equal(pixels.frameSeq, annotation.capture!.presentation!.frameSeq); assert.equal(annotation.capture!.sceneSource!.frameSeq, pixels.frameSeq);
 }
 
+async function expectObjectX(page: Page, objectId: string, x: number) {
+  await expect.poll(() => page.locator(`[data-object-id="${objectId}"]`).evaluate(element => {
+    const board = element.closest<HTMLElement>('#whiteboard')!, world = element.closest<HTMLElement>('.canvas-world')!;
+    const bounds = element.getBoundingClientRect(), root = board.getBoundingClientRect(), scale = root.width / board.clientWidth;
+    const camera = new DOMMatrix(getComputedStyle(world).transform);
+    return ((bounds.x - root.x) / scale - camera.e) / camera.a;
+  })).toBe(x);
+}
+
 type Box = { left: number; top: number; right: number; bottom: number };
 type Area = { x: number; y: number; width: number; height: number };
 type Region = { window: Area; kind: 'red' | 'pin' | 'ink' | 'bright' | 'color'; color?: number[] };
@@ -748,13 +757,13 @@ test('managed React captures GIF, file cards, mixed scenes and the actual overla
   await page.locator(`[data-object-id="${gifObject.id}"]`).evaluate(element => (element as HTMLElement).style.zIndex = '5');
   await app.mark({ x: 560, y: 430 }); const top = await app.done('Top painted target'); assert.equal(top.objectId, back.id);
   await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: back.id, expectedVersion: back.version, changes: { x: 1200 } }] });
-  await expect(page.locator(`[data-object-id="${back.id}"]`)).toHaveCSS('left', '1200px');
+  await expectObjectX(page, back.id, 1200);
   await page.locator('.draft-annotation .annotation-content').last().click(); await redrawAt(page, 520, 360);
   await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.locator('.draft-annotation').last()).toHaveAttribute('data-capture-state', 'complete');
   assert.equal((await app.saved()).annotations.at(-1)?.objectId, gifObject.id);
   const movedBack = app.running.service.objects().find(value => value.id === back.id)!;
   await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: back.id, expectedVersion: movedBack.version, changes: { x: 350 } }] });
-  await expect(page.locator(`[data-object-id="${back.id}"]`)).toHaveCSS('left', '350px');
+  await expectObjectX(page, back.id, 350);
   await page.locator(`[data-object-id="${gifObject.id}"]`).evaluate(element => { const object = element as HTMLElement; object.style.borderRadius = '32px'; const media = object.querySelector<HTMLElement>('.object-media')!; media.style.backgroundColor = 'transparent'; });
   await app.mark({ x: 380, y: 350 }); const rounded = await app.done('Visible lower corners');
   assert(rounded.capture?.scene.objects.some(value => value.object.id === back.id)); assert.deepEqual((await app.saved()).references.objectIds, []);
@@ -769,7 +778,7 @@ test('managed marks use the top painted media owner and keep letterbox points an
   const visiblePNG = async () => Array.from(new Uint8Array(await page.screenshot({ caret: 'hide' })));
   const wholeWithLower = await visiblePNG(), stable = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, theme: document.documentElement.dataset.theme, focusedTag: document.activeElement?.tagName }));
   await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: lower.id, expectedVersion: lower.version, changes: { x: 5000, y: 5000 } }] });
-  await expect(page.locator(`[data-object-id="${lower.id}"]`)).toHaveCSS('left', '5000px'); await page.evaluate(() => new Promise(requestAnimationFrame));
+  await expectObjectX(page, lower.id, 5000); await page.evaluate(() => new Promise(requestAnimationFrame));
   const wholeWithoutVisibleLower = await visiblePNG(); assert.deepEqual(await page.evaluate(() => ({ width: innerWidth, height: innerHeight, theme: document.documentElement.dataset.theme, focusedTag: document.activeElement?.tagName })), stable);
   const contribution = await page.evaluate(async ({ before, after }) => {
     const read = async (bytes: number[]) => { const image = await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: 'image/png' })), canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; canvas.getContext('2d')!.drawImage(image, 0, 0); image.close(); return { width: canvas.width, height: canvas.height, pixels: canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data }; };
@@ -779,7 +788,7 @@ test('managed marks use the top painted media owner and keep letterbox points an
   }, { before: wholeWithLower, after: wholeWithoutVisibleLower });
   assert(contribution.shadowChannels > 0, JSON.stringify(contribution)); await writeFile(join(app.evidence, 'with-lower.png'), Buffer.from(wholeWithLower)); await writeFile(join(app.evidence, 'without-visible-lower.png'), Buffer.from(wholeWithoutVisibleLower)); await writeFile(join(app.evidence, 'lower-paint-contribution.json'), JSON.stringify(contribution, null, 2));
   const moved = app.running.service.objects().find(value => value.id === lower.id)!; await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: lower.id, expectedVersion: moved.version, changes: { x: 350, y: 220 } }] });
-  await expect(page.locator(`[data-object-id="${lower.id}"]`)).toHaveCSS('left', '350px'); await page.evaluate(() => new Promise(requestAnimationFrame));
+  await expectObjectX(page, lower.id, 350); await page.evaluate(() => new Promise(requestAnimationFrame));
   await app.mark({ x: 500, y: 250 }); const letterbox = await app.done('The visible white margin');
   assert.equal(letterbox.scope, 'region'); assert.deepEqual(letterbox.objectIds, []); assert.equal(letterbox.objectId, undefined);
   assert(letterbox.capture?.scene.objects.some(value => value.object.id === upper.id)); assert(letterbox.capture?.scene.objects.some(value => value.object.id === lower.id)); assert(letterbox.capture?.presentation?.layers.some(value => value.objectId === lower.id));
@@ -1047,11 +1056,11 @@ test('Done validates near-expiry and expired base scenes against its frozen obje
   const refreshed = scenes.state.snapshots.find(value => value.held); assert(refreshed);
   assert.equal(first.capture!.presentation!.baseSceneId, refreshed.id); assert.equal(first.capture!.sceneSource!.baseSceneId, refreshed.id);
   assert.equal(first.capture!.scene.objects.find(value => value.object.id === target.id)?.object.version, target.version); assert.deepEqual(confirms, [200]);
-  await expect(page.locator(`[data-object-id="${other.id}"]`)).toHaveCSS('left', '820px');
+  await expectObjectX(page, other.id, 820);
   scenes.state.nearExpiry = false;
   const moved = app.running.service.objects().find(value => value.id === other.id)!;
   await app.call('/api/board/operations', 'POST', { sessionId: app.session.id, operations: [{ type: 'update', objectId: other.id, expectedVersion: moved.version, changes: { x: 800 } }] });
-  await expect(page.locator(`[data-object-id="${other.id}"]`)).toHaveCSS('left', '800px'); await expect.poll(() => scenes.state.snapshots.length).toBeGreaterThanOrEqual(4);
+  await expectObjectX(page, other.id, 800); await expect.poll(() => scenes.state.snapshots.length).toBeGreaterThanOrEqual(4);
   const expired = scenes.state.snapshots.at(-1)!.id; app.running.service.db.prepare('UPDATE capture_scenes SET expires_at=0').run();
   await app.mark({ x: 560, y: 400 }); const second = await app.done('After the base scene expired');
   assert.deepEqual(confirms.slice(1), [409, 200]); assert.notEqual(second.capture!.presentation!.baseSceneId, expired); assert.equal(second.capture!.presentation!.baseSceneId, scenes.state.snapshots.at(-1)!.id);

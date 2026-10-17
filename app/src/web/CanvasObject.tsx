@@ -1,4 +1,5 @@
-import { memo, useMemo, useRef, type KeyboardEvent, type PointerEvent, type RefObject } from 'react';
+import { memo, useLayoutEffect, useMemo, useRef, type KeyboardEvent, type PointerEvent, type RefObject } from 'react';
+import type { GroupPresentation } from './group-presentation';
 import type { Asset, BoardObject, CaptureView } from '../shared/types';
 import { contentCapabilities, resolveContentKind, type NoteFill } from '../shared/content-types';
 import type { BoardApi } from './api';
@@ -23,6 +24,8 @@ export interface CanvasObjectActions {
 }
 
 interface CanvasObjectProps {
+  presentation: GroupPresentation;
+  transitioning: boolean;
   object: BoardObject;
   canonical: BoardObject;
   asset?: Asset;
@@ -48,12 +51,18 @@ interface CanvasObjectProps {
 }
 
 /** Camera movement is owned by the world transform; item props describe content and interaction state. */
-export const CanvasObject = memo(function CanvasObject({ object, canonical, asset, api, sessionId, registry, captureView, actions, index, selected, exterior, departing, arriving, moving, departureX, departureY, appearance, readOnly, disabled, preserveScene, error, fill }: CanvasObjectProps) {
+export const CanvasObject = memo(function CanvasObject({ presentation, transitioning, object, canonical, asset, api, sessionId, registry, captureView, actions, index, selected, exterior, departing, arriving, moving, departureX, departureY, appearance, readOnly, disabled, preserveScene, error, fill }: CanvasObjectProps) {
+  const element = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const node = element.current!;
+    presentation.update(node, { x: object.x, y: object.y, width: object.width, height: object.height, dx: departing && departureX !== undefined ? departureX + 20 - object.x : 0, dy: departing && departureY !== undefined ? departureY + 16 - object.y : 0, scale: departing ? .22 : appearance?.scale ?? 1, opacity: departing ? 0 : exterior ? presentation.exterior.opacity : appearance?.opacity ?? 1, blur: exterior ? presentation.exterior.blur : 0 }, transitioning, arriving, moving);
+  });
+  useLayoutEffect(() => { const node = element.current!; return () => presentation.forget(node); }, [presentation]);
   const contentElement = useRef<HTMLDivElement>(null);
   const scope = useMemo(() => ({ registry, objectId: object.id, width: object.width, height: object.height, captureView, contentElement }), [registry, object.id, object.width, object.height, captureView]);
   const kind = resolveContentKind(asset);
   const handles = (contentCapabilities[kind].freeResize ? ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] : ['nw', 'ne', 'sw', 'se']) as ResizeHandle[];
-  return <article className={`board-object object-${object.type} ${selected ? 'selected' : ''} ${exterior ? 'group-exterior' : ''} ${departing ? 'group-member-departing' : ''} ${arriving ? 'group-member-arriving' : ''}`} inert={exterior || departing} data-moving={moving || undefined} aria-hidden={exterior || undefined} data-object-id={object.id} data-content-kind={kind} data-object-version={canonical.version} data-selected={selected || undefined} style={{ left: object.x, top: object.y, width: object.width, height: object.height, ...(appearance ? { transform: `scale(${appearance.scale})`, transformOrigin: '0 0', opacity: appearance.opacity } : {}), ...(departing && departureX !== undefined && departureY !== undefined ? { transform: `translate(${departureX + 20 - object.x}px,${departureY + 16 - object.y}px) scale(.22)` } : {}) }} tabIndex={exterior || departing ? -1 : 0} role="group" aria-label={`${asset?.name || 'File'}${selected ? ', selected' : ''}`} onKeyDown={event => actions.current.keyDown(object, event)}>
+  return <div ref={element} className="object-placement" data-group-presentation><article className={`board-object object-${object.type} ${selected ? 'selected' : ''} ${exterior ? 'group-exterior' : ''} ${departing ? 'group-member-departing' : ''} ${arriving ? 'group-member-arriving' : ''}`} inert={exterior || departing} data-moving={moving || undefined} aria-hidden={exterior || undefined} data-object-id={object.id} data-content-kind={kind} data-object-version={canonical.version} data-selected={selected || undefined} tabIndex={exterior || departing ? -1 : 0} role="group" aria-label={`${asset?.name || 'File'}${selected ? ', selected' : ''}`} onKeyDown={event => actions.current.keyDown(object, event)}>
     <div ref={contentElement} className="object-media" data-continuous={['html', 'audio', 'video', 'gif'].includes(kind) || undefined}><SceneContentContext.Provider value={scope}><ContentRenderer
       asset={asset} src={api.content(canonical.assetId)} api={api} objectId={object.id} objectVersion={canonical.version} sessionId={sessionId}
       readOnly={readOnly} disabled={disabled} preserveScene={preserveScene} error={error} fill={fill}
@@ -69,5 +78,5 @@ export const CanvasObject = memo(function CanvasObject({ object, canonical, asse
     /></SceneContentContext.Provider></div>
     <div className="object-caption"><span className="object-index">{String(index + 1).padStart(2, '0')}</span><span title={asset?.name}>{asset?.name || 'File'}</span>{object.sourceTaskId && <span className="generated-label">Output</span>}</div>
     {selected && handles.map(corner => <button key={corner} type="button" className="resize-handle" data-resize-id={object.id} data-resize-corner={corner} aria-label={`Resize ${asset?.name || 'File'} ${{ nw: 'top left', n: 'top', ne: 'top right', e: 'right', se: 'bottom right', s: 'bottom', sw: 'bottom left', w: 'left' }[corner]}`} onKeyDown={event => actions.current.resize(object, corner, event)}/>)}
-  </article>;
+  </article></div>;
 });

@@ -7,6 +7,7 @@ import { alignedPositions, fitView, screenBounds, intersects, mediaContentRect, 
 import { GroupName } from './GroupName';
 import { CanvasObject, type CanvasObjectActions } from './CanvasObject';
 import { CanvasWorld, CameraOverlay } from './CanvasWorld';
+import { GroupPresentation, presentedItemElement } from './group-presentation';
 import { GroupFolder } from './GroupFolder';
 import { groupDisplayBounds, groupFrameBounds } from '../shared/groups';
 import { useBoard } from './useBoard';
@@ -273,6 +274,8 @@ function TaskCard({ task, assets, objects, content, api, onReloadBoard, locateAs
 export default function App() {
   const board = useBoard();
   const { state, draft, viewContext: view, camera } = board;
+  const groupPresentation = useMemo(() => new GroupPresentation(), []);
+  useLayoutEffect(() => groupPresentation.connect(), [groupPresentation]);
   useLayoutEffect(() => { camera.commitContext(view, state?.session.id || ''); });
   const [themePreference, setThemePreference] = useState<ThemePreference>(readThemePreference);
   const [systemDark, setSystemDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -420,9 +423,10 @@ export default function App() {
     return object.fill;
   };
   const capabilityFor = (object: BoardObject) => contentCapabilities[resolveContentKind(assetFor(object.assetId))];
-  const disabled = board.projectChanged || board.switching || board.sending || editingTask || removingObjects || layoutSaving || !!board.historyBusy;
+  const viewMotionBlocked = board.projectChanged || board.switching || board.sending || editingTask || removingObjects || !!board.historyBusy;
+  const disabled = viewMotionBlocked || layoutSaving;
   const historyUnavailable = disabled || board.contentComposing || (!board.contentDirty && board.mutationBusy) || !state?.history;
-  const fitMotion = useAnimatedView(camera, state?.session.id || '', disabled, board.updateView, board.persistView);
+  const fitMotion = useAnimatedView(camera, state?.session.id || '', viewMotionBlocked, board.updateView, board.persistView);
   const queuedTaskState = useTaskQueue(state?.tasks || [], state?.session.id, { onBeforeRemove: beforeQueueItemRemove });
   const queuedTasks = queuedTaskState.items;
   const pending = queuedTasks.length;
@@ -708,7 +712,7 @@ export default function App() {
     const area = root.getBoundingClientRect(), scale = area.width / Math.max(1, root.clientWidth), zoom = view.zoom * scale;
     return values.flatMap(object => {
       const element = root.querySelector<HTMLElement>(`.board-object[data-object-id="${CSS.escape(object.id)}"]`); if (!element) return [object];
-      if (Number(getComputedStyle(element).opacity) <= .001) return [];
+      if (Number(getComputedStyle(presentedItemElement(element)).opacity) <= .001) return [];
       const bounds = element.getBoundingClientRect();
       return [{ ...object, x: (bounds.x - area.x - view.x * scale) / zoom, y: (bounds.y - area.y - view.y * scale) / zoom, width: bounds.width / zoom, height: bounds.height / zoom }];
     });
@@ -1033,7 +1037,7 @@ export default function App() {
     const target = expected.objectId ? displayed.find(object => object.id === expected.objectId) : undefined;
     const worldBounds = expected.coordinateSpace === 'normalized' && target ? objectRegion(expected.bounds, contentBounds(target)) : expected.bounds;
     const liveObjects = displayed.map(object => { const canonical = state?.objects.find(value => value.id === object.id); return canonical ? { ...object, assetId: canonical.assetId, version: canonical.version } : object; });
-    return freezeBoardScene({ board: canvas.current!, registry: sceneRegistry, view: captureView, snapshot, objects: liveObjects, exteriorObjectIds: exteriorObjects.map(object => object.id), assets, camera: view, contentBounds, objectStyles: Object.fromEntries(displayed.map(object => { const element = canvas.current!.querySelector<HTMLElement>(`.board-object[data-object-id="${CSS.escape(object.id)}"]`); const style = element && getComputedStyle(element); return [object.id, { opacity: Number(style?.opacity ?? 1), blur: Number(/blur\(([^p]+)px\)/.exec(style?.filter || '')?.[1] || 0), scale: style?.transform && style.transform !== 'none' ? new DOMMatrix(style.transform).a : 1 }]; })), annotations: allAnnotations,
+    return freezeBoardScene({ board: canvas.current!, registry: sceneRegistry, view: captureView, snapshot, objects: liveObjects, exteriorObjectIds: exteriorObjects.map(object => object.id), assets, camera: view, contentBounds, objectStyles: Object.fromEntries(displayed.map(object => { const element = canvas.current!.querySelector<HTMLElement>(`.board-object[data-object-id="${CSS.escape(object.id)}"]`); const style = element && getComputedStyle(presentedItemElement(element)); return [object.id, { opacity: Number(style?.opacity ?? 1), blur: Number(/blur\(([^p]+)px\)/.exec(style?.filter || '')?.[1] || 0), scale: style?.transform && style.transform !== 'none' ? new DOMMatrix(style.transform).a : 1 }]; })), annotations: allAnnotations,
       outlines: visibleOutlines.map(({ annotation, bounds }) => ({ bounds, point: annotation.geometry === 'point', dashed: !annotation.inspectionTaskId })), editingBounds, selection: selectionRect, guides: snapGuides,
       marks: annotationMarks.map((mark, index) => ({ annotationId: mark.annotation.id, pin: annotationPins[index], number: mark.number, anchor: mark.annotation.geometry === 'point' ? 'tail' as const : 'center' as const })), target: { annotation: expected, worldBounds }, clip: { x: 0, y: 0, width: innerWidth, height: innerHeight },
       onCaptureError: (cause, asset) => board.showError(new Error(`${asset?.name || 'A file'} appears as a placeholder in the annotation image: ${cause instanceof Error ? cause.message : 'its content could not be copied.'}`)) });
@@ -1279,9 +1283,10 @@ export default function App() {
       dragAppearance.current = {};
       canvas.current?.querySelectorAll<HTMLElement>('.board-object,.board-group').forEach(element => {
         const id = element.dataset.objectId, owned = id ? movingIds.includes(id) : element.dataset.groupId === targetGroupId;
-        if (owned && id && poses.has(id)) { const style = getComputedStyle(element); dragAppearance.current[id] = { scale: poses.get(id)!.width / allObjects.find(object => object.id === id)!.width, opacity: Number(style.opacity) }; }
+        if (owned && id && poses.has(id)) { const style = getComputedStyle(presentedItemElement(element)); dragAppearance.current[id] = { scale: poses.get(id)!.width / allObjects.find(object => object.id === id)!.width, opacity: Number(style.opacity) }; }
         element.getAnimations().forEach(animation => owned ? animation.cancel() : animation.finish());
       });
+      groupPresentation.interrupt(new Set([...canvas.current!.querySelectorAll<HTMLElement>('.board-object,.board-group')].filter(element => element.dataset.objectId ? movingIds.includes(element.dataset.objectId) : element.dataset.groupId === targetGroupId).map(element => element.closest<HTMLElement>('[data-group-presentation]') || element)));
     }
     const gestureObjects = objects.map(object => poses.has(object.id) ? { ...object, x: poses.get(object.id)!.x, y: poses.get(object.id)!.y } : object);
     fitMotion.interrupt();
@@ -1527,7 +1532,7 @@ export default function App() {
         const canonical = canonicalObjectsById.get(object.id) || object, asset = assetFor(canonical.assetId);
         const exterior = exteriorObjectIds.has(object.id), departing = departingObjectIds.has(object.id);
         const arriving = !!groupTransition && (groupTransition.id === object.groupId || !!groupTransition.ghost?.objectIds.includes(object.id)) && (groupTransition.kind === 'enter' || groupTransition.kind === 'expand');
-        return <CanvasObject key={object.id} object={object} canonical={canonical} asset={asset} api={board.api} sessionId={state.session.id} registry={sceneRegistry} captureView={projectScene?.view} actions={objectActions} index={index}
+        return <CanvasObject key={object.id} presentation={groupPresentation} transitioning={!!groupTransition} object={object} canonical={canonical} asset={asset} api={board.api} sessionId={state.session.id} registry={sceneRegistry} captureView={projectScene?.view} actions={objectActions} index={index}
           selected={!exterior && !departing && selectedObjectIds.has(object.id)} exterior={exterior} departing={departing} arriving={arriving} moving={!!gesture.current?.objects.some(item => item.id === object.id)}
           departureX={departingGroup?.x} departureY={departingGroup?.y} appearance={dragAppearance.current[object.id]} readOnly={!!board.historyBusy || exterior || departing}
           disabled={disabled || annotating || exterior} preserveScene={annotating || !!annotationRead} error={mediaErrors[object.id]} fill={shownNoteFill(object)}/>;
