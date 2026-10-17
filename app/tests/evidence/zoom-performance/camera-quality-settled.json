@@ -1,0 +1,272 @@
+[
+  {
+    "key": "image-0.05-0",
+    "edgeRatio": 1.0088105726872247,
+    "width": 30,
+    "height": 20,
+    "changed": 40,
+    "changedRatio": 0.06666666666666667,
+    "meanChannelDifference": 0.035555555555555556,
+    "max": 1,
+    "presentation": {
+      "transform": "translate(792.5px, 594.75px) scale(0.05)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "note-0.05-1",
+    "edgeRatio": 1,
+    "width": 30,
+    "height": 20,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(762.5px, 594.75px) scale(0.05)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "markdown-0.05-2",
+    "edgeRatio": 1,
+    "width": 30,
+    "height": 20,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(732.5px, 594.75px) scale(0.05)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "image-0.25-3",
+    "edgeRatio": 0.9986028641285365,
+    "width": 150,
+    "height": 104,
+    "changed": 208,
+    "changedRatio": 0.013333333333333334,
+    "meanChannelDifference": 0.022222222222222223,
+    "max": 2,
+    "presentation": {
+      "transform": "translate(762.5px, 573.75px) scale(0.25)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "note-0.25-4",
+    "edgeRatio": 1,
+    "width": 150,
+    "height": 104,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(612.5px, 573.75px) scale(0.25)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "markdown-0.25-5",
+    "edgeRatio": 1,
+    "width": 150,
+    "height": 104,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(462.5px, 573.75px) scale(0.25)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "image-1-6",
+    "edgeRatio": 1,
+    "width": 600,
+    "height": 420,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(650px, 495px) scale(1)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "note-1-7",
+    "edgeRatio": 1,
+    "width": 600,
+    "height": 420,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(50px, 495px) scale(1)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "markdown-1-8",
+    "edgeRatio": 1,
+    "width": 600,
+    "height": 420,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(-550px, 495px) scale(1)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "image-2-9",
+    "edgeRatio": 1,
+    "width": 1200,
+    "height": 840,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(500px, 390px) scale(2)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "note-2-10",
+    "edgeRatio": 1,
+    "width": 1200,
+    "height": 840,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(-700px, 390px) scale(2)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "markdown-2-11",
+    "edgeRatio": 0.9999898474236991,
+    "width": 1200,
+    "height": 840,
+    "changed": 21,
+    "changedRatio": 0.000020833333333333333,
+    "meanChannelDifference": 0.0001398809523809524,
+    "max": 16,
+    "presentation": {
+      "transform": "translate(-1900px, 390px) scale(2)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "image-4-12",
+    "edgeRatio": 1,
+    "width": 2400,
+    "height": 1680,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(200px, 180px) scale(4)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "note-4-13",
+    "edgeRatio": 1,
+    "width": 2400,
+    "height": 1680,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(-2200px, 180px) scale(4)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "markdown-4-14",
+    "edgeRatio": 1,
+    "width": 2400,
+    "height": 1680,
+    "changed": 62,
+    "changedRatio": 0.00001537698412698413,
+    "meanChannelDifference": 0.000014550264550264551,
+    "max": 1,
+    "presentation": {
+      "transform": "translate(-4600px, 180px) scale(4)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "image-1-15",
+    "edgeRatio": 0.9999386676963742,
+    "width": 600,
+    "height": 420,
+    "changed": 1697,
+    "changedRatio": 0.006734126984126984,
+    "meanChannelDifference": 0.003507936507936508,
+    "max": 1,
+    "presentation": {
+      "transform": "translate(650px, 495px) scale(1)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "note-1-16",
+    "edgeRatio": 1,
+    "width": 600,
+    "height": 420,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(50px, 495px) scale(1)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "key": "markdown-1-17",
+    "edgeRatio": 1,
+    "width": 600,
+    "height": 420,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(-550px, 495px) scale(1)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  }
+]

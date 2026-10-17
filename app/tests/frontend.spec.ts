@@ -685,7 +685,7 @@ test('project identity and contextual actions follow selection, pan, zoom, resiz
   await open(page, app);
   const initial = await app.state();
   await expect(page.locator('.project-name')).toHaveText(initial.project.name);
-  await expect(page.locator('.project-identity')).toHaveAttribute('aria-label', `acanvas project: ${initial.project.name}`);
+  await expect(page.locator('.project-identity')).toHaveAttribute('aria-label', `Acanvas project: ${initial.project.name}`);
   await expect(page.locator('header')).toHaveCount(0);
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
   const object = page.locator('.board-object'), actions = page.locator('.selection-actions');
@@ -968,6 +968,41 @@ test('two URL task contexts keep drafts and sends isolated through delayed saves
   await secondPage.close();
 });
 
+test('a playing video retains its element during large-board zoom pan and minimum-scale Fit', async ({ page, app }) => {
+  await open(page, app);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(resolve('app/tests/fixtures/frontend-video.mp4'));
+  await expect(page.locator('.board-object.object-video')).toHaveCount(1);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
+  await expect(page.locator('.board-object.object-image')).toHaveCount(1);
+  const state = await app.state(), videoObject = state.objects.find(object => object.type === 'video')!, imageObject = state.objects.find(object => object.type === 'image')!;
+  await app.call('/api/board/operations', 'POST', { sessionId: state.session.id, operations: [{ type: 'update', objectId: imageObject.id, expectedVersion: imageObject.version, changes: { x: 19000, y: 200 } }, ...Array.from({ length: 198 }, (_, index) => ({ type: 'create', object: { id: `video-study-${index}`, assetId: imageObject.assetId, x: 20000 + index * 250, y: 200, width: 200, height: 120 } }))] });
+  await expect(page.locator('.board-object')).toHaveCount(200);
+  const object = page.locator(`[data-object-id="${videoObject.id}"]`), video = object.locator('video');
+  await expect.poll(() => video.evaluate(element => (element as HTMLVideoElement).readyState)).toBeGreaterThanOrEqual(2);
+  await object.locator('.object-caption').click();
+  await video.evaluate(element => { const media = element as HTMLVideoElement; media.loop = true; (window as any).studyVideo = media; (window as any).studyTicks = 0; media.addEventListener('timeupdate', () => (window as any).studyTicks++); });
+  await page.getByRole('button', { name: 'Play video', exact: true }).click();
+  await expect(video).toHaveJSProperty('paused', false);
+  const beforeZoom = (await app.state()).session.view, box = (await video.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.keyboard.down('Control'); await page.mouse.wheel(0, -35); await page.keyboard.up('Control');
+  await expect.poll(async () => (await app.state()).session.view.zoom).toBeGreaterThan(beforeZoom.zoom);
+  const beforePan = (await app.state()).session.view;
+  await page.mouse.wheel(24, 16);
+  await expect.poll(async () => (await app.state()).session.view.x).toBeCloseTo(beforePan.x - 24, 3);
+  await expect.poll(async () => (await app.state()).session.view.y).toBeCloseTo(beforePan.y - 16, 3);
+  await page.getByRole('button', { name: 'Fit all files', exact: true }).click();
+  await expect(page.locator('.zoom-label')).toHaveText('5%');
+  await expect(video).toHaveJSProperty('paused', false);
+  expect(await video.evaluate(element => element === (window as any).studyVideo)).toBe(true);
+  await expect.poll(() => page.evaluate(() => (window as any).studyTicks as number)).toBeGreaterThan(2);
+  expect((await app.state()).objects.find(object => object.id === videoObject.id)).toEqual(videoObject);
+  await video.evaluate(element => (element as HTMLVideoElement).pause());
+  const saved = (await app.state()).session.view;
+  await page.reload(); await expect(page.locator('.zoom-label')).toHaveText('5%');
+  expect((await app.state()).session.view).toEqual(saved);
+});
+
 test('video surface selects and moves at zoom/pan, with explicit keyboard playback and persisted layout', async ({ page, app }, info) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
   await open(page, app);
@@ -987,6 +1022,7 @@ test('video surface selects and moves at zoom/pan, with explicit keyboard playba
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
   await expect.poll(async () => (await app.state()).session.view.zoom).toBeCloseTo(1.44, 4);
+  await expect.poll(() => page.locator('.canvas-world').evaluate(element => new DOMMatrix(getComputedStyle(element).transform).a)).toBeCloseTo(1.44, 4);
   const beforePan = (await app.state()).session.view;
   await page.getByRole('button', { name: 'Pan canvas', exact: true }).click();
   let box = (await surface.boundingBox())!;
@@ -1706,7 +1742,7 @@ test('an earlier annotation-only request keeps its references after a normal com
   expect((await app.state()).tasks[0].snapshot).toEqual(revised.snapshot);
 });
 
-test('fit all files animates exact bounds, interrupts on input and persists one final view', async ({ page, app }, info) => {
+test('fit all files saves its destination and the final camera after interruption', async ({ page, app }, info) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' }); await open(page, app);
   await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page)); await expect(page.locator('.board-object')).toHaveCount(1);
   const initial = await app.state(), sessionId = initial.session.id;
@@ -1747,14 +1783,14 @@ test('fit all files animates exact bounds, interrupts on input and persists one 
   for (const action of ['wheel', 'zoom', 'fit'] as const) {
     await reset(); requests.length = 0; const samples = await measure(action); const final = samples.at(-1)!; interruptions[action] = samples;
     if (action === 'fit') expect(final).toMatchObject({ x: expected.x, y: expected.y, zoom: expected.zoom });
-    else { expect(final.zoom === expected.zoom && final.x === expected.x && final.y === expected.y).toBeFalsy(); expect(samples.filter(sample => sample.time > 350).every(sample => sample.x === final.x && sample.y === final.y && sample.zoom === final.zoom)).toBeTruthy(); }
-    await expect.poll(async () => { const view = (await app.state()).session.view; return Math.abs(view.x - final.x) < .01 && Math.abs(view.y - final.y) < .01 && Math.abs(view.zoom - final.zoom) < .00001; }).toBeTruthy(); expect(requests).toHaveLength(1);
+    else { expect(final.zoom === expected.zoom && final.x === expected.x && final.y === expected.y).toBeFalsy(); expect(samples.filter(sample => sample.time > (action === 'zoom' ? 600 : 350)).every(sample => sample.x === final.x && sample.y === final.y && sample.zoom === final.zoom)).toBeTruthy(); }
+    await expect.poll(async () => { const view = (await app.state()).session.view; return Math.abs(view.x - final.x) < .01 && Math.abs(view.y - final.y) < .01 && Math.abs(view.zoom - final.zoom) < .00001; }).toBeTruthy(); expect(requests).toHaveLength(action === 'wheel' ? 3 : 2);
   }
   await reset(); requests.length = 0; await page.getByRole('button', { name: 'Pan canvas', exact: true }).click();
   const panFrames = measure(); await page.waitForTimeout(110); await page.mouse.move(1000, 200); await page.mouse.down(); await page.mouse.move(1050, 260, { steps: 3 }); await page.mouse.up();
   const panned = await panFrames, panFinal = panned.at(-1)!; interruptions.pan = panned;
   expect(panFinal.zoom).toBeLessThan(expected.zoom); expect(panned.filter(frame => frame.time > 400).every(frame => frame.x === panFinal.x && frame.y === panFinal.y && frame.zoom === panFinal.zoom)).toBeTruthy();
-  await expect.poll(async () => { const view = (await app.state()).session.view; return Math.abs(view.x - panFinal.x) < .01 && Math.abs(view.y - panFinal.y) < .01 && Math.abs(view.zoom - panFinal.zoom) < .00001; }).toBeTruthy(); expect(requests).toHaveLength(1);
+  await expect.poll(async () => { const view = (await app.state()).session.view; return Math.abs(view.x - panFinal.x) < .01 && Math.abs(view.y - panFinal.y) < .01 && Math.abs(view.zoom - panFinal.zoom) < .00001; }).toBeTruthy(); expect(requests).toHaveLength(3);
   await reset(); requests.length = 0; await page.emulateMedia({ reducedMotion: 'reduce' });
   const reduced = await measure(); expect(new Set(reduced.slice(1).map(frame => `${frame.x},${frame.y},${frame.zoom}`)).size).toBe(1); expect(reduced[1]).toMatchObject({ x: expected.x, y: expected.y, zoom: expected.zoom });
   await expect.poll(async () => (await app.state()).session.view).toEqual(expected); expect(requests).toHaveLength(1);

@@ -1,0 +1,95 @@
+{
+  "environment": {
+    "browser": "Codex in-app browser",
+    "width": 1280,
+    "height": 720,
+    "devicePixelRatio": 2,
+    "items": 500,
+    "nodes": 7932
+  },
+  "method": {
+    "input": "Synthetic Ctrl+wheel once per requestAnimationFrame, full production application path",
+    "frames": 180,
+    "zoomRange": [
+      0.08,
+      1.2
+    ],
+    "initialAndFinalCamera": {
+      "x": 70,
+      "y": 120,
+      "zoom": 0.08
+    },
+    "before": "Prior item-memo production renderer",
+    "after": "Independent camera with managed native raster and content visibility",
+    "metric": "rAF callback throughput, not physical display presentation FPS",
+    "timingsRoundedToMs": 0.1
+  },
+  "runs": [
+    {
+      "variant": "before",
+      "elapsedMs": 3941.7,
+      "rafPerSecond": 45.6655757668,
+      "frameP50Ms": 9.9,
+      "frameP95Ms": 75,
+      "framesOver25ms": 48,
+      "framesOver50ms": 22,
+      "handlerMs": 21.7,
+      "longAnimationFrames": 5
+    },
+    {
+      "variant": "after",
+      "elapsedMs": 2491.6,
+      "rafPerSecond": 72.2427355916,
+      "frameP50Ms": 8.4,
+      "frameP95Ms": 41.7,
+      "framesOver25ms": 17,
+      "framesOver50ms": 7,
+      "handlerMs": 49.5,
+      "longAnimationFrames": 1
+    },
+    {
+      "variant": "before",
+      "elapsedMs": 3849.5,
+      "rafPerSecond": 46.7593193921,
+      "frameP50Ms": 9.2,
+      "frameP95Ms": 74.7,
+      "framesOver25ms": 41,
+      "framesOver50ms": 21,
+      "handlerMs": 20.4,
+      "longAnimationFrames": 5
+    },
+    {
+      "variant": "after",
+      "elapsedMs": 2474.7,
+      "rafPerSecond": 72.7360892229,
+      "frameP50Ms": 8.4,
+      "frameP95Ms": 43.4,
+      "framesOver25ms": 18,
+      "framesOver50ms": 5,
+      "handlerMs": 49,
+      "longAnimationFrames": 1
+    },
+    {
+      "variant": "before",
+      "elapsedMs": 3841.6,
+      "rafPerSecond": 46.8554768846,
+      "frameP50Ms": 9.4,
+      "frameP95Ms": 74.9,
+      "framesOver25ms": 42,
+      "framesOver50ms": 22,
+      "handlerMs": 21.2,
+      "longAnimationFrames": 6
+    },
+    {
+      "variant": "after",
+      "elapsedMs": 2316.7,
+      "rafPerSecond": 77.6967237881,
+      "frameP50Ms": 8.4,
+      "frameP95Ms": 41.6,
+      "framesOver25ms": 15,
+      "framesOver50ms": 6,
+      "handlerMs": 49.1,
+      "longAnimationFrames": 1
+    }
+  ]
+}

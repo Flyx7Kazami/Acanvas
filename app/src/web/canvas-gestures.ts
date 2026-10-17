@@ -6,6 +6,7 @@ export type CanvasGestureState = { view: SessionView; sessionId: string; disable
 export type CanvasGestureCallbacks = {
   current: () => CanvasGestureState;
   updateView: (view: SessionView, sessionId: string) => void;
+  finishView: () => void;
   interrupt: () => void;
   cancelPointer: () => void;
   pointerDown: (event: CanvasPointerInput) => void;
@@ -42,7 +43,7 @@ export function attachCanvasGestures(element: HTMLDivElement, callbacks: CanvasG
     const ids = [...touches.keys()];
     const active = !!native || !!pinch || touches.size > 0 || callbacks.current().busy;
     native = undefined; pinch = undefined; touches.clear(); touchSession = ''; touchEnded = false;
-    if (active) callbacks.cancelPointer();
+    if (active) { callbacks.cancelPointer(); callbacks.finishView(); }
     ids.forEach(release);
   };
   const current = () => {
@@ -97,7 +98,7 @@ export function attachCanvasGestures(element: HTMLDivElement, callbacks: CanvasG
     touches.delete(event.pointerId); release(event.pointerId);
     if (pinch && touches.size < 2) pinch = undefined;
     else if (pinch) beginPinch();
-    if (!touches.size) { touchSession = ''; touchEnded = false; }
+    if (!touches.size) { touchSession = ''; touchEnded = false; callbacks.finishView(); }
   };
   const cancel = (event: PointerEvent) => { if (touches.has(event.pointerId)) { stop(event); reset(); } };
   const lost = (event: PointerEvent) => { if (touches.has(event.pointerId)) reset(); };
@@ -114,7 +115,7 @@ export function attachCanvasGestures(element: HTMLDivElement, callbacks: CanvasG
     if (!native || !Number.isFinite(event.scale) || event.scale! <= 0) return;
     callbacks.updateView(canvasPinchView(native.view, event.scale! / native.scale, native.point, gesturePoint(event, native.point)), native.sessionId);
   };
-  const endNative = (event: NativeGestureEvent) => { stop(event); current(); native = undefined; };
+  const endNative = (event: NativeGestureEvent) => { stop(event); current(); native = undefined; callbacks.finishView(); };
   const listeners: [string, EventListener][] = [
     ['pointerdown', down as EventListener], ['pointermove', move as EventListener], ['pointerup', up as EventListener], ['pointercancel', cancel as EventListener], ['lostpointercapture', lost as EventListener],
   ];

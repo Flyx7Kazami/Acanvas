@@ -390,8 +390,9 @@ test('group names, hover actions, independent selection and camera transitions f
   await page.getByRole('button', { name: 'Reset zoom to 100%', exact: true }).click(); await expect.poll(zoom).toBeCloseTo(1, 3);
   const parent = await page.locator('.canvas-world').getAttribute('style');
   await page.getByRole('button', { name: 'Open folder Field archive', exact: true }).click();
-  await expect.poll(() => f.state().session.view.activeGroupId).toBe('archive');
+  await expect(page.getByRole('button', { name: 'Back to board', exact: true })).toBeVisible();
   await page.waitForTimeout(100); assert(await zoom() > 1 && await zoom() < 1.5);
+  await expect.poll(() => f.state().session.view.activeGroupId).toBe('archive');
   await page.reload(); await expect(page.getByRole('button', { name: 'Back to board', exact: true })).toBeVisible(); await expect.poll(zoom).toBeCloseTo(1.5, 3);
   await page.getByRole('button', { name: 'Back to board', exact: true }).click(); await expect.poll(() => f.state().session.view.activeGroupId).toBeUndefined();
   await page.reload(); await expect(page.locator('.canvas-world')).toHaveAttribute('style', parent!);

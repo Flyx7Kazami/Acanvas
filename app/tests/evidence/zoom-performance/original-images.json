@@ -1,0 +1,50 @@
+[
+  {
+    "count": 1000,
+    "content": "images",
+    "round": 0,
+    "LayoutDuration": 6.615999999999997,
+    "RecalcStyleDuration": 30.269999999999992,
+    "ScriptDuration": 803.785,
+    "TaskDuration": 1535.934,
+    "frames": 362,
+    "frameP95": 16.700000000000728,
+    "inputP95": 5.299999997019768,
+    "inputs": 180,
+    "updates": 180,
+    "longTasks": [],
+    "transform": "translate(80px, 70px) scale(0.16)"
+  },
+  {
+    "count": 1000,
+    "content": "images",
+    "round": 1,
+    "LayoutDuration": 6.799000000000003,
+    "RecalcStyleDuration": 30.382000000000005,
+    "ScriptDuration": 843.138,
+    "TaskDuration": 1632.751,
+    "frames": 366,
+    "frameP95": 16.700000000000728,
+    "inputP95": 5.600000008940697,
+    "inputs": 180,
+    "updates": 180,
+    "longTasks": [],
+    "transform": "translate(80px, 70px) scale(0.16)"
+  },
+  {
+    "count": 1000,
+    "content": "images",
+    "round": 2,
+    "LayoutDuration": 6.859000000000001,
+    "RecalcStyleDuration": 30.599999999999987,
+    "ScriptDuration": 849.726,
+    "TaskDuration": 1628.906,
+    "frames": 365,
+    "frameP95": 16.799999999999727,
+    "inputP95": 5.300000011920929,
+    "inputs": 180,
+    "updates": 180,
+    "longTasks": [],
+    "transform": "translate(80px, 70px) scale(0.16)"
+  }
+]

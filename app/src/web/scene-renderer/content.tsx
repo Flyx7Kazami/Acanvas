@@ -1,4 +1,4 @@
-import { createContext, useContext, useLayoutEffect, useRef } from 'react';
+import { createContext, useContext, useLayoutEffect, useRef, type RefObject } from 'react';
 import type { CaptureView } from '../../shared/types.js';
 import { SceneContentFrame, type SceneContentFrameInput } from './texture.js';
 export { SceneContentFrame } from './texture.js';
@@ -41,6 +41,7 @@ export interface SceneContentScope {
   width: number;
   height: number;
   captureView?: CaptureView;
+  contentElement?: RefObject<HTMLElement | null>;
 }
 export const SceneContentContext = createContext<SceneContentScope | undefined>(undefined);
 
@@ -50,7 +51,14 @@ export function useSceneContent() { return useContext(SceneContentContext); }
 /** Registers an on-demand frame reader for the scoped board object. */
 export function useSceneCapture(source: SceneContentSource) {
   const scope = useContext(SceneContentContext), latest = useRef(source); latest.current = source;
-  useLayoutEffect(() => scope?.registry.register(scope.objectId, () => latest.current()), [scope?.registry, scope?.objectId]);
+  useLayoutEffect(() => scope?.registry.register(scope.objectId, () => {
+    const element = scope.contentElement?.current;
+    if (!element) return latest.current();
+    const visibility = element.style.contentVisibility;
+    element.style.contentVisibility = 'visible';
+    try { return latest.current(); }
+    finally { element.style.contentVisibility = visibility; }
+  }), [scope?.registry, scope?.objectId, scope?.contentElement]);
   return scope;
 }
 
