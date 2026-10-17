@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { editableTextBytes } from '../shared/content-types';
 import type { ContentSaveResult, RegisterContentEditor } from './content-editing';
+import { acquireTextSource } from './text-source';
 
 type SaveText = (text: string, expectedVersion?: number) => Promise<ContentSaveResult | void>;
 
@@ -83,16 +84,12 @@ export function useEditableText(src: string, save: SaveText, onError?: (cause: u
   useEffect(() => {
     const currentGeneration = ++generation.current;
     const currentSaveGeneration = saveGeneration.current;
-    const controller = new AbortController();
+    const request = acquireTextSource(src);
+    let active = true;
     void (async () => {
       try {
-        const response = await fetch(src, { credentials: 'same-origin', signal: controller.signal });
-        if (!response.ok) throw new Error('The text is unavailable.');
-        const length = Number(response.headers.get('Content-Length'));
-        if (length > editableTextBytes) throw new Error('Notes and Markdown stay within 2 MB.');
-        const source = await response.text();
-        if (new TextEncoder().encode(source).byteLength > editableTextBytes) throw new Error('Notes and Markdown stay within 2 MB.');
-        if (controller.signal.aborted || currentGeneration !== generation.current || currentSaveGeneration !== saveGeneration.current) return;
+        const source = await request.promise;
+        if (!active || currentGeneration !== generation.current || currentSaveGeneration !== saveGeneration.current) return;
         if (baselineVersion.current !== undefined && objectVersionRef.current !== undefined && baselineVersion.current > objectVersionRef.current && source !== saved.current) return;
 
         // A history replay or an external update is safe to adopt when this
@@ -130,11 +127,11 @@ export function useEditableText(src: string, save: SaveText, onError?: (cause: u
           setText(source);
         }
       } catch (cause) {
-        if (!controller.signal.aborted && currentGeneration === generation.current) onErrorRef.current?.(cause);
+        if (active && currentGeneration === generation.current) onErrorRef.current?.(cause);
       }
     })();
     return () => {
-      controller.abort(); window.clearTimeout(timer.current);
+      active = false; request.release(); window.clearTimeout(timer.current);
       if (identityKey && isDirty() && pending.current !== undefined) abandonedContent.set(identityKey, { text: pending.current, expectedVersion: baselineVersion.current });
       void flush().catch(() => undefined);
     };

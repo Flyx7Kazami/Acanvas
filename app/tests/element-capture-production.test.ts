@@ -71,7 +71,10 @@ test('production full element captures keep copied image audio GIF video and HTM
       if (scenario.kind === 'audio') await page.waitForFunction(id => document.querySelector<HTMLAudioElement>(`[data-object-id="${id}"] audio`)!.readyState >= 1, object.id);
       if (scenario.kind === 'gif') await page.waitForFunction(id => Boolean(document.querySelector<HTMLCanvasElement>(`[data-object-id="${id}"] canvas[data-scene-media="gif"]`)?.dataset.frameIndex), object.id);
       if (scenario.kind === 'video') await page.waitForFunction(id => document.querySelector<HTMLVideoElement>(`[data-object-id="${id}"] video`)!.readyState >= 2, object.id);
-      if (scenario.kind === 'html') await expect(target.locator('.html-content')).toHaveAttribute('data-preview-ready', 'true', { timeout: 15_000 });
+      if (scenario.kind === 'html') await page.waitForFunction(id => {
+        const image = document.querySelector<HTMLImageElement>(`[data-object-id="${id}"] .html-snapshot`);
+        return Boolean(image?.complete && image.naturalWidth);
+      }, object.id, { timeout: 15_000 });
       const overlapState = await call('/api/board/operations', 'POST', { sessionId: session.id, operations: [{ type: 'create', object: { assetId: occluder.id, x: 430, y: 160, width: 120, height: 120 } }] });
       const overlap: BoardObject = overlapState.objects.filter((value: BoardObject) => value.assetId === occluder.id).at(-1);
       await page.waitForFunction(id => { const image = document.querySelector<HTMLImageElement>(`[data-object-id="${id}"] img`); return Boolean(image?.complete && image.naturalWidth); }, overlap.id);

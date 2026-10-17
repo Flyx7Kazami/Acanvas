@@ -1,0 +1,50 @@
+[
+  {
+    "count": 1000,
+    "content": "images",
+    "round": 0,
+    "LayoutDuration": 6.439,
+    "RecalcStyleDuration": 30.737000000000002,
+    "ScriptDuration": 285.123,
+    "TaskDuration": 972.6669999999999,
+    "frames": 363,
+    "frameP95": 16.799999999999727,
+    "inputP95": 1.7999999970197678,
+    "inputs": 180,
+    "updates": 180,
+    "longTasks": [],
+    "transform": "translate(80px, 70px) scale(0.16)"
+  },
+  {
+    "count": 1000,
+    "content": "images",
+    "round": 1,
+    "LayoutDuration": 6.482999999999999,
+    "RecalcStyleDuration": 30.668,
+    "ScriptDuration": 309.84000000000003,
+    "TaskDuration": 988.5160000000002,
+    "frames": 360,
+    "frameP95": 16.799999999999272,
+    "inputP95": 1.8999999910593033,
+    "inputs": 180,
+    "updates": 180,
+    "longTasks": [],
+    "transform": "translate(80px, 70px) scale(0.16)"
+  },
+  {
+    "count": 1000,
+    "content": "images",
+    "round": 2,
+    "LayoutDuration": 6.871,
+    "RecalcStyleDuration": 31.63200000000001,
+    "ScriptDuration": 308.105,
+    "TaskDuration": 994.5039999999999,
+    "frames": 363,
+    "frameP95": 16.700000000000728,
+    "inputP95": 1.8999999910593033,
+    "inputs": 180,
+    "updates": 180,
+    "longTasks": [],
+    "transform": "translate(80px, 70px) scale(0.16)"
+  }
+]

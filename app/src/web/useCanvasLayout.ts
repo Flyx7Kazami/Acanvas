@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
-import type { Draft, SessionView } from '../shared/types';
+import type { CanvasCamera } from './canvas-camera';
+import type { Draft } from '../shared/types';
 import { placeFloatingControl, placeVideoControl, screenBounds, unionBounds, type Rect } from './geometry';
 
 type ElementRef<T extends HTMLElement = HTMLElement> = RefObject<T | null>;
@@ -96,7 +97,7 @@ export function useComposerLayout(input: ElementRef, dock: ElementRef, draft: Dr
   }, [input, dock, draft?.id, draft?.text, draft?.attachments.length, draft?.annotations.length, draft?.references.objectIds.length, draft?.references.taskIds.length, loaded, previewCount]);
 }
 
-export function useContextualControls(canvas: ElementRef, actions: ElementRef, playback: ElementRef, selected: Rect[], video: Rect | undefined, view: SessionView) {
+export function useContextualControls(canvas: ElementRef, actions: ElementRef, playback: ElementRef, selected: Rect[], video: Rect | undefined, camera: CanvasCamera) {
   const currentLayout = useRef<() => void>(() => {});
   const resizeObserver = useRef<ResizeObserver | null>(null);
   const observed = useRef(new Set<Element>());
@@ -105,12 +106,14 @@ export function useContextualControls(canvas: ElementRef, actions: ElementRef, p
     const observer = new ResizeObserver(layout);
     resizeObserver.current = observer;
     window.addEventListener('resize', layout);
+    const unsubscribe = camera.subscribe(layout);
     return () => {
+      unsubscribe();
       currentLayout.current = () => {};
       observer.disconnect(); observed.current.clear(); resizeObserver.current = null;
       window.removeEventListener('resize', layout);
     };
-  }, []);
+  }, [camera]);
   useLayoutEffect(() => {
     const board = canvas.current, actionBar = actions.current, videoBar = playback.current;
     const dock = document.querySelector<HTMLElement>('.creation-dock');
@@ -131,6 +134,7 @@ export function useContextualControls(canvas: ElementRef, actions: ElementRef, p
       if (control.getAttribute('aria-hidden') !== hidden) control.setAttribute('aria-hidden', hidden);
     };
     const layout = () => {
+      const view = camera.getSnapshot();
       const bounds = board.getBoundingClientRect();
       const viewport = { x: 0, y: 0, width: bounds.width, height: bounds.height };
       const projected = selected.map(rect => screenBounds(rect, view));

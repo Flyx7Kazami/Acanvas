@@ -21,7 +21,10 @@ const command = process.argv[2];
 const rest = process.argv.slice(3);
 if (['build', 'build-server', 'test', 'typecheck', 'test-html-surface'].includes(command)) execute([...tsc, '-p', 'app/tsconfig.server.json']);
 if (['build', 'typecheck'].includes(command)) execute([...tsc, '-p', 'app/tsconfig.json']);
-if (command === 'build') execute(['node_modules/vite/bin/vite.js', 'build', '--config', 'app/vite.config.ts']);
+if (command === 'build') {
+  execute(['scripts/generate-domino-loader.mjs']);
+  execute(['node_modules/vite/bin/vite.js', 'build', '--config', 'app/vite.config.ts']);
+}
 else if (command === 'test') execute(['--test', ...rest, ...readdirSync(join(installation, 'dist/tests')).filter(name => name.endsWith('.test.js')).map(name => `dist/tests/${name}`)]);
 else if (command === 'start') execute(['dist/src/server/main.js', ...rest]);
 else if (command === 'cli') execute(['dist/src/cli.js', ...rest]);

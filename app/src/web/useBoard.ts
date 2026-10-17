@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AnnotationInput, BoardObject, BoardOperation, BoardVersionChanges, BoardState, Draft, SessionView } from '../shared/types';
 import { referenceOrder } from '../shared/task-message';
 import { annotationTarget } from './annotation-scene';
+import { CanvasCamera, sameViewContext, viewContext, type ViewContext } from './canvas-camera';
 import { BoardApi, RequestError } from './api';
 import { ownExpectedVersion, rememberVersionChanges, type OwnVersions } from './board-versions';
 import type { ContentEditorRegistration, ContentSaveResult } from './content-editing';
@@ -28,7 +29,9 @@ export function useBoard() {
   const [state, setState] = useState<BoardState | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [draftConflict, setDraftConflict] = useState<Draft | null>(null);
-  const [view, setView] = useState<SessionView>({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] });
+  const [contextView, setContextView] = useState<ViewContext>({ selectedObjectIds: [] });
+  const camera = useMemo(() => new CanvasCamera({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }), []);
+  useEffect(() => () => camera.dispose(), [camera]);
   const [failure, setFailure] = useState({ message: '', revision: 0 });
   const error = failure.message;
   const setError = useCallback((message: string) => setFailure(current => ({ message, revision: current.revision + (message ? 1 : 0) })), []);
@@ -114,6 +117,8 @@ export function useBoard() {
     drafts.current.set(next.session.id, local);
     const nextView = views.current.get(next.session.id) || next.session.view;
     views.current.set(next.session.id, nextView);
+    if (viewSessionRef.current !== next.session.id) camera.reset(nextView, next.session.id);
+    else camera.update(nextView);
     sessionRef.current = next.session.id;
     viewSessionRef.current = next.session.id;
     sessionStorage.setItem(`acanvas-context:${next.project.id}`, next.session.id);
@@ -121,7 +126,7 @@ export function useBoard() {
     setContentDirtyState(contentDirtyForSession(next.session.id));
     setContentComposingState(contentComposingForSession(next.session.id));
     reflectDraft(local);
-    setView(nextView);
+    setContextView(viewContext(nextView));
     setMutationBusy((mutationPending.current.get(next.session.id) || 0) > 0);
     const url = new URL(window.location.href); url.searchParams.set('session', next.session.id); window.history.replaceState(null, '', url);
   }, [reflectDraft]);
@@ -372,9 +377,8 @@ export function useBoard() {
     await refresh();
   }, [save, refresh, reflectDraft]);
 
-  const updateView = useCallback((next: SessionView, ownerSessionId = viewSessionRef.current, persist: boolean | 'immediate' = true) => {
+  const queueView = useCallback((next: SessionView, ownerSessionId: string, persist: boolean | 'immediate') => {
     if (api.projectChanged || switchingRef.current || ownerSessionId !== sessionRef.current || ownerSessionId !== viewSessionRef.current) return;
-    views.current.set(ownerSessionId, next); setView(next);
     window.clearTimeout(viewTimers.current.get(ownerSessionId));
     if (!persist) return;
     const saveView = () => {
@@ -385,6 +389,13 @@ export function useBoard() {
     if (persist === 'immediate') saveView();
     else viewTimers.current.set(ownerSessionId, window.setTimeout(saveView, 250));
   }, [api, showError]);
+  const persistView = useCallback((next: SessionView, ownerSessionId: string) => queueView(next, ownerSessionId, 'immediate'), [queueView]);
+  const updateView = useCallback((next: SessionView, ownerSessionId = viewSessionRef.current, persist: boolean | 'immediate' = true) => {
+    if (api.projectChanged || switchingRef.current || ownerSessionId !== sessionRef.current || ownerSessionId !== viewSessionRef.current) return;
+    views.current.set(ownerSessionId, next); camera.update(next);
+    setContextView(current => sameViewContext(current, next) ? current : viewContext(next));
+    queueView(next, ownerSessionId, persist);
+  }, [api, camera, queueView]);
 
   const switchSession = useCallback(async (sessionId: string) => {
     if (sessionId === sessionRef.current || switchingRef.current) return;
@@ -396,12 +407,13 @@ export function useBoard() {
       showError(cause);
       return;
     }
+    if (camera.getFrame().moving) updateView(camera.flush(), previous, 'immediate');
     sessionRef.current = sessionId; switchingRef.current = true; setSwitching(true);
     const sequence = ++loadSequence.current;
     try { const next = await api.state(sessionId); if (sequence === loadSequence.current && sessionId === sessionRef.current) adopt(next); }
     catch (cause) { if (sessionRef.current === sessionId) { sessionRef.current = previous; showError(cause); } }
     finally { switchingRef.current = false; setSwitching(false); }
-  }, [api, adopt, flushContent, flushDraft, showError]);
+  }, [api, adopt, camera, updateView, flushContent, flushDraft, showError]);
 
   const createSession = useCallback(async (name: string) => { const session = await api.createSession(name); await switchSession(session.id); }, [api, switchSession]);
   const send = useCallback(async () => {
@@ -524,5 +536,5 @@ export function useBoard() {
     };
     window.addEventListener('beforeunload', handler); return () => window.removeEventListener('beforeunload', handler);
   }, [flushContent]);
-  return { api, state, draft, draftConflict, view, error, errorRevision: failure.revision, connection, serviceInstance, saveState, switching, sending, historyBusy, mutationBusy, contentDirty, contentComposing, projectChanged, setError, showError, refresh, changeDraft, changeDraftFor, getDraftFor, acceptSavedDraft, saveCapturedDraft, updateView, switchSession, createSession, send, editTask, operations, saveContent, registerContentEditor, setContentDirty, setContentComposing, undo, redo, flushDraft, flushContent, resolveDraftConflict };
+  return { api, state, draft, draftConflict, viewContext: contextView, camera, error, errorRevision: failure.revision, connection, serviceInstance, saveState, switching, sending, historyBusy, mutationBusy, contentDirty, contentComposing, projectChanged, setError, showError, refresh, changeDraft, changeDraftFor, getDraftFor, acceptSavedDraft, saveCapturedDraft, updateView, persistView, switchSession, createSession, send, editTask, operations, saveContent, registerContentEditor, setContentDirty, setContentComposing, undo, redo, flushDraft, flushContent, resolveDraftConflict };
 }

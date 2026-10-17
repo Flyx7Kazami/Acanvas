@@ -67,6 +67,42 @@ async function waitObject(app: AppFixture, sessionId: string, objectId: string, 
   await expect.poll(async () => predicate((await app.state(sessionId)).objects.find(value => value.id === objectId))).toBeTruthy();
 }
 
+test('a large board keeps editor selection and current camera interactions through zoom', async ({ page, app }) => {
+  await open(page, app);
+  const { note, editor } = await addNote(page);
+  const initial = await app.state(), sessionId = initial.session.id, id = initial.objects[0].id;
+  await editor.fill('Composition study'); await editor.blur(); await waitText(app, sessionId, id, 'Composition study');
+  const response = await fetch(`${app.server.url}/api/assets?name=Study.svg&mime=image%2Fsvg%2Bxml`, { method: 'POST', headers: { Authorization: `Bearer ${app.token}` }, body: '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="120"><rect width="200" height="120" fill="#315ad9"/></svg>' });
+  expect(response.ok).toBeTruthy(); const asset = await response.json();
+  await app.call('/api/board/operations', 'POST', { sessionId, operations: Array.from({ length: 199 }, (_, index) => ({ type: 'create', object: { id: `study-${index}`, assetId: asset.id, x: 1800 + (index % 20) * 240, y: Math.floor(index / 20) * 180, width: 200, height: 120 } })) });
+  await expect(page.locator('.board-object')).toHaveCount(200);
+  await editor.focus();
+  await editor.evaluate(element => { (window as any).studyEditor = element; (element as HTMLTextAreaElement).setSelectionRange(2, 8); });
+  const box = (await editor.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.keyboard.down('Control'); await page.mouse.wheel(0, 120); await page.keyboard.up('Control');
+  await expect.poll(async () => (await app.state(sessionId)).session.view.zoom).toBeLessThan(.7);
+  expect(await editor.evaluate(element => ({ same: (window as any).studyEditor === element, start: (element as HTMLTextAreaElement).selectionStart, end: (element as HTMLTextAreaElement).selectionEnd }))).toEqual({ same: true, start: 2, end: 8 });
+
+  // A content-edge drag uses the camera from the completed zoom.
+  const beforeDrag = (await app.state(sessionId)).objects.find(object => object.id === id)!;
+  const camera = (await app.state(sessionId)).session.view, card = (await note.locator('.note-card').boundingBox())!;
+  const dragStart = { x: card.x + card.width / 4, y: card.y + 2 };
+  expect(await page.evaluate(point => document.elementFromPoint(point.x, point.y)?.classList.contains('note-card'), dragStart)).toBe(true);
+  await page.keyboard.down('Alt'); await page.mouse.move(dragStart.x, dragStart.y); await page.mouse.down();
+  await page.mouse.move(dragStart.x + 60, dragStart.y + 30, { steps: 5 }); await page.mouse.up(); await page.keyboard.up('Alt');
+  await expect.poll(async () => (await app.state(sessionId)).objects.find(object => object.id === id)!.x).toBeCloseTo(beforeDrag.x + 60 / camera.zoom, 1);
+  await expect.poll(async () => (await app.state(sessionId)).objects.find(object => object.id === id)!.y).toBeCloseTo(beforeDrag.y + 30 / camera.zoom, 1);
+  const handle = page.locator(`[data-resize-id="${id}"][data-resize-corner="se"]`);
+  await handle.focus(); await handle.press('ArrowRight');
+  await expect.poll(async () => (await app.state(sessionId)).objects.find(object => object.id === id)!.width).toBe(beforeDrag.width + 10);
+  await editor.fill('Revised composition'); await editor.blur(); await waitText(app, sessionId, id, 'Revised composition');
+  await page.getByRole('button', { name: 'Undo', exact: true }).click(); await waitText(app, sessionId, id, 'Composition study');
+  await page.getByRole('button', { name: 'Redo', exact: true }).click(); await waitText(app, sessionId, id, 'Revised composition');
+  await page.reload(); await expect(page.locator('.board-object')).toHaveCount(200);
+  await expect(page.locator(`[data-object-id="${id}"] textarea.note-editor`)).toHaveValue('Revised composition');
+});
+
 test('note content forms A to B to C history and keeps a shared source independent', async ({ page, app }) => {
   await open(page, app);
   const sessionId = (await app.state()).session.id;

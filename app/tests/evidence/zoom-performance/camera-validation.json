@@ -1,0 +1,44 @@
+{
+  "status": "passed",
+  "checks": {
+    "camera_and_geometry_unit": 11,
+    "editing_and_history_browser": 12,
+    "camera_overlays_media_and_session_browser": 8,
+    "gestures_and_groups_browser": 11,
+    "native_media_and_scene_capture": 2
+  },
+  "total": 44,
+  "quality": {
+    "comparisons": 27,
+    "minimumEdgeRatio": 0.9986028641285365,
+    "maximumMeanChannelDifference": 0.03652630805408583,
+    "exactNoteComparisons": 9,
+    "dpr": 2,
+    "settledZooms": [
+      0.05,
+      0.25,
+      1,
+      2,
+      4,
+      1
+    ],
+    "movingZooms": [
+      0.6,
+      1.2,
+      3.5
+    ]
+  },
+  "priorSuiteFailures": {
+    "count": 12,
+    "comparison": "Same failures reproduced on the prior item-memo production build",
+    "categories": [
+      "Old Annotate button selectors",
+      "Textarea expectations for the contenteditable composer",
+      "Existing annotation geometry expectations"
+    ]
+  },
+  "limitations": [
+    "Physical trackpad and display presentation require the user test.",
+    "Performance fixtures reuse three assets; unique high-resolution media workloads were not measured."
+  ]
+}

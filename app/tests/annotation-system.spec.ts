@@ -16,7 +16,7 @@ type App = {
 const test = base.extend<{ app: App }>({
   app: async ({}, use) => {
     const root = await mkdtemp(join(tmpdir(), 'acanvas-annotation-project-'));
-    const child = spawn(runtime, [resolve('dist/src/server/main.js'), '--project', root, '--port', '0'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(runtime, [resolve(process.env.ACANVAS_TEST_OUT_DIR || 'dist', 'src/server/main.js'), '--project', root, '--port', '0'], { stdio: ['ignore', 'pipe', 'pipe'] });
     let output = '', errors = '';
     child.stderr.on('data', chunk => { errors += chunk.toString(); });
     const url = await new Promise<string>((ready, reject) => {

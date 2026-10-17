@@ -52,7 +52,8 @@ h1,h2,h3,p { margin: 0; }
 .canvas-world { position: absolute; inset: 0; transform-origin: 0 0; pointer-events: none; }
 .board-object { position: absolute; pointer-events: auto; border-radius: 0; outline: 1px solid color-mix(in srgb,var(--edge) 65%,transparent); box-shadow: var(--shadow); }
 .board-object.selected { outline: 2px solid var(--ink); }
-.object-media { width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: var(--surface); }
+.object-media { width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: var(--surface); content-visibility: auto; }
+.object-media:focus-within,.object-media[data-continuous] { content-visibility: visible; }
 .object-media>img,.object-media>video { width: 100%; height: 100%; object-fit: contain; display: block; }
 .object-media>video { background: #161616; pointer-events: none; }
 .mode-select .object-video .object-media { cursor: move; }

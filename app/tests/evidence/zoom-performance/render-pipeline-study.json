@@ -1,0 +1,117 @@
+{
+  "environment": {
+    "browser": "Codex in-app browser",
+    "width": 1280,
+    "height": 720,
+    "devicePixelRatio": 2,
+    "items": 500,
+    "nodes": 7932
+  },
+  "method": {
+    "input": "One synthetic Ctrl+wheel per requestAnimationFrame in app modes; direct transform writes in camera mode.",
+    "steps": 180,
+    "zoomRange": [
+      0.08,
+      1.2
+    ],
+    "startAndEnd": {
+      "x": 70,
+      "y": 120,
+      "zoom": 0.08
+    },
+    "timingsRoundedToMs": 0.1,
+    "frameMetric": "rAF callback throughput; physical display presentation and trackpad hardware were not measured."
+  },
+  "runs": [
+    {
+      "mode": "app-both",
+      "elapsedMs": 2366.7,
+      "frameP50Ms": 8.4,
+      "frameP95Ms": 25,
+      "framesOver25ms": 8,
+      "framesOver50ms": 2,
+      "handlerMs": 20.4,
+      "longAnimationFrames": 4
+    },
+    {
+      "mode": "app",
+      "elapsedMs": 4566.6,
+      "frameP50Ms": 16.6,
+      "frameP95Ms": 75.7,
+      "framesOver25ms": 48,
+      "framesOver50ms": 25,
+      "handlerMs": 24.6,
+      "longAnimationFrames": 9
+    },
+    {
+      "mode": "camera",
+      "elapsedMs": 3958.3,
+      "frameP50Ms": 8.4,
+      "frameP95Ms": 74.5,
+      "framesOver25ms": 43,
+      "framesOver50ms": 24,
+      "handlerMs": 7.1,
+      "longAnimationFrames": 3
+    },
+    {
+      "mode": "app-both",
+      "elapsedMs": 2083.4,
+      "frameP50Ms": 8.4,
+      "frameP95Ms": 24.1,
+      "framesOver25ms": 5,
+      "framesOver50ms": 1,
+      "handlerMs": 22.3,
+      "longAnimationFrames": 2
+    },
+    {
+      "mode": "camera",
+      "elapsedMs": 4466.6,
+      "frameP50Ms": 9.3,
+      "frameP95Ms": 83.4,
+      "framesOver25ms": 49,
+      "framesOver50ms": 31,
+      "handlerMs": 5.5,
+      "longAnimationFrames": 11
+    },
+    {
+      "mode": "app",
+      "elapsedMs": 3800,
+      "frameP50Ms": 8.4,
+      "frameP95Ms": 66.7,
+      "framesOver25ms": 39,
+      "framesOver50ms": 21,
+      "handlerMs": 28.1,
+      "longAnimationFrames": 3
+    },
+    {
+      "mode": "camera",
+      "elapsedMs": 3908.2,
+      "frameP50Ms": 8.4,
+      "frameP95Ms": 75,
+      "framesOver25ms": 44,
+      "framesOver50ms": 24,
+      "handlerMs": 5.1,
+      "longAnimationFrames": 1
+    },
+    {
+      "mode": "app",
+      "elapsedMs": 3825,
+      "frameP50Ms": 9,
+      "frameP95Ms": 66.7,
+      "framesOver25ms": 41,
+      "framesOver50ms": 23,
+      "handlerMs": 25.5,
+      "longAnimationFrames": 2
+    },
+    {
+      "mode": "app-both",
+      "elapsedMs": 2033.2,
+      "frameP50Ms": 8.4,
+      "frameP95Ms": 24.8,
+      "framesOver25ms": 5,
+      "framesOver50ms": 1,
+      "handlerMs": 21.7,
+      "longAnimationFrames": 4
+    }
+  ]
+}

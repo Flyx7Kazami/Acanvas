@@ -1,0 +1,524 @@
+{
+  "date": "2026-10-17",
+  "comparisonCommit": "51ec011922179ffa053872849def1e8a8c33399d",
+  "review": "Complete branch diff reviewed; no introduced functional, interaction or image-quality regression found in the covered paths.",
+  "build": "passed",
+  "defaultSuite": {
+    "command": "TMPDIR=/private/tmp node scripts/runtime.mjs test --test-concurrency=1",
+    "tests": 377,
+    "passed": 341,
+    "skipped": 36,
+    "failed": 0
+  },
+  "additionalChecks": {
+    "editingHistory": 12,
+    "cameraMediaAndSession": 8,
+    "nativeGesturesAndCaptures": 3
+  },
+  "quality": {
+    "dpr": 2,
+    "canvasComparisons": 27,
+    "loaderComparisons": 10,
+    "minimumEdgeRatio": 0.9986028641285365,
+    "maximumMeanChannelDifference": 0.03652630805408583,
+    "exactNoteComparisons": 9,
+    "loaderAnimation": true,
+    "settled": [
+      {
+        "key": "image-0.05-0",
+        "edgeRatio": 1.0088105726872247,
+        "width": 30,
+        "height": 20,
+        "changed": 40,
+        "changedRatio": 0.06666666666666667,
+        "meanChannelDifference": 0.035555555555555556,
+        "max": 1,
+        "presentation": {
+          "transform": "translate(792.5px, 594.75px) scale(0.05)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "note-0.05-1",
+        "edgeRatio": 1,
+        "width": 30,
+        "height": 20,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(762.5px, 594.75px) scale(0.05)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "markdown-0.05-2",
+        "edgeRatio": 1,
+        "width": 30,
+        "height": 20,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(732.5px, 594.75px) scale(0.05)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "image-0.25-3",
+        "edgeRatio": 0.9986028641285365,
+        "width": 150,
+        "height": 104,
+        "changed": 208,
+        "changedRatio": 0.013333333333333334,
+        "meanChannelDifference": 0.022222222222222223,
+        "max": 2,
+        "presentation": {
+          "transform": "translate(762.5px, 573.75px) scale(0.25)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "note-0.25-4",
+        "edgeRatio": 1,
+        "width": 150,
+        "height": 104,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(612.5px, 573.75px) scale(0.25)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "markdown-0.25-5",
+        "edgeRatio": 1,
+        "width": 150,
+        "height": 104,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(462.5px, 573.75px) scale(0.25)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "image-1-6",
+        "edgeRatio": 1,
+        "width": 600,
+        "height": 420,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(650px, 495px) scale(1)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "note-1-7",
+        "edgeRatio": 1,
+        "width": 600,
+        "height": 420,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(50px, 495px) scale(1)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "markdown-1-8",
+        "edgeRatio": 1,
+        "width": 600,
+        "height": 420,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(-550px, 495px) scale(1)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "image-2-9",
+        "edgeRatio": 1,
+        "width": 1200,
+        "height": 840,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(500px, 390px) scale(2)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "note-2-10",
+        "edgeRatio": 1,
+        "width": 1200,
+        "height": 840,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(-700px, 390px) scale(2)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "markdown-2-11",
+        "edgeRatio": 0.9999898474236991,
+        "width": 1200,
+        "height": 840,
+        "changed": 21,
+        "changedRatio": 0.000020833333333333333,
+        "meanChannelDifference": 0.0001398809523809524,
+        "max": 16,
+        "presentation": {
+          "transform": "translate(-1900px, 390px) scale(2)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "image-4-12",
+        "edgeRatio": 1,
+        "width": 2400,
+        "height": 1680,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(200px, 180px) scale(4)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "note-4-13",
+        "edgeRatio": 1,
+        "width": 2400,
+        "height": 1680,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(-2200px, 180px) scale(4)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "markdown-4-14",
+        "edgeRatio": 1,
+        "width": 2400,
+        "height": 1680,
+        "changed": 55,
+        "changedRatio": 0.000013640873015873016,
+        "meanChannelDifference": 0.000012814153439153439,
+        "max": 1,
+        "presentation": {
+          "transform": "translate(-4600px, 180px) scale(4)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "image-1-15",
+        "edgeRatio": 0.9999386676963742,
+        "width": 600,
+        "height": 420,
+        "changed": 1697,
+        "changedRatio": 0.006734126984126984,
+        "meanChannelDifference": 0.003507936507936508,
+        "max": 1,
+        "presentation": {
+          "transform": "translate(650px, 495px) scale(1)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "note-1-16",
+        "edgeRatio": 1,
+        "width": 600,
+        "height": 420,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(50px, 495px) scale(1)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      },
+      {
+        "key": "markdown-1-17",
+        "edgeRatio": 1,
+        "width": 600,
+        "height": 420,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(-550px, 495px) scale(1)",
+          "willChange": "auto",
+          "moving": "false"
+        }
+      }
+    ],
+    "moving": [
+      {
+        "key": "image-0.6-0",
+        "edgeRatio": 1,
+        "width": 360,
+        "height": 252,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(710px, 537px) scale(0.6)",
+          "willChange": "auto",
+          "moving": "true"
+        }
+      },
+      {
+        "key": "note-0.6-1",
+        "edgeRatio": 1,
+        "width": 360,
+        "height": 252,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(350px, 537px) scale(0.6)",
+          "willChange": "auto",
+          "moving": "true"
+        }
+      },
+      {
+        "key": "markdown-0.6-2",
+        "edgeRatio": 0.9999969952765748,
+        "width": 360,
+        "height": 252,
+        "changed": 5,
+        "changedRatio": 0.00005511463844797178,
+        "meanChannelDifference": 0.00004409171075837743,
+        "max": 1,
+        "presentation": {
+          "transform": "translate(-10px, 537px) scale(0.6)",
+          "willChange": "auto",
+          "moving": "true"
+        }
+      },
+      {
+        "key": "image-1.2-3",
+        "edgeRatio": 0.9999926811863797,
+        "width": 720,
+        "height": 504,
+        "changed": 519,
+        "changedRatio": 0.0014302248677248678,
+        "meanChannelDifference": 0.0004767416225749559,
+        "max": 1,
+        "presentation": {
+          "transform": "translate(620px, 474px) scale(1.2)",
+          "willChange": "auto",
+          "moving": "true"
+        }
+      },
+      {
+        "key": "note-1.2-4",
+        "edgeRatio": 1,
+        "width": 720,
+        "height": 504,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(-100px, 474px) scale(1.2)",
+          "willChange": "auto",
+          "moving": "true"
+        }
+      },
+      {
+        "key": "markdown-1.2-5",
+        "edgeRatio": 0.9996709761500501,
+        "width": 720,
+        "height": 504,
+        "changed": 3185,
+        "changedRatio": 0.008777006172839507,
+        "meanChannelDifference": 0.03652630805408583,
+        "max": 74,
+        "presentation": {
+          "transform": "translate(-820px, 474px) scale(1.2)",
+          "willChange": "auto",
+          "moving": "true"
+        }
+      },
+      {
+        "key": "image-3.5-6",
+        "edgeRatio": 1,
+        "width": 2100,
+        "height": 1470,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(275px, 232.5px) scale(3.5)",
+          "willChange": "auto",
+          "moving": "true"
+        }
+      },
+      {
+        "key": "note-3.5-7",
+        "edgeRatio": 1,
+        "width": 2100,
+        "height": 1470,
+        "changed": 0,
+        "changedRatio": 0,
+        "meanChannelDifference": 0,
+        "max": 0,
+        "presentation": {
+          "transform": "translate(-1825px, 232.5px) scale(3.5)",
+          "willChange": "auto",
+          "moving": "true"
+        }
+      },
+      {
+        "key": "markdown-3.5-8",
+        "edgeRatio": 1,
+        "width": 2100,
+        "height": 1470,
+        "changed": 26,
+        "changedRatio": 0.000008422416585681892,
+        "meanChannelDifference": 0.000011877766979807796,
+        "max": 13,
+        "presentation": {
+          "transform": "translate(-3925px, 232.5px) scale(3.5)",
+          "willChange": "auto",
+          "moving": "true"
+        }
+      }
+    ],
+    "loader": [
+      {
+        "theme": "light",
+        "size": 16,
+        "mean": 0,
+        "max": 0,
+        "ink": 1116
+      },
+      {
+        "theme": "light",
+        "size": 32,
+        "mean": 0,
+        "max": 0,
+        "ink": 4332
+      },
+      {
+        "theme": "light",
+        "size": 36,
+        "mean": 0,
+        "max": 0,
+        "ink": 5457
+      },
+      {
+        "theme": "light",
+        "size": 48,
+        "mean": 0,
+        "max": 0,
+        "ink": 9627
+      },
+      {
+        "theme": "light",
+        "size": 192,
+        "mean": 0,
+        "max": 0,
+        "ink": 150399
+      },
+      {
+        "theme": "dark",
+        "size": 16,
+        "mean": 0,
+        "max": 0,
+        "ink": 1116
+      },
+      {
+        "theme": "dark",
+        "size": 32,
+        "mean": 0,
+        "max": 0,
+        "ink": 4332
+      },
+      {
+        "theme": "dark",
+        "size": 36,
+        "mean": 0,
+        "max": 0,
+        "ink": 5457
+      },
+      {
+        "theme": "dark",
+        "size": 48,
+        "mean": 0,
+        "max": 0,
+        "ink": 9624
+      },
+      {
+        "theme": "dark",
+        "size": 192,
+        "mean": 0,
+        "max": 0,
+        "ink": 150393
+      },
+      {
+        "animating": true
+      }
+    ]
+  },
+  "initialRun": {
+    "tests": 377,
+    "passed": 331,
+    "failed": 10,
+    "skipped": 36,
+    "filesystem": "The same path-alias failures reproduced from the branch starting commit. All 17 related checks passed with canonical TMPDIR on that commit. Server and filesystem-test sources are unchanged.",
+    "ui": "One folder annotation check timed out during the parallel run. Its complete flow and every other default check passed in the serial run."
+  },
+  "liveBoard": {
+    "items": 500,
+    "loading": 0
+  },
+  "scope": "Chrome on macOS. Physical trackpad behavior remains user-tested; performance fixtures use small local media. Prior standalone legacy annotation-suite failures are documented separately in camera-validation.json."
+}
