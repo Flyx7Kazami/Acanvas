@@ -54,6 +54,7 @@ h1,h2,h3,p { margin: 0; }
 .board-object.selected { outline: 2px solid var(--ink); }
 .object-placement { position:absolute; pointer-events:none; }
 .object-placement>.board-object { left:0; top:0; width:100%; height:100%; opacity:1; filter:none; transform:none; }
+.canvas-world[data-camera-scaling='true'] [data-camera-raster='true'] { transform: translateZ(0); }
 .object-media { width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: var(--surface); content-visibility: auto; }
 .object-media:focus-within,.object-media[data-continuous] { content-visibility: visible; }
 .object-media>img,.object-media>video { width: 100%; height: 100%; object-fit: contain; display: block; }

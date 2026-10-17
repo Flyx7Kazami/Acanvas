@@ -50,7 +50,9 @@ test('production canvas inherits native wheel fields, accumulates bursts, and ow
     await burst('ctrlKey', -4, 12, '.canvas-toolbar button');
     const scaledExpected = canvasPinchView({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }, Math.exp(.24), { x: 600, y: 280 });
     await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(scaledExpected.zoom, 5); close(await camera(page), scaledExpected); samples.push({ input: 'scaled viewport control target', actual: await camera(page), expected: scaledExpected });
-    await reset(); const reading = page.locator('.markdown-content'); const beforeReading = await camera(page); await reading.hover(); await page.mouse.wheel(0, 220); await expect.poll(() => reading.evaluate(element => element.scrollTop)).toBeGreaterThan(0); close(await camera(page), beforeReading);
+    await reset(); const reading = page.locator('.markdown-content'); await reading.hover(); await page.mouse.wheel(0, 220);
+    await expect.poll(async () => (await camera(page)).y).toBe(-220); assert.equal(await reading.evaluate(element => element.scrollTop), 0);
+    await reset(); await reading.click(); const beforeReading = await camera(page); await reading.hover(); await page.mouse.wheel(0, 220); await expect.poll(() => reading.evaluate(element => element.scrollTop)).toBeGreaterThan(0); close(await camera(page), beforeReading);
     await burst('ctrlKey', -4, 12, '.markdown-content'); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(Math.exp(.24), 5); samples.push({ input: 'document scroll plus canvas pinch', scrollTop: await reading.evaluate(element => element.scrollTop), zoom: (await camera(page)).zoom });
 
     await reset(); const beforePan = await camera(page);

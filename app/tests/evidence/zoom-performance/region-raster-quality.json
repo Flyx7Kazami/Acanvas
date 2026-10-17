@@ -1,0 +1,434 @@
+[
+  {
+    "scenario": "settled",
+    "key": "image-0.05-0",
+    "edgeRatio": 1,
+    "width": 30,
+    "height": 20,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(792.5px, 594.75px) scale(0.05)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "note-0.05-1",
+    "edgeRatio": 1,
+    "width": 30,
+    "height": 20,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(762.5px, 594.75px) scale(0.05)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "markdown-0.05-2",
+    "edgeRatio": 1,
+    "width": 30,
+    "height": 20,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(732.5px, 594.75px) scale(0.05)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "image-0.25-3",
+    "edgeRatio": 1,
+    "width": 150,
+    "height": 104,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(762.5px, 573.75px) scale(0.25)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "note-0.25-4",
+    "edgeRatio": 1,
+    "width": 150,
+    "height": 104,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(612.5px, 573.75px) scale(0.25)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "markdown-0.25-5",
+    "edgeRatio": 1,
+    "width": 150,
+    "height": 104,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(462.5px, 573.75px) scale(0.25)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "image-1-6",
+    "edgeRatio": 1,
+    "width": 600,
+    "height": 420,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(650px, 495px) scale(1)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "note-1-7",
+    "edgeRatio": 1,
+    "width": 600,
+    "height": 420,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(50px, 495px) scale(1)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "markdown-1-8",
+    "edgeRatio": 1,
+    "width": 600,
+    "height": 420,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(-550px, 495px) scale(1)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "image-2-9",
+    "edgeRatio": 1,
+    "width": 1200,
+    "height": 840,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(500px, 390px) scale(2)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "note-2-10",
+    "edgeRatio": 1,
+    "width": 1200,
+    "height": 840,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(-700px, 390px) scale(2)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "markdown-2-11",
+    "edgeRatio": 1,
+    "width": 1200,
+    "height": 840,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(-1900px, 390px) scale(2)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "image-4-12",
+    "edgeRatio": 1,
+    "width": 2400,
+    "height": 1680,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(200px, 180px) scale(4)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "note-4-13",
+    "edgeRatio": 1,
+    "width": 2400,
+    "height": 1680,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(-2200px, 180px) scale(4)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "markdown-4-14",
+    "edgeRatio": 1,
+    "width": 2400,
+    "height": 1680,
+    "changed": 6,
+    "changedRatio": 1.4880952380952381e-06,
+    "meanChannelDifference": 1.4880952380952381e-06,
+    "max": 1,
+    "presentation": {
+      "transform": "translate(-4600px, 180px) scale(4)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "image-1-15",
+    "edgeRatio": 1.000059370200352,
+    "width": 600,
+    "height": 420,
+    "changed": 839,
+    "changedRatio": 0.0033293650793650795,
+    "meanChannelDifference": 0.001599206349206349,
+    "max": 1,
+    "presentation": {
+      "transform": "translate(650px, 495px) scale(1)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "note-1-16",
+    "edgeRatio": 1,
+    "width": 600,
+    "height": 420,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(50px, 495px) scale(1)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "settled",
+    "key": "markdown-1-17",
+    "edgeRatio": 1,
+    "width": 600,
+    "height": 420,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(-550px, 495px) scale(1)",
+      "willChange": "auto",
+      "moving": "false"
+    }
+  },
+  {
+    "scenario": "moving",
+    "key": "image-0.6-0",
+    "edgeRatio": 1,
+    "width": 360,
+    "height": 252,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(710px, 537px) scale(0.6)",
+      "willChange": "auto",
+      "moving": "true"
+    }
+  },
+  {
+    "scenario": "moving",
+    "key": "note-0.6-1",
+    "edgeRatio": 1,
+    "width": 360,
+    "height": 252,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(350px, 537px) scale(0.6)",
+      "willChange": "auto",
+      "moving": "true"
+    }
+  },
+  {
+    "scenario": "moving",
+    "key": "markdown-0.6-2",
+    "edgeRatio": 1,
+    "width": 360,
+    "height": 252,
+    "changed": 1,
+    "changedRatio": 1.1022927689594357e-05,
+    "meanChannelDifference": 1.1022927689594357e-05,
+    "max": 1,
+    "presentation": {
+      "transform": "translate(-10px, 537px) scale(0.6)",
+      "willChange": "auto",
+      "moving": "true"
+    }
+  },
+  {
+    "scenario": "moving",
+    "key": "image-1.2-3",
+    "edgeRatio": 1.0000073188671856,
+    "width": 720,
+    "height": 504,
+    "changed": 533,
+    "changedRatio": 0.001468805114638448,
+    "meanChannelDifference": 0.0004896017048794827,
+    "max": 1,
+    "presentation": {
+      "transform": "translate(620px, 474px) scale(1.2)",
+      "willChange": "auto",
+      "moving": "true"
+    }
+  },
+  {
+    "scenario": "moving",
+    "key": "note-1.2-4",
+    "edgeRatio": 1,
+    "width": 720,
+    "height": 504,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(-100px, 474px) scale(1.2)",
+      "willChange": "auto",
+      "moving": "true"
+    }
+  },
+  {
+    "scenario": "moving",
+    "key": "markdown-1.2-5",
+    "edgeRatio": 1,
+    "width": 720,
+    "height": 504,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(-820px, 474px) scale(1.2)",
+      "willChange": "auto",
+      "moving": "true"
+    }
+  },
+  {
+    "scenario": "moving",
+    "key": "image-3.5-6",
+    "edgeRatio": 1,
+    "width": 2100,
+    "height": 1470,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(275px, 232.5px) scale(3.5)",
+      "willChange": "auto",
+      "moving": "true"
+    }
+  },
+  {
+    "scenario": "moving",
+    "key": "note-3.5-7",
+    "edgeRatio": 1,
+    "width": 2100,
+    "height": 1470,
+    "changed": 0,
+    "changedRatio": 0,
+    "meanChannelDifference": 0,
+    "max": 0,
+    "presentation": {
+      "transform": "translate(-1825px, 232.5px) scale(3.5)",
+      "willChange": "auto",
+      "moving": "true"
+    }
+  },
+  {
+    "scenario": "moving",
+    "key": "markdown-3.5-8",
+    "edgeRatio": 1,
+    "width": 2100,
+    "height": 1470,
+    "changed": 9,
+    "changedRatio": 2.915451895043732e-06,
+    "meanChannelDifference": 2.915451895043732e-06,
+    "max": 1,
+    "presentation": {
+      "transform": "translate(-3925px, 232.5px) scale(3.5)",
+      "willChange": "auto",
+      "moving": "true"
+    }
+  }
+]

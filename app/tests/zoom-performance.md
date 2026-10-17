@@ -2,6 +2,35 @@
 
 日期：2026-10-17。分支：`codex/zoom-many-items`。原版：`51ec011`。
 
+## 2026-10-18：正文绘制层与相机合成
+
+分支：`codex/canvas-raster-regions`。对照主线：`1aab270`。
+
+源码对照读取了 tldraw 的 [DefaultCanvas](https://github.com/tldraw/tldraw/blob/dd116535b138520d560c9881ad095ab782dc74c7/packages/editor/src/lib/components/default-components/DefaultCanvas.tsx)、[Shape](https://github.com/tldraw/tldraw/blob/dd116535b138520d560c9881ad095ab782dc74c7/packages/editor/src/lib/components/Shape.tsx)、[集中裁剪](https://github.com/tldraw/tldraw/blob/dd116535b138520d560c9881ad095ab782dc74c7/packages/editor/src/lib/hooks/useShapeCulling.tsx)和[图像资源调度](https://github.com/tldraw/tldraw/blob/dd116535b138520d560c9881ad095ab782dc74c7/packages/tldraw/src/lib/shapes/shared/useImageOrVideoAsset.ts)。相机更新、内容绘制和资源调度分别管理；本实现按 Acanvas 的原生 DOM 交互方式落实这一分层。
+
+真实画布包含 82 个对象、8 个组，根画布挂载 55 个对象，其中有 32 个 Markdown 视口。Chrome 轨迹显示主线程长时间停在 `LayerTreeHost::WaitForCommitCompletion`。隔离文字区域后，该累计等待从约 978 ms 降到 128 ms；去除阴影仍约 997 ms。结果把重点指向文字的重复栅格化。隔离实验仅用于定位，交付实现保留全部文字、图片、阴影和动态媒体。
+
+正文和文字编辑器的镜像内容注册为独立绘制源，原生滚动容器、输入框和选区保持各自生命周期。相机复用父层合成；可见且布局稳定的文字视口使用最多 32 个独立缓存，优先较大的可见区域。已有缓存跨输入帧复用；放大时提前分批更新，并保持 25% 的放大采样范围。缩小时复用已有细节，过采样限制为显示尺度的 4 倍。转为平移、真正结束手势或进入现有操作/截图边界时恢复原生绘制。空的缩放输入和到达缩放边界的输入保留精确的相机坐标。
+
+同一临时副本、822 × 786、DPR 2、60 步的 20% → 5% → 20% 录制结果：
+
+| 指标 | 原版 | 正文缓存 |
+| --- | ---: | ---: |
+| GPU 提交等待总计 | 977.9 ms | 336.2 ms |
+| 最长单次提交等待 | 97.3 ms | 43.4 ms |
+| 帧间隔 P95 | 100 ms | 50 ms |
+| 超过 50 ms 的帧 | 15 | 2 |
+
+该轨迹来自独立 Chrome 测试进程，录制有额外开销。长帧仍然存在，固定路径结果与真实触控板体感分别验收。源项目只读，副本保留素材、HTML bundle、对象 ID、版本、顺序、分组、几何和会话视图。
+
+500-item 两轮对照中，总任务时间中位数由 2641 ms 变为 2551 ms，帧间隔 P95 的两轮结果由 33.3–33.4 ms 变为 16.8–33.3 ms。200 成员文件夹的两轮对照覆盖折叠、进入、返回和展开；多数指标维持原范围，首次进入仍可能出现长帧。完整数据见 [region-raster-performance.json](evidence/zoom-performance/region-raster-performance.json)。
+
+画质程序分别比较静止的 5%–400% 视图，以及缩放后持续平移的 60%、120%、350% 视图。图像、笔记和 Markdown 共 27 组；结果见 [region-raster-quality.json](evidence/zoom-performance/region-raster-quality.json)。
+
+最终代码的构建、类型检查、48 项相机/几何/原生手势/文件夹/生产截图检查及 12 项编辑与历史浏览器检查通过。27 组画质比较的最大单通道差异为 1/255，全部达到原生清晰度比较要求。一次旧的可选音频测试在未修改主线同样超时；本次生产截图与媒体路径通过。验证摘要见 [region-raster-validation.json](evidence/zoom-performance/region-raster-validation.json)。
+
+诊断复制工具支持真实分组和 HTML bundle，并提供 `Zoom out 4x` / `60` 步的低倍率总览路径。目标限制在产品的 5%–400% 范围内。
+
 ## 提交前全分支审查
 
 完整代码差异审查、生产构建与类型检查通过。本轮默认套件 341 项通过、36 项按配置跳过、0 失败；另执行编辑与历史 12 项、相机/媒体/会话 8 项、原生手势与实际媒体截图 3 项，全部通过。内置浏览器中的 500-item 画布全部就绪，保留用户当前视图。

@@ -250,8 +250,9 @@ export function mediaContentRect(object: Rect, natural?: { width: number; height
 }
 
 export function zoomAt(view: View, factor: number, anchor: Point): View {
-  const world = screenToWorld(anchor, view);
   const zoom = Math.min(4, Math.max(0.05, view.zoom * factor));
+  if (zoom === view.zoom) return { x: view.x, y: view.y, zoom };
+  const world = screenToWorld(anchor, view);
   return { x: anchor.x - world.x * zoom, y: anchor.y - world.y * zoom, zoom };
 }
 

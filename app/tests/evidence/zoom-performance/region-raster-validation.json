@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-18",
+  "build": "passed",
+  "targetedNodeChecks": 48,
+  "editingAndHistoryBrowserChecks": 12,
+  "qualityComparisons": 27,
+  "qualityMaxChannelDifference": 1,
+  "qualityMaxMeanDifference": 0.001599206349206349,
+  "qualityMinimumEdgeRatio": 1,
+  "earlierFullSuite": {
+    "tests": 380,
+    "passed": 346,
+    "skipped": 34,
+    "failed": 0,
+    "scope": "Intermediate renderer before source-layer refinement"
+  },
+  "knownPreexistingFailure": "Optional interactive-media-pipeline audio fixture waits for deprecated automatic metadata publication; the same timeout reproduced on unchanged main source. The production scene capture and media path passed.",
+  "physicalAcceptance": "Pending on the final bounded text-source implementation; earlier item-shell prototype was judged only slightly improved."
+}

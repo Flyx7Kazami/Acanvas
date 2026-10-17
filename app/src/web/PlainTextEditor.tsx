@@ -1,7 +1,9 @@
 import { useLayoutEffect, useRef, type KeyboardEvent } from 'react';
+import { useCanvasRasterSource } from './CanvasWorld';
 
 export function PlainTextEditor({ value, label, className, variant, placeholder, disabled, readOnly, onChange, onBlur, onFocus, onCompositionStart, onCompositionEnd }: { value: string; label: string; className: string; variant: 'note' | 'markdown'; placeholder?: string; disabled?: boolean; readOnly?: boolean; onChange: (value: string) => void; onBlur?: () => void; onFocus?: () => void; onCompositionStart?: () => void; onCompositionEnd?: () => void }) {
   const mirror = useRef<HTMLDivElement>(null);
+  const text = useRef<HTMLDivElement>(null), raster = useCanvasRasterSource(text);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const previousValue = useRef(value);
   const selection = useRef({ start: 0, end: 0, direction: 'none' as 'forward' | 'backward' | 'none' });
@@ -15,7 +17,7 @@ export function PlainTextEditor({ value, label, className, variant, placeholder,
     element.setSelectionRange(start, end, selection.current.direction);
   }, [value]);
   return <div className={`plain-text-field ${variant}`}>
-    <div ref={mirror} className="plain-text-mirror" aria-hidden="true">{value}</div>
+    <div ref={mirror} className="plain-text-mirror" aria-hidden="true"><div ref={raster}>{value}</div></div>
     <textarea ref={textarea} className={className} aria-label={label} placeholder={placeholder} value={value} disabled={disabled} readOnly={readOnly} spellCheck onChange={event => { rememberSelection(event.target); onChange(event.target.value); sync(event.target.scrollTop, event.target.scrollLeft); }} onSelect={event => rememberSelection(event.currentTarget)} onScroll={event => sync(event.currentTarget.scrollTop, event.currentTarget.scrollLeft)} onBlur={onBlur} onFocus={event => { rememberSelection(event.currentTarget); onFocus?.(); }} onCompositionStart={onCompositionStart} onCompositionEnd={onCompositionEnd} onKeyDown={(event: KeyboardEvent<HTMLTextAreaElement>) => { if (event.key === 'Escape') { event.preventDefault(); event.currentTarget.blur(); } }}/>
   </div>;
 }
