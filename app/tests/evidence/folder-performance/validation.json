@@ -1,0 +1,107 @@
+{
+  "date": "2026-10-18",
+  "build": "passed",
+  "checks": {
+    "folder": 14,
+    "editingHistory": 12,
+    "inputAndMedia": 6,
+    "mediaCapture": 2,
+    "fitInterruption": 1
+  },
+  "total": 35,
+  "quality": {
+    "comparisons": 36,
+    "dpr": 2,
+    "minimumEdgeRatio": 1,
+    "maximumMeanChannelDifference": 0.0023121693121693123,
+    "exactNoteComparisons": 12
+  },
+  "manual": {
+    "browser": "Codex in-app browser",
+    "objects": 500,
+    "folderMembers": 200,
+    "actions": [
+      "enter",
+      "expand onto parent",
+      "collapse"
+    ],
+    "parentZoomRestored": 0.35
+  },
+  "limits": [
+    "Performance fixture contains three small shared PNG/note/Markdown assets.",
+    "Entering and leaving a large folder retain mounting and rasterization cost."
+  ],
+  "releaseReview": {
+    "date": "2026-10-18",
+    "comparisonRevision": "eb51cd84b1ae4f5adc69214d7e0d7fad47bb528d",
+    "build": "passed",
+    "node": {
+      "initial": {
+        "tests": 379,
+        "passed": 330,
+        "failed": 13,
+        "skipped": 36
+      },
+      "reruns": {
+        "visibleCaptureGeometry": {
+          "tests": 3,
+          "passed": 3
+        },
+        "canonicalTemporaryPathHtmlBundles": {
+          "tests": 5,
+          "passed": 5
+        },
+        "canonicalTemporaryPathNativeProfiles": {
+          "tests": 12,
+          "passed": 12
+        },
+        "boundedReferenceGeometry": {
+          "tests": 1,
+          "passed": 1
+        }
+      },
+      "unresolvedFailures": 0
+    },
+    "browserHistoryAndCanvas": {
+      "tests": 19,
+      "passed": 19
+    },
+    "quality": {
+      "comparisons": 36,
+      "minimumEdgeRatio": 1,
+      "maximumMeanChannelDifference": 0.0018571428571428571,
+      "exactComparisons": 34,
+      "exactNoteComparisons": 12
+    },
+    "markdown": {
+      "activation": "pointer click or keyboard focus",
+      "release": "outside focus or Escape",
+      "sourceEditor": "same focus policy",
+      "modifierWheel": "canvas zoom",
+      "annotationFlow": "Done before Send"
+    },
+    "referenceGeometryComparison": {
+      "master": "passed",
+      "candidate": "passed"
+    },
+    "existingMarkdownAnnotationCheck": {
+      "master": "failed with incomplete capture after Escape",
+      "correctFlow": "complete capture with Done before Send"
+    },
+    "browserMarkdownAndMedia": {
+      "tests": 6,
+      "passed": 6,
+      "coverage": [
+        "hover pan",
+        "click activation",
+        "outside focus",
+        "keyboard focus",
+        "Escape from link and source",
+        "Ctrl/Meta zoom",
+        "Markdown resize and original-source reference",
+        "HTML wheel and pinch",
+        "audio timeline"
+      ]
+    }
+  }
+}

@@ -52,6 +52,8 @@ h1,h2,h3,p { margin: 0; }
 .canvas-world { position: absolute; inset: 0; transform-origin: 0 0; pointer-events: none; }
 .board-object { position: absolute; pointer-events: auto; border-radius: 0; outline: 1px solid color-mix(in srgb,var(--edge) 65%,transparent); box-shadow: var(--shadow); }
 .board-object.selected { outline: 2px solid var(--ink); }
+.object-placement { position:absolute; pointer-events:none; }
+.object-placement>.board-object { left:0; top:0; width:100%; height:100%; opacity:1; filter:none; transform:none; }
 .object-media { width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: var(--surface); content-visibility: auto; }
 .object-media:focus-within,.object-media[data-continuous] { content-visibility: visible; }
 .object-media>img,.object-media>video { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -553,11 +555,10 @@ details[open] summary svg { rotate: 180deg; }
 .group-frame-title[data-renaming]>.group-name-slot { pointer-events:auto; }
 .group-frame-select { position:absolute; inset:0; padding:0; background:none; border-radius:0; cursor:grab; }
 .group-frame-title[data-renaming]>.group-frame-select { display:none; }
-.board-object,.board-group { transition:filter 420ms cubic-bezier(.2,.8,.2,1),opacity 420ms cubic-bezier(.2,.8,.2,1); }
-.layout-transitioning .board-object,.layout-transitioning .board-group { transition:left 420ms cubic-bezier(.2,.8,.2,1),top 420ms cubic-bezier(.2,.8,.2,1),width 420ms cubic-bezier(.2,.8,.2,1),height 420ms cubic-bezier(.2,.8,.2,1),transform 420ms cubic-bezier(.2,.8,.2,1),filter 420ms cubic-bezier(.2,.8,.2,1),opacity 420ms cubic-bezier(.2,.8,.2,1); }
+.board-group { transition:filter 420ms cubic-bezier(.2,.8,.2,1),opacity 420ms cubic-bezier(.2,.8,.2,1); }
+.layout-transitioning .board-group { transition:left 420ms cubic-bezier(.2,.8,.2,1),top 420ms cubic-bezier(.2,.8,.2,1),width 420ms cubic-bezier(.2,.8,.2,1),height 420ms cubic-bezier(.2,.8,.2,1),transform 420ms cubic-bezier(.2,.8,.2,1),filter 420ms cubic-bezier(.2,.8,.2,1),opacity 420ms cubic-bezier(.2,.8,.2,1); }
 .board-object[data-moving],.board-group[data-moving] { transition:none; animation:none; }
 .group-member-departing { opacity:0; transform-origin:0 0; pointer-events:none; }
-.group-member-arriving { animation:group-arrive 420ms cubic-bezier(.2,.8,.2,1) both; }
 .layout-transitioning[data-transition-kind='collapse'] .group-folder[data-transition-group],.layout-transitioning[data-transition-kind='leave'] .group-folder[data-transition-group] { animation:group-arrive 420ms cubic-bezier(.2,.8,.2,1) both; }
 .group-transition-ghost { filter:none!important; animation:group-depart 420ms cubic-bezier(.2,.8,.2,1) both; pointer-events:none!important; }
 @keyframes group-arrive { from { opacity:0; transform:translateY(12px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }

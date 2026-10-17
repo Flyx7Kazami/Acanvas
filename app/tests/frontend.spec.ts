@@ -293,11 +293,12 @@ test('drag snapping preserves its preview at release, group offsets and bypass c
   await expect(page.locator('.board-object')).toHaveCount(3);
   const initial = await app.state(), ids = initial.objects.map(object => object.id);
   const place = async (zoom = 1, group = false) => {
+    await page.goto('about:blank');
     const state = await app.state();
     const positions = group ? [{ x: 200, y: 200, width: 80, height: 80 }, { x: 350, y: 250, width: 100, height: 60 }, { x: 600, y: 420, width: 120, height: 80 }] : [{ x: 250, y: 250, width: 100, height: 80 }, { x: 450, y: 450, width: 80, height: 60 }, { x: 900, y: 700, width: 60, height: 60 }];
     await app.call('/api/board/operations', 'POST', { sessionId: state.session.id, operations: state.objects.map((object, index) => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: positions[index] })) });
     await app.call(`/api/sessions/${state.session.id}/view`, 'PUT', { x: zoom === 2 ? -200 : 0, y: zoom === 2 ? -250 : 0, zoom, selectedObjectIds: group ? ids.slice(0, 2) : [ids[0]] });
-    await page.reload(); await expect(page.locator('.board-object')).toHaveCount(3); await expect(page.getByRole('button', { name: 'Select files', exact: true })).toBeEnabled();
+    await page.goto(`${app.server.url}/?session=${state.session.id}`); await expect(page.locator('.board-object')).toHaveCount(3); await expect(page.getByRole('button', { name: 'Select files', exact: true })).toBeEnabled();
   };
   const object = () => page.locator(`[data-object-id="${ids[0]}"]`);
   const begin = async () => { const rect = (await object().boundingBox())!; await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2); await page.mouse.down(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }; };
@@ -306,7 +307,7 @@ test('drag snapping preserves its preview at release, group offsets and bypass c
     const start = await begin(); await page.mouse.move(start.x + 97 * zoom, start.y + 120 * zoom, { steps: 4 });
     await expect(page.locator('[data-snap-axis=x]')).toHaveAttribute('x1', '450');
     expect(await page.locator('.alignment-guides').evaluate(element => getComputedStyle(element).pointerEvents)).toBe('none');
-    await expect.poll(async () => object().evaluate(element => Number.parseFloat((element as HTMLElement).style.left))).toBe(350);
+    await expect.poll(async () => object().evaluate(element => { const placement = element.closest<HTMLElement>('[data-group-presentation]')!; return Number.parseFloat(placement.style.left) + new DOMMatrix(getComputedStyle(placement).transform).e; })).toBe(350);
     const preview = (await object().boundingBox())!; await page.mouse.up();
     await expect(object()).toHaveAttribute('data-object-version', String(before.version + 1));
     const saved = (await app.state()).objects[0]; expect(saved.x).toBe(350); expect(saved.y).toBe(370);
@@ -315,7 +316,7 @@ test('drag snapping preserves its preview at release, group offsets and bypass c
   }
   await place();
   let start = await begin(); await page.mouse.move(start.x + 97, start.y + 120); await expect(page.locator('.alignment-guides')).toBeVisible();
-  await page.keyboard.down('Alt'); await expect(page.locator('.alignment-guides')).toHaveCount(0); expect(await object().evaluate(element => Number.parseFloat((element as HTMLElement).style.left))).toBe(347);
+  await page.keyboard.down('Alt'); await expect(page.locator('.alignment-guides')).toHaveCount(0); expect(await object().evaluate(element => { const placement = element.closest<HTMLElement>('[data-group-presentation]')!; return Number.parseFloat(placement.style.left) + new DOMMatrix(getComputedStyle(placement).transform).e; })).toBe(347);
   await page.mouse.up(); await page.keyboard.up('Alt'); await expect.poll(async () => (await app.state()).objects[0].x).toBe(347);
   await expect(page.getByRole('button', { name: 'Snap to objects', exact: true })).toHaveCount(0);
   await place(1, true); const groupBefore = await app.state(); start = await begin(); await page.mouse.move(start.x + 147, start.y + 40, { steps: 4 }); await expect(page.locator('[data-snap-axis=x]')).toHaveAttribute('x1', '600');
@@ -1748,7 +1749,7 @@ test('fit all files saves its destination and the final camera after interruptio
   const initial = await app.state(), sessionId = initial.session.id;
   await app.call('/api/board/operations', 'POST', { sessionId, operations: [{ type: 'update', objectId: initial.objects[0].id, expectedVersion: initial.objects[0].version, changes: { x: 2400, y: -900, width: 1000, height: 600 } }] });
   const start = { x: 80, y: 120, zoom: .5, selectedObjectIds: [initial.objects[0].id] };
-  const reset = async () => { await app.call(`/api/sessions/${sessionId}/view`, 'PUT', start); await page.reload(); await expect(page.locator('.canvas-world')).toHaveCSS('transform', 'matrix(0.5, 0, 0, 0.5, 80, 120)'); };
+  const reset = async () => { await page.goto('about:blank'); await app.call(`/api/sessions/${sessionId}/view`, 'PUT', start); await page.goto(`${app.server.url}/?session=${sessionId}`); await expect(page.locator('.board-object')).toHaveCount(1); await expect(page.locator('.canvas-world')).toHaveCSS('transform', 'matrix(0.5, 0, 0, 0.5, 80, 120)'); };
   await reset();
   const requests: any[] = []; page.on('request', request => { if (request.method() === 'PUT' && request.url().endsWith('/view')) requests.push(request.postDataJSON()); });
   const expected = { x: -3166, y: 1304, zoom: 1.34, selectedObjectIds: start.selectedObjectIds };
@@ -1855,8 +1856,8 @@ test('four square file corners preserve opposite anchors and commit snapped resi
   const place = async (zoom = 1) => { const state = await app.state(); await app.call('/api/board/operations', 'POST', { sessionId: state.session.id, operations: state.objects.map(object => ({ type: 'update', objectId: object.id, expectedVersion: object.version, changes: object.id === id ? { x: 400, y: 200, width: 200, height: 100 } : { x: 700, y: 350, width: 80, height: 80 } })) }); await app.call(`/api/sessions/${state.session.id}/view`, 'PUT', { x: zoom === 2 ? -500 : 0, y: zoom === 2 ? -160 : 0, zoom, selectedObjectIds: [id] }); await page.reload(); await expect(page.locator(`[data-object-id="${id}"] .resize-handle`)).toHaveCount(4); };
   await place(); const object = page.locator(`[data-object-id="${id}"]`); expect(await object.evaluate(element => getComputedStyle(element).borderRadius)).toBe('0px');
   for (const corner of ['nw', 'ne', 'sw', 'se']) { await place(); const box = (await object.locator(`[data-resize-corner="${corner}"]`).boundingBox())!; const signX = corner.endsWith('w') ? -1 : 1, signY = corner.startsWith('n') ? -1 : 1; await page.keyboard.down('Alt'); await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down(); await page.mouse.move(box.x + box.width / 2 + signX * 40, box.y + box.height / 2 + signY * 20, { steps: 4 }); await page.mouse.up(); await page.keyboard.up('Alt'); await expect.poll(async () => (await app.state()).objects.find(value => value.id === id)!.width).toBeCloseTo(240, 3); const result = (await app.state()).objects.find(value => value.id === id)!; expect(result.width / result.height).toBe(2); expect(corner.endsWith('w') ? result.x + result.width : result.x).toBe(corner.endsWith('w') ? 600 : 400); expect(corner.startsWith('n') ? result.y + result.height : result.y).toBe(corner.startsWith('n') ? 300 : 200); }
-  for (const zoom of [1, 2]) { await place(zoom); const handle = (await object.locator('[data-resize-corner="se"]').boundingBox())!, start = { x: handle.x + handle.width / 2, y: handle.y + handle.height / 2 }; await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(start.x + 97 * zoom, start.y + 48.5 * zoom, { steps: 4 }); await expect(page.locator('[data-snap-axis="x"]')).toHaveAttribute('x1', '700'); await expect(page.locator('[data-snap-axis="y"]')).toHaveAttribute('y1', '350'); const preview = await object.evaluate(element => ({ width: parseFloat((element as HTMLElement).style.width), height: parseFloat((element as HTMLElement).style.height) })); expect(preview).toEqual({ width: 300, height: 150 }); await page.screenshot({ path: info.outputPath(`resize-snap-${zoom}x.png`) }); await page.mouse.up(); await expect.poll(async () => (await app.state()).objects.find(value => value.id === id)!.width).toBe(300); }
-  await page.reload(); await expect.poll(async () => object.evaluate(element => parseFloat((element as HTMLElement).style.width))).toBe(300); expect((await app.state()).objects.find(value => value.id === targetId)!.width).toBe(80);
+  for (const zoom of [1, 2]) { await place(zoom); const handle = (await object.locator('[data-resize-corner="se"]').boundingBox())!, start = { x: handle.x + handle.width / 2, y: handle.y + handle.height / 2 }; await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(start.x + 97 * zoom, start.y + 48.5 * zoom, { steps: 4 }); await expect(page.locator('[data-snap-axis="x"]')).toHaveAttribute('x1', '700'); await expect(page.locator('[data-snap-axis="y"]')).toHaveAttribute('y1', '350'); const preview = await object.evaluate(element => ({ width: (element as HTMLElement).clientWidth, height: (element as HTMLElement).clientHeight })); expect(preview).toEqual({ width: 300, height: 150 }); await page.screenshot({ path: info.outputPath(`resize-snap-${zoom}x.png`) }); await page.mouse.up(); await expect.poll(async () => (await app.state()).objects.find(value => value.id === id)!.width).toBe(300); }
+  await page.reload(); await expect.poll(async () => object.evaluate(element => (element as HTMLElement).clientWidth)).toBe(300); expect((await app.state()).objects.find(value => value.id === targetId)!.width).toBe(80);
 });
 
 test('explicit draft conflict choices adopt the current editing scope in both directions', async ({ page, app }) => {

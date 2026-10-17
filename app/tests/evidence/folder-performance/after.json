@@ -1,0 +1,268 @@
+[
+  {
+    "round": 0,
+    "action": "collapse",
+    "members": 200,
+    "LayoutDuration": 25.098000000000003,
+    "RecalcStyleDuration": 47.757999999999996,
+    "ScriptDuration": 127.62700000000002,
+    "TaskDuration": 562.831,
+    "frameCount": 74,
+    "p95": 33.299999999999955,
+    "longest": 83.19999999999982,
+    "over50": 2,
+    "longTasks": [],
+    "firstMutation": 104,
+    "peakItems": 500,
+    "finalItems": 300,
+    "loading": 0
+  },
+  {
+    "round": 0,
+    "action": "enter",
+    "members": 200,
+    "LayoutDuration": 23.31799999999999,
+    "RecalcStyleDuration": 41.27900000000001,
+    "ScriptDuration": 99.58500000000004,
+    "TaskDuration": 461.8230000000001,
+    "frameCount": 43,
+    "p95": 83.39999999999964,
+    "longest": 100.09999999999991,
+    "over50": 6,
+    "longTasks": [
+      {
+        "start": 24.900000005960464,
+        "duration": 64
+      },
+      {
+        "start": 89.7999999821186,
+        "duration": 52
+      }
+    ],
+    "firstMutation": 89,
+    "peakItems": 500,
+    "finalItems": 500,
+    "loading": 0
+  },
+  {
+    "round": 0,
+    "action": "leave",
+    "members": 200,
+    "LayoutDuration": 8.094000000000005,
+    "RecalcStyleDuration": 47.735,
+    "ScriptDuration": 85.38800000000002,
+    "TaskDuration": 449.41200000000015,
+    "frameCount": 58,
+    "p95": 66.59999999999991,
+    "longest": 83.30000000000018,
+    "over50": 3,
+    "longTasks": [
+      {
+        "start": 43.80000001192093,
+        "duration": 54
+      },
+      {
+        "start": 577,
+        "duration": 53
+      }
+    ],
+    "firstMutation": 91.30000001192093,
+    "peakItems": 500,
+    "finalItems": 300,
+    "loading": 0
+  },
+  {
+    "round": 0,
+    "action": "expand",
+    "members": 200,
+    "LayoutDuration": 32.42599999999998,
+    "RecalcStyleDuration": 37.61800000000001,
+    "ScriptDuration": 117.87899999999996,
+    "TaskDuration": 583.8680000000003,
+    "frameCount": 77,
+    "p95": 33.30000000000018,
+    "longest": 66.69999999999982,
+    "over50": 1,
+    "longTasks": [],
+    "firstMutation": 93.7000000178814,
+    "peakItems": 500,
+    "finalItems": 500,
+    "loading": 0
+  },
+  {
+    "round": 1,
+    "action": "collapse",
+    "members": 200,
+    "LayoutDuration": 25.986000000000008,
+    "RecalcStyleDuration": 34.509000000000015,
+    "ScriptDuration": 93.59099999999998,
+    "TaskDuration": 475.1240000000001,
+    "frameCount": 77,
+    "p95": 16.800000000000182,
+    "longest": 50,
+    "over50": 0,
+    "longTasks": [],
+    "firstMutation": 77.2999999821186,
+    "peakItems": 500,
+    "finalItems": 300,
+    "loading": 0
+  },
+  {
+    "round": 1,
+    "action": "enter",
+    "members": 200,
+    "LayoutDuration": 22.24699999999999,
+    "RecalcStyleDuration": 42.346,
+    "ScriptDuration": 92.74700000000003,
+    "TaskDuration": 476.08000000000004,
+    "frameCount": 47,
+    "p95": 66.70000000000073,
+    "longest": 100,
+    "over50": 4,
+    "longTasks": [
+      {
+        "start": 25.400000005960464,
+        "duration": 60
+      },
+      {
+        "start": 86.2000000178814,
+        "duration": 58
+      }
+    ],
+    "firstMutation": 85.5,
+    "peakItems": 500,
+    "finalItems": 500,
+    "loading": 0
+  },
+  {
+    "round": 1,
+    "action": "leave",
+    "members": 200,
+    "LayoutDuration": 8.061000000000012,
+    "RecalcStyleDuration": 45.38100000000001,
+    "ScriptDuration": 80.76700000000004,
+    "TaskDuration": 443.009,
+    "frameCount": 57,
+    "p95": 66.70000000000073,
+    "longest": 83.29999999999927,
+    "over50": 4,
+    "longTasks": [
+      {
+        "start": 40.69999998807907,
+        "duration": 54
+      },
+      {
+        "start": 569.2999999821186,
+        "duration": 51
+      }
+    ],
+    "firstMutation": 87.7999999821186,
+    "peakItems": 500,
+    "finalItems": 300,
+    "loading": 0
+  },
+  {
+    "round": 1,
+    "action": "expand",
+    "members": 200,
+    "LayoutDuration": 31.78600000000001,
+    "RecalcStyleDuration": 37.11300000000001,
+    "ScriptDuration": 105.33800000000015,
+    "TaskDuration": 565.5660000000005,
+    "frameCount": 74,
+    "p95": 33.30000000000109,
+    "longest": 66.70000000000073,
+    "over50": 1,
+    "longTasks": [],
+    "firstMutation": 95.09999999403954,
+    "peakItems": 500,
+    "finalItems": 500,
+    "loading": 0
+  },
+  {
+    "round": 2,
+    "action": "collapse",
+    "members": 200,
+    "LayoutDuration": 25.346000000000007,
+    "RecalcStyleDuration": 33.912,
+    "ScriptDuration": 90.82400000000001,
+    "TaskDuration": 486.86399999999975,
+    "frameCount": 76,
+    "p95": 16.80000000000109,
+    "longest": 66.60000000000036,
+    "over50": 1,
+    "longTasks": [],
+    "firstMutation": 73.7999999821186,
+    "peakItems": 500,
+    "finalItems": 300,
+    "loading": 0
+  },
+  {
+    "round": 2,
+    "action": "enter",
+    "members": 200,
+    "LayoutDuration": 21.70299999999997,
+    "RecalcStyleDuration": 41.441,
+    "ScriptDuration": 87.84400000000004,
+    "TaskDuration": 454.55999999999983,
+    "frameCount": 50,
+    "p95": 66.69999999999891,
+    "longest": 83.29999999999927,
+    "over50": 3,
+    "longTasks": [
+      {
+        "start": 24.599999994039536,
+        "duration": 55
+      }
+    ],
+    "firstMutation": 78.30000001192093,
+    "peakItems": 500,
+    "finalItems": 500,
+    "loading": 0
+  },
+  {
+    "round": 2,
+    "action": "leave",
+    "members": 200,
+    "LayoutDuration": 8.29000000000002,
+    "RecalcStyleDuration": 47.870999999999995,
+    "ScriptDuration": 81.10700000000004,
+    "TaskDuration": 463.5009999999999,
+    "frameCount": 56,
+    "p95": 66.60000000000036,
+    "longest": 83.39999999999964,
+    "over50": 3,
+    "longTasks": [
+      {
+        "start": 46.5,
+        "duration": 55
+      },
+      {
+        "start": 625.5999999940395,
+        "duration": 54
+      }
+    ],
+    "firstMutation": 94.30000001192093,
+    "peakItems": 500,
+    "finalItems": 300,
+    "loading": 0
+  },
+  {
+    "round": 2,
+    "action": "expand",
+    "members": 200,
+    "LayoutDuration": 30.967000000000024,
+    "RecalcStyleDuration": 39.146000000000015,
+    "ScriptDuration": 111.20299999999995,
+    "TaskDuration": 608.7890000000007,
+    "frameCount": 81,
+    "p95": 16.799999999999272,
+    "longest": 66.60000000000218,
+    "over50": 1,
+    "longTasks": [],
+    "firstMutation": 145.5,
+    "peakItems": 500,
+    "finalItems": 500,
+    "loading": 0
+  }
+]

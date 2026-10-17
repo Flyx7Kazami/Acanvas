@@ -164,6 +164,49 @@ test('item groups use real selection, folders, navigation, editing and current-l
 
 });
 
+test('expanding an open folder restores the parent camera while its layout save is pending', { timeout: 60_000 }, async t => {
+  const f = await fixture(t), { page } = f;
+  const image = await f.picture('Parent camera', '#315AD9'), a = await f.add(image, 240, 220), b = await f.add(image, 480, 220);
+  await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'group.create', group: { id: 'parent-camera', name: 'Parent camera', objectIds: [a.id, b.id] }, expectedVersions: { [a.id]: a.version, [b.id]: b.version } }] });
+  await page.getByRole('button', { name: 'Select group Parent camera', exact: true }).click();
+  await page.getByRole('button', { name: 'Store in folder', exact: true }).click();
+  await expect(page.locator('.board-object')).toHaveCount(0);
+  const read = () => page.locator('.canvas-world').evaluate(element => { const m = new DOMMatrix(getComputedStyle(element).transform); return { x: m.e, y: m.f, zoom: m.a }; });
+  const parent = await read();
+  await page.getByRole('button', { name: 'Open folder Parent camera', exact: true }).click();
+  await expect.poll(async () => (await read()).zoom).toBe(1.5);
+  let release!: () => void, reached!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; }), pending = new Promise<void>(resolve => { reached = resolve; });
+  await page.route('**/api/board/operations', async route => { const response = await route.fetch(); reached(); await gate; await route.fulfill({ response }); });
+  try {
+    await page.getByRole('button', { name: 'Expand on board', exact: true }).click(); await pending;
+    await expect(page.getByRole('button', { name: 'Select files', exact: true })).toBeDisabled();
+    await expect.poll(read).toEqual(parent);
+  } finally { release(); }
+  await expect(page.getByRole('button', { name: 'Select files', exact: true })).toBeEnabled();
+  await page.reload(); await expect.poll(read).toEqual(parent);
+});
+
+test('item placement finishes live motion when reduced motion is selected', { timeout: 60_000 }, async t => {
+  const f = await fixture(t), { page } = f;
+  const image = await f.picture('Motion source', '#315AD9');
+  const a = await f.add(image, 240, 220), b = await f.add(image, 480, 220);
+  await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'group.create', group: { id: 'motion-preference', name: 'Motion preference', objectIds: [a.id, b.id] }, expectedVersions: { [a.id]: a.version, [b.id]: b.version } }] });
+  await page.getByRole('button', { name: 'Select group Motion preference', exact: true }).click();
+  await page.getByRole('button', { name: 'Store in folder', exact: true }).click();
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('[data-group-presentation]')).some(node => node.getAnimations().some(animation => animation.playState === 'running')));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect.poll(() => page.locator('[data-group-presentation]').evaluateAll(nodes => nodes.flatMap(node => node.getAnimations()).filter(animation => animation.playState === 'running').length), { intervals: [16], timeout: 100 }).toBe(0);
+  await expect(page.locator('.board-object')).toHaveCount(0);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.getByRole('button', { name: 'Select group Motion preference', exact: true }).click();
+  await page.getByRole('button', { name: 'Expand on board', exact: true }).click();
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('[data-group-presentation]')).some(node => node.getAnimations().some(animation => animation.playState === 'running')));
+  await expect(page.locator('.canvas-world')).not.toHaveAttribute('data-transition-kind', /.+/);
+  assert.equal(await page.locator('[data-group-presentation]').evaluateAll(nodes => nodes.flatMap(node => node.getAnimations()).length), 0);
+  assert.equal(f.state().objects.length, 2);
+});
+
 test('layer projection excludes hidden snap targets and keeps asynchronous import ownership', { timeout: 90_000 }, async t => {
   const f = await fixture(t), { page } = f;
   const image = await f.picture('Material', '#315AD9');
@@ -232,7 +275,7 @@ test('layer projection excludes hidden snap targets and keeps asynchronous impor
   const placeFree = async (x: number) => {
     const object = f.state().objects.find(object => object.id === free.id)!;
     await f.call('/api/board/operations', { sessionId: f.session.id, operations: [{ type: 'update', objectId: object.id, expectedVersion: object.version, changes: { x, y: 350 } }] });
-    await expect(page.locator(`[data-object-id="${free.id}"]`)).toHaveCSS('left', `${x}px`);
+    await expect.poll(() => page.locator(`[data-object-id="${free.id}"]`).evaluate(element => { const placement = element.closest<HTMLElement>('[data-group-presentation]')!; return Number.parseFloat(placement.style.left) + new DOMMatrix(getComputedStyle(placement).transform).e; })).toBe(x);
   };
   await placeFree(500);
   const sharedCaption = (await page.locator(`[data-object-id="${free.id}"] .object-caption`).boundingBox())!;
@@ -409,9 +452,9 @@ test('mid-collapse Done copies scaled articles and pointer gestures take over gr
   await page.locator('.annotation-content').first().click(); await expect(page.getByRole('textbox', { name: 'Annotation text', exact: true })).toBeVisible();
   await page.waitForTimeout(100);
   const frozen = await page.evaluate(objectId => {
-    document.querySelectorAll<HTMLElement>('.board-object,.board-group').forEach(element => element.getAnimations().forEach(animation => animation.pause()));
+    document.querySelectorAll<HTMLElement>('[data-group-presentation],.board-group').forEach(element => element.getAnimations().forEach(animation => animation.pause()));
     const object = document.querySelector<HTMLElement>(`[data-object-id="${objectId}"]`)!, bounds = object.getBoundingClientRect(), caption = object.querySelector('.object-caption')!.getBoundingClientRect();
-    const scale = new DOMMatrix(getComputedStyle(object).transform).a;
+    const scale = new DOMMatrix(getComputedStyle(object.closest<HTMLElement>('[data-group-presentation]')!).transform).a;
     return { scale, bounds: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }, caption: { x: caption.x, y: caption.y, width: caption.width, height: caption.height } };
   }, a.id);
   assert(frozen.scale > .22 && frozen.scale < 1, `Expected an intermediate compositor scale, got ${frozen.scale}`);
@@ -602,7 +645,7 @@ test('folder content and group actions share persistent history with the vertica
   assert.equal(f.state().objects.find(object => object.id === b.id)!.groupId, groupId);
   const outside = page.locator('.board-object.group-exterior');
   await expect(outside).toHaveCount(1); assert.equal(await outside.getAttribute('inert'), '');
-  assert.equal(await outside.evaluate(element => getComputedStyle(element).filter), 'blur(12px)');
+  assert.equal(await outside.evaluate(element => getComputedStyle(element.closest<HTMLElement>('[data-group-presentation]')!).filter), 'blur(12px)');
   await page.reload(); await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   if (!await page.locator('.group-navigation').count()) await page.getByRole('button', { name: 'Open folder Group 1', exact: true }).click();
