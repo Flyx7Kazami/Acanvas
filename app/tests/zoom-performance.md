@@ -2,34 +2,34 @@
 
 日期：2026-10-17。分支：`codex/zoom-many-items`。原版：`51ec011`。
 
-## 2026-10-18：正文绘制层与相机合成
+## 2026-10-18：相机合成、共享内容层与文字缓存
 
 分支：`codex/canvas-raster-regions`。对照主线：`1aab270`。
 
-源码对照读取了 tldraw 的 [DefaultCanvas](https://github.com/tldraw/tldraw/blob/dd116535b138520d560c9881ad095ab782dc74c7/packages/editor/src/lib/components/default-components/DefaultCanvas.tsx)、[Shape](https://github.com/tldraw/tldraw/blob/dd116535b138520d560c9881ad095ab782dc74c7/packages/editor/src/lib/components/Shape.tsx)、[集中裁剪](https://github.com/tldraw/tldraw/blob/dd116535b138520d560c9881ad095ab782dc74c7/packages/editor/src/lib/hooks/useShapeCulling.tsx)和[图像资源调度](https://github.com/tldraw/tldraw/blob/dd116535b138520d560c9881ad095ab782dc74c7/packages/tldraw/src/lib/shapes/shared/useImageOrVideoAsset.ts)。相机更新、内容绘制和资源调度分别管理；本实现按 Acanvas 的原生 DOM 交互方式落实这一分层。
+用户在稳定相机合成的版本上实测反馈“好多了”。六段触控板记录去掉末尾空闲采样后，帧间隔 P95 为 9.2–16.7 ms；仍有少量孤立长帧，最长 108.3 ms。随后完成共享内容层与独立文字视口的资源限制，并用固定场景完成下列回归。真实触控板记录与自动化对照分别保存，避免把不同手势当成相同输入。
 
-真实画布包含 82 个对象、8 个组，根画布挂载 55 个对象，其中有 32 个 Markdown 视口。Chrome 轨迹显示主线程长时间停在 `LayerTreeHost::WaitForCommitCompletion`。隔离文字区域后，该累计等待从约 978 ms 降到 128 ms；去除阴影仍约 997 ms。结果把重点指向文字的重复栅格化。隔离实验仅用于定位，交付实现保留全部文字、图片、阴影和动态媒体。
+源码对照读取了 tldraw 的 [DefaultCanvas](https://github.com/tldraw/tldraw/blob/dd116535b138520d560c9881ad095ab782dc74c7/packages/editor/src/lib/components/default-components/DefaultCanvas.tsx)、[Shape](https://github.com/tldraw/tldraw/blob/dd116535b138520d560c9881ad095ab782dc74c7/packages/editor/src/lib/components/Shape.tsx)、[集中裁剪](https://github.com/tldraw/tldraw/blob/dd116535b138520d560c9881ad095ab782dc74c7/packages/editor/src/lib/hooks/useShapeCulling.tsx)和[图像资源调度](https://github.com/tldraw/tldraw/blob/dd116535b138520d560c9881ad095ab782dc74c7/packages/tldraw/src/lib/shapes/shared/useImageOrVideoAsset.ts)。Acanvas 分别管理相机合成、内容绘制和资源生命周期，继续使用原生 DOM、滚动、输入、选区、媒体与截图路径。
 
-正文和文字编辑器的镜像内容注册为独立绘制源，原生滚动容器、输入框和选区保持各自生命周期。相机复用父层合成；可见且布局稳定的文字视口使用最多 32 个独立缓存，优先较大的可见区域。已有缓存跨输入帧复用；放大时提前分批更新，并保持 25% 的放大采样范围。缩小时复用已有细节，过采样限制为显示尺度的 4 倍。转为平移、真正结束手势或进入现有操作/截图边界时恢复原生绘制。空的缩放输入和到达缩放边界的输入保留精确的相机坐标。
+相机合成层贯穿连续缩放，状态属性在手势边界切换。全部对象与控件保留在一个共享内容层内，维持既有堆叠顺序。可见且布局稳定的文字内容使用最多 32 个独立视口和正文缓存，优先较大的可见区域。正文按倍率分批刷新；平移、手势结束和现有操作边界恢复原生绘制。输入框与选择控件继续使用原有节点。
 
-同一临时副本、822 × 786、DPR 2、60 步的 20% → 5% → 20% 录制结果：
+真实画布包含 82 个对象、8 个组，根画布挂载 55 个对象，其中有 32 个 Markdown 视口。源项目只读，临时副本保留素材、HTML bundle、对象 ID、版本、顺序、分组、几何和会话视图。Chrome 轨迹的主要等待位于 `LayerTreeHost::WaitForCommitCompletion`。
 
-| 指标 | 原版 | 正文缓存 |
+同一副本、822 × 786、DPR 2、60 步的 20% → 5% → 20% 录制结果：
+
+| 指标 | 主线 | 当前实现，两轮 |
 | --- | ---: | ---: |
-| GPU 提交等待总计 | 977.9 ms | 336.2 ms |
-| 最长单次提交等待 | 97.3 ms | 43.4 ms |
-| 帧间隔 P95 | 100 ms | 50 ms |
-| 超过 50 ms 的帧 | 15 | 2 |
+| 合成提交等待总计 | 1166.9 ms | 131.5 / 109.8 ms |
+| 最长单次提交等待 | 109.9 ms | 85.7 / 82.0 ms |
+| 帧间隔 P95 | 116.6 ms | 33.3 / 50.1 ms |
+| 超过 50 ms 的帧 | 14 | 2 / 3 |
 
-该轨迹来自独立 Chrome 测试进程，录制有额外开销。长帧仍然存在，固定路径结果与真实触控板体感分别验收。源项目只读，副本保留素材、HTML bundle、对象 ID、版本、顺序、分组、几何和会话视图。
+轨迹录制有额外开销，长帧仍然存在。500-item 两轮对照中，总任务时间中位数由 4022 ms 变为 2723 ms；P95 由 33.3–33.4 ms 变为 16.8–33.3 ms。当前实现两轮均记录到 180 次输入、180 次呈现更新和零主线程长任务。
 
-500-item 两轮对照中，总任务时间中位数由 2641 ms 变为 2551 ms，帧间隔 P95 的两轮结果由 33.3–33.4 ms 变为 16.8–33.3 ms。200 成员文件夹的两轮对照覆盖折叠、进入、返回和展开；多数指标维持原范围，首次进入仍可能出现长帧。完整数据见 [region-raster-performance.json](evidence/zoom-performance/region-raster-performance.json)。
+200 成员文件夹的两轮对照覆盖折叠、进入、返回和展开。进入的 P95 为 100 / 66.6 ms，主线为 83.3 / 83.3 ms；返回为 50 / 50.1 ms，主线为 66.6 / 66.7 ms。折叠与展开仍有轮次波动，保留大文件夹动画存在长帧的边界。完整数据见 [region-raster-performance.json](evidence/zoom-performance/region-raster-performance.json)。
 
-画质程序分别比较静止的 5%–400% 视图，以及缩放后持续平移的 60%、120%、350% 视图。图像、笔记和 Markdown 共 27 组；结果见 [region-raster-quality.json](evidence/zoom-performance/region-raster-quality.json)。
+构建和类型检查通过。50 项相机、几何、原生手势、文件夹与生产截图检查，以及 12 项编辑和历史浏览器检查通过；其中包含重叠卡片缩放手柄的实际拖拽。静止 5%–400%、持续平移、持续缩放及文件夹缩放共 39 组画质比较通过，最大平均通道差为 0.00154/255，最小边缘对比度比值约 0.999995。画质与验证摘要见 [region-raster-quality.json](evidence/zoom-performance/region-raster-quality.json) 和 [region-raster-validation.json](evidence/zoom-performance/region-raster-validation.json)。
 
-最终代码的构建、类型检查、48 项相机/几何/原生手势/文件夹/生产截图检查及 12 项编辑与历史浏览器检查通过。27 组画质比较的最大单通道差异为 1/255，全部达到原生清晰度比较要求。一次旧的可选音频测试在未修改主线同样超时；本次生产截图与媒体路径通过。验证摘要见 [region-raster-validation.json](evidence/zoom-performance/region-raster-validation.json)。
-
-诊断复制工具支持真实分组和 HTML bundle，并提供 `Zoom out 4x` / `60` 步的低倍率总览路径。目标限制在产品的 5%–400% 范围内。
+画质复测分别使用 `MOTION=scale`、`MOTION=1`，以及 `FOLDER=closed MOTION=scale` 运行 `app/tests/camera-quality.mjs`；`ORIGINAL_WEB_ROOT` 指向对照构建。文件夹颜色在测试夹具中明确指定，确保比较对象一致。
 
 ## 提交前全分支审查
 

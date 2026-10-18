@@ -45,5 +45,5 @@ export function CanvasWorld({ camera, transition, children }: { camera: CanvasCa
     window.addEventListener('blur', settle); window.addEventListener('pagehide', settle); window.addEventListener('resize', settle);
     return () => { detach(); resize.disconnect(); window.removeEventListener('blur', settle); window.removeEventListener('pagehide', settle); window.removeEventListener('resize', settle); };
   }, [camera, regions]);
-  return <RasterContext.Provider value={regions}><div ref={element} className={`canvas-world${transition ? ' layout-transitioning' : ''}`} data-transition-kind={transition}>{children}</div></RasterContext.Provider>;
+  return <RasterContext.Provider value={regions}><div ref={element} className={`canvas-world${transition ? ' layout-transitioning' : ''}`} data-transition-kind={transition}><div className="canvas-content-layer">{children}</div></div></RasterContext.Provider>;
 }

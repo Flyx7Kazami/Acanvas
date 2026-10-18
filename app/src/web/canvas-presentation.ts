@@ -16,25 +16,27 @@ export class CanvasRasterRegions {
   private scaling = false;
   private rasterFrame = 0;
   private worldRelease = 0;
-  private worldZoom: number;
-  constructor(initial: CameraFrame, private clock: FrameClock = browserFrames) { this.frame = initial; this.worldZoom = initial.view.zoom; }
+  constructor(initial: CameraFrame, private clock: FrameClock = browserFrames) { this.frame = initial; }
   connect(world: HTMLElement) { this.world = world; }
   private schedule() { if (!this.rasterFrame) this.rasterFrame = this.clock.requestFrame(this.updateRasters); }
 
   register(id: string, node: HTMLElement, bounds: Rect, nativeContent: boolean) {
     const region: Region = { id, node, bounds, nativeContent, zoom: this.frame.view.zoom, releasing: 0, retained: false, admitted: false };
     this.regions.set(id, region);
+    node.dataset.cameraRegion = 'false';
     for (const source of this.sources.get(id) ?? []) source.dataset.cameraRaster = 'false';
+    this.schedule();
     return {
       update: (bounds: Rect, nativeContent: boolean) => {
         if (this.regions.get(id) !== region) return;
+        if (nativeContent !== region.nativeContent || bounds.x !== region.bounds.x || bounds.y !== region.bounds.y || bounds.width !== region.bounds.width || bounds.height !== region.bounds.height) this.schedule();
         if (nativeContent || bounds.width !== region.bounds.width || bounds.height !== region.bounds.height) {
           this.native(region); if (region.releasing) this.schedule();
         }
         region.bounds = bounds; region.nativeContent = nativeContent;
         if (nativeContent) this.admit(region, false);
       },
-      dispose: () => { if (this.regions.get(id) === region) { this.admit(region, false); this.native(region); this.regions.delete(id); } },
+      dispose: () => { if (this.regions.get(id) === region) { this.admit(region, false); this.native(region); delete node.dataset.cameraRegion; this.regions.delete(id); } },
     };
   }
 
@@ -43,7 +45,7 @@ export class CanvasRasterRegions {
     if (!sources) { sources = new Set(); this.sources.set(id, sources); }
     sources.add(node); node.dataset.cameraSource = 'true'; node.dataset.cameraRaster = String(this.regions.get(id)?.admitted ?? false);
     const region = this.regions.get(id);
-    if (region) { this.native(region); if (region.releasing || this.scaling) this.schedule(); }
+    if (region) { this.native(region); this.schedule(); }
     return () => {
       sources.delete(node);
       if (this.sources.get(id) === sources) {
@@ -53,7 +55,7 @@ export class CanvasRasterRegions {
     };
   }
 
-  setViewport(width: number, height: number) { this.viewport = { width, height }; }
+  setViewport(width: number, height: number) { this.viewport = { width, height }; this.schedule(); }
   private visible(region: Region) {
     const { x, y, zoom } = this.frame.view, bounds = region.bounds;
     return x + (bounds.x + bounds.width) * zoom >= 0 && x + bounds.x * zoom <= this.viewport.width
@@ -62,6 +64,7 @@ export class CanvasRasterRegions {
   private admit(region: Region, admitted: boolean) {
     if (region.admitted === admitted) return;
     region.admitted = admitted;
+    region.node.dataset.cameraRegion = String(admitted);
     if (!admitted) this.native(region);
     for (const source of this.sources.get(region.id) ?? []) source.dataset.cameraRaster = String(admitted);
   }
@@ -91,10 +94,11 @@ export class CanvasRasterRegions {
     this.scaling = false;
     if (this.world) {
       if (this.world.style.willChange) this.worldRelease = 2;
-      this.world.style.willChange = ''; this.world.dataset.cameraScaling = 'false';
+      this.world.style.willChange = '';
+      if (this.world.dataset.cameraScaling !== 'false') this.world.dataset.cameraScaling = 'false';
     }
     for (const region of this.regions.values()) this.native(region);
-    if (this.worldRelease || [...this.regions.values()].some(region => region.releasing)) this.schedule();
+    this.schedule();
   }
 
   present(frame: CameraFrame) {
@@ -102,15 +106,11 @@ export class CanvasRasterRegions {
     const translated = frame.view.x !== previous.x || frame.view.y !== previous.y;
     this.frame = frame;
     if (!frame.moving || (this.scaling && !changed && translated)) { this.exact(); return; }
-    if (changed) {
+    if (changed && !this.scaling) {
       this.scaling = true;
       if (this.world) {
         this.world.dataset.cameraScaling = 'true';
-        if (!this.worldRelease) {
-          if (frame.view.zoom > this.worldZoom * 1.25 || frame.view.zoom < this.worldZoom / 1.25) {
-            this.world.style.willChange = ''; this.worldRelease = 2; this.schedule();
-          } else this.world.style.willChange = 'transform';
-        }
+        if (!this.worldRelease) this.world.style.willChange = 'transform';
       }
     }
     if (!this.scaling) return;
@@ -126,11 +126,12 @@ export class CanvasRasterRegions {
 
   private updateRasters = () => {
     this.rasterFrame = 0;
+    this.planRasters();
     const zoom = this.frame.view.zoom, pending: Region[] = [];
     let work = false;
     if (this.worldRelease) {
       if (--this.worldRelease) work = true;
-      else { this.worldZoom = zoom; if (this.world && this.scaling) this.world.style.willChange = 'transform'; }
+      else if (this.world && this.scaling) this.world.style.willChange = 'transform';
     }
     for (const region of this.regions.values()) {
       if (region.releasing) {
@@ -153,6 +154,7 @@ export class CanvasRasterRegions {
 
   dispose() {
     this.exact(); this.clock.cancelFrame(this.rasterFrame); this.rasterFrame = 0;
+    for (const region of this.regions.values()) delete region.node.dataset.cameraRegion;
     for (const sources of this.sources.values()) for (const source of sources) { source.style.willChange = ''; delete source.dataset.cameraSource; delete source.dataset.cameraRaster; }
     this.regions.clear(); this.sources.clear(); this.world = undefined; this.worldRelease = 0;
   }
@@ -162,7 +164,8 @@ export function attachCameraPresentation(camera: CanvasCamera, node: HTMLElement
   regions?.connect(node);
   const render = (frame: CameraFrame) => {
     node.style.transform = `translate(${frame.view.x}px,${frame.view.y}px) scale(${frame.view.zoom})`;
-    node.dataset.cameraMoving = String(frame.moving);
+    const moving = String(frame.moving);
+    if (node.dataset.cameraMoving !== moving) node.dataset.cameraMoving = moving;
     regions?.present(frame);
   };
   const unsubscribe = camera.subscribePresentation(render);

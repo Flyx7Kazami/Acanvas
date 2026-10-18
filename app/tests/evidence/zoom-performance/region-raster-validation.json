@@ -1,12 +1,12 @@
 {
   "date": "2026-10-18",
   "build": "passed",
-  "targetedNodeChecks": 48,
+  "targetedNodeChecks": 50,
   "editingAndHistoryBrowserChecks": 12,
-  "qualityComparisons": 27,
-  "qualityMaxChannelDifference": 1,
-  "qualityMaxMeanDifference": 0.001599206349206349,
-  "qualityMinimumEdgeRatio": 1,
+  "qualityComparisons": 39,
+  "qualityMaxChannelDifference": 21,
+  "qualityMaxMeanDifference": 0.001539535567313345,
+  "qualityMinimumEdgeRatio": 0.9999946184800105,
   "earlierFullSuite": {
     "tests": 380,
     "passed": 346,
@@ -15,5 +15,5 @@
     "scope": "Intermediate renderer before source-layer refinement"
   },
   "knownPreexistingFailure": "Optional interactive-media-pipeline audio fixture waits for deprecated automatic metadata publication; the same timeout reproduced on unchanged main source. The production scene capture and media path passed.",
-  "physicalAcceptance": "Pending on the final bounded text-source implementation; earlier item-shell prototype was judged only slightly improved."
+  "physicalAcceptance": "The user reported much better on the stable camera composition path. The subsequent shared content layer and bounded viewport refinement passed automated regression and performance comparisons; isolated long frames remain in the physical recordings."
 }

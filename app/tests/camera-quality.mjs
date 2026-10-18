@@ -1,4 +1,4 @@
-// Compare settled native pixels after zooming through multiple raster scales.
+// Compare native pixels at rest, during translation, or during scale input (MOTION=scale).
 // ORIGINAL_WEB_ROOT=/path/to/original/web node app/tests/camera-quality.mjs
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -8,7 +8,9 @@ import { chromium } from 'playwright-core';
 import { startServer } from '../../dist/src/server/http.js';
 const original = process.env.ORIGINAL_WEB_ROOT;
 const motion = process.env.MOTION === '1';
-const folder = process.env.FOLDER === '1';
+const scaling = process.env.MOTION === 'scale';
+const folded = process.env.FOLDER === 'closed';
+const folder = process.env.FOLDER === '1' || folded;
 if (!original) throw new Error('Supply ORIGINAL_WEB_ROOT with a built comparison revision.');
 const output = process.env.OUTPUT || await mkdtemp(join(tmpdir(), 'acanvas-camera-quality-'));
 await mkdir(output, { recursive: true });
@@ -32,33 +34,38 @@ try {
       const objects = assets.map((asset,index)=>({type:'create',object:{id:asset.id,assetId:asset.id,x:index*600,y:0,width:300,height:210}}));
       if (folder) {
         server.service.boardOperations(session.id, objects.slice(0, 2));
-        server.service.boardOperations(session.id, [{ type: 'group.create', group: { id: 'collection', name: 'Collection', objectIds: ['image', 'note'] }, expectedVersions: { image: 1, note: 1 } }]);
+        server.service.boardOperations(session.id, [{ type: 'group.create', group: { id: 'collection', name: 'Collection', color: 'cobalt', objectIds: ['image', 'note'] }, expectedVersions: { image: 1, note: 1 } }]);
         server.service.boardOperations(session.id, [{ type: 'group.update', groupId: 'collection', expectedVersion: server.service.groups()[0].version, changes: { mode: 'folder' } }]);
         server.service.boardOperations(session.id, objects.slice(2));
       } else server.service.boardOperations(session.id, objects);
-      server.service.saveView(session.id, { x: 300, y: 200, zoom: 1, selectedObjectIds: [], ...(folder ? { activeGroupId: 'collection', parentView: { x: 300, y: 200, zoom: 1 } } : {}) });
+      server.service.saveView(session.id, { x: 300, y: 200, zoom: 1, selectedObjectIds: [], ...(folder && !folded ? { activeGroupId: 'collection', parentView: { x: 300, y: 200, zoom: 1 } } : {}) });
       await page.goto(`${server.url}/?session=${session.id}`);
-      await page.waitForFunction(()=>document.querySelectorAll('.board-object').length===3 && !document.querySelector('.content-loading'));
+      await page.waitForFunction(count=>document.querySelectorAll('.board-object').length===count && !document.querySelector('.content-loading'), folded ? 1 : 3);
       await page.evaluate(()=>document.fonts.ready);
+      const folderCenter = folded ? await page.locator('[data-group-id="collection"]').evaluate(element => {
+        const box = element.getBoundingClientRect(), matrix = new DOMMatrix(document.querySelector('.canvas-world').style.transform);
+        return { x: (box.x + box.width / 2 - matrix.e) / matrix.a, y: (box.y + box.height / 2 - matrix.f) / matrix.a };
+      }) : undefined;
       let sample = 0;
-      for (const zoom of (motion ? [.6, 1.2, 3.5] : [.05, .25, 1, 2, 4, 1])) for (const [index, asset] of assets.entries()) {
-        await page.evaluate(async({zoom,worldX})=>{
+      for (const zoom of (motion || scaling ? [.6, 1.2, 3.5] : [.05, .25, 1, 2, 4, 1])) for (const [index, asset] of (folded ? assets.slice(0,1) : assets).entries()) {
+        await page.evaluate(async({zoom,worldX,worldY,scaling})=>{
           const board=document.querySelector('#whiteboard'), world=document.querySelector('.canvas-world'), m=new DOMMatrix(getComputedStyle(world).transform);
           const cx=innerWidth/2,cy=innerHeight/2, anchorX=(cx-m.e)/m.a, anchorY=(cy-m.f)/m.a;
+          if(scaling) { board.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaX:(worldX-anchorX)*m.a,deltaY:(worldY-anchorY)*m.a}));await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))); }
           let previous=m.a;
           await new Promise(resolve=>{let step=0;function frame(){const next=m.a*Math.exp(Math.log(zoom/m.a)*++step/12);board.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,ctrlKey:true,clientX:cx,clientY:cy,deltaY:-Math.log(next/previous)/.005}));previous=next;if(step<12)requestAnimationFrame(frame);else resolve();}requestAnimationFrame(frame)});
-          board.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaX:(worldX-anchorX)*zoom,deltaY:(105-anchorY)*zoom}));
-        },{zoom,worldX:index*600+150});
-        if (motion) {
+          if(!scaling)board.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaX:(worldX-anchorX)*zoom,deltaY:(worldY-anchorY)*zoom}));
+        },{zoom,worldX:folderCenter?.x ?? index*600+150,worldY:folderCenter?.y ?? 105,scaling});
+        if (scaling) { await page.evaluate(() => { window.qualityScaling=setInterval(()=>{document.querySelector('#whiteboard').dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,ctrlKey:true,clientX:innerWidth/2,clientY:innerHeight/2,deltaY:.000000001}));},30); });await page.waitForTimeout(40); } else if (motion) {
           await page.evaluate(() => { const motion = { sign: 1, timer: 0 }; window.qualityMotion = motion; motion.timer = setInterval(() => { document.querySelector('#whiteboard').dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaX: motion.sign * .125, deltaY: 0 })); motion.sign = -motion.sign; }, 32); });
           await page.waitForTimeout(100);
         } else await page.waitForTimeout(350);
         if (motion) await page.evaluate(async () => { const motion = window.qualityMotion; clearInterval(motion.timer); if (motion.sign === -1) document.querySelector('#whiteboard').dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaX: -.125, deltaY: 0 })); await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
-        const media=page.locator(`[data-object-id="${asset.id}"] .object-media`);
+        const media=page.locator(folded ? '[data-group-id="collection"]' : `[data-object-id="${asset.id}"] .object-media`);
         const bounds=await media.boundingBox();
         const presentation=await page.locator('.canvas-world').evaluate(element=>({transform:element.style.transform,willChange:getComputedStyle(element).willChange,moving:element.dataset.cameraMoving}));
-        const pixels=await page.screenshot({clip:bounds,caret:'hide'});
-        const key=`${asset.id}-${zoom}-${sample++}`;
+        const pixels=await page.screenshot({clip:bounds,caret:'hide'});if(scaling)await page.evaluate(()=>clearInterval(window.qualityScaling));
+        const key=`${folded ? 'folder' : asset.id}-${zoom}-${sample++}`;
         const path=join(output,`${variant}-${key}.png`);await writeFile(path,pixels);
 
         if(variant==='original') captures.set(key,{pixels,bounds});
@@ -73,8 +80,8 @@ try {
             return {edgeRatio:leftEdges?rightEdges/leftEdges:1,width:left.width,height:left.height,changed,changedRatio:changed/(left.width*left.height),meanChannelDifference:total/(left.width*left.height*3),max};
           },{a:[...expected.pixels],b:[...pixels]});
           const result={key,...comparison,presentation};results.push(result);console.log(JSON.stringify(result));
-          assert.equal(presentation.willChange,'auto',`${key} uses current-scale native raster`);
-          if (motion) assert.equal(presentation.moving, 'true', `${key} is sampled during camera motion`);
+          if(!scaling)assert.equal(presentation.willChange,'auto',`${key} uses current-scale native raster`);
+          if (motion || scaling) assert.equal(presentation.moving, 'true', `${key} is sampled during camera motion`);
         }
       }
     } finally {await page.close();await server.close();await rm(root,{recursive:true,force:true})}

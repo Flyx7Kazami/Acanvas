@@ -80,6 +80,16 @@ test('content rasters release across a paint before retaining the next zoom segm
   f.frame(); assert.equal(p.node.style.willChange, 'transform'); assert.equal(p.world.style.willChange, 'transform'); p.detach();
 });
 
+test('visible text surfaces remain prepared between gestures and follow the viewport', () => {
+  const f = fixture(), p = presentation(f);
+  f.frame();
+  assert.equal(p.node.dataset.cameraRaster, 'true'); assert.equal(p.node.style.willChange, '');
+  f.camera.update({ ...f.initial, zoom: .7 }); f.frame(); f.idle(); f.frame(); f.frame();
+  assert.equal(p.node.dataset.cameraRaster, 'true'); assert.equal(p.node.style.willChange, '');
+  f.camera.update({ ...f.initial, x: -1000 }); f.frame(); f.idle(); f.frame();
+  assert.equal(p.node.dataset.cameraRaster, 'false'); p.detach();
+});
+
 test('stable zoom restores native content detail while translation advances', () => {
   const f = fixture(), p = presentation(f);
   f.camera.update({ ...f.initial, zoom: .7 }); f.frame();
@@ -114,13 +124,14 @@ test('content refreshes independently and visible static content owns retention'
   assert.ok(nodes.every(node => node.style.willChange === '')); p.detach();
 });
 
-test('zooming out retains available text detail while camera composition refreshes', () => {
+test('zooming out retains camera composition while content refreshes independently', () => {
   const f = fixture(), p = presentation(f);
   f.camera.update({ ...f.initial, zoom: .61 }); f.frame();
   f.camera.update({ ...f.initial, zoom: .3 }); f.frame();
-  assert.equal(p.node.style.willChange, 'transform'); assert.equal(p.world.style.willChange, '');
+  assert.equal(p.node.style.willChange, 'transform'); assert.equal(p.world.style.willChange, 'transform');
   f.frame(); f.frame(); assert.equal(p.node.style.willChange, 'transform');
   f.camera.update({ ...f.initial, zoom: .1 }); f.camera.flush(); assert.equal(p.node.style.willChange, '');
+  assert.equal(p.world.style.willChange, 'transform');
   f.idle(); assert.equal(p.world.style.willChange, ''); p.detach();
 });
 
@@ -130,5 +141,7 @@ test('a large visible page uses a bounded text raster pool', () => {
   nodes.forEach((node, index) => { const id = `budget-${index}`; p.regions.register(id, node, { x: 0, y: 0, width: 100, height: 100 }, false); p.regions.registerSource(id, node); });
   f.camera.update({ ...f.initial, zoom: .61 }); f.frame();
   assert.equal([p.node, ...nodes].filter(node => node.style.willChange === 'transform').length, 32);
+  assert.equal([p.node, ...nodes].filter(node => node.dataset.cameraRegion === 'true').length, 32);
   f.idle(); assert.ok(nodes.every(node => node.style.willChange === '')); p.detach();
+  assert.ok(nodes.every(node => node.dataset.cameraRegion === undefined));
 });
