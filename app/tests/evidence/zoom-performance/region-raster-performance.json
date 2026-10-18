@@ -1,0 +1,566 @@
+{
+  "date": "2026-10-18",
+  "comparisonCommit": "1aab270",
+  "fixture": {
+    "objects": 82,
+    "mountedObjects": 55,
+    "markdownViewports": 32,
+    "width": 822,
+    "height": 786,
+    "dpr": 2,
+    "path": "20% to 5% to 20%",
+    "steps": 60
+  },
+  "instrumentedTrace": {
+    "original": {
+      "variant": "final-reference",
+      "p95": 116.60000000000014,
+      "max": 116.70000000000005,
+      "over50": 14,
+      "waitTotal": 1166.851,
+      "waitMax": 109.865
+    },
+    "candidateRuns": [
+      {
+        "variant": "final-bounded",
+        "p95": 33.30000000000018,
+        "max": 100.10000000000002,
+        "over50": 2,
+        "waitTotal": 131.462,
+        "waitMax": 85.714
+      },
+      {
+        "variant": "final-bounded-repeat",
+        "p95": 50.100000000000136,
+        "max": 100,
+        "over50": 3,
+        "waitTotal": 109.773,
+        "waitMax": 81.969
+      }
+    ]
+  },
+  "largeBoard": {
+    "original": [
+      {
+        "count": 500,
+        "content": "mixed",
+        "round": 0,
+        "LayoutDuration": 11.451000000000002,
+        "RecalcStyleDuration": 28.191000000000003,
+        "ScriptDuration": 58.96,
+        "TaskDuration": 4623.247,
+        "frames": 493,
+        "frameP95": 33.399999999999636,
+        "inputP95": 0.20000001788139343,
+        "inputs": 180,
+        "updates": 342,
+        "longTasks": [
+          55,
+          50,
+          52,
+          58,
+          50
+        ],
+        "transform": "translate(80px, 70px) scale(0.16)"
+      },
+      {
+        "count": 500,
+        "content": "mixed",
+        "round": 1,
+        "LayoutDuration": 11.809,
+        "RecalcStyleDuration": 22.505999999999997,
+        "ScriptDuration": 52.347,
+        "TaskDuration": 3420.7980000000002,
+        "frames": 443,
+        "frameP95": 33.30000000000018,
+        "inputP95": 0.19999998807907104,
+        "inputs": 180,
+        "updates": 303,
+        "longTasks": [
+          51,
+          95,
+          53
+        ],
+        "transform": "translate(80px, 70px) scale(0.16)"
+      }
+    ],
+    "candidate": [
+      {
+        "count": 500,
+        "content": "mixed",
+        "round": 0,
+        "LayoutDuration": 17.564000000000004,
+        "RecalcStyleDuration": 22.968000000000004,
+        "ScriptDuration": 113.483,
+        "TaskDuration": 2679.735,
+        "frames": 384,
+        "frameP95": 33.29999999999927,
+        "inputP95": 0.5,
+        "inputs": 180,
+        "updates": 180,
+        "longTasks": [],
+        "transform": "translate(80px, 70px) scale(0.16)"
+      },
+      {
+        "count": 500,
+        "content": "mixed",
+        "round": 1,
+        "LayoutDuration": 17.304,
+        "RecalcStyleDuration": 24.084,
+        "ScriptDuration": 121.429,
+        "TaskDuration": 2767.183,
+        "frames": 393,
+        "frameP95": 16.800000000000182,
+        "inputP95": 0.5,
+        "inputs": 180,
+        "updates": 180,
+        "longTasks": [],
+        "transform": "translate(80px, 70px) scale(0.16)"
+      }
+    ]
+  },
+  "folders": {
+    "original": [
+      {
+        "round": 0,
+        "action": "collapse",
+        "members": 200,
+        "LayoutDuration": 24.965999999999994,
+        "RecalcStyleDuration": 46.330999999999996,
+        "ScriptDuration": 126.54900000000002,
+        "TaskDuration": 564.592,
+        "frameCount": 75,
+        "p95": 33.30000000000018,
+        "longest": 66.70000000000005,
+        "over50": 2,
+        "longTasks": [],
+        "firstMutation": 131.19999998807907,
+        "peakItems": 500,
+        "finalItems": 300,
+        "loading": 0
+      },
+      {
+        "round": 0,
+        "action": "enter",
+        "members": 200,
+        "LayoutDuration": 22.548000000000012,
+        "RecalcStyleDuration": 43.903,
+        "ScriptDuration": 99.18500000000002,
+        "TaskDuration": 487.12,
+        "frameCount": 44,
+        "p95": 83.30000000000018,
+        "longest": 100,
+        "over50": 7,
+        "longTasks": [
+          {
+            "start": 24.400000005960464,
+            "duration": 65
+          },
+          {
+            "start": 89.59999999403954,
+            "duration": 54
+          },
+          {
+            "start": 665.4000000059605,
+            "duration": 50
+          }
+        ],
+        "firstMutation": 88.90000000596046,
+        "peakItems": 500,
+        "finalItems": 500,
+        "loading": 0
+      },
+      {
+        "round": 0,
+        "action": "leave",
+        "members": 200,
+        "LayoutDuration": 8.691999999999991,
+        "RecalcStyleDuration": 49.31099999999999,
+        "ScriptDuration": 86.32800000000002,
+        "TaskDuration": 464.2429999999997,
+        "frameCount": 59,
+        "p95": 66.60000000000036,
+        "longest": 66.69999999999982,
+        "over50": 3,
+        "longTasks": [
+          {
+            "start": 49,
+            "duration": 56
+          },
+          {
+            "start": 581.3999999761581,
+            "duration": 52
+          }
+        ],
+        "firstMutation": 98.2999999821186,
+        "peakItems": 500,
+        "finalItems": 300,
+        "loading": 0
+      },
+      {
+        "round": 0,
+        "action": "expand",
+        "members": 200,
+        "LayoutDuration": 32.73799999999999,
+        "RecalcStyleDuration": 38.473000000000006,
+        "ScriptDuration": 115.34999999999995,
+        "TaskDuration": 578.4780000000001,
+        "frameCount": 79,
+        "p95": 33.30000000000018,
+        "longest": 50,
+        "over50": 0,
+        "longTasks": [],
+        "firstMutation": 97.80000001192093,
+        "peakItems": 500,
+        "finalItems": 500,
+        "loading": 0
+      },
+      {
+        "round": 1,
+        "action": "collapse",
+        "members": 200,
+        "LayoutDuration": 25.277999999999995,
+        "RecalcStyleDuration": 35.11499999999998,
+        "ScriptDuration": 93.56799999999998,
+        "TaskDuration": 509.633,
+        "frameCount": 76,
+        "p95": 33.30000000000018,
+        "longest": 50,
+        "over50": 0,
+        "longTasks": [],
+        "firstMutation": 77.5,
+        "peakItems": 500,
+        "finalItems": 300,
+        "loading": 0
+      },
+      {
+        "round": 1,
+        "action": "enter",
+        "members": 200,
+        "LayoutDuration": 20.424999999999997,
+        "RecalcStyleDuration": 37.91900000000001,
+        "ScriptDuration": 86.60299999999998,
+        "TaskDuration": 472.82100000000014,
+        "frameCount": 43,
+        "p95": 83.29999999999927,
+        "longest": 133.29999999999927,
+        "over50": 7,
+        "longTasks": [
+          {
+            "start": 27.599999994039536,
+            "duration": 56
+          },
+          {
+            "start": 417.69999998807907,
+            "duration": 80
+          }
+        ],
+        "firstMutation": 82.69999998807907,
+        "peakItems": 500,
+        "finalItems": 500,
+        "loading": 0
+      },
+      {
+        "round": 1,
+        "action": "leave",
+        "members": 200,
+        "LayoutDuration": 8.942000000000005,
+        "RecalcStyleDuration": 48.202999999999996,
+        "ScriptDuration": 84.36699999999998,
+        "TaskDuration": 466.9340000000002,
+        "frameCount": 56,
+        "p95": 66.69999999999891,
+        "longest": 83.39999999999964,
+        "over50": 4,
+        "longTasks": [
+          {
+            "start": 48.79999998211861,
+            "duration": 56
+          },
+          {
+            "start": 604,
+            "duration": 57
+          }
+        ],
+        "firstMutation": 98.5,
+        "peakItems": 500,
+        "finalItems": 300,
+        "loading": 0
+      },
+      {
+        "round": 1,
+        "action": "expand",
+        "members": 200,
+        "LayoutDuration": 33.64300000000001,
+        "RecalcStyleDuration": 38.16700000000001,
+        "ScriptDuration": 116.26999999999998,
+        "TaskDuration": 565.7449999999997,
+        "frameCount": 76,
+        "p95": 33.30000000000109,
+        "longest": 66.60000000000036,
+        "over50": 1,
+        "longTasks": [],
+        "firstMutation": 94.80000001192093,
+        "peakItems": 500,
+        "finalItems": 500,
+        "loading": 0
+      }
+    ],
+    "candidate": [
+      {
+        "round": 0,
+        "action": "collapse",
+        "members": 200,
+        "LayoutDuration": 25.39399999999999,
+        "RecalcStyleDuration": 42.556999999999995,
+        "ScriptDuration": 142.01999999999998,
+        "TaskDuration": 562.5819999999999,
+        "frameCount": 75,
+        "p95": 50,
+        "longest": 66.59999999999991,
+        "over50": 3,
+        "longTasks": [
+          {
+            "start": 92.09999999403954,
+            "duration": 53
+          }
+        ],
+        "firstMutation": 130.80000001192093,
+        "peakItems": 500,
+        "finalItems": 300,
+        "loading": 0
+      },
+      {
+        "round": 0,
+        "action": "enter",
+        "members": 200,
+        "LayoutDuration": 24.915000000000006,
+        "RecalcStyleDuration": 45.155,
+        "ScriptDuration": 101.70199999999996,
+        "TaskDuration": 499.846,
+        "frameCount": 47,
+        "p95": 100,
+        "longest": 116.70000000000027,
+        "over50": 6,
+        "longTasks": [
+          {
+            "start": 29.799999982118607,
+            "duration": 65
+          },
+          {
+            "start": 94.7999999821186,
+            "duration": 61
+          }
+        ],
+        "firstMutation": 94.09999999403954,
+        "peakItems": 500,
+        "finalItems": 500,
+        "loading": 0
+      },
+      {
+        "round": 0,
+        "action": "leave",
+        "members": 200,
+        "LayoutDuration": 9.980000000000002,
+        "RecalcStyleDuration": 52.56500000000001,
+        "ScriptDuration": 91.99499999999999,
+        "TaskDuration": 489.914,
+        "frameCount": 56,
+        "p95": 50,
+        "longest": 100.10000000000036,
+        "over50": 2,
+        "longTasks": [
+          {
+            "start": 37.900000005960464,
+            "duration": 53
+          },
+          {
+            "start": 566,
+            "duration": 57
+          }
+        ],
+        "firstMutation": 84.30000001192093,
+        "peakItems": 500,
+        "finalItems": 300,
+        "loading": 0
+      },
+      {
+        "round": 0,
+        "action": "expand",
+        "members": 200,
+        "LayoutDuration": 30.065999999999995,
+        "RecalcStyleDuration": 38.236999999999995,
+        "ScriptDuration": 121.68299999999999,
+        "TaskDuration": 583.1140000000001,
+        "frameCount": 86,
+        "p95": 33.30000000000018,
+        "longest": 50.100000000000364,
+        "over50": 1,
+        "longTasks": [],
+        "firstMutation": 95,
+        "peakItems": 500,
+        "finalItems": 500,
+        "loading": 0
+      },
+      {
+        "round": 1,
+        "action": "collapse",
+        "members": 200,
+        "LayoutDuration": 25.13499999999999,
+        "RecalcStyleDuration": 33.734000000000016,
+        "ScriptDuration": 99.98200000000001,
+        "TaskDuration": 515.9409999999998,
+        "frameCount": 81,
+        "p95": 16.800000000000182,
+        "longest": 50,
+        "over50": 0,
+        "longTasks": [],
+        "firstMutation": 70.2000000178814,
+        "peakItems": 500,
+        "finalItems": 300,
+        "loading": 0
+      },
+      {
+        "round": 1,
+        "action": "enter",
+        "members": 200,
+        "LayoutDuration": 22.458000000000006,
+        "RecalcStyleDuration": 45.824000000000005,
+        "ScriptDuration": 94.46599999999994,
+        "TaskDuration": 490.0660000000001,
+        "frameCount": 52,
+        "p95": 66.60000000000036,
+        "longest": 83.30000000000109,
+        "over50": 3,
+        "longTasks": [
+          {
+            "start": 26.799999982118607,
+            "duration": 53
+          },
+          {
+            "start": 80.5,
+            "duration": 52
+          }
+        ],
+        "firstMutation": 79.39999997615814,
+        "peakItems": 500,
+        "finalItems": 500,
+        "loading": 0
+      },
+      {
+        "round": 1,
+        "action": "leave",
+        "members": 200,
+        "LayoutDuration": 10.02800000000001,
+        "RecalcStyleDuration": 53.64099999999999,
+        "ScriptDuration": 96.30199999999999,
+        "TaskDuration": 488.2930000000005,
+        "frameCount": 56,
+        "p95": 50.100000000000364,
+        "longest": 99.89999999999964,
+        "over50": 3,
+        "longTasks": [
+          {
+            "start": 34.79999998211861,
+            "duration": 55
+          },
+          {
+            "start": 581.7999999821186,
+            "duration": 55
+          }
+        ],
+        "firstMutation": 83.5,
+        "peakItems": 500,
+        "finalItems": 300,
+        "loading": 0
+      },
+      {
+        "round": 1,
+        "action": "expand",
+        "members": 200,
+        "LayoutDuration": 30.265999999999988,
+        "RecalcStyleDuration": 37.794,
+        "ScriptDuration": 106.69400000000007,
+        "TaskDuration": 604.095,
+        "frameCount": 76,
+        "p95": 33.19999999999891,
+        "longest": 66.60000000000036,
+        "over50": 1,
+        "longTasks": [],
+        "firstMutation": 100,
+        "peakItems": 500,
+        "finalItems": 500,
+        "loading": 0
+      }
+    ]
+  },
+  "physicalInput": {
+    "feedback": "好多了",
+    "browser": "Codex in-app browser",
+    "viewport": {
+      "width": 822,
+      "height": 786,
+      "dpr": 2
+    },
+    "records": [
+      {
+        "events": 81,
+        "frameP95Ms": 9.3,
+        "activeFrameP95Ms": 9.4,
+        "maxFrameMs": 108.3,
+        "framesOver25": 2,
+        "inputDelayP95Ms": 19.7,
+        "compositionSwitches": 2
+      },
+      {
+        "events": 69,
+        "frameP95Ms": 9.3,
+        "activeFrameP95Ms": 9.2,
+        "maxFrameMs": 41.6,
+        "framesOver25": 1,
+        "inputDelayP95Ms": 23.4,
+        "compositionSwitches": 4
+      },
+      {
+        "events": 20,
+        "frameP95Ms": 9.3,
+        "activeFrameP95Ms": 16.7,
+        "maxFrameMs": 91.6,
+        "framesOver25": 2,
+        "inputDelayP95Ms": 82.5,
+        "compositionSwitches": 4
+      },
+      {
+        "events": 56,
+        "frameP95Ms": 9.2,
+        "activeFrameP95Ms": 16.6,
+        "maxFrameMs": 66.6,
+        "framesOver25": 1,
+        "inputDelayP95Ms": 28.6,
+        "compositionSwitches": 2
+      },
+      {
+        "events": 44,
+        "frameP95Ms": 9.3,
+        "activeFrameP95Ms": 9.3,
+        "maxFrameMs": 16.6,
+        "framesOver25": 0,
+        "inputDelayP95Ms": 19,
+        "compositionSwitches": 2
+      },
+      {
+        "events": 34,
+        "frameP95Ms": 9.2,
+        "activeFrameP95Ms": 9.2,
+        "maxFrameMs": 66.7,
+        "framesOver25": 1,
+        "inputDelayP95Ms": 25,
+        "compositionSwitches": 2
+      }
+    ],
+    "activeWindow": "Frames through 32 ms after the final scale input; excludes the remaining 750 ms diagnostic tail.",
+    "limitations": "Physical gestures differ across runs. Feedback confirms improvement; isolated long frames remain.",
+    "scope": "User feedback on stable camera composition before the final shared content layer and bounded viewport refinement."
+  },
+  "limitations": "Trace collection adds overhead. Physical gestures vary across recordings. Isolated long frames and large-folder transition spikes remain."
+}

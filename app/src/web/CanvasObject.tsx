@@ -7,6 +7,7 @@ import type { CanvasWheelInput } from './canvas-wheel';
 import type { ResizeHandle } from './geometry';
 import type { useBoard } from './useBoard';
 import { ContentRenderer } from './ContentRenderer';
+import { useCanvasRaster } from './CanvasWorld';
 import { SceneContentContext, type SceneContentRegistry } from './scene-renderer/content';
 
 export interface CanvasObjectActions {
@@ -59,11 +60,14 @@ export const CanvasObject = memo(function CanvasObject({ presentation, transitio
   });
   useLayoutEffect(() => { const node = element.current!; return () => presentation.forget(node); }, [presentation]);
   const contentElement = useRef<HTMLDivElement>(null);
+  const rasterElement = useRef<HTMLElement>(null);
   const scope = useMemo(() => ({ registry, objectId: object.id, width: object.width, height: object.height, captureView, contentElement }), [registry, object.id, object.width, object.height, captureView]);
   const kind = resolveContentKind(asset);
+  const continuous = ['html', 'audio', 'video', 'gif'].includes(kind);
+  useCanvasRaster(object.id, rasterElement, object, exterior || departing || transitioning || moving, kind === 'note' || kind === 'markdown');
   const handles = (contentCapabilities[kind].freeResize ? ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] : ['nw', 'ne', 'sw', 'se']) as ResizeHandle[];
-  return <div ref={element} className="object-placement" data-group-presentation><article className={`board-object object-${object.type} ${selected ? 'selected' : ''} ${exterior ? 'group-exterior' : ''} ${departing ? 'group-member-departing' : ''} ${arriving ? 'group-member-arriving' : ''}`} inert={exterior || departing} data-moving={moving || undefined} aria-hidden={exterior || undefined} data-object-id={object.id} data-content-kind={kind} data-object-version={canonical.version} data-selected={selected || undefined} tabIndex={exterior || departing ? -1 : 0} role="group" aria-label={`${asset?.name || 'File'}${selected ? ', selected' : ''}`} onKeyDown={event => actions.current.keyDown(object, event)}>
-    <div ref={contentElement} className="object-media" data-continuous={['html', 'audio', 'video', 'gif'].includes(kind) || undefined}><SceneContentContext.Provider value={scope}><ContentRenderer
+  return <div ref={element} className="object-placement" data-group-presentation><article ref={rasterElement} className={`board-object object-${object.type} ${selected ? 'selected' : ''} ${exterior ? 'group-exterior' : ''} ${departing ? 'group-member-departing' : ''} ${arriving ? 'group-member-arriving' : ''}`} inert={exterior || departing} data-moving={moving || undefined} aria-hidden={exterior || undefined} data-object-id={object.id} data-content-kind={kind} data-object-version={canonical.version} data-selected={selected || undefined} tabIndex={exterior || departing ? -1 : 0} role="group" aria-label={`${asset?.name || 'File'}${selected ? ', selected' : ''}`} onKeyDown={event => actions.current.keyDown(object, event)}>
+    <div ref={contentElement} className="object-media" data-continuous={continuous || undefined}><SceneContentContext.Provider value={scope}><ContentRenderer
       asset={asset} src={api.content(canonical.assetId)} api={api} objectId={object.id} objectVersion={canonical.version} sessionId={sessionId}
       readOnly={readOnly} disabled={disabled} preserveScene={preserveScene} error={error} fill={fill}
       saveContent={(text, expectedVersion) => actions.current.board.saveContent(object.id, text, expectedVersion, sessionId)}

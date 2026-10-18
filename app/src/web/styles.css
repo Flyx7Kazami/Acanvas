@@ -50,10 +50,13 @@ h1,h2,h3,p { margin: 0; }
 .whiteboard.mode-pan { cursor: grab; }
 .whiteboard.mode-pan:active { cursor: grabbing; }
 .canvas-world { position: absolute; inset: 0; transform-origin: 0 0; pointer-events: none; }
+.canvas-content-layer { position:absolute; inset:0; pointer-events:none; }
 .board-object { position: absolute; pointer-events: auto; border-radius: 0; outline: 1px solid color-mix(in srgb,var(--edge) 65%,transparent); box-shadow: var(--shadow); }
 .board-object.selected { outline: 2px solid var(--ink); }
 .object-placement { position:absolute; pointer-events:none; }
 .object-placement>.board-object { left:0; top:0; width:100%; height:100%; opacity:1; filter:none; transform:none; }
+.canvas-world[data-camera-scaling='true'] :is(.canvas-content-layer,[data-camera-raster='true']),
+.canvas-world[data-camera-scaling='true'] [data-camera-region='true']>.object-media { transform:translateZ(0); }
 .object-media { width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: var(--surface); content-visibility: auto; }
 .object-media:focus-within,.object-media[data-continuous] { content-visibility: visible; }
 .object-media>img,.object-media>video { width: 100%; height: 100%; object-fit: contain; display: block; }

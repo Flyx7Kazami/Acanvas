@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CanvasCamera, type CameraClock } from '../src/web/canvas-camera.js';
 import { canvasWheelView } from '../src/web/canvas-wheel.js';
-import { attachCameraPresentation } from '../src/web/canvas-presentation.js';
+import { attachCameraPresentation, CanvasRasterRegions } from '../src/web/canvas-presentation.js';
 import type { SessionView } from '../src/shared/types.js';
 
 function fixture() {
@@ -62,32 +62,86 @@ test('a restored session presents after its content commits with the matching ow
   f.camera.commitContext(restored, 'next'); assert.equal(f.camera.getSnapshot(), restored);
 });
 
-test('a released raster stays released across a paint when a new zoom arrives immediately', () => {
-  const f = fixture(), node = { style: { transform: '', willChange: '' }, dataset: {} } as unknown as HTMLElement;
-  const detach = attachCameraPresentation(f.camera, node, f.clock);
-  f.camera.update({ ...f.initial, zoom: .65 }); f.frame(); assert.equal(node.style.willChange, 'transform');
-  f.camera.settle(); assert.equal(node.style.willChange, '');
+function presentation(f: ReturnType<typeof fixture>) {
+  const world = { style: { transform: '' }, dataset: {} } as unknown as HTMLElement;
+  const node = { style: { willChange: '' }, dataset: {}, ownerDocument: { activeElement: null }, contains: () => false } as unknown as HTMLElement;
+  const regions = new CanvasRasterRegions(f.camera.getFrame(), f.clock); regions.setViewport(1000, 800);
+  regions.register('primary', node, { x: 0, y: 0, width: 300, height: 200 }, false); regions.registerSource('primary', node);
+  return { world, node, regions, detach: attachCameraPresentation(f.camera, world, regions) };
+}
+
+test('content rasters release across a paint before retaining the next zoom segment', () => {
+  const f = fixture(), p = presentation(f);
+  f.camera.update({ ...f.initial, zoom: .65 }); f.frame(); assert.equal(p.node.style.willChange, 'transform');
+  f.camera.settle(); assert.equal(p.node.style.willChange, '');
+  assert.equal(p.world.style.willChange, '');
   f.camera.update({ ...f.initial, zoom: .68 }); f.camera.flush();
-  assert.equal(node.style.willChange, ''); f.frame(); assert.equal(node.style.willChange, '');
-  f.frame(); assert.equal(node.style.willChange, 'transform'); detach();
+  assert.equal(p.node.style.willChange, ''); f.frame(); assert.equal(p.node.style.willChange, ''); assert.equal(p.world.style.willChange, '');
+  f.frame(); assert.equal(p.node.style.willChange, 'transform'); assert.equal(p.world.style.willChange, 'transform'); p.detach();
 });
 
-test('stable zoom restores exact raster detail while translation keeps advancing', () => {
-  const f = fixture(), node = { style: { transform: '', willChange: '' }, dataset: {} } as unknown as HTMLElement;
-  const detach = attachCameraPresentation(f.camera, node, f.clock);
+test('visible text surfaces remain prepared between gestures and follow the viewport', () => {
+  const f = fixture(), p = presentation(f);
+  f.frame();
+  assert.equal(p.node.dataset.cameraRaster, 'true'); assert.equal(p.node.style.willChange, '');
+  f.camera.update({ ...f.initial, zoom: .7 }); f.frame(); f.idle(); f.frame(); f.frame();
+  assert.equal(p.node.dataset.cameraRaster, 'true'); assert.equal(p.node.style.willChange, '');
+  f.camera.update({ ...f.initial, x: -1000 }); f.frame(); f.idle(); f.frame();
+  assert.equal(p.node.dataset.cameraRaster, 'false'); p.detach();
+});
+
+test('stable zoom restores native content detail while translation advances', () => {
+  const f = fixture(), p = presentation(f);
   f.camera.update({ ...f.initial, zoom: .7 }); f.frame();
   for (let i = 0; i < 7; i++) { f.camera.update({ ...f.camera.getView(), x: i * 10 }); f.frame(); }
-  assert.equal(node.style.willChange, ''); assert.equal(node.dataset.cameraMoving, 'true');
-  assert.equal(node.style.transform, 'translate(60px,-20px) scale(0.7)'); detach();
+  assert.equal(p.node.style.willChange, ''); assert.equal(p.world.dataset.cameraMoving, 'true');
+  assert.equal(p.world.style.transform, 'translate(60px,-20px) scale(0.7)'); p.detach();
 });
 
-test('60 Hz scale input retains its segment across intervening 120 Hz display frames', () => {
-  const f = fixture(), node = { style: { transform: '', willChange: '' }, dataset: {} } as unknown as HTMLElement;
-  const detach = attachCameraPresentation(f.camera, node, f.clock);
-  for (let i = 1; i <= 15; i++) {
+test('60 Hz scale input retains content across intervening 120 Hz display frames', () => {
+  const f = fixture(), p = presentation(f);
+  for (let i = 1; i <= 8; i++) {
     f.camera.update({ ...f.initial, zoom: f.initial.zoom * 1.01 ** i });
-    f.frame(); f.frame(); assert.equal(node.style.willChange, 'transform');
+    f.frame(); f.frame(); assert.equal(p.node.style.willChange, 'transform');
   }
   for (let i = 0; i < 6; i++) f.frame();
-  assert.equal(node.style.willChange, ''); detach();
+  assert.equal(p.node.style.willChange, 'transform'); f.idle();
+  assert.equal(p.node.style.willChange, ''); p.detach();
+});
+
+test('content refreshes independently and visible static content owns retention', () => {
+  const f = fixture(), p = presentation(f);
+  const nodes = Array.from({ length: 8 }, () => ({ style: { willChange: '' }, dataset: {}, ownerDocument: { activeElement: null }, contains: () => false }) as unknown as HTMLElement);
+  nodes.forEach((node, index) => { const id = `item-${index}`; p.regions.register(id, node, { x: index === 6 ? 10000 : 0, y: 0, width: 100, height: 100 }, index === 7); p.regions.registerSource(id, node); });
+  f.camera.update({ ...f.initial, zoom: .61 }); f.frame();
+  assert.equal(nodes[6].style.willChange, ''); assert.equal(nodes[7].style.willChange, '');
+  f.camera.update({ ...f.initial, zoom: .68 }); f.frame();
+  assert.equal([p.node, ...nodes.slice(0, 6)].filter(node => node.style.willChange === '').length, 4);
+  assert.equal(p.world.style.willChange, 'transform');
+  f.camera.update({ ...f.initial, zoom: .9 }); f.camera.flush();
+  assert.ok(nodes.slice(0, 6).every(node => node.style.willChange === ''));
+  f.camera.settle();
+  assert.ok(nodes.every(node => node.style.willChange === '')); p.detach();
+});
+
+test('zooming out retains camera composition while content refreshes independently', () => {
+  const f = fixture(), p = presentation(f);
+  f.camera.update({ ...f.initial, zoom: .61 }); f.frame();
+  f.camera.update({ ...f.initial, zoom: .3 }); f.frame();
+  assert.equal(p.node.style.willChange, 'transform'); assert.equal(p.world.style.willChange, 'transform');
+  f.frame(); f.frame(); assert.equal(p.node.style.willChange, 'transform');
+  f.camera.update({ ...f.initial, zoom: .1 }); f.camera.flush(); assert.equal(p.node.style.willChange, '');
+  assert.equal(p.world.style.willChange, 'transform');
+  f.idle(); assert.equal(p.world.style.willChange, ''); p.detach();
+});
+
+test('a large visible page uses a bounded text raster pool', () => {
+  const f = fixture(), p = presentation(f);
+  const nodes = Array.from({ length: 100 }, () => ({ style: { willChange: '' }, dataset: {}, ownerDocument: { activeElement: null }, contains: () => false }) as unknown as HTMLElement);
+  nodes.forEach((node, index) => { const id = `budget-${index}`; p.regions.register(id, node, { x: 0, y: 0, width: 100, height: 100 }, false); p.regions.registerSource(id, node); });
+  f.camera.update({ ...f.initial, zoom: .61 }); f.frame();
+  assert.equal([p.node, ...nodes].filter(node => node.style.willChange === 'transform').length, 32);
+  assert.equal([p.node, ...nodes].filter(node => node.dataset.cameraRegion === 'true').length, 32);
+  f.idle(); assert.ok(nodes.every(node => node.style.willChange === '')); p.detach();
+  assert.ok(nodes.every(node => node.dataset.cameraRegion === undefined));
 });

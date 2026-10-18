@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { canvasPinchView } from '../src/web/canvas-gestures.js';
 import { canvasWheelView } from '../src/web/canvas-wheel.js';
-import { screenToWorld } from '../src/web/geometry.js';
+import { screenToWorld, zoomAt } from '../src/web/geometry.js';
 import type { SessionView } from '../src/shared/types.js';
 
 test('pinch scale and midpoint retain their world anchor across limits', () => {
@@ -34,4 +34,13 @@ test('wheel supports continuous ctrl and meta zoom, ordinary pan, and line/page 
   const input = { clientX: 20, clientY: 30, deltaX: 2, deltaY: 3, deltaMode: 1, ctrlKey: false, metaKey: false };
   assert.deepEqual(canvasWheelView(original, input, bounds), { ...original, x: -32, y: -48 });
   assert.deepEqual(canvasWheelView(original, { ...input, deltaMode: 2 }, bounds), { ...original, x: -1400, y: -2100 });
+});
+
+test('zero scale input and a clamped zoom preserve the exact fractional camera pose', () => {
+  const view: SessionView = { x: 18.573612375, y: -167.4329941, zoom: .2, selectedObjectIds: [] };
+  const input = { clientX: 411.125, clientY: 392.375, deltaX: 0, deltaY: 0, deltaMode: 0, ctrlKey: true, metaKey: false };
+  assert.equal(canvasWheelView(view, input, { left: 0, top: 0, height: 786 }), view);
+  assert.equal(canvasWheelView(view, { ...input, ctrlKey: false }, { left: 0, top: 0, height: 786 }), view);
+  const limited = { x: view.x, y: view.y, zoom: .05 };
+  assert.deepEqual(zoomAt(limited, .5, { x: input.clientX, y: input.clientY }), limited);
 });

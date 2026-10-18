@@ -29,17 +29,22 @@ await mkdir(projectRoot);
 const running = await startServer({ root: projectRoot, port: 0, webRoot });
 try {
   for (const [index, asset] of state.assets.entries()) {
-    const response = await fetch(new URL(`/api/assets/${encodeURIComponent(asset.id)}/content`, source), { headers });
+    const response = await fetch(new URL(`/api/assets/${encodeURIComponent(asset.id)}/content?sessionId=${encodeURIComponent(sessionId)}`, source), { headers });
     if (!response.ok) throw new Error(`Source asset ${asset.id}: ${response.status}`);
     const data = Buffer.from(await response.arrayBuffer()), path = `assets/${index}`;
     await writeFile(join(running.service.dataDir, path), data);
     running.service.registerAsset(asset, path);
   }
+  for (const asset of state.assets) if (asset.htmlBundle) running.service.registerHtmlBundle(asset.htmlBundle);
+  // Seed the isolated study with the source geometry, versions, order and group membership.
+  running.service.db.transaction(() => {
+    const group = running.service.db.prepare('INSERT INTO groups(id,name,mode,color,x,y,width,height,version,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)');
+    for (const value of state.groups) group.run(value.id, value.name, value.mode, value.color, value.x, value.y, value.width, value.height, value.version, value.createdAt, value.updatedAt);
+    const object = running.service.db.prepare('INSERT INTO objects(id,asset_id,x,y,width,height,version,created_at,updated_at,source_task_id,source_run_id,fill,group_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)');
+    for (const value of state.objects) object.run(value.id, value.assetId, value.x, value.y, value.width, value.height, value.version, value.createdAt, value.updatedAt, value.sourceTaskId || null, value.sourceRunId || null, value.fill || null, value.groupId || null);
+  })();
   const session = running.service.createSession('Render architecture study');
-  // The study compares independent image, note, and Markdown items in one world layer.
-  const operations = state.objects.map(({ id, assetId, x, y, width, height }) => ({ type: 'create', object: { id, assetId, x, y, width, height } }));
-  for (let offset = 0; offset < operations.length; offset += 1000) running.service.boardOperations(session.id, operations.slice(offset, offset + 1000));
-  running.service.saveView(session.id, { x: 70, y: 120, zoom: .08, selectedObjectIds: [] });
+  running.service.saveView(session.id, state.session.view);
   console.log(JSON.stringify({ root: directory, url: `${running.url}/?session=${session.id}`, objects: running.service.objects().length }));
   for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => void running.close().then(() => process.exit(0)));
 } catch (error) { await running.close(); throw error; }

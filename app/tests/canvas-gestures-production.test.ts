@@ -11,6 +11,32 @@ import { canvasPinchView } from '../src/web/canvas-gestures.js';
 async function camera(page: Page) { return page.locator('.canvas-world').evaluate(element => { const matrix = new DOMMatrix(getComputedStyle(element).transform); return { x: matrix.e, y: matrix.f, zoom: matrix.a }; }); }
 function close(actual: { x: number; y: number; zoom: number }, expected: { x: number; y: number; zoom: number }) { for (const key of ['x', 'y', 'zoom'] as const) assert.ok(Math.abs(actual[key] - expected[key]) < .001, `${key}: ${actual[key]} / ${expected[key]}`); }
 
+test('selected resize handles remain reachable over overlapping content surfaces', { skip: process.env.ACANVAS_GESTURE_TESTS !== '1', timeout: 30_000 }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'acanvas-overlapping-surfaces-'));
+  const running = await startServer({ root, port: 0, webRoot: resolve(process.env.ACANVAS_TEST_WEB_ROOT || 'dist/web'), browser: { headless: true } });
+  try {
+    const bytes = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="120"><rect width="200" height="120" fill="#4286ff"/></svg>');
+    await writeFile(join(running.service.dataDir, 'assets/overlap.svg'), bytes);
+    running.service.registerAsset({ id: 'overlap-image', name: 'Image.svg', mime: 'image/svg+xml', kind: 'image', size: bytes.length, createdAt: new Date().toISOString() }, 'assets/overlap.svg');
+    const session = running.service.createSession('Overlapping content');
+    running.service.boardOperations(session.id, [
+      { type: 'create', object: { id: 'back', assetId: 'overlap-image', x: 100, y: 100, width: 200, height: 120 } },
+      { type: 'create', object: { id: 'front', assetId: 'overlap-image', x: 280, y: 200, width: 200, height: 120 } },
+    ]);
+    running.service.saveView(session.id, { x: 200, y: 150, zoom: 1, selectedObjectIds: ['back'] });
+    await running.browser.open(session.id); const page = running.browser.page(session.id)!;
+    const handle = page.locator('[data-object-id="back"] [data-resize-corner="se"]');
+    await expect(handle).toBeVisible();
+    const hit = await handle.evaluate(element => { const box = element.getBoundingClientRect(); return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)?.closest('[data-resize-id]')?.getAttribute('data-resize-id'); });
+    assert.equal(hit, 'back');
+    const box = (await handle.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 30, box.y + box.height / 2 + 20, { steps: 5 }); await page.mouse.up();
+    await expect.poll(() => running.service.objects().find(object => object.id === 'back')!.width).toBeGreaterThan(200);
+    assert.equal(running.service.objects().find(object => object.id === 'front')!.version, 1);
+  } finally { await running.close(); }
+});
+
 test('production canvas inherits native wheel fields, accumulates bursts, and owns distinct pinch inputs', { skip: process.env.ACANVAS_GESTURE_TESTS !== '1', timeout: 120_000 }, async t => {
   const root = await mkdtemp(join(tmpdir(), 'acanvas-gestures-production-'));
   const running = await startServer({ root, port: 0, webRoot: resolve(process.env.ACANVAS_TEST_WEB_ROOT || 'dist/web'), browser: { headless: true } });
@@ -50,7 +76,9 @@ test('production canvas inherits native wheel fields, accumulates bursts, and ow
     await burst('ctrlKey', -4, 12, '.canvas-toolbar button');
     const scaledExpected = canvasPinchView({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }, Math.exp(.24), { x: 600, y: 280 });
     await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(scaledExpected.zoom, 5); close(await camera(page), scaledExpected); samples.push({ input: 'scaled viewport control target', actual: await camera(page), expected: scaledExpected });
-    await reset(); const reading = page.locator('.markdown-content'); const beforeReading = await camera(page); await reading.hover(); await page.mouse.wheel(0, 220); await expect.poll(() => reading.evaluate(element => element.scrollTop)).toBeGreaterThan(0); close(await camera(page), beforeReading);
+    await reset(); const reading = page.locator('.markdown-content'); await reading.hover(); await page.mouse.wheel(0, 220);
+    await expect.poll(async () => (await camera(page)).y).toBe(-220); assert.equal(await reading.evaluate(element => element.scrollTop), 0);
+    await reset(); await reading.click(); const beforeReading = await camera(page); await reading.hover(); await page.mouse.wheel(0, 220); await expect.poll(() => reading.evaluate(element => element.scrollTop)).toBeGreaterThan(0); close(await camera(page), beforeReading);
     await burst('ctrlKey', -4, 12, '.markdown-content'); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(Math.exp(.24), 5); samples.push({ input: 'document scroll plus canvas pinch', scrollTop: await reading.evaluate(element => element.scrollTop), zoom: (await camera(page)).zoom });
 
     await reset(); const beforePan = await camera(page);

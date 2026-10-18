@@ -10,13 +10,15 @@ import { useEditableText } from './useEditableText';
 import { useControlledScenePanel } from './scene-renderer/media/use-controlled-panel.js';
 import { readMarkdownContentAnchor } from './scene-renderer/media/markdown-anchor.js';
 import type { ContentSaveResult, RegisterContentEditor } from './content-editing';
+import { useCanvasRasterSource } from './CanvasWorld';
 
 export function MarkdownCanvasContent({ title, source }: { title: string; source?: string }) {
   const root = useRef<HTMLDivElement>(null);
+  const body = useRef<HTMLDivElement>(null), raster = useCanvasRasterSource(body);
   useControlledScenePanel(root, { resolveRoot: element => element.closest<HTMLElement>('.content-shell') ?? element, textRoot: element => element.querySelector<HTMLElement>('.markdown-body') ?? undefined, metadata: () => { const contentAnchor = root.current && readMarkdownContentAnchor(root.current); return contentAnchor ? { scroll: contentAnchor.scroll, contentAnchor } : {}; } });
   const markup = useMemo(() => source === undefined ? undefined : { __html: renderMarkdown(source) }, [source]);
   return <div ref={root} className="markdown-content" data-canvas-wheel="focused-content" role="document" aria-label={title} tabIndex={0} onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); const active = event.currentTarget.ownerDocument.activeElement; if (active instanceof HTMLElement) active.blur(); } }}>
-    {markup ? <div className="markdown-body" dangerouslySetInnerHTML={markup}/> : <div className="content-loading" role="status"><DominoLoader size={36}/><span>Loading document…</span></div>}
+    {markup ? <div ref={raster} className="markdown-body" dangerouslySetInnerHTML={markup}/> : <div className="content-loading" role="status"><DominoLoader size={36}/><span>Loading document…</span></div>}
   </div>;
 }
 
