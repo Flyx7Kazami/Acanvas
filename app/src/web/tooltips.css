@@ -1,0 +1,37 @@
+.control-tooltip {
+  position: fixed;
+  z-index: 130;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  overflow: hidden;
+  padding: 6px 9px;
+  border: 1px solid var(--edge, var(--review-edge));
+  border-radius: 7px;
+  background: var(--soft, var(--review-surface));
+  color: var(--ink, var(--review-ink));
+  box-shadow: var(--float-shadow, 0 4px 12px #0002);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+
+:root:not([data-theme='dark']) .control-tooltip {
+  background: color-mix(in srgb, var(--soft, var(--review-surface)) 60%, var(--surface, var(--review-page)));
+}
+
+.control-tooltip[data-enter] {
+  animation: control-tooltip-in 120ms ease-out both;
+}
+
+@keyframes control-tooltip-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control-tooltip[data-enter] { animation: none; }
+}

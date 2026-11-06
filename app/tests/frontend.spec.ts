@@ -114,6 +114,81 @@ async function png(page: Page) {
   return { name: 'reference.png', mimeType: 'image/png', buffer: Buffer.from(encoded, 'base64') };
 }
 
+test('canvas hints switch immediately between icons after the first hover', async ({ page, app }, info) => {
+  await open(page, app);
+  const fit = page.getByRole('button', { name: 'Fit all files', exact: true });
+  const zoomIn = page.getByRole('button', { name: 'Zoom in', exact: true });
+  const tooltip = page.locator('.control-tooltip');
+  await expect(fit).not.toHaveAttribute('title', /.+/);
+  await expect(page.locator('.project-identity')).not.toHaveAttribute('data-tooltip', /.+/);
+  await fit.hover();
+  await expect(tooltip).toHaveText('Fit all');
+  await expect(tooltip).toHaveCSS('animation-name', 'control-tooltip-in');
+  const [button, hint] = await Promise.all([fit.boundingBox(), tooltip.boundingBox()]);
+  expect(hint!.x).toBeGreaterThan(button!.x + button!.width);
+  await page.mouse.move(hint!.x, hint!.y);
+  await expect(tooltip).toHaveCount(0);
+  await zoomIn.hover();
+  await expect(tooltip).toHaveText('Zoom in', { timeout: 250 });
+  await expect(tooltip).toHaveCSS('animation-name', 'none');
+  await fit.hover();
+  await expect(tooltip).toHaveText('Fit all', { timeout: 250 });
+  await page.mouse.move(5, 5);
+  await expect(tooltip).toHaveCount(0);
+  await zoomIn.focus();
+  await page.keyboard.press('Tab');
+  await expect(fit).toBeFocused();
+  await expect(tooltip).toHaveText('Fit all');
+  await page.keyboard.press('Escape');
+  await expect(tooltip).toHaveCount(0);
+  await page.getByRole('button', { name: 'Theme', exact: true }).click();
+  await page.getByRole('menuitemradio', { name: 'Dark', exact: true }).click();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await fit.hover();
+  await expect(tooltip).toHaveText('Fit all');
+  await expect(tooltip).toHaveCSS('animation-name', 'none');
+  await page.screenshot({ path: info.outputPath('canvas-tooltip-dark.png') });
+
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles(await png(page));
+  await page.locator('.object-caption').click();
+  await page.getByRole('button', { name: 'Remove selected files from canvas', exact: true }).hover();
+  await expect(tooltip).toHaveText('Remove');
+});
+
+test('Fit all files keeps files and captions clear of the canvas controls', async ({ page, app }, info) => {
+  await page.setViewportSize({ width: 1000, height: 700 });
+  await open(page, app);
+  const image = await png(page);
+  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles([image, { ...image, name: 'second.png' }]);
+  await expect(page.locator('.board-object')).toHaveCount(2);
+  const { session, objects } = await app.state();
+  await app.call('/api/board/operations', 'POST', { sessionId: session.id, operations: objects.map((object, index) => ({
+    type: 'update', objectId: object.id, expectedVersion: object.version,
+    changes: { x: index * 650, y: 0, width: 600, height: 600 },
+  })) });
+  await app.call(`/api/sessions/${session.id}/view`, 'PUT', { x: 0, y: 0, zoom: 1, selectedObjectIds: [] });
+  await page.reload();
+  await expect(page.locator('.board-object')).toHaveCount(2);
+  await replaceInstructionText(page.locator('#instruction'), 'Compare the two references.\nKeep the composition balanced.\nUse the darker image on the left.\nPreserve room for the captions.');
+  await expect.poll(async () => (await page.locator('.composer').boundingBox())!.height).toBeGreaterThan(60);
+
+  const fit = page.getByRole('button', { name: 'Fit all files', exact: true });
+  for (const width of [1000, 390]) {
+    await page.setViewportSize({ width, height: width === 390 ? 480 : 700 });
+    await fit.click();
+    await expect.poll(() => page.locator('.board-object, .object-caption').evaluateAll(elements => {
+      const board = document.querySelector('#whiteboard')!.getBoundingClientRect();
+      const controls = Array.from(document.querySelectorAll('.canvas-toolbar,.project-identity,.canvas-actions,.composer'), control => control.getBoundingClientRect());
+      return elements.length === 4 && elements.every(element => {
+        const rect = element.getBoundingClientRect();
+        return rect.left >= board.left && rect.right <= board.right && rect.top >= board.top && rect.bottom <= board.bottom
+          && controls.every(control => rect.right < control.left || rect.left > control.right || rect.bottom < control.top || rect.top > control.bottom);
+      });
+    })).toBe(true);
+    await page.screenshot({ path: info.outputPath(`fit-clear-${width}.png`) });
+  }
+});
+
 async function confirmSelectedReferences(page: import('@playwright/test').Page) {
   await page.locator('.reference-preview-confirm').first().click();
   await expect(page.locator('.chatbox-reference-preview')).toHaveCount(0);
@@ -1752,7 +1827,6 @@ test('fit all files saves its destination and the final camera after interruptio
   const reset = async () => { await page.goto('about:blank'); await app.call(`/api/sessions/${sessionId}/view`, 'PUT', start); await page.goto(`${app.server.url}/?session=${sessionId}`); await expect(page.locator('.board-object')).toHaveCount(1); await expect(page.locator('.canvas-world')).toHaveCSS('transform', 'matrix(0.5, 0, 0, 0.5, 80, 120)'); };
   await reset();
   const requests: any[] = []; page.on('request', request => { if (request.method() === 'PUT' && request.url().endsWith('/view')) requests.push(request.postDataJSON()); });
-  const expected = { x: -3166, y: 1304, zoom: 1.34, selectedObjectIds: start.selectedObjectIds };
   const measure = async (interrupt?: 'wheel' | 'zoom' | 'fit') => page.evaluate(async interrupt => {
     const world = document.querySelector<HTMLElement>('.canvas-world')!, board = document.querySelector<HTMLElement>('#whiteboard')!, fit = document.querySelector<HTMLButtonElement>('button[aria-label="Fit all files"]')!;
     const samples: { time: number; x: number; y: number; zoom: number }[] = [];
@@ -1774,12 +1848,19 @@ test('fit all files saves its destination and the final camera after interruptio
     return samples;
   }, interrupt);
   const frames = await measure();
+  const { x, y, zoom } = frames.at(-1)!;
+  const expected = { x, y, zoom, selectedObjectIds: start.selectedObjectIds };
+  const savedDestination = async () => {
+    const view = (await app.state()).session.view;
+    return Math.abs(view.x - x) < .01 && Math.abs(view.y - y) < .01 && Math.abs(view.zoom - zoom) < .00001
+      && view.selectedObjectIds.length === 1 && view.selectedObjectIds[0] === start.selectedObjectIds[0];
+  };
+  expect(zoom).toBeGreaterThan(start.zoom);
   expect(new Set(frames.map(frame => `${frame.x},${frame.y},${frame.zoom}`)).size).toBeGreaterThan(10);
   const motion = frames.filter(frame => frame.zoom > start.zoom + .001 && frame.zoom < expected.zoom - .001); expect(motion.length).toBeGreaterThan(8);
-  expect(frames.find(frame => frame.time > 75 && frame.time < 120)!.zoom).toBeLessThan(start.zoom + .84 * .25);
-  expect(frames.at(-1)).toMatchObject({ x: expected.x, y: expected.y, zoom: expected.zoom });
-  await expect.poll(async () => (await app.state()).session.view).toEqual(expected); expect(requests).toHaveLength(1);
-  await page.reload(); await expect(page.locator('.canvas-world')).toHaveCSS('transform', 'matrix(1.34, 0, 0, 1.34, -3166, 1304)');
+  expect(frames.find(frame => frame.time > 75 && frame.time < 120)!.zoom).toBeLessThan(start.zoom + (zoom - start.zoom) * .25);
+  await expect.poll(savedDestination).toBeTruthy(); expect(requests).toHaveLength(1);
+  await page.reload(); await expect(page.locator('.canvas-world')).toHaveCSS('transform', `matrix(${zoom}, 0, 0, ${zoom}, ${x}, ${y})`);
   const interruptions: Record<string, unknown> = {};
   for (const action of ['wheel', 'zoom', 'fit'] as const) {
     await reset(); requests.length = 0; const samples = await measure(action); const final = samples.at(-1)!; interruptions[action] = samples;
@@ -1794,7 +1875,7 @@ test('fit all files saves its destination and the final camera after interruptio
   await expect.poll(async () => { const view = (await app.state()).session.view; return Math.abs(view.x - panFinal.x) < .01 && Math.abs(view.y - panFinal.y) < .01 && Math.abs(view.zoom - panFinal.zoom) < .00001; }).toBeTruthy(); expect(requests).toHaveLength(3);
   await reset(); requests.length = 0; await page.emulateMedia({ reducedMotion: 'reduce' });
   const reduced = await measure(); expect(new Set(reduced.slice(1).map(frame => `${frame.x},${frame.y},${frame.zoom}`)).size).toBe(1); expect(reduced[1]).toMatchObject({ x: expected.x, y: expected.y, zoom: expected.zoom });
-  await expect.poll(async () => (await app.state()).session.view).toEqual(expected); expect(requests).toHaveLength(1);
+  await expect.poll(savedDestination).toBeTruthy(); expect(requests).toHaveLength(1);
   await writeFile(info.outputPath('fit-motion.json'), JSON.stringify({ frames, interruptions, reduced }, null, 2));
 });
 

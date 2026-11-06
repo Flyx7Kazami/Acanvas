@@ -29,7 +29,9 @@ test('wheel supports continuous ctrl and meta zoom, ordinary pan, and line/page 
   for (const modifier of ['ctrlKey', 'metaKey'] as const) {
     let view = original;
     for (let index = 0; index < 24; index++) view = canvasWheelView(view, { clientX: 600, clientY: 280, deltaX: 0, deltaY: -4, deltaMode: 0, ctrlKey: false, metaKey: false, [modifier]: true }, bounds);
-    assert.ok(Math.abs(view.zoom - Math.exp(.48)) < 1e-9); const anchor = screenToWorld({ x: 600, y: 280 }, view); assert.ok(Math.abs(anchor.x - 600) < 1e-9); assert.ok(Math.abs(anchor.y - 280) < 1e-9);
+    assert.ok(Math.abs(view.zoom - Math.exp(.768)) < 1e-9); const anchor = screenToWorld({ x: 600, y: 280 }, view); assert.ok(Math.abs(anchor.x - 600) < 1e-9); assert.ok(Math.abs(anchor.y - 280) < 1e-9);
+    for (let index = 0; index < 24; index++) view = canvasWheelView(view, { clientX: 600, clientY: 280, deltaX: 0, deltaY: 4, deltaMode: 0, ctrlKey: false, metaKey: false, [modifier]: true }, bounds);
+    for (const key of ['x', 'y', 'zoom'] as const) assert.ok(Math.abs(view[key] - original[key]) < 1e-9);
   }
   const input = { clientX: 20, clientY: 30, deltaX: 2, deltaY: 3, deltaMode: 1, ctrlKey: false, metaKey: false };
   assert.deepEqual(canvasWheelView(original, input, bounds), { ...original, x: -32, y: -48 });

@@ -1,0 +1,1 @@
+export const CANVAS_GESTURE_ZOOM_GAIN = 1.6;

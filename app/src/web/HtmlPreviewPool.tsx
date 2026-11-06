@@ -7,7 +7,7 @@ export const HTML_SNAPSHOT_BYTES = 64 * 1024 * 1024;
 type Slot = 'hidden' | 'waiting' | 'capturing' | 'live' | 'freezing' | 'frozen' | 'stopped';
 type Entry = { element: HTMLElement; intersecting: boolean; attempted: boolean; requested: boolean; phase?: 'capturing' | 'live' | 'freezing'; width: number; height: number; generation: number; used: number; hovered: boolean; preserved?: boolean; resizeTimer?: number };
 type Cached = { image: HtmlSnapshot; cost: number };
-type PreviewState = { slot: Slot; image?: HtmlSnapshot; width: number; height: number; generation: number };
+type PreviewState = { slot: Slot; phase?: Entry['phase']; image?: HtmlSnapshot; width: number; height: number; generation: number };
 
 // Both initial screenshot jobs and explicit interactive previews reserve slots,
 // including pending grants and the short capture handoff before an eviction.
@@ -50,13 +50,12 @@ export class HtmlPreviewPool {
     if (!event.isTrusted || !(event.target instanceof Node)) return;
     for (const entry of this.entries.values()) entry.hovered = entry.element.contains(event.target);
   };
-  private visible(entry: Entry) {
-    return entry.intersecting && (!document.hidden || entry.preserved && !!entry.phase) && !entry.element.closest('[inert], [hidden], [aria-hidden="true"]') && entry.element.checkVisibility({ checkVisibilityCSS: true });
-  }
+  private available(entry: Entry) { return !entry.element.closest('[inert], [hidden], [aria-hidden="true"]') && entry.element.checkVisibility({ checkVisibilityCSS: true }); }
+  private visible(entry: Entry) { return entry.intersecting && (!document.hidden || entry.preserved && !!entry.phase) && this.available(entry); }
   private state(id: symbol, entry: Entry | undefined, visible: boolean): PreviewState {
     const image = this.cache.get(id)?.image;
     const slot: Slot = !entry || !visible ? 'hidden' : entry.phase || (entry.requested || !entry.attempted ? 'waiting' : image ? 'frozen' : 'stopped');
-    return { slot, image, width: entry?.width || 0, height: entry?.height || 0, generation: entry?.generation || 0 };
+    return { slot, phase: entry?.phase, image, width: entry?.width || 0, height: entry?.height || 0, generation: entry?.generation || 0 };
   }
   read(id: symbol) {
     const entry = this.entries.get(id);
@@ -71,8 +70,9 @@ export class HtmlPreviewPool {
     };
     for (const id of this.active) {
       const entry = this.entries.get(id);
-      if (!entry || !visible(entry)) {
-        if (entry && entry.phase !== 'capturing') { entry.attempted = true; entry.requested = false; }
+      const retained = entry && (entry.phase === 'live' || entry.phase === 'freezing') && this.available(entry);
+      if (!entry || !visible(entry) && !retained) {
+        if (entry && entry.phase !== 'capturing') { entry.attempted = entry.phase !== 'live' || this.cache.has(id); entry.requested = false; }
         this.release(id);
       }
     }
@@ -86,7 +86,7 @@ export class HtmlPreviewPool {
           if (![...this.active].some(key => this.entries.get(key)?.phase === 'freezing')) {
             const candidates = [...this.active].map(key => this.entries.get(key)!).filter(candidate => !candidate.preserved);
             const protectedEntry = (candidate: Entry) => candidate.hovered || candidate.element.matches(':focus-within') || candidate.element.contains(document.activeElement);
-            candidates.sort((a, b) => Number(protectedEntry(a)) - Number(protectedEntry(b)) || a.used - b.used);
+            candidates.sort((a, b) => Number(visible(a)) - Number(visible(b)) || Number(protectedEntry(a)) - Number(protectedEntry(b)) || a.used - b.used);
             if (candidates[0]) candidates[0].phase = 'freezing';
           }
           break;
@@ -103,7 +103,7 @@ export class HtmlPreviewPool {
     for (const [id, entry] of this.entries) {
       const value = this.state(id, entry, visible(entry)), previous = this.published.get(id);
       next.set(id, value);
-      if (!previous || previous.slot !== value.slot || previous.image !== value.image || previous.width !== value.width || previous.height !== value.height || previous.generation !== value.generation) changed = true;
+      if (!previous || previous.slot !== value.slot || previous.phase !== value.phase || previous.image !== value.image || previous.width !== value.width || previous.height !== value.height || previous.generation !== value.generation) changed = true;
     }
     if (changed) {
       this.published = next;

@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
 import { startServer } from '../../dist/src/server/http.js';
 const original = process.env.ORIGINAL_WEB_ROOT;
+const originalGestureGain = Number(process.env.ORIGINAL_GESTURE_GAIN || 1);
 const motion = process.env.MOTION === '1';
 const scaling = process.env.MOTION === 'scale';
 const folded = process.env.FOLDER === 'closed';
@@ -25,6 +26,7 @@ const assets = [
 const captures = new Map(), results = [];
 try {
   for (const [variant, webRoot] of [['original', original], ['candidate', process.env.WEB_ROOT || 'dist/web']]) {
+    const gestureGain = variant === 'original' ? originalGestureGain : 1.6;
     const root = await mkdtemp(join(tmpdir(), 'acanvas-camera-quality-board-'));
     const server = await startServer({ root, port: 0, webRoot: resolve(webRoot) });
     const page = await context.newPage();
@@ -43,19 +45,19 @@ try {
       await page.waitForFunction(count=>document.querySelectorAll('.board-object').length===count && !document.querySelector('.content-loading'), folded ? 1 : 3);
       await page.evaluate(()=>document.fonts.ready);
       const folderCenter = folded ? await page.locator('[data-group-id="collection"]').evaluate(element => {
-        const box = element.getBoundingClientRect(), matrix = new DOMMatrix(document.querySelector('.canvas-world').style.transform);
+        const box = element.getBoundingClientRect(), matrix = new DOMMatrix(getComputedStyle(document.querySelector('.canvas-world')).transform);
         return { x: (box.x + box.width / 2 - matrix.e) / matrix.a, y: (box.y + box.height / 2 - matrix.f) / matrix.a };
       }) : undefined;
       let sample = 0;
       for (const zoom of (motion || scaling ? [.6, 1.2, 3.5] : [.05, .25, 1, 2, 4, 1])) for (const [index, asset] of (folded ? assets.slice(0,1) : assets).entries()) {
-        await page.evaluate(async({zoom,worldX,worldY,scaling})=>{
+        await page.evaluate(async({zoom,worldX,worldY,scaling,gestureGain})=>{
           const board=document.querySelector('#whiteboard'), world=document.querySelector('.canvas-world'), m=new DOMMatrix(getComputedStyle(world).transform);
           const cx=innerWidth/2,cy=innerHeight/2, anchorX=(cx-m.e)/m.a, anchorY=(cy-m.f)/m.a;
           if(scaling) { board.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaX:(worldX-anchorX)*m.a,deltaY:(worldY-anchorY)*m.a}));await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))); }
           let previous=m.a;
-          await new Promise(resolve=>{let step=0;function frame(){const next=m.a*Math.exp(Math.log(zoom/m.a)*++step/12);board.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,ctrlKey:true,clientX:cx,clientY:cy,deltaY:-Math.log(next/previous)/.005}));previous=next;if(step<12)requestAnimationFrame(frame);else resolve();}requestAnimationFrame(frame)});
+          await new Promise(resolve=>{let step=0;function frame(){const next=m.a*Math.exp(Math.log(zoom/m.a)*++step/12);board.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,ctrlKey:true,clientX:cx,clientY:cy,deltaY:-Math.log(next/previous)/(.005*gestureGain)}));previous=next;if(step<12)requestAnimationFrame(frame);else resolve();}requestAnimationFrame(frame)});
           if(!scaling)board.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaX:(worldX-anchorX)*zoom,deltaY:(worldY-anchorY)*zoom}));
-        },{zoom,worldX:folderCenter?.x ?? index*600+150,worldY:folderCenter?.y ?? 105,scaling});
+        },{zoom,worldX:folderCenter?.x ?? index*600+150,worldY:folderCenter?.y ?? 105,scaling,gestureGain});
         if (scaling) { await page.evaluate(() => { window.qualityScaling=setInterval(()=>{document.querySelector('#whiteboard').dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,ctrlKey:true,clientX:innerWidth/2,clientY:innerHeight/2,deltaY:.000000001}));},30); });await page.waitForTimeout(40); } else if (motion) {
           await page.evaluate(() => { const motion = { sign: 1, timer: 0 }; window.qualityMotion = motion; motion.timer = setInterval(() => { document.querySelector('#whiteboard').dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaX: motion.sign * .125, deltaY: 0 })); motion.sign = -motion.sign; }, 32); });
           await page.waitForTimeout(100);
@@ -63,7 +65,7 @@ try {
         if (motion) await page.evaluate(async () => { const motion = window.qualityMotion; clearInterval(motion.timer); if (motion.sign === -1) document.querySelector('#whiteboard').dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaX: -.125, deltaY: 0 })); await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
         const media=page.locator(folded ? '[data-group-id="collection"]' : `[data-object-id="${asset.id}"] .object-media`);
         const bounds=await media.boundingBox();
-        const presentation=await page.locator('.canvas-world').evaluate(element=>({transform:element.style.transform,willChange:getComputedStyle(element).willChange,moving:element.dataset.cameraMoving}));
+        const presentation=await page.locator('.canvas-world').evaluate(element=>({transform:getComputedStyle(element).transform,inlineTransform:element.style.transform,animations:element.getAnimations().length,willChange:getComputedStyle(element).willChange,moving:element.dataset.cameraMoving}));
         const pixels=await page.screenshot({clip:bounds,caret:'hide'});if(scaling)await page.evaluate(()=>clearInterval(window.qualityScaling));
         const key=`${folded ? 'folder' : asset.id}-${zoom}-${sample++}`;
         const path=join(output,`${variant}-${key}.png`);await writeFile(path,pixels);

@@ -66,7 +66,7 @@ test('production canvas inherits native wheel fields, accumulates bursts, and ow
     }, { modifier, deltaY, count, selector });
     for (const modifier of ['ctrlKey', 'metaKey'] as const) {
       await reset(); const event = await burst(modifier, -4); assert.equal(event.prevented, 24); assert.equal(event.inheritedCtrl, true);
-      const expected = canvasPinchView({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }, Math.exp(.48), { x: 600, y: 280 });
+      const expected = canvasPinchView({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }, Math.exp(.768), { x: 600, y: 280 });
       await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(expected.zoom, 5); const actual = await camera(page); close(actual, expected); assert.equal(event.viewportScale, 1);
       assert.equal(await page.evaluate(() => (window as any).boardDraws), event.drawsBefore, 'Pinch zoom does not draw any 2D canvas.');
       await burst(modifier, 4); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1, 5); close(await camera(page), { x: 0, y: 0, zoom: 1 });
@@ -74,12 +74,12 @@ test('production canvas inherits native wheel fields, accumulates bursts, and ow
     }
     await reset(); await page.evaluate(() => document.documentElement.style.zoom = '1.25');
     await burst('ctrlKey', -4, 12, '.canvas-toolbar button');
-    const scaledExpected = canvasPinchView({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }, Math.exp(.24), { x: 600, y: 280 });
+    const scaledExpected = canvasPinchView({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }, Math.exp(.384), { x: 600, y: 280 });
     await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(scaledExpected.zoom, 5); close(await camera(page), scaledExpected); samples.push({ input: 'scaled viewport control target', actual: await camera(page), expected: scaledExpected });
     await reset(); const reading = page.locator('.markdown-content'); await reading.hover(); await page.mouse.wheel(0, 220);
     await expect.poll(async () => (await camera(page)).y).toBe(-220); assert.equal(await reading.evaluate(element => element.scrollTop), 0);
     await reset(); await reading.click(); const beforeReading = await camera(page); await reading.hover(); await page.mouse.wheel(0, 220); await expect.poll(() => reading.evaluate(element => element.scrollTop)).toBeGreaterThan(0); close(await camera(page), beforeReading);
-    await burst('ctrlKey', -4, 12, '.markdown-content'); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(Math.exp(.24), 5); samples.push({ input: 'document scroll plus canvas pinch', scrollTop: await reading.evaluate(element => element.scrollTop), zoom: (await camera(page)).zoom });
+    await burst('ctrlKey', -4, 12, '.markdown-content'); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(Math.exp(.384), 5); samples.push({ input: 'document scroll plus canvas pinch', scrollTop: await reading.evaluate(element => element.scrollTop), zoom: (await camera(page)).zoom });
 
     await reset(); const beforePan = await camera(page);
     const pan = await page.evaluate(() => { const board = document.querySelector('#whiteboard')!; const events = [{ deltaX: 2, deltaY: 3, deltaMode: 1 }, { deltaX: 1, deltaY: 1, deltaMode: 0 }]; return events.map(input => { const event = new WheelEvent('wheel', { ...input, bubbles: true, cancelable: true }); board.dispatchEvent(event); return event.defaultPrevented; }); });
@@ -88,12 +88,22 @@ test('production canvas inherits native wheel fields, accumulates bursts, and ow
     await page.context().addInitScript(() => Object.defineProperty(window, 'ongesturestart', { configurable: true, value: null })); await reset();
     const native = async (type: string, scale: number) => page.evaluate(({ type, scale }) => { const event = new Event(type, { bubbles: true, cancelable: true }); Object.defineProperties(event, { scale: { value: scale }, clientX: { value: 600 }, clientY: { value: 280 } }); document.querySelector('#whiteboard')!.dispatchEvent(event); return event.defaultPrevented; }, { type, scale });
     assert(await native('gesturestart', 1)); assert(await native('gesturechange', 1.2)); await burst('ctrlKey', -4); assert(await native('gesturechange', 1.5)); assert(await native('gesturechange', 1.5)); assert(await native('gestureend', 1.5));
-    await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.5, 5); close(await camera(page), canvasPinchView({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }, 1.5, { x: 600, y: 280 }));
-    await burst('ctrlKey', -4, 1); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.5 * Math.exp(.02), 5); samples.push({ input: 'WebKit capability path', relativeScale: 1.5, duplicateWheelSuppressed: true, afterEndWheel: await camera(page), support: 'Synthetic GestureEvent capability, not physical Safari input.' });
+    await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.5 ** 1.6, 5); close(await camera(page), canvasPinchView({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }, 1.5 ** 1.6, { x: 600, y: 280 }));
+    await burst('ctrlKey', -4, 1); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.5 ** 1.6 * Math.exp(.032), 5); samples.push({ input: 'WebKit capability path', relativeScale: 1.5, duplicateWheelSuppressed: true, afterEndWheel: await camera(page), support: 'Synthetic GestureEvent capability, not physical Safari input.' });
 
+    await reset(); await native('gesturestart', 2); await native('gesturechange', 3); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.5 ** 1.6, 5); await native('gesturechange', 2); await native('gestureend', 2); close(await camera(page), { x: 0, y: 0, zoom: 1 }); samples.push({ input: 'WebKit non-unit start and reversal', camera: await camera(page) });
+    await reset(); await native('gesturestart', 1); await native('gesturechange', 100); await expect.poll(async () => (await camera(page)).zoom).toBe(4); await native('gesturechange', .001); await native('gestureend', .001); await expect.poll(async () => (await camera(page)).zoom).toBe(.05); samples.push({ input: 'WebKit scale limits', zoom: (await camera(page)).zoom });
+    await reset(); await burst('ctrlKey', -1000, 1); await expect.poll(async () => (await camera(page)).zoom).toBe(4); await burst('metaKey', 1000, 1); await expect.poll(async () => (await camera(page)).zoom).toBe(.05); samples.push({ input: 'wheel scale limits', zoom: (await camera(page)).zoom });
+    await reset(); await page.getByRole('button', { name: 'Zoom in', exact: true }).click(); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.2, 5); await page.getByRole('button', { name: 'Zoom out', exact: true }).click(); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1, 5); samples.push({ input: 'toolbar zoom factors', in: 1.2, out: 1 });
+    await reset(); await burst('ctrlKey', -4, 8); await expect.poll(() => page.locator('.canvas-world').evaluate(el => el.getAnimations().length)).toBe(1);
+    await page.evaluate(() => { const node=document.querySelector('.canvas-world') as HTMLElement, original=node.animate.bind(node);(window as any).fitComposition={created:0,max:0,watch:false};node.animate=((...args:any[])=>{(window as any).fitComposition.created++;return (original as any)(...args)}) as typeof node.animate; });
+    await page.getByRole('button', { name:'Fit all files', exact:true }).focus(); await page.getByRole('button', { name:'Fit all files', exact:true }).press('Enter');
+    await page.evaluate(() => { const state=(window as any).fitComposition;state.watch=true;const frame=()=>{if(!state.watch)return;state.max=Math.max(state.max,document.querySelector('.canvas-world')!.getAnimations().length);requestAnimationFrame(frame)};frame(); });
+    await page.waitForTimeout(500); const fitComposition=await page.evaluate(() => { const state=(window as any).fitComposition;state.watch=false;return {created:state.created,max:state.max}; });assert.deepEqual(fitComposition,{created:0,max:0});
+    const fitPose=await camera(page);await burst('ctrlKey',-4,2);await expect.poll(() => page.locator('.canvas-world').evaluate(el=>el.getAnimations().length)).toBe(1);samples.push({input:'active input to keyboard Fit and back to input',fitComposition,fitPose,nextInputAnimations:1});
     await reset(); await native('gesturestart', 1); await native('gesturechange', 1.2);
     await page.evaluate(() => { window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })); window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })); });
-    await burst('ctrlKey', -4, 1); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.2 * Math.exp(.02), 5);
+    await burst('ctrlKey', -4, 1); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.2 ** 1.6 * Math.exp(.032), 5);
     samples.push({ input: 'persisted page lifecycle during unfinished WebKit gesture', camera: await camera(page), priorCameraPreserved: true, nextWheelAccepted: true });
 
     await reset(); await native('gesturestart', 1); await native('gesturechange', 1.2);
@@ -102,7 +112,7 @@ test('production canvas inherits native wheel fields, accumulates bursts, and ow
     await call(`/api/sessions/${session.id}/capture-views/${oldViewId}`, 'DELETE', { documentId: oldView.documentId, viewGeneration: oldView.viewGeneration, operationSeq: 1_000_000 });
     await expect.poll(() => page.locator('#whiteboard').getAttribute('data-view-id')).not.toBe(oldViewId);
     await expect(page.locator('#whiteboard')).toHaveAttribute('data-view-id', /.+/);
-    await burst('ctrlKey', -4, 1); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.2 * Math.exp(.02), 5);
+    await burst('ctrlKey', -4, 1); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.2 ** 1.6 * Math.exp(.032), 5);
     samples.push({ input: 'capture view retirement during unfinished WebKit gesture', oldViewId, newViewId: await page.locator('#whiteboard').getAttribute('data-view-id'), camera: await camera(page), priorCameraPreserved: true, nextWheelAccepted: true });
 
     await reset(); const cdp = await page.context().newCDPSession(page), beforeTouch = await call(`/api/state?sessionId=${session.id}`);
@@ -110,16 +120,17 @@ test('production canvas inherits native wheel fields, accumulates bursts, and ow
     await touch('touchStart', [{ x: 500, y: 310, id: 1 }, { x: 680, y: 310, id: 2 }]);
     await touch('touchMove', [{ x: 475, y: 340, id: 1 }, { x: 745, y: 340, id: 2 }]);
     await touch('touchEnd', []);
-    const touchExpected = canvasPinchView({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }, 1.5, { x: 590, y: 310 }, { x: 610, y: 340 });
-    await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.5, 5); close(await camera(page), touchExpected); await expect(page.locator('.board-object.selected')).toHaveCount(0);
+    const touchExpected = canvasPinchView({ x: 0, y: 0, zoom: 1, selectedObjectIds: [] }, 1.5 ** 1.6, { x: 590, y: 310 }, { x: 610, y: 340 });
+    await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.5 ** 1.6, 5); close(await camera(page), touchExpected); await expect(page.locator('.board-object.selected')).toHaveCount(0);
     const afterTouch = await call(`/api/state?sessionId=${session.id}`); assert.deepEqual(afterTouch.objects, beforeTouch.objects); assert.deepEqual(afterTouch.draft.annotations, beforeTouch.draft.annotations); samples.push({ input: 'Chrome CDP touch pointer path', expected: touchExpected, actual: await camera(page), selectionPreserved: true, objectsPreserved: true });
+    await touch('touchStart', [{ x: 475, y: 340, id: 1 }, { x: 745, y: 340, id: 2 }]); await touch('touchMove', [{ x: 500, y: 310, id: 1 }, { x: 680, y: 310, id: 2 }]); await touch('touchEnd', []); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1, 5); close(await camera(page), { x: 0, y: 0, zoom: 1 }); samples.push({ input: 'two-touch scale and midpoint reversal', camera: await camera(page) });
     await reset(); await page.getByRole('button', { name: 'Mark canvas', exact: true }).click(); await touch('touchStart', [{ x: 500, y: 310, id: 1 }, { x: 680, y: 310, id: 2 }]); await touch('touchMove', [{ x: 475, y: 310, id: 1 }, { x: 745, y: 310, id: 2 }]); await touch('touchEnd', []);
-    await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.5, 5); await expect(page.locator('.annotation-fulltext')).toHaveCount(0); assert.deepEqual((await call(`/api/state?sessionId=${session.id}`)).draft.annotations, beforeTouch.draft.annotations); samples.push({ input: 'two touches in Mark mode', annotationsPreserved: true });
+    await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1.5 ** 1.6, 5); await expect(page.locator('.annotation-fulltext')).toHaveCount(0); assert.deepEqual((await call(`/api/state?sessionId=${session.id}`)).draft.annotations, beforeTouch.draft.annotations); samples.push({ input: 'two touches in Mark mode', annotationsPreserved: true });
     const beforeImage = beforeTouch.objects.find((object: { assetId: string }) => object.assetId === image.id);
     await reset();
     await touch('touchStart', [{ x: 590, y: 310, id: 1 }]); await touch('touchMove', [{ x: 628, y: 334, id: 1 }]);
     await touch('touchEnd', []); await expect.poll(async () => (await call(`/api/state?sessionId=${session.id}`)).objects.find((object: { id: string }) => object.id === beforeImage.id).version).toBe(beforeImage.version + 1); const single = (await call(`/api/state?sessionId=${session.id}`)).objects.find((object: { id: string }) => object.id === beforeImage.id); assert.equal(single.x, 528); assert.equal(single.y, 270); samples.push({ input: 'single touch after pinch', object: { x: single.x, y: single.y, version: single.version }, snappedToDocumentCenter: true });
-    await reset(); await touch('touchStart', [{ x: 500, y: 500, id: 1 }, { x: 680, y: 500, id: 2 }]); await touch('touchCancel', []); await burst('ctrlKey', -4, 1); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(Math.exp(.02), 5); samples.push({ input: 'touch cancel then wheel', actual: await camera(page) });
+    await reset(); await touch('touchStart', [{ x: 500, y: 500, id: 1 }, { x: 680, y: 500, id: 2 }]); await touch('touchCancel', []); await burst('ctrlKey', -4, 1); await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(Math.exp(.032), 5); samples.push({ input: 'touch cancel then wheel', actual: await camera(page) });
 
     await reset(); await native('gesturestart', 1); const other = running.service.createSession('Other gesture scope'); await reset(other.id); await native('gesturechange', 2); await native('gestureend', 2); close(await camera(page), { x: 0, y: 0, zoom: 1 }); assert.equal((await call(`/api/state?sessionId=${session.id}`)).session.view.zoom, 1); samples.push({ input: 'session change during native gesture', otherView: await camera(page), priorSessionView: (await call(`/api/state?sessionId=${session.id}`)).session.view });
     await cdp.detach();

@@ -38,10 +38,10 @@ export function MarkdownBlock({ asset, src, title, api, disabled, readOnly, obje
   return <>
     <div className="markdown-tools" data-canvas-control onPointerDown={event => event.stopPropagation()}>
       <div className="markdown-view-switch" role="group" aria-label="Markdown view">
-        <button type="button" aria-pressed={view === 'preview'} aria-label="Preview Markdown" title="Preview" disabled={readOnly} onClick={showPreview}><Eye size={14}/></button>
-        <button type="button" aria-pressed={view === 'source'} aria-label="Edit Markdown" title="Edit Markdown" disabled={!editable || disabled || readOnly} onClick={() => setView('source')}><Code2 size={14}/></button>
+        <button type="button" aria-pressed={view === 'preview'} aria-label="Preview Markdown" data-tooltip="Preview" disabled={readOnly} onClick={showPreview}><Eye size={14}/></button>
+        <button type="button" aria-pressed={view === 'source'} aria-label="Edit Markdown" data-tooltip="Edit" disabled={!editable || disabled || readOnly} onClick={() => setView('source')}><Code2 size={14}/></button>
       </div>
-      <button type="button" className="markdown-download" aria-label={`Download ${title}`} title="Download original Markdown" disabled={readOnly} onClick={() => void download()}><ArrowDownToLine size={13}/></button>
+      <button type="button" className="markdown-download" aria-label={`Download ${title}`} data-tooltip="Download" disabled={readOnly} onClick={() => void download()}><ArrowDownToLine size={13}/></button>
     </div>
     {view === 'source' && document.text !== undefined ? <MarkdownSource title={title} value={document.text} disabled={disabled} readOnly={readOnly} onChange={document.change} onBlur={() => void document.flush()} onCompositionStart={() => document.setComposing(true)} onCompositionEnd={() => document.setComposing(false)}/> : <MarkdownCanvasContent title={title} source={document.text}/>}
   </>;

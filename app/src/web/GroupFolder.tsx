@@ -53,7 +53,7 @@ function FolderText({ text, className, lines = 2, ellipsis = true }: { text: str
     const observer = new ResizeObserver(update); observer.observe(node);
     return () => { active = false; observer.disconnect(); };
   }, [text, lines, ellipsis]);
-  return <span ref={element} className={className} title={text}>{shown.map((line, index) => <span className="folder-text-line" key={index}>{line || '\u200b'}</span>)}</span>;
+  return <span ref={element} className={className} data-tooltip={text}>{shown.map((line, index) => <span className="folder-text-line" key={index}>{line || '\u200b'}</span>)}</span>;
 }
 
 function FolderPreview({ object, asset, api }: { object: BoardObject; asset?: Asset; api: BoardApi }) {

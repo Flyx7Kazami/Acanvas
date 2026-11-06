@@ -21,9 +21,10 @@ export function installHtmlSnapshotBridge(instanceId: string, parentOrigin: stri
         if (value.startsWith('data:image/')) return value;
         const url = new URL(value, location.href);
         if (!resourcePrefix || url.origin !== location.origin || !url.pathname.startsWith(resourcePrefix)) return 'data:,';
-        url.hash = '';
+        const fragment = url.hash; url.hash = '';
+        const referenced = (image: string) => image === 'data:,' ? image : image + fragment;
         const cached = resources.get(url.href);
-        if (cached) return cached;
+        if (cached) return referenced(await cached);
         if (resources.size >= 32) throw new Error('Preview has too many snapshot images.');
         const pending = (async () => {
           const response = await fetch(url.href, { mode: 'cors', credentials: 'omit', redirect: 'error', signal: controller.signal });
@@ -48,13 +49,16 @@ export function installHtmlSnapshotBridge(instanceId: string, parentOrigin: stri
           return `data:${mime};base64,${btoa(binary)}`;
         })();
         resources.set(url.href, pending);
-        return pending;
+        return referenced(await pending);
       };
       const embedCss = async (value: string): Promise<string> => {
         const matches = Array.from(value.matchAll(/url\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\s*\)/gi));
         let output = '', offset = 0;
         for (const match of matches) {
-          const embedded = await embedImage(match[1] ?? match[2] ?? match[3].trim());
+          const reference = match[1] ?? match[2] ?? match[3].trim();
+          const url = new URL(reference, location.href), documentUrl = new URL(location.href);
+          const fragment = url.hash; url.hash = ''; documentUrl.hash = '';
+          const embedded = fragment && url.href === documentUrl.href ? fragment : await embedImage(reference);
           output += value.slice(offset, match.index) + `url("${embedded.replace(/"/g, '%22')}")`;
           offset = match.index! + match[0].length;
         }
@@ -91,6 +95,7 @@ export function installHtmlSnapshotBridge(instanceId: string, parentOrigin: stri
         target.removeAttribute(pseudoAttribute);
         if (source instanceof HTMLCanvasElement) { let url = 'data:,'; try { url = source.toDataURL('image/png'); } catch { url = 'data:,'; } target.setAttribute('src', url); }
         else if (source instanceof HTMLImageElement && source.currentSrc) target.setAttribute('src', await embedImage(source.currentSrc));
+        else if (source instanceof SVGImageElement && source.href.baseVal) target.setAttribute('href', await embedImage(source.href.baseVal));
         const style = getComputedStyle(source);
         let css = '';
         for (const property of Array.from(style)) {

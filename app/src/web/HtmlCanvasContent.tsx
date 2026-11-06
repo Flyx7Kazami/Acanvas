@@ -33,9 +33,16 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
   useSceneRefresh(() => refreshLive.current());
   const documentOrigin = useRef(document.querySelector<HTMLMetaElement>('meta[name="acanvas-html-preview-origin"]')?.content);
   const inputPort = useRef<MessagePort | undefined>(undefined);
-  const allocated = ['capturing', 'live', 'freezing'].includes(preview.slot), live = preview.slot === 'live';
+  const allocated = !!preview.phase, live = preview.phase === 'live' && preview.slot !== 'hidden';
   const inputState = useRef({ live, onFrameWheel, onFrameDrag, preview }); inputState.current = { live, onFrameWheel, onFrameDrag, preview };
   const currentGeneration = useRef(preview.generation); currentGeneration.current = preview.generation;
+  useLayoutEffect(() => {
+    if (preview.slot !== 'hidden') return;
+    const focused = document.activeElement;
+    if (focused === frame.current || focused === container.current) {
+      (focused as HTMLElement).blur(); container.current?.closest<HTMLElement>('#whiteboard')?.focus({ preventScroll: true });
+    }
+  }, [preview.slot]);
   useEffect(() => { if (!pendingDrag) return; const timeout = setTimeout(() => setPendingDrag(undefined), 1500); return () => clearTimeout(timeout); }, [pendingDrag]);
   useEffect(() => {
     if (!allocated) return;
@@ -117,15 +124,15 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
     return () => clearTimeout(timer);
   }, [grant, preview.stop]);
   useEffect(() => {
-    if (preview.slot !== 'capturing' && preview.slot !== 'freezing') return;
+    if (preview.phase !== 'capturing' && preview.phase !== 'freezing') return;
     // This includes grant acquisition and content that never reaches readiness.
     const timer = window.setTimeout(() => {
       setError('Snapshot unavailable. You can still interact or retry.'); preview.complete(preview.generation);
-    }, preview.slot === 'freezing' ? 2000 : 8000);
+    }, preview.phase === 'freezing' ? 2000 : 8000);
     return () => clearTimeout(timer);
-  }, [preview.slot, preview.generation, preview.complete]);
+  }, [preview.phase, preview.generation, preview.complete]);
   useEffect(() => {
-    if (!grant || !ready || preview.slot !== 'capturing' && preview.slot !== 'freezing') return;
+    if (!grant || !ready || preview.phase !== 'capturing' && preview.phase !== 'freezing') return;
     const controller = new AbortController(), requestId = randomId();
     let received = false, firstFrame = 0, secondFrame = 0;
     const message = (event: MessageEvent) => {
@@ -145,7 +152,7 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
     window.addEventListener('message', message);
     firstFrame = requestAnimationFrame(() => { secondFrame = requestAnimationFrame(() => frame.current?.contentWindow?.postMessage({ type: 'acanvas:preview-snapshot', instanceId: grant.id, requestId }, '*')); });
     return () => { controller.abort(); cancelAnimationFrame(firstFrame); cancelAnimationFrame(secondFrame); window.removeEventListener('message', message); };
-  }, [grant, ready, preview.slot, preview.generation, preview.width, preview.height, preview.complete]);
+  }, [grant, ready, preview.phase, preview.generation, preview.width, preview.height, preview.complete]);
 
   refreshLive.current = async () => {
     const iframe = frame.current, grant = active.current, target = iframe?.contentWindow;
@@ -179,24 +186,24 @@ function LegacyHtmlCanvasContent({ asset, api, onReloadBoard, onFrameDrag, onFra
   }
   function reload() { setAttempt(value => value + 1); setError(''); }
   const preparing = preview.slot === 'capturing' || preview.slot === 'freezing' || preview.slot === 'waiting' || !!(allocated && grant && !ready);
-  return <div ref={container} className="html-content" data-preview-state={preview.slot} data-preview-ready={allocated && ready || undefined} tabIndex={0} aria-label={`HTML preview: ${asset.name}`}
+  return <div ref={container} className="html-content" data-preview-state={preview.slot} data-preview-phase={preview.phase} data-preview-ready={allocated && ready || undefined} tabIndex={preview.slot === 'hidden' ? -1 : 0} aria-label={`HTML preview: ${asset.name}`}
     onPointerEnter={event => { preview.setHovered(true); hover(event); }} onPointerMove={hover} onPointerLeave={() => { preview.setHovered(false); stoppedWhileHovered.current = false; hoverAttempted.current = false; }}
     onFocus={event => { if (event.target === event.currentTarget) interact(true); }}
     onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); interact(true); } }}
     onPointerDown={event => { if (event.pointerType === 'touch' && !(event.target as Element).closest('[data-canvas-control].html-preview-tools')) interact(true); }}>
     {preview.image && <img ref={snapshotImage} className="html-snapshot" src={preview.image.url} alt={`Static preview of ${asset.name}`} draggable={false} data-snapshot-width={preview.image.width} data-snapshot-height={preview.image.height}/>}
-    {allocated && grant && <iframe ref={frame} className={live ? 'html-live-frame' : 'html-capture-frame'} style={{ visibility: preview.image && !ready ? 'hidden' : undefined }} src={grant.url} title={`HTML preview: ${asset.name}`} sandbox="allow-scripts" referrerPolicy="no-referrer" allow="" tabIndex={live ? 0 : -1} aria-hidden={!live} onLoad={() => setReady(true)}/>}
-    {!preview.image && !(allocated && grant && ready) && <div className="html-poster" role={preparing ? 'status' : undefined}>{preparing ? <DominoLoader size={40}/> : <Code2 size={32} strokeWidth={1.25}/>}<strong>{asset.name}</strong><span>{preparing ? preview.slot === 'waiting' ? `Waiting for a preview slot · ${HTML_PREVIEW_LIMIT} at a time` : 'Preparing preview…' : 'Preview unavailable'}</span></div>}
+    {allocated && grant && <iframe ref={frame} className={live ? 'html-live-frame' : 'html-capture-frame'} style={{ display: preview.slot === 'hidden' ? 'none' : undefined, visibility: !live || preview.image && !ready ? 'hidden' : undefined }} src={grant.url} title={`HTML preview: ${asset.name}`} sandbox="allow-scripts" referrerPolicy="no-referrer" allow="" tabIndex={live ? 0 : -1} inert={!live} aria-hidden={!live} onLoad={() => setReady(true)}/>}
+    {!preview.image && !(live && grant && ready) && <div className="html-poster" role={preparing ? 'status' : undefined}>{preparing ? <DominoLoader size={40}/> : <Code2 size={32} strokeWidth={1.25}/>}<strong>{asset.name}</strong><span>{preparing ? preview.slot === 'waiting' ? `Waiting for a preview slot · ${HTML_PREVIEW_LIMIT} at a time` : 'Preparing preview…' : 'Preview unavailable'}</span></div>}
     {pendingDrag && live && <div className="html-drag-capture" aria-hidden="true" onPointerDown={() => setPendingDrag(undefined)} onPointerMove={event => {
       if (!event.isTrusted || !(event.buttons & 1)) { setPendingDrag(undefined); return; }
       if (event.pointerId === pendingDrag.pointerId && frame.current) { event.stopPropagation(); onFrameDrag?.(frame.current, pendingDrag, event); setPendingDrag(undefined); }
     }} onPointerUp={() => setPendingDrag(undefined)} onPointerCancel={() => setPendingDrag(undefined)}/>}
-    <div className="html-preview-tools" data-canvas-control onPointerDown={event => event.stopPropagation()}>
-      {live && <><button type="button" aria-label="Reload HTML preview" title="Reload preview" disabled={!grant} onClick={reload}><RotateCw size={13}/></button><button type="button" aria-label="Stop HTML preview" title="Stop preview" onClick={() => { stoppedWhileHovered.current = true; setError(''); preview.stop(); }}><Square size={13}/></button></>}
-      {!live && !preparing && <button type="button" aria-label="Refresh HTML snapshot" title="Refresh snapshot" disabled={reloadRequired} onClick={() => { setError(''); preview.retry(); }}><RotateCw size={13}/></button>}
-      <a href={api.content(asset.id)} download={asset.name} aria-label={`Download ${asset.name}`} title="Download original HTML"><ArrowDownToLine size={13}/></a>
+    <div className="html-preview-tools" data-canvas-control inert={preview.slot === 'hidden'} aria-hidden={preview.slot === 'hidden'} onPointerDown={event => event.stopPropagation()}>
+      {live && <><button type="button" aria-label="Reload HTML preview" data-tooltip="Reload" disabled={!grant} onClick={reload}><RotateCw size={13}/></button><button type="button" aria-label="Stop HTML preview" data-tooltip="Stop" onClick={() => { stoppedWhileHovered.current = true; setError(''); preview.stop(); }}><Square size={13}/></button></>}
+      {!live && !preparing && <button type="button" aria-label="Refresh HTML snapshot" data-tooltip="Refresh" disabled={reloadRequired} onClick={() => { setError(''); preview.retry(); }}><RotateCw size={13}/></button>}
+      <a href={api.content(asset.id)} download={asset.name} aria-label={`Download ${asset.name}`} data-tooltip="Download"><ArrowDownToLine size={13}/></a>
     </div>
-    {error && <div className="html-preview-error" role="status"><p>{error}</p>{reloadRequired && <button type="button" data-canvas-control onPointerDown={event => event.stopPropagation()} onClick={() => { if (onReloadBoard) void onReloadBoard(); else window.location.reload(); }}>Reload board</button>}</div>}
+    {error && <div className="html-preview-error" role="status" inert={preview.slot === 'hidden'} aria-hidden={preview.slot === 'hidden'}><p>{error}</p>{reloadRequired && <button type="button" data-canvas-control onPointerDown={event => event.stopPropagation()} onClick={() => { if (onReloadBoard) void onReloadBoard(); else window.location.reload(); }}>Reload board</button>}</div>}
   </div>;
 }
 

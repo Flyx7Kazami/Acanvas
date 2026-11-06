@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AudioCanvasPlayer } from './AudioCanvasPlayer';
+import { TooltipLayer } from './TooltipLayer';
 import { DominoLoader } from './DominoLoader';
 import { resolveContentKind } from '../shared/content-types';
 import type { Asset } from '../shared/types';
@@ -33,4 +34,4 @@ function Preview() {
     {!!assets.length && <select className="audio-review-source" aria-label="Audio file" value={selected} onChange={event => setSelected(event.target.value)}><option value="">Choose audio…</option>{assets.map(asset => <option key={asset.id} value={asset.id}>{asset.name}</option>)}</select>}
   </div></main>;
 }
-createRoot(document.getElementById('root')!).render(<Preview/>);
+createRoot(document.getElementById('root')!).render(<><Preview/><TooltipLayer/></>);

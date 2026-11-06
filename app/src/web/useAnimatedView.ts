@@ -22,10 +22,11 @@ export function useAnimatedView(camera: CanvasCamera, sessionId: string, disable
     const start = { ...current.current, view: animation.current?.view || camera.getView() };
     interrupt(false);
     if (!start.sessionId || start.disabled) return;
+    camera.settle();
     persistView(target, start.sessionId);
     if (matchMedia('(prefers-reduced-motion: reduce)').matches || (start.view.x === target.x && start.view.y === target.y && start.view.zoom === target.zoom)) { updateView(target, start.sessionId, false); camera.settle(); return; }
     const active = { frame: 0, sessionId: start.sessionId, target, view: { ...target, x: start.view.x, y: start.view.y, zoom: start.view.zoom } };
-    animation.current = active; updateView(active.view, active.sessionId, false);
+    animation.current = active; updateView(active.view, active.sessionId, false); camera.flush('native');
     const started = performance.now();
     const step = (time: number) => {
       if (animation.current !== active) return;
@@ -33,7 +34,7 @@ export function useAnimatedView(camera: CanvasCamera, sessionId: string, disable
       const progress = Math.min(1, Math.max(0, (time - started) / viewTransitionDuration)), eased = viewTransitionEase(progress);
       active.view = { ...target, x: start.view.x + (target.x - start.view.x) * eased, y: start.view.y + (target.y - start.view.y) * eased, zoom: start.view.zoom + (target.zoom - start.view.zoom) * eased };
       updateView(active.view, active.sessionId, false);
-      camera.flush();
+      camera.flush('native');
       if (progress === 1) { animation.current = null; camera.settle(); }
       else active.frame = requestAnimationFrame(step);
     };
