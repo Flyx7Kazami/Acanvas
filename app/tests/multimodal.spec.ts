@@ -322,9 +322,20 @@ test('HTML captures rendered content, activates on hover and saves the latest st
   await page.mouse.move(5, 5); await object.locator('.html-content').hover();
   await expect(frame.getByRole('button', { name: '0', exact: true })).toBeVisible(); await expect(frame.getByLabel('Label')).toHaveValue('');
   expect((await app.state()).assets).toHaveLength(1); await page.screenshot({ path: info.outputPath('html-live-counter.png') });
+
+  const saved = await app.state(), card = saved.objects[0], zoom = .13;
+  await app.call('/api/board/operations', 'POST', { sessionId: saved.session.id, operations: [{ type: 'update', objectId: card.id, expectedVersion: card.version, changes: { width: 1250, height: 1000 } }] });
+  await app.call(`/api/sessions/${saved.session.id}/view`, 'PUT', { x: 320 - card.x * zoom, y: 220 - card.y * zoom, zoom, selectedObjectIds: [] });
+  await page.mouse.move(5, 5);
+  await page.reload();
+  const restored = object.locator('.html-snapshot');
+  await expect(restored).toBeVisible();
+  await expect(restored).toHaveAttribute('data-snapshot-width', '1250');
+  await expect(restored).toHaveAttribute('data-snapshot-height', '1000');
+  await expect(object.locator('iframe')).toHaveCount(0);
 });
 
-test('twelve HTML snapshots drain to zero frames, retain cached views and share four interaction slots', async ({ page, app }, info) => {
+test('HTML previews retain cached snapshots and offscreen live state within four slots', async ({ page, app }, info) => {
   const initial = await app.state(), { token } = await (await page.request.get(`${app.url}/api/bootstrap`)).json();
   for (let index = 0; index < 13; index++) {
     const response = await page.request.post(`${app.url}/api/assets?name=preview-${index}.html&mime=text/html`, { headers: { Authorization: `Bearer ${token}` }, data: `<style>body{margin:0;font:16px sans-serif}button{margin:20px}</style><button onclick="this.textContent='Changed';document.body.style.background='rgb(240,40,80)'">Initial</button><script>document.querySelector('button').textContent='Rendered ${index}';document.body.style.background='rgb(20,120,200)'</script>` });
@@ -362,22 +373,37 @@ test('twelve HTML snapshots drain to zero frames, retain cached views and share 
   await expect(objects.nth(5).locator('.html-content')).toHaveAttribute('data-preview-state', 'live');
   await expect(objects.nth(2).locator('iframe')).toHaveCount(0); await expect(page.locator('iframe')).toHaveCount(4);
   await objects.nth(4).getByRole('button', { name: 'Stop HTML preview', exact: true }).click(); await expect(page.locator('iframe')).toHaveCount(3);
+  const retained = [0, 3, 5].map(index => objects.nth(index));
+  const liveButton = objects.nth(3).frameLocator('iframe').getByRole('button');
+  await liveButton.click();
+  await expect(liveButton).toHaveText('Changed');
+  const frames = await Promise.all(retained.map(object => object.locator('iframe').elementHandle()));
   const world = page.locator('.canvas-world'), camera = await world.getAttribute('style');
   await page.mouse.move(5, 5);
   await world.evaluate(element => { (element as HTMLElement).style.transform = 'translate(-6000px, 0px) scale(1)'; });
-  await expect(page.locator('iframe')).toHaveCount(0); const requests = await page.evaluate(() => (window as any).htmlMetrics.requests);
-  await world.evaluate((element, style) => element.setAttribute('style', style!), camera); await page.waitForTimeout(250);
-  await expect(page.locator('.html-snapshot')).toHaveCount(12); await expect(page.locator('iframe')).toHaveCount(0); expect(await page.evaluate(() => (window as any).htmlMetrics.requests)).toBe(requests);
+  await expect(page.locator('.html-content[data-preview-state="hidden"] iframe')).toHaveCount(3);
+  await expect(page.locator('iframe:visible')).toHaveCount(0);
+  const requests = await page.evaluate(() => (window as any).htmlMetrics.requests);
+  await world.evaluate((element, style) => element.setAttribute('style', style!), camera);
+  await expect(page.locator('.html-snapshot')).toHaveCount(12);
+  for (const [index, object] of retained.entries()) {
+    await expect(object.locator('.html-content')).toHaveAttribute('data-preview-state', 'live');
+    expect(await object.locator('iframe').evaluate((element, original) => element === original, frames[index])).toBe(true);
+  }
+  await expect(liveButton).toHaveText('Changed');
+  expect(await page.evaluate(() => (window as any).htmlMetrics.requests)).toBe(requests);
+  for (const object of retained) await object.getByRole('button', { name: 'Stop HTML preview', exact: true }).click();
+  await expect(page.locator('iframe')).toHaveCount(0);
   // A boundary-touch notification must not strand the still-cold thirteenth block.
-  await objects.nth(12).evaluate(element => { (element as HTMLElement).style.left = `${innerWidth}px`; }); await page.waitForTimeout(100);
+  await objects.nth(12).evaluate(element => { element.closest<HTMLElement>('[data-group-presentation]')!.style.left = `${innerWidth}px`; }); await page.waitForTimeout(100);
   await expect(objects.nth(12).locator('.html-content')).toHaveAttribute('data-preview-state', 'hidden');
-  await objects.nth(12).evaluate(element => { (element as HTMLElement).style.left = `${innerWidth - 100}px`; });
+  await objects.nth(12).evaluate(element => { element.closest<HTMLElement>('[data-group-presentation]')!.style.left = `${innerWidth - 100}px`; });
   await expect(objects.nth(12).locator('.html-snapshot')).toHaveCount(1); await expect(page.locator('iframe')).toHaveCount(0);
   // Layout resizing refreshes after settling; canvas zoom does not execute HTML.
   const beforeReversal = await page.evaluate(() => (window as any).htmlMetrics.requests);
-  await objects.nth(0).evaluate(async element => { const style = (element as HTMLElement).style; style.width = '320px'; await new Promise(resolve => setTimeout(resolve, 30)); style.width = '280px'; });
+  await objects.nth(0).evaluate(async element => { const style = element.closest<HTMLElement>('[data-group-presentation]')!.style; style.width = '320px'; await new Promise(resolve => setTimeout(resolve, 30)); style.width = '280px'; });
   await page.waitForTimeout(300); expect(await page.evaluate(() => (window as any).htmlMetrics.requests)).toBe(beforeReversal);
-  await objects.nth(0).evaluate(element => { (element as HTMLElement).style.width = '310.5px'; });
+  await objects.nth(0).evaluate(element => { element.closest<HTMLElement>('[data-group-presentation]')!.style.width = '310.5px'; });
   await expect(objects.nth(0).locator('.html-snapshot')).toHaveAttribute('data-snapshot-width', '311'); await expect(page.locator('iframe')).toHaveCount(0);
   const beforeZoom = await page.evaluate(() => (window as any).htmlMetrics.requests);
   await world.evaluate(element => { (element as HTMLElement).style.transform = 'scale(.9)'; }); await page.waitForTimeout(300);
@@ -385,7 +411,7 @@ test('twelve HTML snapshots drain to zero frames, retain cached views and share 
   await world.evaluate((element, style) => element.setAttribute('style', style!), camera);
   for (let index = 0; index < 4; index++) await activate(index);
   const current = await app.state(), source = current.objects[12];
-  const draft = await app.call(`/api/sessions/${current.session.id}/draft`, 'PUT', { ...current.draft, text: 'Inspect this HTML source.', attachments: [source.assetId], references: { ...current.draft.references, objectIds: [source.id] } });
+  const draft = await app.call(`/api/sessions/${current.session.id}/draft`, 'PUT', { ...current.draft, text: 'Inspect this HTML source.', attachments: [source.assetId], references: { objectIds: [source.id], taskIds: [] } });
   await app.call(`/api/sessions/${current.session.id}/tasks`, 'POST', { draftId: draft.id, expectedRevision: draft.revision });
   await app.call('/api/board/operations', 'POST', { sessionId: current.session.id, operations: [{ type: 'delete', objectId: source.id, expectedVersion: source.version }] });
   await expect(objects).toHaveCount(12); await page.locator('.queue-task').first().click(); await page.mouse.move(5, 5); await page.getByRole('button', { name: 'View preview-12.html', exact: true }).focus(); await page.keyboard.press('Enter');
@@ -682,14 +708,15 @@ test('undecodable canvas audio keeps its download visible within the minimum row
   const result = page.waitForEvent('download'); await link.click(); const file = await result; const path = info.outputPath('original-broken-audio.wav'); await file.saveAs(path); expect((await readFile(path)).equals(original)).toBeTruthy(); expect((await app.state()).assets).toHaveLength(1);
 });
 
-test('HTML hover keeps real iframe wheel and pinch on the canvas at both scales', async ({ page, app }) => {
-  await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'wheel.html', mimeType: 'text/html', buffer: Buffer.from('<style>body{margin:0}button{margin:24px}main{height:2500px;background:linear-gradient(white,lightblue)}</style><button onclick="this.textContent=Number(this.textContent)+1">0</button><main>Scroll area</main>') });
-  const object = page.locator('.board-object[data-content-kind="html"]'), content = object.locator('.html-content');
-  await expect(object.locator('.html-snapshot')).toBeVisible(); await expect(page.getByRole('button', { name: /^Interact/ })).toHaveCount(0);
-  for (const zoom of [1, .5]) {
+for (const zoom of [1, .5]) {
+  test(`HTML hover keeps real iframe wheel and pinch on the canvas at ${zoom * 100}%`, async ({ page, app }) => {
+    await page.getByLabel('Import files into canvas', { exact: true }).setInputFiles({ name: 'wheel.html', mimeType: 'text/html', buffer: Buffer.from('<style>body{margin:0}button{margin:24px}main{height:2500px;background:linear-gradient(white,lightblue)}</style><button onclick="this.textContent=Number(this.textContent)+1">0</button><main>Scroll area</main>') });
+    const object = page.locator('.board-object[data-content-kind="html"]'), content = object.locator('.html-content');
+    await expect(object.locator('.html-snapshot')).toBeVisible(); await expect(page.getByRole('button', { name: /^Interact/ })).toHaveCount(0);
     const initial = await app.state(), item = initial.objects[0];
     await app.call(`/api/sessions/${initial.session.id}/view`, 'PUT', { x: 320 - item.x * zoom, y: 220 - item.y * zoom, zoom, selectedObjectIds: [] });
     await page.mouse.move(5, 5); await page.reload(); await expect(object.locator('.html-snapshot')).toBeVisible();
+    await expect(page.locator('.zoom-label')).toHaveText(`${zoom * 100}%`);
     await content.hover(); await expect(object.locator('.html-live-frame')).toBeVisible();
     await expect(object.frameLocator('iframe').getByRole('button', { name: '0', exact: true })).toBeVisible();
     const frame = page.frames().find(value => value.url().includes('/preview/'))!;
@@ -710,9 +737,11 @@ test('HTML hover keeps real iframe wheel and pinch on the canvas at both scales'
     await page.keyboard.down('Control'); await page.mouse.wheel(0, -40); await page.keyboard.up('Control');
     await expect.poll(async () => (await app.state()).session.view.zoom).toBeGreaterThan(zoom);
     const after = (await app.state()).session.view;
-    expect(after.zoom).toBeCloseTo(zoom * Math.exp(.2), 5);
-    expect((anchor.x - canvas.x - after.x) / after.zoom).toBeCloseTo((anchor.x - canvas.x - pan.x) / pan.zoom, 3);
-    expect((anchor.y - canvas.y - after.y) / after.zoom).toBeCloseTo((anchor.y - canvas.y - pan.y) / pan.zoom, 3);
+    expect(after.zoom).toBeCloseTo(zoom * Math.exp(.32), 5);
+    // The pointer anchor stays within one screen pixel.
+    const worldX = (anchor.x - canvas.x - pan.x) / pan.zoom, worldY = (anchor.y - canvas.y - pan.y) / pan.zoom;
+    expect(Math.abs(canvas.x + after.x + worldX * after.zoom - anchor.x)).toBeLessThan(1);
+    expect(Math.abs(canvas.y + after.y + worldY * after.zoom - anchor.y)).toBeLessThan(1);
     const saved = await app.state();
     await page.mouse.move(5, 5);
     await frame.evaluate(() => {
@@ -731,8 +760,8 @@ test('HTML hover keeps real iframe wheel and pinch on the canvas at both scales'
     await expect(object.locator('iframe')).toHaveCount(0); await page.waitForTimeout(200); await expect(object.locator('iframe')).toHaveCount(0);
     await page.locator('#instruction').focus(); await content.focus();
     await expect(content).toHaveAttribute('data-preview-state', 'live');
-  }
-});
+  });
+}
 
 
 test.describe('HTML touch activation', () => {

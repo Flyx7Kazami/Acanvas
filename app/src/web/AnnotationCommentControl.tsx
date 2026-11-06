@@ -25,7 +25,7 @@ export function AnnotationCommentControl({ text, mode, inputLabel, className = '
   const composing = compositionRef || ownComposition;
   const input = inputRef || ownInput;
   if (mode === 'display') return <div ref={controlRef} className={`canvas-annotation-note canvas-annotation-comment ${className}`} data-annotation-id={annotationId} data-comment-mode="display" data-canvas-control onPointerDown={event => event.stopPropagation()}>
-    <button type="button" className="canvas-annotation-summary" title={text} aria-label={inputLabel} onClick={onOpen}>{text.split('\n').find(line => line.trim()) || 'Add a comment'}</button>
+    <button type="button" className="canvas-annotation-summary" data-tooltip={text} aria-label={inputLabel} onClick={onOpen}>{text.split('\n').find(line => line.trim()) || 'Add a comment'}</button>
   </div>;
   return <div ref={controlRef} className={`canvas-annotation-note annotation-full inline-annotation-reader ${className}`} role="region" aria-label={regionLabel || 'Annotation'} data-canvas-control data-annotation-id={annotationId} data-comment-mode={mode} onPointerDown={event => event.stopPropagation()} onKeyDown={event => {
     event.stopPropagation();

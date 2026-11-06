@@ -256,12 +256,50 @@ export function zoomAt(view: View, factor: number, anchor: Point): View {
   return { x: anchor.x - world.x * zoom, y: anchor.y - world.y * zoom, zoom };
 }
 
-export function fitView(objects: Rect[], size: { width: number; height: number }): View {
+function clearFitArea(viewport: Rect, content: Rect, obstacles: readonly Rect[]): Rect {
+  const gap = 12;
+  const left = viewport.x, right = left + viewport.width;
+  const top = viewport.y, bottom = top + viewport.height;
+  const blocked = obstacles.map(rect => ({
+    left: Math.max(left, rect.x - gap), right: Math.min(right, rect.x + rect.width + gap),
+    top: Math.max(top, rect.y - gap), bottom: Math.min(bottom, rect.y + rect.height + gap),
+  })).filter(rect => rect.left < rect.right && rect.top < rect.bottom).sort((a, b) => a.left - b.left);
+  if (!blocked.length) return viewport;
+
+  // A clear rectangle can grow vertically until it reaches an edge or an obstacle.
+  const edges = [...new Set([top, bottom, ...blocked.flatMap(rect => [rect.top, rect.bottom])])].sort((a, b) => a - b);
+  let best = viewport, bestScale = -1, bestDistance = Infinity;
+  for (const [index, y] of edges.entries()) {
+    for (const end of edges.slice(index + 1)) {
+      const height = end - y;
+      const consider = (x: number, limit: number) => {
+        const width = limit - x;
+        if (width <= 0) return;
+        const scale = Math.min(1.5, width / content.width, height / content.height);
+        const distance = Math.hypot(x + width / 2 - (left + right) / 2, y + height / 2 - (top + bottom) / 2);
+        if (scale > bestScale || scale === bestScale && distance < bestDistance) {
+          best = { x, y, width, height };
+          bestScale = scale;
+          bestDistance = distance;
+        }
+      };
+      let x = left;
+      for (const obstacle of blocked) {
+        if (obstacle.top >= end || obstacle.bottom <= y) continue;
+        consider(x, obstacle.left);
+        x = Math.max(x, obstacle.right);
+      }
+      consider(x, right);
+    }
+  }
+  return best;
+}
+
+export function fitView(objects: Rect[], size: { width: number; height: number }, obstacles: readonly Rect[] = []): View {
   if (!objects.length) return { x: 0, y: 0, zoom: 1 };
-  const left = Math.min(...objects.map(object => object.x));
-  const top = Math.min(...objects.map(object => object.y));
-  const right = Math.max(...objects.map(object => object.x + object.width));
-  const bottom = Math.max(...objects.map(object => object.y + object.height));
-  const zoom = Math.min(1.5, Math.max(0.05, Math.min((size.width - 100) / (right - left), (size.height - 130) / (bottom - top))));
-  return { x: (size.width - (right - left) * zoom) / 2 - left * zoom, y: (size.height - (bottom - top) * zoom) / 2 - top * zoom, zoom };
+  const content = unionBounds(objects);
+  const x = Math.min(50, size.width / 4), y = Math.min(65, size.height / 4);
+  const area = clearFitArea({ x, y, width: size.width - x * 2, height: size.height - y * 2 }, content, obstacles);
+  const zoom = Math.min(1.5, Math.max(0.05, Math.min(area.width / content.width, area.height / content.height)));
+  return { x: area.x + (area.width - content.width * zoom) / 2 - content.x * zoom, y: area.y + (area.height - content.height * zoom) / 2 - content.y * zoom, zoom };
 }

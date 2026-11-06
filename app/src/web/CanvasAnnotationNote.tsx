@@ -119,7 +119,7 @@ export function CanvasAnnotationNote({ canvas, bounds, markBounds, pin, geometry
     return () => { reduced.removeEventListener('change', stop); animations.current.forEach(animation => animation.cancel()); };
   }, []);
   return <div ref={group} className="canvas-annotation-group" data-annotation-id={annotationId} data-active={active || undefined} data-redrawing={redrawing || undefined} data-geometry={point ? 'point' : undefined} data-canvas-control style={point ? { left: screenBounds(markBounds!, view).x, top: screenBounds(markBounds!, view).y } : undefined}>
-    <button ref={pinButton} type="button" className="annotation-pin" title={control.text} aria-label={`Annotation ${number}: ${control.text || 'Add a comment'}`} onPointerDown={event => event.stopPropagation()} onClick={onOpen}><AnnotationBubble number={number} size={28}/></button>
+    <button ref={pinButton} type="button" className="annotation-pin" data-tooltip={control.text} aria-label={`Annotation ${number}: ${control.text || 'Add a comment'}`} onPointerDown={event => event.stopPropagation()} onClick={onOpen}><AnnotationBubble number={number} size={28}/></button>
     <AnnotationCommentControl {...control} controlRef={element} annotationId={annotationId}/>
   </div>;
 }

@@ -5,6 +5,17 @@ import { placeFloatingControl, placeVideoControl, screenBounds, unionBounds, typ
 
 type ElementRef<T extends HTMLElement = HTMLElement> = RefObject<T | null>;
 
+export function fitObstacles(board: HTMLElement): Rect[] {
+  const bounds = board.getBoundingClientRect();
+  const scaleX = bounds.width / board.clientWidth, scaleY = bounds.height / board.clientHeight;
+  const shell = board.closest('.app-shell') ?? board;
+  const controls = shell.querySelectorAll<HTMLElement>('.canvas-toolbar,.project-identity,.canvas-actions,.group-navigation,.creation-dock,.queue-stack,.queue-expand,.composer-menu,.theme-menu,.notification-stack');
+  return [...controls].filter(control => control.checkVisibility({ checkVisibilityCSS: true, checkOpacity: true })).map(control => {
+    const rect = control.getBoundingClientRect();
+    return { x: (rect.left - bounds.left) / scaleX, y: (rect.top - bounds.top) / scaleY, width: rect.width / scaleX, height: rect.height / scaleY };
+  }).filter(rect => rect.width > 0 && rect.height > 0);
+}
+
 export function useNotificationLayout(dock: ElementRef, notifications: ElementRef, loaded: boolean) {
   useLayoutEffect(() => {
     const stack = notifications.current;

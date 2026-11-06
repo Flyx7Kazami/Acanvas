@@ -46,15 +46,14 @@ try {
         await page.waitForFunction(n => document.querySelectorAll('.board-object').length === n && !document.querySelector('.content-loading'), count);
         await page.waitForTimeout(1200);
         await page.evaluate(() => {
-          window.zoomStudy = { frames: [], latencies: [], inputs: 0, updates: 0, longTasks: [], pending: 0 };
+          const world=document.querySelector('.canvas-world'),matrix=new DOMMatrix(getComputedStyle(world).transform);
+          window.zoomStudy = { frames: [], latencies: [], inputs: 0, updates: 0, longTasks: [], events: [], target:{x:matrix.e,y:matrix.f,zoom:matrix.a},sequence:0 };
           const study = window.zoomStudy;
-          document.querySelector('#whiteboard').addEventListener('wheel', () => { study.inputs++; study.pending = performance.now(); }, { capture: true });
-          study.observer = new MutationObserver(() => { study.updates++; if (study.pending) study.latencies.push(performance.now() - study.pending); study.pending = 0; });
-          study.observer.observe(document.querySelector('.canvas-world'), { attributes: true, attributeFilter: ['style'] });
+          document.querySelector('#whiteboard').addEventListener('wheel', event => { study.inputs++; const old=study.target,z=Math.max(.05,Math.min(4,old.zoom*Math.exp(-event.deltaY*.008)));study.target={x:event.clientX-(event.clientX-old.x)/old.zoom*z,y:event.clientY-(event.clientY-old.y)/old.zoom*z,zoom:z};study.events.push({...study.target,at:performance.now(),sequence:++study.sequence}); }, { capture: true });
           study.longObserver = new PerformanceObserver(list => study.longTasks.push(...list.getEntries().map(entry => entry.duration)));
           study.longObserver.observe({ type: 'longtask' });
-          study.running = true; let last;
-          function frame(now) { if (!study.running) return; if (last) study.frames.push(now - last); last = now; requestAnimationFrame(frame); } requestAnimationFrame(frame);
+          study.running = true; let last,previous='';
+          function frame(now) { if (!study.running) return; if (last) study.frames.push(now - last); last = now; const transform=getComputedStyle(world).transform,m=new DOMMatrix(transform);if(transform!==previous){study.updates++;previous=transform;}const matched=study.events.filter(e=>Math.abs(e.x-m.e)<.002&&Math.abs(e.y-m.f)<.002&&Math.abs(e.zoom-m.a)<.000002);if(matched.length){study.latencies.push(...matched.map(e=>performance.now()-e.at));const sequence=Math.max(...matched.map(e=>e.sequence));study.events=study.events.filter(e=>e.sequence>sequence);} requestAnimationFrame(frame); } requestAnimationFrame(frame);
         });
         const before = (await cdp.send('Performance.getMetrics')).metrics;
         if (process.env.PROFILE) { await cdp.send('Profiler.enable'); await cdp.send('Profiler.start'); }
@@ -64,7 +63,7 @@ try {
         }
         if (process.env.PROFILE) { const { profile } = await cdp.send('Profiler.stop'); await writeFile(`${output}.${count}.${round}.cpuprofile`, JSON.stringify(profile)); }
         const after = (await cdp.send('Performance.getMetrics')).metrics;
-        const measured = await page.evaluate(() => { const s = window.zoomStudy; s.running = false; s.observer.disconnect(); s.longObserver.disconnect(); return { frames: s.frames, latencies: s.latencies, inputs: s.inputs, updates: s.updates, longTasks: s.longTasks, transform: document.querySelector('.canvas-world').style.transform }; });
+        const measured = await page.evaluate(() => { const s = window.zoomStudy; s.running = false; s.longObserver.disconnect(); return { frames: s.frames, latencies: s.latencies, inputs: s.inputs, updates: s.updates, longTasks: s.longTasks, transform: getComputedStyle(document.querySelector('.canvas-world')).transform, inlineTransform:document.querySelector('.canvas-world').style.transform,animations:document.querySelector('.canvas-world').getAnimations().length }; });
         const metrics = Object.fromEntries(after.filter(value => ['ScriptDuration', 'TaskDuration', 'LayoutDuration', 'RecalcStyleDuration'].includes(value.name)).map(value => [value.name, (value.value - before.find(entry => entry.name === value.name).value) * 1000]));
         const result = { count, content, round, ...metrics, frames: measured.frames.length, frameP95: percentile(measured.frames, .95), inputP95: percentile(measured.latencies, .95), inputs: measured.inputs, updates: measured.updates, longTasks: measured.longTasks, transform: measured.transform };
         results.push(result); console.log(JSON.stringify(result));

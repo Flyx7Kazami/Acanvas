@@ -1,5 +1,6 @@
 import type { SessionView } from '../shared/types.js';
 import { zoomAt, type Point } from './geometry.js';
+import { CANVAS_GESTURE_ZOOM_GAIN } from './canvas-zoom.js';
 
 export type CanvasPointerInput = Pick<PointerEvent, 'target' | 'clientX' | 'clientY' | 'pointerId' | 'pointerType' | 'button' | 'buttons' | 'altKey' | 'shiftKey' | 'ctrlKey' | 'metaKey' | 'preventDefault' | 'stopPropagation'> & { currentTarget: HTMLDivElement };
 export type CanvasGestureState = { view: SessionView; sessionId: string; disabled: boolean; busy: boolean };
@@ -76,7 +77,7 @@ export function attachCanvasGestures(element: HTMLDivElement, callbacks: CanvasG
     const touch = touches.get(event.pointerId); if (!touch) return;
     stop(event); touch.point = point(event);
     if (pinch && touches.size >= 2) {
-      const next = pair(); callbacks.updateView(canvasPinchView(pinch.view, next.scale / pinch.scale, pinch.point, next.point), pinch.sessionId); return;
+      const next = pair(); callbacks.updateView(canvasPinchView(pinch.view, (next.scale / pinch.scale) ** CANVAS_GESTURE_ZOOM_GAIN, pinch.point, next.point), pinch.sessionId); return;
     }
     if (touchEnded) return;
     if (!touch.single) {
@@ -113,7 +114,7 @@ export function attachCanvasGestures(element: HTMLDivElement, callbacks: CanvasG
   const changeNative = (event: NativeGestureEvent) => {
     stop(event); current();
     if (!native || !Number.isFinite(event.scale) || event.scale! <= 0) return;
-    callbacks.updateView(canvasPinchView(native.view, event.scale! / native.scale, native.point, gesturePoint(event, native.point)), native.sessionId);
+    callbacks.updateView(canvasPinchView(native.view, (event.scale! / native.scale) ** CANVAS_GESTURE_ZOOM_GAIN, native.point, gesturePoint(event, native.point)), native.sessionId);
   };
   const endNative = (event: NativeGestureEvent) => { stop(event); current(); native = undefined; callbacks.finishView(); };
   const listeners: [string, EventListener][] = [

@@ -24,7 +24,7 @@ test('wheel bursts retain every delta and present one shared camera frame', () =
   const event = { clientX: 450, clientY: 280, deltaX: 0, deltaY: -1, deltaMode: 0, ctrlKey: true, metaKey: false };
   for (let i = 0; i < 120; i++) f.camera.update(canvasWheelView(f.camera.getView(), event, { left: 0, top: 0, height: 800 }));
   assert.equal(f.frames.size, 1);
-  assert.ok(Math.abs(f.camera.getView().zoom - .6 * Math.exp(.6)) < 1e-10);
+  assert.ok(Math.abs(f.camera.getView().zoom - .6 * Math.exp(.96)) < 1e-10);
   assert.equal(presented.length, 0); f.frame();
   assert.equal(presented.length, 1); assert.equal(controls.length, 1); assert.equal(presented[0], controls[0]);
   assert.deepEqual(controls[0].selectedObjectIds, ['a']);
@@ -62,8 +62,21 @@ test('a restored session presents after its content commits with the matching ow
   f.camera.commitContext(restored, 'next'); assert.equal(f.camera.getSnapshot(), restored);
 });
 
+test('native presentation commits an existing effect and remains attached to pending context', () => {
+  const f = fixture(); let created = 0, cancelled = 0;
+  const world = { style: { transform: '' }, dataset: {}, animate: () => { created++; return { effect: { setKeyframes: () => {} }, pause: () => {}, cancel: () => { cancelled++; }, currentTime: 0 }; } } as unknown as HTMLElement;
+  const detach = attachCameraPresentation(f.camera, world);
+  f.camera.update({ ...f.initial, zoom: .7 }); f.frame(); assert.equal(created, 1);
+  f.camera.flush('native'); assert.equal(cancelled, 1); assert.equal(world.style.transform, 'translate3d(30px,-20px,0) scale(0.7)');
+  f.camera.flush(); assert.equal(f.camera.getFrame().presentation, 'native'); assert.equal(created, 1);
+  f.camera.update({ ...f.camera.getView(), zoom: .8, activeGroupId: 'folder' }); f.camera.flush('native'); f.frame();
+  f.camera.commitContext(f.camera.getView(), ''); assert.equal(f.camera.getFrame().presentation, 'native'); assert.equal(created, 1);
+  f.camera.update({ ...f.camera.getView(), zoom: .9 }); f.frame(); assert.equal(f.camera.getFrame().presentation, 'composite'); assert.equal(created, 2);
+  f.camera.settle(); assert.equal(cancelled, 2); assert.equal(f.camera.getFrame().presentation, 'native'); detach();
+});
+
 function presentation(f: ReturnType<typeof fixture>) {
-  const world = { style: { transform: '' }, dataset: {} } as unknown as HTMLElement;
+  const world = { style: { transform: '' }, dataset: {}, animate: () => ({ effect: { setKeyframes: () => {} }, pause: () => {}, cancel: () => {}, currentTime: 0 }) } as unknown as HTMLElement;
   const node = { style: { willChange: '' }, dataset: {}, ownerDocument: { activeElement: null }, contains: () => false } as unknown as HTMLElement;
   const regions = new CanvasRasterRegions(f.camera.getFrame(), f.clock); regions.setViewport(1000, 800);
   regions.register('primary', node, { x: 0, y: 0, width: 300, height: 200 }, false); regions.registerSource('primary', node);
@@ -95,7 +108,7 @@ test('stable zoom restores native content detail while translation advances', ()
   f.camera.update({ ...f.initial, zoom: .7 }); f.frame();
   for (let i = 0; i < 7; i++) { f.camera.update({ ...f.camera.getView(), x: i * 10 }); f.frame(); }
   assert.equal(p.node.style.willChange, ''); assert.equal(p.world.dataset.cameraMoving, 'true');
-  assert.equal(p.world.style.transform, 'translate(60px,-20px) scale(0.7)'); p.detach();
+  assert.equal(p.world.style.transform, 'translate3d(60px,-20px,0) scale(0.7)'); p.detach();
 });
 
 test('60 Hz scale input retains content across intervening 120 Hz display frames', () => {
@@ -109,14 +122,14 @@ test('60 Hz scale input retains content across intervening 120 Hz display frames
   assert.equal(p.node.style.willChange, ''); p.detach();
 });
 
-test('content refreshes independently and visible static content owns retention', () => {
+test('content stays retained within its scale budget and visible static content owns retention', () => {
   const f = fixture(), p = presentation(f);
   const nodes = Array.from({ length: 8 }, () => ({ style: { willChange: '' }, dataset: {}, ownerDocument: { activeElement: null }, contains: () => false }) as unknown as HTMLElement);
   nodes.forEach((node, index) => { const id = `item-${index}`; p.regions.register(id, node, { x: index === 6 ? 10000 : 0, y: 0, width: 100, height: 100 }, index === 7); p.regions.registerSource(id, node); });
   f.camera.update({ ...f.initial, zoom: .61 }); f.frame();
   assert.equal(nodes[6].style.willChange, ''); assert.equal(nodes[7].style.willChange, '');
   f.camera.update({ ...f.initial, zoom: .68 }); f.frame();
-  assert.equal([p.node, ...nodes.slice(0, 6)].filter(node => node.style.willChange === '').length, 4);
+  assert.ok([p.node, ...nodes.slice(0, 6)].every(node => node.style.willChange === 'transform'));
   assert.equal(p.world.style.willChange, 'transform');
   f.camera.update({ ...f.initial, zoom: .9 }); f.camera.flush();
   assert.ok(nodes.slice(0, 6).every(node => node.style.willChange === ''));
@@ -124,14 +137,14 @@ test('content refreshes independently and visible static content owns retention'
   assert.ok(nodes.every(node => node.style.willChange === '')); p.detach();
 });
 
-test('zooming out retains camera composition while content refreshes independently', () => {
+test('zooming out retains camera composition while raster caches refresh', () => {
   const f = fixture(), p = presentation(f);
   f.camera.update({ ...f.initial, zoom: .61 }); f.frame();
   f.camera.update({ ...f.initial, zoom: .3 }); f.frame();
   assert.equal(p.node.style.willChange, 'transform'); assert.equal(p.world.style.willChange, 'transform');
   f.frame(); f.frame(); assert.equal(p.node.style.willChange, 'transform');
   f.camera.update({ ...f.initial, zoom: .1 }); f.camera.flush(); assert.equal(p.node.style.willChange, '');
-  assert.equal(p.world.style.willChange, 'transform');
+  assert.equal(p.world.style.willChange, ''); assert.equal(f.camera.getFrame().presentation, 'composite');
   f.idle(); assert.equal(p.world.style.willChange, ''); p.detach();
 });
 

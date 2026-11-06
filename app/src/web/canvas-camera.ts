@@ -6,7 +6,8 @@ export interface CameraClock {
   delay(callback: () => void, milliseconds: number): number;
   cancelDelay(id: number): void;
 }
-export interface CameraFrame { view: SessionView; moving: boolean }
+export type CameraPresentation = 'composite' | 'native';
+export interface CameraFrame { view: SessionView; moving: boolean; presentation: CameraPresentation }
 const browserClock: CameraClock = {
   requestFrame: callback => requestAnimationFrame(callback), cancelFrame: id => cancelAnimationFrame(id),
   delay: (callback, milliseconds) => window.setTimeout(callback, milliseconds), cancelDelay: id => window.clearTimeout(id),
@@ -25,12 +26,13 @@ export class CanvasCamera {
   private frame = 0;
   private idle = 0;
   private moving = false;
+  private presentation: CameraPresentation = 'native';
   private pendingContext = false;
   private owner = '';
   private listeners = new Set<() => void>();
   private renderers = new Set<(frame: CameraFrame) => void>();
   constructor(initial: SessionView, private clock: CameraClock = browserClock) {
-    this.current = initial; this.presented = { view: initial, moving: false };
+    this.current = initial; this.presented = { view: initial, moving: false, presentation: 'native' };
   }
   getView = () => this.current;
   getSnapshot = () => this.presented.view;
@@ -41,13 +43,13 @@ export class CanvasCamera {
   update(next: SessionView) {
     const moved = !sameCameraPose(this.current, next), contextChanged = !sameViewContext(this.current, next);
     if (!moved && !contextChanged) return;
-    this.current = next;
+    this.current = next; this.presentation = 'composite';
     if (contextChanged) this.pendingContext = true;
     if (moved) {
       if (!this.moving) {
         this.moving = true;
         // Prepare the retained layer at its presented pose before the next camera frame.
-        if (!this.pendingContext) for (const render of this.renderers) render({ view: this.presented.view, moving: true });
+        if (!this.pendingContext) for (const render of this.renderers) render({ view: this.presented.view, moving: true, presentation: this.presentation });
       }
       this.clock.cancelDelay(this.idle);
       this.idle = this.clock.delay(() => this.settle(), 140);
@@ -57,7 +59,7 @@ export class CanvasCamera {
 
   /** Retire pending input; owned sessions present alongside their committed content. */
   reset(next: SessionView, owner = '') {
-    this.stop(); this.current = next; this.moving = false; this.owner = owner; this.pendingContext = !!owner;
+    this.stop(); this.current = next; this.moving = false; this.presentation = 'native'; this.owner = owner; this.pendingContext = !!owner;
     if (!this.pendingContext) this.publish();
   }
   /** Context-owned content and its camera become visible in the same React commit. */
@@ -65,19 +67,20 @@ export class CanvasCamera {
     if (this.pendingContext && this.owner === owner && sameViewContext(context, this.current)) { this.pendingContext = false; this.flush(); }
   }
   /** Finish pose work for the currently committed context before reading its geometry. */
-  flush = () => {
+  flush = (presentation = this.presentation) => {
+    this.presentation = presentation;
     if (this.frame) this.clock.cancelFrame(this.frame);
     this.frame = 0;
-    if (!this.pendingContext && (this.presented.view !== this.current || this.presented.moving !== this.moving)) this.publish();
+    if (!this.pendingContext && (this.presented.view !== this.current || this.presented.moving !== this.moving || this.presented.presentation !== this.presentation)) this.publish();
     return this.presented.view;
   };
   settle = () => {
-    this.clock.cancelDelay(this.idle); this.idle = 0; this.moving = false;
+    this.clock.cancelDelay(this.idle); this.idle = 0; this.moving = false; this.presentation = 'native';
     return this.flush();
   };
   private publish() {
     const previous = this.presented.view;
-    this.presented = { view: this.current, moving: this.moving };
+    this.presented = { view: this.current, moving: this.moving, presentation: this.presentation };
     for (const render of this.renderers) render(this.presented);
     if (previous !== this.current) for (const listener of this.listeners) listener();
   }

@@ -74,7 +74,7 @@ test('reselecting one object creates individual atoms with neutral preview styli
     const after = await appearance(formal.first()); assert.equal(after.background, before.background); assert.equal(after.border, before.border); assert.notEqual(after.color, before.color);
     await formal.first().hover(); const hoveredFormal = await appearance(formal.first()); assert.equal(hoveredFormal.background, hoveredPreview.background); assert.notEqual(hoveredFormal.background, after.background);
     await page.mouse.move(5, 5);
-    assert.deepEqual(await formal.locator('span[title]').allTextContents(), Array(theme === 'light' ? 1 : 2).fill('Repeated.png'));
+    assert.deepEqual(await formal.locator('span[data-tooltip]').allTextContents(), Array(theme === 'light' ? 1 : 2).fill('Repeated.png'));
     await page.locator('.composer').screenshot({ path: join(app.evidence, `${theme}-confirmed.png`) });
     await app.saved();
   }

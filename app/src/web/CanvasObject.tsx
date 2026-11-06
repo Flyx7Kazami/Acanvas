@@ -80,7 +80,7 @@ export const CanvasObject = memo(function CanvasObject({ presentation, transitio
       onActivate={() => actions.current.activate(object.id)} onSaveError={cause => actions.current.board.showError(cause)}
       onMediaElement={element => actions.current.media(object.id, kind, element)}
     /></SceneContentContext.Provider></div>
-    <div className="object-caption"><span className="object-index">{String(index + 1).padStart(2, '0')}</span><span title={asset?.name}>{asset?.name || 'File'}</span>{object.sourceTaskId && <span className="generated-label">Output</span>}</div>
+    <div className="object-caption"><span className="object-index">{String(index + 1).padStart(2, '0')}</span><span data-tooltip={asset?.name}>{asset?.name || 'File'}</span>{object.sourceTaskId && <span className="generated-label">Output</span>}</div>
     {selected && handles.map(corner => <button key={corner} type="button" className="resize-handle" data-resize-id={object.id} data-resize-corner={corner} aria-label={`Resize ${asset?.name || 'File'} ${{ nw: 'top left', n: 'top', ne: 'top right', e: 'right', se: 'bottom right', s: 'bottom', sw: 'bottom left', w: 'left' }[corner]}`} onKeyDown={event => actions.current.resize(object, corner, event)}/>)}
   </article></div>;
 });

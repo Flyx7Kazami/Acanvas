@@ -22,7 +22,7 @@ button.addEventListener('click',async()=>{
    if(startTime===undefined)startTime=time;if(previous!==undefined)frames.push(time-previous);previous=time;
    const nextZoom=Math.max(.05,Math.min(4,start.zoom*Math.exp(Math.sin(steps/totalSteps*Math.PI)*Math.log(factor))));
    const began=performance.now();
-   if(mode==='app'||mode==='app-both') board.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,ctrlKey:true,clientX:rect.x+anchor.x,clientY:rect.y+anchor.y,deltaY:-Math.log(nextZoom/zoom)/.005}));
+   if(mode==='app'||mode==='app-both') board.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,ctrlKey:true,clientX:rect.x+anchor.x,clientY:rect.y+anchor.y,deltaY:-Math.log(nextZoom/zoom)/.008}));
    else world.style.transform=`translate(${anchor.x-origin.x*nextZoom}px,${anchor.y-origin.y*nextZoom}px) scale(${nextZoom})`;
    handlers.push(performance.now()-began);zoom=nextZoom;
    if(++steps<=totalSteps)requestAnimationFrame(frame);else resolve();

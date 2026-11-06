@@ -41,6 +41,15 @@
 .task-media-preview .markdown-content { padding: 16px; }.task-media-preview .markdown-body { font-size: 12px; }
 .html-content { position: relative; width: 100%; height: 100%; background: var(--surface); }
 .html-content iframe { position: absolute; inset: 0; width: 100%; height: 100%; display: block; border: 0; background: white; }
+/* The embedded page lays out in card CSS pixels inside the raster-scaled canvas. */
+.canvas-content-layer .html-content iframe {
+  inset: 0 auto auto 0;
+  width: calc(100% / var(--canvas-raster-unit));
+  height: calc(100% / var(--canvas-raster-unit));
+  zoom: calc(1 / var(--canvas-raster-unit));
+  transform: scale(var(--canvas-raster-unit));
+  transform-origin: 0 0;
+}
 .html-content img.html-snapshot { width: 100%; height: 100%; max-height: none; display: block; object-fit: fill; border-radius: 0; background: white; }
 .html-capture-frame { pointer-events: none; }
 .html-snapshot~.html-capture-frame { opacity: 0; }

@@ -572,7 +572,7 @@ test('annotation text, bubble and full panel keep screen sizes while anchors fol
       await page.setViewportSize({ width, height: 760 });
       for (const target of [.5, 1, 1.5, 2]) {
         const current = await worldZoom();
-        await page.locator('#whiteboard').dispatchEvent('wheel', { deltaY: -Math.log(target / current) / .005, ctrlKey: true, clientX: width / 2, clientY: 400, bubbles: true, cancelable: true });
+        await page.locator('#whiteboard').dispatchEvent('wheel', { deltaY: -Math.log(target / current) / .008, ctrlKey: true, clientX: width / 2, clientY: 400, bubbles: true, cancelable: true });
         await expect.poll(worldZoom).toBeCloseTo(target, 5); await expect(page.locator('.zoom-label')).toHaveText(`${target * 100}%`);
         const summary = group(page, note.id).locator('.canvas-annotation-summary');
         const metrics = await group(page, note.id).evaluate(element => {
@@ -621,7 +621,7 @@ test('annotation text, bubble and full panel keep screen sizes while anchors fol
   expect(afterPan.y).toBeCloseTo(beforePan!.y - 45, 3); expect(sourceAfterPan.x).toBeCloseTo(sourceBeforePan!.x - 35, 3); expect(sourceAfterPan.y).toBeCloseTo(sourceBeforePan!.y - 45, 3);
   for (const target of [.5, 1, 1.5, 2]) {
     const current = await worldZoom();
-    await page.locator('#whiteboard').dispatchEvent('wheel', { deltaY: -Math.log(target / current) / .005, ctrlKey: true, clientX: 720, clientY: 400, bubbles: true, cancelable: true });
+    await page.locator('#whiteboard').dispatchEvent('wheel', { deltaY: -Math.log(target / current) / .008, ctrlKey: true, clientX: 720, clientY: 400, bubbles: true, cancelable: true });
     await expect.poll(worldZoom).toBeCloseTo(target, 5);
     const panel = (await full(page).boundingBox())!, source = (await page.locator('.board-object').boundingBox())!;
     expect(panel.width).toBeCloseTo(360, 3); expect(panel.height).toBeCloseTo(160, 3); expect(source.y - (panel.y + panel.height)).toBeCloseTo(8, 3); expect(panel.x - source.x).toBeCloseTo(36, 3);
@@ -672,7 +672,7 @@ test('annotation expansion and retraction keep continuous screen bounds and supp
     await page.setViewportSize({ width, height: 760 });
     for (const zoom of [.5, 1, 1.5, 2]) {
       const current = await page.locator('.canvas-world').evaluate(element => new DOMMatrix(getComputedStyle(element).transform).a);
-      await page.locator('#whiteboard').dispatchEvent('wheel', { deltaY: -Math.log(zoom / current) / .005, ctrlKey: true, clientX: 80, clientY: 330, bubbles: true, cancelable: true });
+      await page.locator('#whiteboard').dispatchEvent('wheel', { deltaY: -Math.log(zoom / current) / .008, ctrlKey: true, clientX: 80, clientY: 330, bubbles: true, cancelable: true });
       const before = await geometry();
       await pin.evaluate(element => (element as HTMLButtonElement).click()); await expect(editInput(page)).toBeFocused();
       const opened = await frames();

@@ -1,4 +1,4 @@
-import { intersects, type Point, type Rect } from './geometry';
+import { intersects, type Point, type Rect } from './geometry.js';
 
 /** Painted bottom-left of the speech bubble inside a square pin. The tail tip is that corner. */
 export function annotationBubbleTail(size: number) {
@@ -28,12 +28,36 @@ export function placePointAnnotationNote(anchor: Point, size: { width: number; h
   const opposite = marker.x - size.width - gap;
   const xs = [beside, opposite, anchor.x - size.width / 2, minX, maxX, ...obstacles.flatMap(rect => [rect.x + rect.width + 8, rect.x - size.width - 8])].map(clampX);
   const ys = [alignedY, marker.y, anchor.y + 22, anchor.y - size.height - 22, minY, maxY, ...obstacles.flatMap(rect => [rect.y + rect.height + 8, rect.y - size.height - 8])].map(clampY);
-  const candidates = ys.flatMap(y => xs.map(x => ({ x, y, ...size })));
+  // Each axis keeps its first occurrence so ties retain the document's placement order.
+  const axis = (values: number[], origin: number, weight: number) => [...new Set(values)].map((value, order) => ({ value, order, distance: Math.abs(value - origin) * weight })).sort((a, b) => a.distance - b.distance || a.order - b.order);
+  const columns = axis(xs, beside, 1), rows = axis(ys, alignedY, 8);
   const overlap = (a: Rect, b: Rect) => Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
-  const clear = candidates.filter(rect => !intersects(rect, marker) && obstacles.every(obstacle => !intersects(rect, obstacle)));
-  const available = clear.length ? clear : candidates.filter(rect => !intersects(rect, marker));
-  const choices = available.length ? available : candidates;
-  const score = (rect: Rect) => obstacles.reduce((sum, obstacle) => sum + overlap(rect, obstacle), 0) * 100 + overlap(rect, marker) * 1000 + Math.abs(rect.x - beside) + Math.abs(rect.y - alignedY) * 8;
-  choices.sort((a, b) => score(a) - score(b));
-  return choices[0];
+  type Choice = { rect: Rect; score: number; order: number };
+  let clear: Choice | undefined, available: Choice | undefined, fallback: Choice | undefined;
+  const better = (candidate: Choice, best: Choice | undefined) => !best || candidate.score < best.score || candidate.score === best.score && candidate.order < best.order;
+  for (const row of rows) {
+    if (clear && row.distance > clear.score) break;
+    for (const column of columns) {
+      const distance = column.distance + row.distance;
+      // Overlap penalties are positive, so farther coordinates cannot improve a clear placement.
+      if (clear && distance > clear.score) break;
+      const rect = { x: column.value, y: row.value, ...size }, order = row.order * xs.length + column.order;
+      const touchesMarker = intersects(rect, marker);
+      let touchesObstacle = false, covered = 0;
+      for (const obstacle of obstacles) {
+        if (intersects(rect, obstacle)) touchesObstacle = true;
+        if (!clear) covered += overlap(rect, obstacle);
+        else if (touchesObstacle) break;
+      }
+      if (!touchesMarker && !touchesObstacle) {
+        const candidate = { rect, score: distance, order };
+        if (better(candidate, clear)) clear = candidate;
+      } else if (!clear) {
+        const candidate = { rect, score: covered * 100 + overlap(rect, marker) * 1000 + column.distance + row.distance, order };
+        if (better(candidate, fallback)) fallback = candidate;
+        if (!touchesMarker && better(candidate, available)) available = candidate;
+      }
+    }
+  }
+  return (clear || available || fallback)!.rect;
 }

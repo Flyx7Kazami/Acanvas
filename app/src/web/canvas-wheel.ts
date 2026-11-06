@@ -1,5 +1,6 @@
 import type { SessionView } from '../shared/types.js';
 import { zoomAt } from './geometry.js';
+import { CANVAS_GESTURE_ZOOM_GAIN } from './canvas-zoom.js';
 
 export type CanvasWheelInput = { clientX: number; clientY: number; deltaX: number; deltaY: number; deltaMode: number; ctrlKey: boolean; metaKey: boolean };
 
@@ -17,7 +18,7 @@ export function routesWheelToCanvas(canvas: Element, event: Pick<WheelEvent, 'ta
 export function canvasWheelView(view: SessionView, event: CanvasWheelInput, bounds: Pick<DOMRect, 'left' | 'top' | 'height'>): SessionView {
   const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? bounds.height : 1;
   const deltaX = event.deltaX * unit, deltaY = event.deltaY * unit;
-  if (event.ctrlKey || event.metaKey) return deltaY === 0 ? view : { ...view, ...zoomAt(view, Math.exp(-deltaY * .005), { x: event.clientX - bounds.left, y: event.clientY - bounds.top }) };
+  if (event.ctrlKey || event.metaKey) return deltaY === 0 ? view : { ...view, ...zoomAt(view, Math.exp(-deltaY * .005 * CANVAS_GESTURE_ZOOM_GAIN), { x: event.clientX - bounds.left, y: event.clientY - bounds.top }) };
   if (deltaX === 0 && deltaY === 0) return view;
   return { ...view, x: view.x - deltaX, y: view.y - deltaY };
 }

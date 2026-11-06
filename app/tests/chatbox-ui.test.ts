@@ -627,10 +627,11 @@ test('managed React records Markdown intent and displayed anchors and keeps the 
   const mdObject = await app.object(md, { x: 220, y: 250, width: 340, height: 300 });
   const scroller = page.locator(`[data-object-id="${mdObject.id}"] .markdown-content`);
   await expect(scroller.locator('p').first()).toBeVisible();
-  await scroller.evaluate(element => { element.scrollTop = 210; const paragraph = element.querySelectorAll('p')[2].firstChild!; const range = document.createRange(); range.setStart(paragraph, 0); range.setEnd(paragraph, 18); const selection = window.getSelection()!; selection.removeAllRanges(); selection.addRange(range); });
+  const scrollY = await scroller.evaluate(element => { element.scrollTop = 210; const paragraph = element.querySelectorAll('p')[2].firstChild!; const range = document.createRange(); range.setStart(paragraph, 0); range.setEnd(paragraph, 18); const selection = window.getSelection()!; selection.removeAllRanges(); selection.addRange(range); return element.scrollTop; });
+  assert(scrollY > 0);
   await app.mark({ x: 300, y: 380 }); const annotated = await app.done('Selected document text');
-  assert.equal(annotated.contentAnchor?.kind, 'text'); assert.equal(annotated.contentAnchor?.scroll?.y, 210); assert(annotated.contentAnchor?.quote); assert(annotated.contentAnchor?.path?.startsWith('rendered-dom:'));
-  assert.equal(annotated.capture?.scene.objects.find(value => value.object.id === mdObject.id)?.scroll?.y, 210);
+  assert.equal(annotated.contentAnchor?.kind, 'text'); assert.equal(annotated.contentAnchor?.scroll?.y, scrollY); assert(annotated.contentAnchor?.quote); assert(annotated.contentAnchor?.path?.startsWith('rendered-dom:'));
+  assert.equal(annotated.capture?.scene.objects.find(value => value.object.id === mdObject.id)?.scroll?.y, scrollY);
   const surfaces: string[] = [];
   page.on('request', request => { if (request.method() === 'POST' && /\/html-surfaces$/.test(new URL(request.url()).pathname)) surfaces.push(request.url()); });
   const html = await app.importAsset('Live.html', 'text/html', Buffer.from('<!doctype html><style>body{margin:0;background:#cff0e8;font:20px sans-serif}input{font:20px sans-serif}</style><input id="value" aria-label="Live value" value="initial"><p id="identity"></p><p id="clock">Live scene</p><script>window.identity=Math.random();document.querySelector("#identity").textContent="Instance "+window.identity;setInterval(()=>document.querySelector("#clock").style.color=["red","blue"][Math.floor(Date.now()/100)%2],100)</script>'));
